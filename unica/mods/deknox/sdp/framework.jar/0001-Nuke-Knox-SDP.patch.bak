@@ -1,0 +1,33 @@
+From 39b955fab2f7693f57a7042325f353fb8d8d3d3e Mon Sep 17 00:00:00 2001
+From: Salvo Giangreco <giangrecosalvo9@gmail.com>
+Date: Sat, 30 Aug 2025 00:54:45 +0200
+Subject: [PATCH] Nuke Knox SDP
+
+---
+ .../database/sqlite/SQLiteDatabase.smali      | 119 ++++--------------
+ .../database/sqlite/SQLiteSdpHelper.smali     |  96 +-------------
+ ...tternUtils$$ExternalSyntheticLambda0.smali |  38 ------
+ .../internal/widget/LockPatternUtils.smali    |  32 +----
+ .../widget/VerifyCredentialResponse$1.smali   |  23 +---
+ .../widget/VerifyCredentialResponse.smali     |  32 -----
+ .../samsung/android/knox/dar/DarRune.smali    |   2 +-
+ .../com/samsung/android/rune/CoreRune.smali   |   2 +-
+ 8 files changed, 29 insertions(+), 315 deletions(-)
+ delete mode 100644 smali_classes6/com/android/internal/widget/LockPatternUtils$$ExternalSyntheticLambda0.smali
+
+diff --git a/smali_classes6/com/samsung/android/rune/CoreRune.smali b/smali_classes6/com/samsung/android/rune/CoreRune.smali
+index 3619eba0..5f48b370 100644
+--- a/smali_classes6/com/samsung/android/rune/CoreRune.smali
++++ b/smali_classes6/com/samsung/android/rune/CoreRune.smali
+@@ -1194,7 +1194,7 @@
+ 
+ .field public static final blacklist KNOX_SUPPORT_DAR_DUAL_DO:Z = true
+ 
+-.field public static final blacklist KNOX_SUPPORT_DAR_SDP:Z = true
++.field public static final blacklist KNOX_SUPPORT_DAR_SDP:Z = false
+ 
+ .field public static final blacklist KNOX_SUPPORT_DUAL_APP:Z = true
+ 
+-- 
+2.51.1
+
