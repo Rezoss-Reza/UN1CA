@@ -1945,15 +1945,6 @@ index b127e8d3a..939bc8cb7 100644
  
      goto/16 :goto_2d
  
-@@ -6297,8 +6317,6 @@
- 
-     return-object v0
- 
--    nop
--
-     :sswitch_data_0
-     .sparse-switch
-         -0x7fd88b6c -> :sswitch_22
+
 -- 
 2.51.1
-
