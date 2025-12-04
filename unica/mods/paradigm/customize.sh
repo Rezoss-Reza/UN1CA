@@ -156,3 +156,24 @@ LOG_STEP_OUT
 LOG "- Downloading latest Game Booster app"
 DOWNLOAD_FILE "$(GET_GALAXY_STORE_DOWNLOAD_URL "com.samsung.android.game.gametools")" \
     "$WORK_DIR/system/system/priv-app/GameTools_Dream/GameTools_Dream.apk"
+
+# # ETC Rezoss Add
+# LOG_STEP_IN "- Adding Others Libs"
+# ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/libphotohdr.so" 0 0 644 "u:object_r:system_lib_file:s0"
+# ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/libsimba.media.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+# ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/libDocColorEnhance.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+# ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/libDocColorEnhance_Auto.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+# ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/libWineDetector_v1.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+# ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/libarcsoft_dualcam_portraitlighting.so" 0 0 644 "u:object_r:system_lib_file:s0"
+# ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/lib_SoundBooster_ver2000.so" 0 0 644 "u:object_r:system_lib_file:s0"
+# ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/lib_SoundBooster_ver1100.so" 0 0 644 "u:object_r:system_lib_file:s0"
+# ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/lib_SoundAlive_play_plus_ver800.so" 0 0 644 "u:object_r:system_lib_file:s0"
+# ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/lib_SAG_EQ_ver2000.so" 0 0 644 "u:object_r:system_lib_file:s0"
+# ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/libLightObjectDetector_v1.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+# ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/libFaceClustering.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+# LOG_STEP_OUT
+
+# # Rezoss add LOG color correction (experimental)
+# ADD_TO_WORK_DIR "pa2qxxx" "system" "system/cameradata/logCubefiles/3DLUT.cube" 0 0 644 "u:object_r:system_file:s0"
+# ADD_TO_WORK_DIR "pa2qxxx" "system" "system/cameradata/stereo_data/SRGIE_Y_A16W8_V006_sm8750_snpe2279.dlc" 0 0 644 "u:object_r:system_file:s0"
+# ADD_TO_WORK_DIR "pa2qxxx" "system" "system/cameradata/stereo_data/stereo_capture_feature.json" 0 0 644 "u:object_r:system_file:s0"
