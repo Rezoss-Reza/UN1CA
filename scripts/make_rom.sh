@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # [
-set -ex
+# set -ex
 source "$SRC_DIR/scripts/utils/build_utils.sh" || exit 1
 
 FORCE=false

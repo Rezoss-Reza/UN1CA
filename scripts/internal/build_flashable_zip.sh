@@ -18,7 +18,7 @@ TMP_DIR="$OUT_DIR/zip"
 ZIP_FILE_SUFFIX="-sign.zip"
 $DEBUG && ! $ROM_IS_OFFICIAL && ZIP_FILE_SUFFIX=".zip"
 
-ZIP_FILE_NAME="UN1CA_${ROM_VERSION}_$(date +%Y%m%d)_${TARGET_CODENAME}${ZIP_FILE_SUFFIX}"
+ZIP_FILE_NAME="UN1CA_${ROM_VERSION}_$(date +%d%m%y-%H%M%S)_${TARGET_CODENAME}${ZIP_FILE_SUFFIX}"
 while [ -f "$OUT_DIR/$ZIP_FILE_NAME" ]; do
     INCREMENTAL=$((INCREMENTAL + 1))
     ZIP_FILE_NAME="UN1CA_${ROM_VERSION}_$(date +%Y%m%d)-${INCREMENTAL}_${TARGET_CODENAME}${ZIP_FILE_SUFFIX}"
@@ -576,12 +576,13 @@ fi
 
 LOG "- Creating zip"
 # EVAL "rm -f \"$TMP_DIR/rom.zip\"" || exit 1
-# # https://android.googlesource.com/platform/build/+/refs/tags/android-15.0.0_r1/tools/releasetools/common.py#3601
-# # https://android.googlesource.com/platform/build/+/refs/tags/android-15.0.0_r1/tools/releasetools/common.py#3609
-# # https://android.googlesource.com/platform/build/+/refs/tags/android-15.0.0_r1/tools/releasetools/ota_utils.py#184
-# # https://android.googlesource.com/platform/build/+/refs/tags/android-15.0.0_r1/tools/releasetools/ota_utils.py#186
+# https://android.googlesource.com/platform/build/+/refs/tags/android-15.0.0_r1/tools/releasetools/common.py#3601
+# https://android.googlesource.com/platform/build/+/refs/tags/android-15.0.0_r1/tools/releasetools/common.py#3609
+# https://android.googlesource.com/platform/build/+/refs/tags/android-15.0.0_r1/tools/releasetools/ota_utils.py#184
+# https://android.googlesource.com/platform/build/+/refs/tags/android-15.0.0_r1/tools/releasetools/ota_utils.py#186
 # EVAL "cd \"$TMP_DIR\" && 7z a -tzip -mx=0 -mmt=$(nproc) $TMP_DIR/rom.zip -r *.patch.dat -ir!META-INF/com/android/* -i!*.new.dat.br" || exit 1
 # EVAL "cd \"$TMP_DIR\" && 7z a -tzip -mx=3 -mmt=$(nproc) $TMP_DIR/rom.zip -r * -xr!META-INF/com/android/* -x!*.new.dat.br -x!*.patch.dat -x!rom.zip" || exit 1
+# Back to UN1CA14 way of zipping
 [ -f "$TMP_DIR/rom.zip" ] && rm -f "$TMP_DIR/rom.zip"
 cd "$TMP_DIR" ; zip -rq $TMP_DIR/rom.zip ./* ; cd - &> /dev/null
 
