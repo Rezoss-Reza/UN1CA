@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
+set -e
 # [
 source "$SRC_DIR/scripts/utils/smali_utils.sh"
 # ]
@@ -109,8 +109,8 @@ GET_GALAXY_STORE_DOWNLOAD_URL()
     local PROTOCOL
 
     # Galaxy S25 Ultra EUR_OPENX
-    # Galaxy S22 Ultra GBL_OPENX
-    DEVICES=("SM-S938B" "SM-S901E")
+    # Galaxy S23 Ultra GBL_OPENX
+    DEVICES=("SM-S938B" "SM-S918B")
 
     OS="$(GET_PROP "system" "ro.build.version.sdk")"
     ONEUI="$(GET_PROP "system" "ro.build.version.oneui")"

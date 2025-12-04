@@ -19,7 +19,7 @@
 # shellcheck disable=SC1007,SC2164,SC2181,SC2291
 
 # [
-set -ex
+# set -ex
 BUILD()
 {
     local PDR

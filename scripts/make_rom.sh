@@ -17,7 +17,7 @@
 #
 
 # [
-set -ex
+# set -ex
 source "$SRC_DIR/scripts/utils/build_utils.sh" || exit 1
 
 FORCE=false
