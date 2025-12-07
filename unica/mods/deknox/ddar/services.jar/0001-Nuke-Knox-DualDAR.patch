@@ -1559,7 +1559,7 @@ index 5fd472f46..b879c75ba 100644
 -    invoke-direct {v11, v7, v3, v12}, Lcom/android/server/am/FreecessHandler$FreecessThread;-><init>(IILjava/lang/String;)V
 +    const/4 v14, 0x0
 +
-+    invoke-direct {v10, v12, v14, v2}, Lcom/android/server/am/FreecessHandler$FreecessThread;-><init>(Ljava/lang/String;II)V
++    invoke-direct {v10, v14, v2, v12}, Lcom/android/server/am/FreecessHandler$FreecessThread;-><init>(IILjava/lang/String;)V
  
 -    invoke-virtual {v11}, Landroid/os/HandlerThread;->start()V
 +    invoke-virtual {v10}, Landroid/os/HandlerThread;->start()V
@@ -1582,7 +1582,7 @@ index 5fd472f46..b879c75ba 100644
 +    const/4 v12, 0x2
  
 -    invoke-virtual {v5}, Landroid/os/HandlerThread;->start()V
-+    invoke-direct {v4, v10, v14, v12}, Lcom/android/server/am/FreecessHandler$FreecessThread;-><init>(Ljava/lang/String;II)V
++    invoke-direct {v4, v14, v12, v10}, Lcom/android/server/am/FreecessHandler$FreecessThread;-><init>(IILjava/lang/String;)V
  
 -    :cond_16
 -    const-string/jumbo v5, "camera"
