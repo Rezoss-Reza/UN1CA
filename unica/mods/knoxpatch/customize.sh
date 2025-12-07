@@ -5,6 +5,8 @@ DELETE_FROM_WORK_DIR "system" "system/lib/vendor.samsung.hardware.security.wsm.s
 DELETE_FROM_WORK_DIR "system" "system/lib64/libhal.wsm.samsung.so"
 DELETE_FROM_WORK_DIR "system" "system/lib64/vendor.samsung.hardware.security.wsm.service-V1-ndk.so"
 
+
+
 # Add KnoxPatchHooks
 APPLY_PATCH "system" "system/framework/framework.jar" \
     "$MODPATH/framework.jar/0001-Introduce-KnoxPatchHooks.patch"
@@ -33,6 +35,7 @@ APPLY_PATCH "system" "system/framework/services.jar" \
 # Disable SAK in DarManagerService
 APPLY_PATCH "system" "system/framework/services.jar" \
     "$MODPATH/services.jar/0002-Disable-SAK-in-DarManagerService.patch"
+find "$APKTOOL_DIR" -type f -name "*.orig" -delete
 SMALI_PATCH "system" "system/framework/services.jar" \
     "smali/com/android/server/knox/dar/AttestedCertParser.smali" 'remove'
 SMALI_PATCH "system" "system/framework/services.jar" \
