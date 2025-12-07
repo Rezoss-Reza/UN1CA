@@ -48,7 +48,6 @@ APPLY_PATCH()
 	-d \"$APKTOOL_DIR/$PARTITION/${FILE//system\//}\" \
 	-N --forward -l \
 	< \"$PATCH\"" || return 1
-
 	# EVAL "LC_ALL=C git apply --reject --ignore-whitespace --whitespace=nowarn --directory=\"$APKTOOL_DIR/$PARTITION/${FILE//system\//}\" --verbose --unsafe-paths \"$PATCH\"" || return 1
 }
 
