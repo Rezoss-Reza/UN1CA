@@ -1,7 +1,9 @@
 name: Build UN1CA UnOfficial by Rezoss (for S23U only)
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - nembelas
 
 jobs:
   build:
