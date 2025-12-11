@@ -12,9 +12,15 @@
 /system/priv-app/SAppLock/SAppLock\.apk u:object_r:system_file:s0
 /system/priv-app/SmartManagerCN u:object_r:system_file:s0
 /system/priv-app/SmartManagerCN/SmartManagerCN\.apk u:object_r:system_file:s0
+/system/priv-app/GameTools_Dream u:object_r:system_file:s0
+/system/priv-app/GameTools_Dream/GameTools_Dream\.apk u:object_r:system_file:s0
 /system/app u:object_r:system_file:s0
 /system/app/SmartManager_v6_DeviceSecurity_CN u:object_r:system_file:s0
 /system/app/SmartManager_v6_DeviceSecurity_CN/SmartManager_v6_DeviceSecurity_CN\.apk u:object_r:system_file:s0
+/system/app/SamsungCalendar u:object_r:system_file:s0
+/system/app/SamsungCalendar/SamsungCalendar\.apk u:object_r:system_file:s0
+/system/app/SamsungClock u:object_r:system_file:s0
+/system/app/SamsungClock/SamsungClock\.apk u:object_r:system_file:s0
 /system/lib64 u:object_r:system_file:s0
 /system/lib64/lib_sag_ai_sound_sep_v1\.00\.so u:object_r:system_file:s0
 /system/lib64/libdtsr_wrapper_v1\.camera\.samsung\.so u:object_r:system_file:s0
@@ -27,5 +33,6 @@
 /system/lib64/libmppfilter\.so u:object_r:system_file:s0
 /system/lib64/libsentencepiece\.camera\.samsung\.so u:object_r:system_file:s0
 /system/lib64/libsamsungSoundbooster_plus_legacy\.so u:object_r:system_file:s0
+/system/lib64/libsoundboostereq_legacy\.so u:object_r:system_file:s0
 /system/app/SamsungSans u:object_r:system_file:s0
 /system/app/SamsungSans/SamsungSans\.apk u:object_r:system_file:s0
