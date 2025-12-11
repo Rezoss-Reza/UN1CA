@@ -1,0 +1,101 @@
+name: Build UN1CA UnOfficial by Rezoss (for S23U only)
+
+on:
+  push:
+    branches:
+      - nembelas
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          
+      - name: Configure Git identity
+        run: |
+          git config --global user.email "164358475+Rezoss-Reza@users.noreply.github.com"
+          git config --global user.name "Rezoss-Reza"
+
+      - name: Free disk space (1/3)
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force
+          sudo docker builder prune -a
+
+      - name: Free disk space (2/3)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+
+      - name: Free disk space (3/3)
+        uses: rokibhasansagar/slimhub_actions@main
+        with:
+          retain: 'compiler_cmake'
+
+      - name: Set up build environment
+        run: |
+          sudo apt update
+          DEBIAN_FRONTEND=noninteractive sudo apt install -yq \
+            7zip attr ccache clang ffmpeg \
+            libbrotli-dev libgtest-dev libprotobuf-dev libunwind-dev libpcre2-dev \
+            libzstd-dev linux-modules-extra-$(uname -r) lld protobuf-compiler webp
+          sudo modprobe erofs f2fs
+         
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Build dependencies
+        run: |
+          source ./buildenv.sh dm3q
+          ./scripts/build_dependencies.sh
+
+      - name: Download stock firmwares
+        run: |
+          source ./buildenv.sh dm3q
+          ./scripts/download_fw.sh
+            
+
+      - name: Extract stock firmwares
+        run: |
+          source ./buildenv.sh dm3q
+          ./scripts/extract_fw.sh
+
+      - name: Build ROM
+        id: package
+        run: |
+          source ./buildenv.sh dm3q
+          ./scripts/make_rom.sh
+          zip_file=$(find ./out -maxdepth 1 -type f -name "*.zip" | head -n 1)
+          # Extract just the filename
+          zip_name=$(basename "$zip_file")
+          # Strip .zip extension
+          base_name="${zip_name%.zip}"
+          echo "zip_name=$base_name" >> "$GITHUB_OUTPUT"
+         
+
+      - name: Upload the flashable kernel in artifact
+        uses: actions/upload-artifact@v4        
+        with:
+          name: ${{steps.package.outputs.zip_name}}
+          path: ./out/zip/ 
+
+      - name: Upload to Google Drive
+        uses: logickoder/g-drive-upload@main
+        with:
+          authType: 'oauth'
+          clientId: ${{ secrets.GOOGLE_CLIENT_ID }}
+          clientSecret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          refreshToken: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+          filename: ./out/*.zip
+          folderId: ${{ secrets.FOLDER_ID }}
+          name: ${{steps.package.outputs.zip_name}}.zip
+          overwrite: 'true' # optional boolean
+        
