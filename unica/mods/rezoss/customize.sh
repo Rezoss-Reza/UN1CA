@@ -9,3 +9,25 @@ DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.sa
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_SECURITY_CONFIG_DEVICEMONITOR_PACKAGE_NAME" "com.samsung.android.sm.devicesecurity.tcm"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME" "com.samsung.android.sm_cn"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GALLERY_CONFIG_AI_EXPANSION" "AI_Timelapse,singletake.hidt.support.on,singletake.capture.support.off,singletake.video_res.config.fhd,singletake"
+
+# Mod from AstroROM
+# Scamsung only added this bomb in Galaxy A23
+
+# Add entries in floating feature
+SET_FLOATING_FEATURE_CONFIG "BATTERY_SUPPORT_BSOH_SETTINGS" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "BATTERY_SUPPORT_SBP_INFO_SETTINGS" "TRUE"
+
+BOMB_MODEL="SM-A236B"
+PLANT_MODEL="$TARGET_PRODUCT_NAME"
+
+
+find . -type f -name "*.smali" | while read -r smali; do
+    if grep -q "$BOMB_MODEL" "$smali"; then
+        
+        # Replace bomb / plant 
+        sed -i "s/$BOMB_MODEL/$PLANT_MODEL/g" "$smali"
+
+        sed -i "s/ro\.product\.model/$PLANT_MODEL/g" "$smali"
+
+    fi
+done
