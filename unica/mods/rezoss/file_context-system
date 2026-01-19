@@ -14,6 +14,8 @@
 /system/priv-app/SmartManagerCN/SmartManagerCN\.apk u:object_r:system_file:s0
 /system/priv-app/GameTools_Dream u:object_r:system_file:s0
 /system/priv-app/GameTools_Dream/GameTools_Dream\.apk u:object_r:system_file:s0
+/system/priv-app/OfflineLanguageModel_stub u:object_r:system_file:s0
+/system/priv-app/OfflineLanguageModel_stub/OfflineLanguageModel_stub\.apk u:object_r:system_file:s0
 /system/app u:object_r:system_file:s0
 /system/app/SmartManager_v6_DeviceSecurity_CN u:object_r:system_file:s0
 /system/app/SmartManager_v6_DeviceSecurity_CN/SmartManager_v6_DeviceSecurity_CN\.apk u:object_r:system_file:s0
@@ -23,6 +25,8 @@
 /system/app/SamsungClock/SamsungClock\.apk u:object_r:system_file:s0
 /system/app/SamsungWeather u:object_r:system_file:s0
 /system/app/SamsungWeather/SamsungWeather\.apk u:object_r:system_file:s0
+/system/app/VisionModel-Stub u:object_r:system_file:s0
+/system/app/VisionModel-Stub/VisionModel-Stub\.apk u:object_r:system_file:s0
 /system/lib64 u:object_r:system_file:s0
 /system/lib64/lib_sag_ai_sound_sep_v1\.00\.so u:object_r:system_file:s0
 /system/lib64/libdtsr_wrapper_v1\.camera\.samsung\.so u:object_r:system_file:s0
