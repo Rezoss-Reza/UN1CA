@@ -308,10 +308,18 @@
     <local name="SUPPORT_LOG_VIDEO" value="true"/>
     <local name="SUPPORT_HLG" value="true"/>
     <local name="SUPPORT_CAMERA_ASSISTANT_ANAMORPHIC_LENS_HW_SCALER" value="true"/>
+    <local name="SUPPORT_STEREO_CAPTURE" value="true"/>
+	<local name="SUPPORT_STEREO_CAPTURE_UHD_30" value="true"/>
 
     <local name="SUPPORT_ADVANCED_ZERO_SHUTTER_LAG" value="true"/>
     <!-- super steady features -->
     <local name="SUPPORT_SUPER_STEADY_CROP_ZOOM_X2" value="true"/>
+    <!-- TEMP: shooting mode crop zoom features for Eureka -->
+    <local name="SUPPORT_FOOD_CROP_ZOOM_X2" value="true"/>
+    <local name="SUPPORT_HYPER_LAPSE_CROP_ZOOM_X2" value="true"/>
+    <local name="SUPPORT_NIGHT_CROP_ZOOM_X2" value="true"/>
+
+    <local name="SUPPORT_FRAME_WATERMARK" value="true"/>
 
     <!-- camera assistant features -->
     <local name="SUPPORT_CAMERA_ASSISTANT" value="true"/>
@@ -324,6 +332,7 @@
     <local name="SUPPORT_CAMERA_ASSISTANT_DIGITAL_ZOOM_UPSCALE" value="true"/>
     <local name="SUPPORT_CAMERA_ASSISTANT_DOF_ADAPTER" value="true"/>
     <local name="SUPPORT_CAMERA_ASSISTANT_ZOOM_X100" value="true"/>
+    <local name="SUPPORT_CAMERA_ASSISTANT_STEREO_CAPTURE" value="true"/>
 
     <!-- default value feature -->
     <local name="DEFAULT_DIGITAL_ZOOM_UPSCALE" value="true"/>

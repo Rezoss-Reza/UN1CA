@@ -1,0 +1,780 @@
+Creating work dir
+  - Copying /product from source firmware
+    - Replacing "ro.product.product.name" prop with "dm3qxxx" in /product/etc/build.prop
+  - Copying /system from source firmware
+    - Adding "ro.product.device" prop with "dm3q" in /system/system/build.prop
+  - Copying /system_ext from source firmware
+    - Adding metadata for /system_ext (uid:0 gid:0 mode:755 selabel:u:object_r:system_file:s0)
+    - Adding metadata for /system/system_ext (uid:0 gid:0 mode:644 selabel:u:object_r:system_file:s0)
+  - Copying /odm from target firmware
+  - Copying /system_dlkm from target firmware
+  - Copying /vendor from target firmware
+    - Replacing "ro.config.ringtone" prop with "ACH_Galaxy_Bells.ogg" in /vendor/build.prop
+    - Replacing "ro.config.notification_sound" prop with "ACH_Spaceline.ogg" in /vendor/build.prop
+    - Replacing "ro.config.alarm_alert" prop with "ACH_Homecoming.ogg" in /vendor/build.prop
+    - Replacing "ro.config.media_sound" prop with "Media_preview_Over_the_horizon.ogg" in /vendor/build.prop
+    - Replacing "ro.config.ringtone_2" prop with "ACH_Atomic_Bell.ogg" in /vendor/build.prop
+    - Replacing "ro.config.notification_sound_2" prop with "ACH_Signal.ogg" in /vendor/build.prop
+  - Copying /vendor_dlkm from target firmware
+  - Copying target firmware kernel images
+    - Removing AVB footer signature from boot.img
+    - Removing Samsung footer signature from boot.img
+    - Removing AVB footer signature from dtbo.img
+    - Removing Samsung footer signature from dtbo.img
+    - Removing AVB footer signature from init_boot.img
+    - Removing Samsung footer signature from init_boot.img
+    - Removing AVB footer signature from vendor_boot.img
+    - Removing Samsung footer signature from vendor_boot.img
+Applying device patches
+  - Processing "Misc patches" by @salvo_giangri
+    - Adding "ro.factory.model" prop with "SM-S918B" in /system/system/build.prop
+  - Processing "Stock blobs" by @salvogiangri
+    - NOTHING TO DO
+Applying ROM patches
+  - Processing "floating_feature.xml patches" by @salvogiangri
+    - Applying target floating feature config
+    - Applying custom device floating feature config
+      - Replacing "SEC_FLOATING_FEATURE_AUDIO_CONFIG_EFFECTS_VIDEOCALL" config with "TRUE" in /system/system/etc/floating_feature.xml
+      - Replacing "SEC_FLOATING_FEATURE_AUDIO_CONFIG_SOUNDALIVE_VERSION" config with "eq_custom,uhq_onoff,karaoke,adapt,spk_stereo,dvfs_20_percent,dvfs_max_45_percent,voice_boost,dolby_game_spk_off" in /system/system/etc/floating_feature.xml
+      - Adding "SEC_FLOATING_FEATURE_CAMERA_CONFIG_AUTOFRAMING" config with "uhd" in /system/system/etc/floating_feature.xml
+      - Adding "SEC_FLOATING_FEATURE_CAMERA_CONFIG_LOG_VIDEO" config with "V1.0" in /system/system/etc/floating_feature.xml
+      - Replacing "SEC_FLOATING_FEATURE_CAMERA_CONFIG_MOTIONPHOTO_CAPTURE_MODE" config with "[[3,1],[3,0.5]]" in /system/system/etc/floating_feature.xml
+      - Replacing "SEC_FLOATING_FEATURE_CAMERA_CONFIG_SDK_FEATURE_INFO" config with "version2,super_night,preview_dis,video_hdr,smooth_zoom,logical_rear_camera:camera_id=20,exposure_table_control,selfie_tone,physical_camera_tele:camera_id=52,physical_camera_tele2:camera_id=54" in /system/system/etc/floating_feature.xml
+      - Replacing "SEC_FLOATING_FEATURE_CAMERA_CONFIG_VENDOR_LIB_INFO" config with "food.samsung.v1,face_landmark.arcsoft.v2_1,beauty.samsung.v4,scene_detection.samsung.v1,facial_restoration.arcsoft.v1,facial_attribute.samsung.v1,human_tracking_hand.arcsoft.v4,fr_tracking.arcsoft.v1,smart_scan.samsung.v2,aimode.samsung.v2,aimfisp.samsung.v1,ai_clear_zoom.arcsoft.v1,macro_raw_sr.arcsoft.v1,super_resolution_raw.arcsoft.v2,aebhdr.arcsoft.v1,hybridhdr.arcsoft.v1,single_bokeh.samsung.v2,super_night.mpi.v2,swuwdc.arcsoft.v1,event_detection.samsung.v2,selfie_correction.samsung.v1,dual_bokeh.samsung.v1_1,image_codec.samsung.v1,pro_single_rgb.mpi.v1,image_enhance.arcsoft.v1,localtm.samsung.v1_1" in /system/system/etc/floating_feature.xml
+      - Replacing "SEC_FLOATING_FEATURE_CAMERA_CONFIG_WINE_DETECTOR" config with "V1_SNAP_CPU" in /system/system/etc/floating_feature.xml
+      - Replacing "SEC_FLOATING_FEATURE_CAMERA_DOCUMENTSCAN_SOLUTIONS" config with "AI_DEWARPING,SHADOW_REMOVAL,DEBLUR,OBJECT_REMOVAL,COLOR_ENHANCE" in /system/system/etc/floating_feature.xml
+      - Adding "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_DUAL_PORTRAITVIDEO" config with "TRUE" in /system/system/etc/floating_feature.xml
+      - Adding "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_EDITABLE_PORTRAITVIDEO" config with "TRUE" in /system/system/etc/floating_feature.xml
+      - Adding "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_PORTRAIT_INTELLIGENT_OPTIMIZATION_AI_ISP" config with "TRUE" in /system/system/etc/floating_feature.xml
+      - Adding "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_SEAMLESS_PORTRAITVIDEO" config with "TRUE" in /system/system/etc/floating_feature.xml
+      - Adding "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_SUPER_NIGHT_DRAFT_RAW" config with "TRUE" in /system/system/etc/floating_feature.xml
+      - Adding "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_VDIS_ON_MOTIONPHOTO" config with "FALSE" in /system/system/etc/floating_feature.xml
+      - Adding "SEC_FLOATING_FEATURE_COMMON_CONFIG_DEX_MODE" config with "dual,wireless,dexforpc" in /system/system/etc/floating_feature.xml
+      - Replacing "SEC_FLOATING_FEATURE_COMMON_CONFIG_EDGE" config with "people,task,circle,panel,-edgefeeds,debug,search,phonecolor" in /system/system/etc/floating_feature.xml
+      - Adding "SEC_FLOATING_FEATURE_FRAMEWORK_SUPPORT_PROVIDE_TSP_RAWDATA" config with "TRUE" in /system/system/etc/floating_feature.xml
+      - Replacing "SEC_FLOATING_FEATURE_GALLERY_CONFIG_AI_EXPANSION" config with "AI_Timelapse,singletake.hidt.support.on,singletake.capture.support.off,singletake.video_res.config.fhd,singletake.video.previous_record" in /system/system/etc/floating_feature.xml
+      - Adding "SEC_FLOATING_FEATURE_GALLERY_SUPPORT_LOG_CORRECT_COLOR" config with "TRUE" in /system/system/etc/floating_feature.xml
+      - Adding "SEC_FLOATING_FEATURE_GENAI_SUPPORT_OFFLINE_LANGUAGEMODEL" config with "TRUE" in /system/system/etc/floating_feature.xml
+      - Replacing "SEC_FLOATING_FEATURE_GENAI_SUPPORT_TIME_WEATHER_WALLPAPER" config with "v2" in /system/system/etc/floating_feature.xml
+      - Adding "SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_TOUCH_FAST_RESPONSE" config with "TRUE" in /system/system/etc/floating_feature.xml
+      - Replacing "SEC_FLOATING_FEATURE_LCD_CONFIG_AOD_BRIGHTNESS_ANIMATION" config with "1" in /system/system/etc/floating_feature.xml
+      - Replacing "SEC_FLOATING_FEATURE_LCD_CONFIG_AOD_FULLSCREEN" config with "1" in /system/system/etc/floating_feature.xml
+      - Replacing "SEC_FLOATING_FEATURE_LCD_CONFIG_AOD_REFRESH_RATE" config with "10" in /system/system/etc/floating_feature.xml
+      - Replacing "SEC_FLOATING_FEATURE_LCD_CONFIG_CONTROL_AUTO_BRIGHTNESS" config with "3" in /system/system/etc/floating_feature.xml
+      - Replacing "SEC_FLOATING_FEATURE_LCD_CONFIG_VIVIDNESS" config with "1" in /system/system/etc/floating_feature.xml
+      - Replacing "SEC_FLOATING_FEATURE_LCD_CONFIG_VIVIDPLUS" config with "1" in /system/system/etc/floating_feature.xml
+      - Replacing "SEC_FLOATING_FEATURE_LOCKSCREEN_CONFIG_WALLPAPER_STYLE" config with "VIDEO,COVER_MP4,GENWEATHER" in /system/system/etc/floating_feature.xml
+      - Adding "SEC_FLOATING_FEATURE_MMFW_SUPPORT_HDR2SDR_MAX_8K" config with "TRUE" in /system/system/etc/floating_feature.xml
+      - Adding "SEC_FLOATING_FEATURE_MMFW_SUPPORT_HIERARCHICAL_B_ENCODING" config with "TRUE" in /system/system/etc/floating_feature.xml
+      - Adding "SEC_FLOATING_FEATURE_MMFW_SUPPORT_LONGEXPOSURE_EFFECT_10BIT" config with "TRUE" in /system/system/etc/floating_feature.xml
+      - Adding "SEC_FLOATING_FEATURE_COMMON_SUPPORT_NAL_PRELOADAPP_REGULATION" config with "TRUE" in /system/system/etc/floating_feature.xml
+      - Adding "SEC_FLOATING_FEATURE_MMFW_SUPPORT_PHOTOHDR" config with "TRUE" in /system/system/etc/floating_feature.xml
+  - Processing "MediaTek-ify" by @Fede2782
+    ! Nothing to do
+  - Processing "Debloat list" by @salvogiangri
+    - Adding /system/system from unica/patches/_debloat
+    - Deleting /product/app/SpeechServicesByGoogle/oat
+    - Deleting /product/app/AssistantShell/oat
+    - Deleting /product/app/Maps/oat
+    - Deleting /product/app/Gmail2/oat
+    - Deleting /product/app/BardShell/oat
+    - Deleting /product/app/Chrome/oat
+    - Deleting /product/app/GoogleCalendarSyncAdapter/oat
+    - Deleting /product/app/YouTube/oat
+    - Deleting /product/app/GoogleLocationHistory/oat
+    - Deleting /product/app/DuoStub/oat
+    - Deleting /product/app/WebViewGoogle/oat
+    - Deleting /product/priv-app/AndroidAutoStub/oat
+    - Deleting /product/priv-app/ConfigUpdater/oat
+    - Deleting /product/priv-app/GmsCore/oat
+    - Deleting /product/priv-app/Turbo/oat
+    - Deleting /product/priv-app/Velvet/oat
+    - Deleting /product/priv-app/AndroidSystemIntelligence/oat
+    - Deleting /product/priv-app/PrivateComputeServices/oat
+    - Deleting /product/priv-app/AiWallpaper/oat
+    - Deleting /product/priv-app/GooglePartnerSetup/oat
+    - Deleting /product/priv-app/HotwordEnrollmentOKGoogleEx4HEXAGON/oat
+    - Deleting /product/priv-app/GoogleRestore/oat
+    - Deleting /product/priv-app/SearchSelector/oat
+    - Deleting /product/priv-app/Phonesky/oat
+    - Deleting /product/priv-app/Messages/oat
+    - Deleting /product/priv-app/GoogleOneTimeInitializer/oat
+    - Deleting /product/priv-app/CarrierWifi/oat
+    - Deleting /product/priv-app/HotwordEnrollmentXGoogleEx4HEXAGON/oat
+    - Deleting /system/system/framework/oat
+    - Deleting /system/system/preload/Facebook_stub_preload/oat
+    - Deleting /system/system/preload/Tips/oat
+    - Deleting /system/system/hidden/SmartTutor/oat
+    - Deleting /system/system/app/ARCore/oat
+    - Deleting /system/system/app/DsmsAPK/oat
+    - Deleting /system/system/app/SamsungTTS/oat
+    - Deleting /system/system/app/SamsungPassAutofill_v1/oat
+    - Deleting /system/system/app/GoogleExtShared/oat
+    - Deleting /system/system/app/BluetoothAgent/oat
+    - Deleting /system/system/app/MAPSAgent/oat
+    - Deleting /system/system/app/SilentLog/oat
+    - Deleting /system/system/app/AllShareAware/oat
+    - Deleting /system/system/app/KeyChain/oat
+    - Deleting /system/system/app/CompanionDeviceManager/oat
+    - Deleting /system/system/app/HiyaService/oat
+    - Deleting /system/system/app/PartnerBookmarksProvider/oat
+    - Deleting /system/system/app/OCRDataProvider/oat
+    - Deleting /system/system/app/SamsungOne/oat
+    - Deleting /system/system/app/ParentalCare/oat
+    - Deleting /system/system/app/SafetyInformation/oat
+    - Deleting /system/system/app/MyDevice/oat
+    - Deleting /system/system/app/StickerCenter/oat
+    - Deleting /system/system/app/SamsungCalendar/oat
+    - Deleting /system/system/app/SamsungTTSVoice_en_GB_f00/oat
+    - Deleting /system/system/app/SmartSwitchStub/oat
+    - Deleting /system/system/app/NfwLocationPrivacy/oat
+    - Deleting /system/system/app/CarrierDefaultApp/oat
+    - Deleting /system/system/app/SamsungWeather/oat
+    - Deleting /system/system/app/PhotoTable/oat
+    - Deleting /system/system/app/SketchBook/oat
+    - Deleting /system/system/app/TetheringAutomation/oat
+    - Deleting /system/system/app/PrintSpooler/oat
+    - Deleting /system/system/app/SamsungTTSVoice_fr_FR_f00/oat
+    - Deleting /system/system/app/DAAgent/oat
+    - Deleting /system/system/app/BixbyWakeup/oat
+    - Deleting /system/system/app/FactoryCameraFB/oat
+    - Deleting /system/system/app/FactoryAirCommandManager/oat
+    - Deleting /system/system/app/HoneyBoard/oat
+    - Deleting /system/system/app/sveservice/oat
+    - Deleting /system/system/app/EasterEgg/oat
+    - Deleting /system/system/app/SimAgent/oat
+    - Deleting /system/system/app/WallpaperBackup/oat
+    - Deleting /system/system/app/SamsungTTSVoice_en_US_l03/oat
+    - Deleting /system/system/app/SamsungTTSVoice_es_US_f00/oat
+    - Deleting /system/system/app/SamsungTTSVoice_th_TH_f00/oat
+    - Deleting /system/system/app/SmartMirroring/oat
+    - Deleting /system/system/app/LiveTranscribe/oat
+    - Deleting /system/system/app/WifiGuider/oat
+    - Deleting /system/system/app/Foundation/oat
+    - Deleting /system/system/app/FBAppManager_NS/oat
+    - Deleting /system/system/app/BluetoothMidiService/oat
+    - Deleting /system/system/app/MotionPhoto/oat
+    - Deleting /system/system/app/SamsungTTSVoice_ru_RU_f00/oat
+    - Deleting /system/system/app/WlanTest/oat
+    - Deleting /system/system/app/EasymodeContactsWidget81/oat
+    - Deleting /system/system/app/ChromeCustomizations/oat
+    - Deleting /system/system/app/EmergencyLauncher/oat
+    - Deleting /system/system/app/UnifiedWFC/oat
+    - Deleting /system/system/app/UniversalMDMClient/oat
+    - Deleting /system/system/app/WifiAiService/oat
+    - Deleting /system/system/app/SmartSwitchAgent/oat
+    - Deleting /system/system/app/Roboto/oat
+    - Deleting /system/system/app/MDMApp/oat
+    - Deleting /system/system/app/AirGlance/oat
+    - Deleting /system/system/app/DRParser/oat
+    - Deleting /system/system/app/SmartTethering/oat
+    - Deleting /system/system/app/MdecService/oat
+    - Deleting /system/system/app/SetupWizardLegalProvider/oat
+    - Deleting /system/system/app/ShortcutBackupService/oat
+    - Deleting /system/system/app/ClipboardEdge/oat
+    - Deleting /system/system/app/SoundPicker_B/oat
+    - Deleting /system/system/app/SamsungTTSVoice_de_DE_f00/oat
+    - Deleting /system/system/app/MdxKitService/oat
+    - Deleting /system/system/app/ImsSettings/oat
+    - Deleting /system/system/app/Stk2/oat
+    - Deleting /system/system/app/SmartReminder/oat
+    - Deleting /system/system/app/BookmarkProvider/oat
+    - Deleting /system/system/app/SecHTMLViewer/oat
+    - Deleting /system/system/app/KidsHome_Installer/oat
+    - Deleting /system/system/app/Stk/oat
+    - Deleting /system/system/app/PacProcessor/oat
+    - Deleting /system/system/app/SLocation/oat
+    - Deleting /system/system/app/CocktailQuickTool/oat
+    - Deleting /system/system/app/HMT/oat
+    - Deleting /system/system/app/FilterProvider/oat
+    - Deleting /system/system/app/SamsungTTSVoice_ar_AE_m00/oat
+    - Deleting /system/system/app/VisionIntelligence3.7/oat
+    - Deleting /system/system/app/SamsungTTSVoice_es_ES_f00/oat
+    - Deleting /system/system/app/MhsAiService/oat
+    - Deleting /system/system/app/GearManagerStub/oat
+    - Deleting /system/system/app/MoccaMobile/oat
+    - Deleting /system/system/app/BBCAgent/oat
+    - Deleting /system/system/app/SamsungTTSVoice_id_ID_f00/oat
+    - Deleting /system/system/app/CameraExtensionsProxy/oat
+    - Deleting /system/system/app/SamsungTTSVoice_pl_PL_f00/oat
+    - Deleting /system/system/app/Traceur/oat
+    - Deleting /system/system/app/SamsungTTSVoice_it_IT_f00/oat
+    - Deleting /system/system/app/ccinfo/oat
+    - Deleting /system/system/app/BasicDreams/oat
+    - Deleting /system/system/app/SimAppDialog/oat
+    - Deleting /system/system/app/ContainerService/oat
+    - Deleting /system/system/app/SamsungTTSVoice_es_MX_f00/oat
+    - Deleting /system/system/app/SamsungTTSVoice_vi_VN_f00/oat
+    - Deleting /system/system/app/BrightnessBackupService/oat
+    - Deleting /system/system/app/HandwritingService/oat
+    - Deleting /system/system/app/SamsungTTSVoice_hi_IN_f00/oat
+    - Deleting /system/system/app/Rampart/oat
+    - Deleting /system/system/app/EasyOneHand3/oat
+    - Deleting /system/system/app/GalaxyResourceUpdater/oat
+    - Deleting /system/system/app/UwbTest/oat
+    - Deleting /system/system/app/SamsungTTSVoice_pt_BR_f00/oat
+    - Deleting /system/system/app/BGMProvider/oat
+    - Deleting /system/system/app/CertInstaller/oat
+    - Deleting /system/system/app/GooglePrintRecommendationService/oat
+    - Deleting /system/system/app/AllshareMediaShare/oat
+    - Deleting /system/system/app/LiveDrawing/oat
+    - Deleting /system/system/app/VoiceAccess/oat
+    - Deleting /system/system/app/Personalization/oat
+    - Deleting /system/system/app/SecureElement/oat
+    - Deleting /system/system/app/VTCameraSetting/oat
+    - Deleting /system/system/priv-app/imsservice/oat
+    - Deleting /system/system/priv-app/KnoxPushManager/oat
+    - Deleting /system/system/priv-app/SamsungMultiConnectivity/oat
+    - Deleting /system/system/priv-app/PeopleStripe/oat
+    - Deleting /system/system/priv-app/Fmm/oat
+    - Deleting /system/system/priv-app/Shell/oat
+    - Deleting /system/system/priv-app/SCameraSDKService/oat
+    - Deleting /system/system/priv-app/DrmEventapp/oat
+    - Deleting /system/system/priv-app/CallAssistant/oat
+    - Deleting /system/system/priv-app/EmergencySOS/oat
+    - Deleting /system/system/priv-app/AREmojiEditor/oat
+    - Deleting /system/system/priv-app/ONS/oat
+    - Deleting /system/system/priv-app/knoxvpnproxyhandler/oat
+    - Deleting /system/system/priv-app/SamsungContactsProvider/oat
+    - Deleting /system/system/priv-app/MobileWips/oat
+    - Deleting /system/system/priv-app/OmaCP/oat
+    - Deleting /system/system/priv-app/HWResourceShare/oat
+    - Deleting /system/system/priv-app/SecFactoryPhoneTest/oat
+    - Deleting /system/system/priv-app/FotaAgent/oat
+    - Deleting /system/system/priv-app/KnoxGuard/oat
+    - Deleting /system/system/priv-app/SVCAgent/oat
+    - Deleting /system/system/priv-app/SmartManager_v5/oat
+    - Deleting /system/system/priv-app/IAFDManagerService/oat
+    - Deleting /system/system/priv-app/BlockedNumberProvider/oat
+    - Deleting /system/system/priv-app/EnhancedAttestationAgent/oat
+    - Deleting /system/system/priv-app/DeviceDiagnostics/oat
+    - Deleting /system/system/priv-app/BlueLightFilter/oat
+    - Deleting /system/system/priv-app/GameTools_Dream/oat
+    - Deleting /system/system/priv-app/EpdgService/oat
+    - Deleting /system/system/priv-app/KnoxCore/oat
+    - Deleting /system/system/priv-app/DigitalWellbeing/oat
+    - Deleting /system/system/priv-app/CMHProvider/oat
+    - Deleting /system/system/priv-app/AODService_v80/oat
+    - Deleting /system/system/priv-app/SHClient/oat
+    - Deleting /system/system/priv-app/GalaxyApps_OPEN/oat
+    - Deleting /system/system/priv-app/NSFusedLocation_v6.0/oat
+    - Deleting /system/system/priv-app/FBServices/oat
+    - Deleting /system/system/priv-app/DiagMonAgent95/oat
+    - Deleting /system/system/priv-app/SecSoundPicker/oat
+    - Deleting /system/system/priv-app/SecMyFiles2020/oat
+    - Deleting /system/system/priv-app/YourPhone_P1_5/oat
+    - Deleting /system/system/priv-app/CallLogBackup/oat
+    - Deleting /system/system/priv-app/SCPMAgent/oat
+    - Deleting /system/system/priv-app/SecureFolder/oat
+    - Deleting /system/system/priv-app/UserDictionaryProvider/oat
+    - Deleting /system/system/priv-app/FBInstaller_NS/oat
+    - Deleting /system/system/priv-app/SamsungMagnifier3/oat
+    - Deleting /system/system/priv-app/smartfaceservice/oat
+    - Deleting /system/system/priv-app/FactoryTestProvider/oat
+    - Deleting /system/system/priv-app/SmartEye/oat
+    - Deleting /system/system/priv-app/NSDSWebApp/oat
+    - Deleting /system/system/priv-app/BCService/oat
+    - Deleting /system/system/priv-app/StorageShare/oat
+    - Deleting /system/system/priv-app/serviceModeApp_FB/oat
+    - Deleting /system/system/priv-app/Routines/oat
+    - Deleting /system/system/priv-app/SamsungInCallUI/oat
+    - Deleting /system/system/priv-app/PhoneNumberService/oat
+    - Deleting /system/system/priv-app/knoxanalyticsagent/oat
+    - Deleting /system/system/priv-app/MyGalaxyService/oat
+    - Deleting /system/system/priv-app/MtpApplication/oat
+    - Deleting /system/system/priv-app/PhoneErrService/oat
+    - Deleting /system/system/priv-app/SmartSwitchAssistant/oat
+    - Deleting /system/system/priv-app/HashTagService/oat
+    - Deleting /system/system/priv-app/BeaconManager/oat
+    - Deleting /system/system/priv-app/sec_camerax_service/oat
+    - Deleting /system/system/priv-app/SamsungCamera/oat
+    - Deleting /system/system/priv-app/DeviceQualityAgent36/oat
+    - Deleting /system/system/priv-app/SettingsProvider/oat
+    - Deleting /system/system/priv-app/ManagedProvisioning/oat
+    - Deleting /system/system/priv-app/SohService/oat
+    - Deleting /system/system/priv-app/PrivacyDashboard/oat
+    - Deleting /system/system/priv-app/ProxyHandler/oat
+    - Deleting /system/system/priv-app/SamsungExperienceService/oat
+    - Deleting /system/system/priv-app/PaymentFramework/oat
+    - Deleting /system/system/priv-app/Telecom/oat
+    - Deleting /system/system/priv-app/VideoScan/oat
+    - Deleting /system/system/priv-app/GlobalPostProcMgr/oat
+    - Deleting /system/system/priv-app/DigitalKey/oat
+    - Deleting /system/system/priv-app/IntentResolver/oat
+    - Deleting /system/system/priv-app/ThemeCenter/oat
+    - Deleting /system/system/priv-app/StoryService/oat
+    - Deleting /system/system/priv-app/SamsungCalendarProvider/oat
+    - Deleting /system/system/priv-app/EsimClient/oat
+    - Deleting /system/system/priv-app/GpuWatchApp/oat
+    - Deleting /system/system/priv-app/SendHelpMessage/oat
+    - Deleting /system/system/priv-app/AuthFramework/oat
+    - Deleting /system/system/priv-app/GameHome/oat
+    - Deleting /system/system/priv-app/SecSettings/oat
+    - Deleting /system/system/priv-app/vexfwk_service/oat
+    - Deleting /system/system/priv-app/InputDevices/oat
+    - Deleting /system/system/priv-app/KnoxNetworkFilter/oat
+    - Deleting /system/system/priv-app/LocalTransport/oat
+    - Deleting /system/system/priv-app/TouchWizHome_2017/oat
+    - Deleting /system/system/priv-app/VpnDialogs/oat
+    - Deleting /system/system/priv-app/Accessibility/oat
+    - Deleting /system/system/priv-app/BadgeProvider_N/oat
+    - Deleting /system/system/priv-app/LinkToWindowsService/oat
+    - Deleting /system/system/priv-app/AirCommand/oat
+    - Deleting /system/system/priv-app/ShareLive/oat
+    - Deleting /system/system/priv-app/LiveWallpapersPicker/oat
+    - Deleting /system/system/priv-app/MCFDeviceSync/oat
+    - Deleting /system/system/priv-app/SamsungSmartSuggestions/oat
+    - Deleting /system/system/priv-app/SecNfc/oat
+    - Deleting /system/system/priv-app/USBSettings/oat
+    - Deleting /system/system/priv-app/DownloadProviderUi/oat
+    - Deleting /system/system/priv-app/CSC/oat
+    - Deleting /system/system/priv-app/NfcNci/oat
+    - Deleting /system/system/priv-app/Bixby/oat
+    - Deleting /system/system/priv-app/StickerFaceARAvatar/oat
+    - Deleting /system/system/priv-app/SecDownloadProvider/oat
+    - Deleting /system/system/priv-app/ModemServiceMode/oat
+    - Deleting /system/system/priv-app/DynamicSystemInstallationService/oat
+    - Deleting /system/system/priv-app/SmartEpdgTestApp/oat
+    - Deleting /system/system/priv-app/CallBGProvider/oat
+    - Deleting /system/system/priv-app/KPECore/oat
+    - Deleting /system/system/priv-app/PetService/oat
+    - Deleting /system/system/priv-app/KLMSAgent/oat
+    - Deleting /system/system/priv-app/SPPPushClient/oat
+    - Deleting /system/system/priv-app/SamsungBilling/oat
+    - Deleting /system/system/priv-app/HdmApk/oat
+    - Deleting /system/system/priv-app/BuiltInPrintService/oat
+    - Deleting /system/system/priv-app/CredentialManager/oat
+    - Deleting /system/system/priv-app/TaskEdgePanel_v3.2/oat
+    - Deleting /system/system/priv-app/VexScanner/oat
+    - Deleting /system/system/priv-app/SecTrashProvider/oat
+    - Deleting /system/system/priv-app/E2eeContactKeysProvider/oat
+    - Deleting /system/system/priv-app/DressRoom/oat
+    - Deleting /system/system/priv-app/BackupRestoreConfirmation/oat
+    - Deleting /system/system/priv-app/MultiControl/oat
+    - Deleting /system/system/priv-app/GooglePackageInstaller/oat
+    - Deleting /system/system/priv-app/EasySetup/oat
+    - Deleting /system/system/priv-app/SecSetupWizard_Global/oat
+    - Deleting /system/system/priv-app/DeviceKeystring/oat
+    - Deleting /system/system/priv-app/FusedLocation/oat
+    - Deleting /system/system/priv-app/MmsService/oat
+    - Deleting /system/system/priv-app/SmartTouchCall/oat
+    - Deleting /system/system/priv-app/TeleService/oat
+    - Deleting /system/system/priv-app/TalkbackSE/oat
+    - Deleting /system/system/priv-app/OdaService/oat
+    - Deleting /system/system/priv-app/ExternalStorageProvider/oat
+    - Deleting /system/system/priv-app/AppUpdateCenter/oat
+    - Deleting /system/system/priv-app/DynamicLockscreen/oat
+    - Deleting /system/system/priv-app/LiveEffectService/oat
+    - Deleting /system/system/priv-app/MultiSoundSetting/oat
+    - Deleting /system/system/priv-app/SharedStorageBackup/oat
+    - Deleting /system/system/priv-app/MediaSearch/oat
+    - Deleting /system/system/priv-app/EsimKeyString/oat
+    - Deleting /system/system/priv-app/KnoxERAgent/oat
+    - Deleting /system/system/priv-app/VolumeMonitorProvider_B/oat
+    - Deleting /system/system/priv-app/DeviceBasedServiceConsent/oat
+    - Deleting /system/system/priv-app/GameOptimizingService/oat
+    - Deleting /system/system/priv-app/FaceService/oat
+    - Deleting /system/system/priv-app/SecTelephonyProvider/oat
+    - Deleting /system/system/priv-app/SOAgent76/oat
+    - Deleting /system/system/priv-app/SmartThingsKit/oat
+    - Deleting /system/system/priv-app/FacAtFunction/oat
+    - Deleting /system/system/priv-app/KmxService/oat
+    - Deleting /system/system/priv-app/MFContents/oat
+    - Deleting /system/system/priv-app/SDMConfig/oat
+    - Deleting /system/system/priv-app/SoundAlive_B/oat
+    - Deleting /system/system/priv-app/SmartCallProvider/oat
+    - Deleting /system/system/priv-app/Crane/oat
+    - Deleting /system/system/priv-app/AudioMirroring/oat
+    - Deleting /system/system/priv-app/SamsungCloudClient/oat
+    - Deleting /system/system/priv-app/SamsungPass/oat
+    - Deleting /system/system/priv-app/PhotoRemasterService/oat
+    - Deleting /system/system/priv-app/SecSettingsIntelligence/oat
+    - Deleting /system/system/priv-app/ImsLogger/oat
+    - Deleting /system/system/priv-app/BiometricSetting/oat
+    - Deleting /system/system/priv-app/BudsUniteManager/oat
+    - Deleting /system/system/priv-app/TelephonyUI/oat
+    - Deleting /system/system/priv-app/SEMFactoryApp/oat
+    - Deleting /system/system/priv-app/MtpService/oat
+    - Deleting /system/system/priv-app/OMCAgent5/oat
+    - Deleting /system/system/priv-app/IPService/oat
+    - Deleting /system/system/priv-app/SecMediaProvider/oat
+    - Deleting /system/system/priv-app/SamsungContacts/oat
+    - Deleting /system/system/priv-app/SamsungGallery2018/oat
+    - Deleting /system/system/priv-app/Tag/oat
+    - Deleting /system/system/priv-app/EuiccService/oat
+    - Deleting /system/system/priv-app/EarphoneTypeC/oat
+    - Deleting /system/system/priv-app/SamsungDialer/oat
+    - Deleting /system/system/priv-app/KnoxDesktopLauncher/oat
+    - Deleting /system/system/priv-app/KnoxMposAgent/oat
+    - Deleting /system/system/priv-app/OneDrive_Samsung_v3/oat
+    - Deleting /system/system/priv-app/GalleryWidget/oat
+    - Deleting /system/system/priv-app/AdaptSound_B/oat
+    - Deleting /system/system/priv-app/MediaProviderLegacy/oat
+    - Deleting /system/system/priv-app/AREmoji/oat
+    - Deleting /system/system/priv-app/KnoxZtFramework/oat
+    - Deleting /system/system/priv-app/IntelligentDynamicFpsService/oat
+    - Deleting /system/system/priv-app/DesktopModeUiService/oat
+    - Deleting /system/system/priv-app/BixbyInterpreter/oat
+    - Deleting /system/system/priv-app/SecAppSeparation/oat
+    - Deleting /system/system/priv-app/SamsungCarKeyFw/oat
+    - Deleting /system/system/priv-app/SKMSAgent/oat
+    - Deleting /system/system/priv-app/SamsungVideoPlayer/oat
+    - Deleting /system/system/priv-app/SamsungMessages/oat
+    - Deleting /system/system/priv-app/CIDManager/oat
+    - Deleting /system/system/priv-app/SpriteWallpaper/oat
+    - Deleting /system/system/priv-app/SsuService/oat
+    - Deleting /system/system/priv-app/SamsungDeviceHealthManagerService/oat
+    - Deleting /system/system/priv-app/ThemeStore/oat
+    - Deleting /system/system/priv-app/BixbyVisionFramework3.5/oat
+    - Deleting /system/system/priv-app/AirReadingGlass/oat
+    - Deleting /system/system/priv-app/SamsungSeAgent/oat
+    - Deleting /system/system/etc/boot-image.bprof
+    - Deleting /system/system/etc/boot-image.prof
+    - Deleting /system/system/framework/arm
+    - Deleting /system/system/framework/arm64
+    - Deleting /system/system/framework/boot-okhttp.vdex
+    - Deleting /system/system/framework/boot-knoxsdk.vdex
+    - Deleting /system/system/framework/boot-ims-common.vdex
+    - Deleting /system/system/framework/boot-telephony-ext.vdex
+    - Deleting /system/system/framework/boot-tcmiface.vdex
+    - Deleting /system/system/framework/boot.vdex
+    - Deleting /system/system/framework/boot-framework-graphics.vdex
+    - Deleting /system/system/framework/boot-core-icu4j.vdex
+    - Deleting /system/system/framework/boot-framework-location.vdex
+    - Deleting /system/system/framework/boot-ext.vdex
+    - Deleting /system/system/framework/boot-core-libart.vdex
+    - Deleting /system/system/framework/boot-bouncycastle.vdex
+    - Deleting /system/system/framework/boot-com.samsung.android.uwb_extras.vdex
+    - Deleting /system/system/framework/boot-voip-common.vdex
+    - Deleting /system/system/framework/boot-esecomm.vdex
+    - Deleting /system/system/framework/boot-framework-ondeviceintelligence-platform.vdex
+    - Deleting /system/system/framework/boot-QPerformance.vdex
+    - Deleting /system/system/framework/boot-telephony-common.vdex
+    - Deleting /system/system/framework/boot-framework-platformcrashrecovery.vdex
+    - Deleting /system/system/framework/boot-apache-xml.vdex
+    - Deleting /system/system/framework/boot-framework-adservices.vdex
+    - Deleting /system/system/framework/boot-framework-nfc.vdex
+    - Deleting /system/system/framework/boot-framework.vdex
+    - Deleting /system/system/framework/boot-UxPerformance.vdex
+    - Deleting /system_ext/framework/oat
+    - Deleting /system_ext/app/QCC/oat
+    - Deleting /system_ext/priv-app/GoogleFeedback/oat
+    - Deleting /system_ext/priv-app/SetupWizard/oat
+    - Deleting /system_ext/priv-app/StorageManager/oat
+    - Deleting /system_ext/priv-app/SystemUI/oat
+    - Deleting /system_ext/priv-app/com.qualcomm.location/oat
+    - Deleting /system_ext/priv-app/WallpaperCropper/oat
+    - Deleting /system_ext/priv-app/DckTimeSyncService/oat
+    - Deleting /system_ext/priv-app/GoogleServicesFramework/oat
+    - Deleting /system_ext/priv-app/AvatarPicker/oat
+    - Deleting /system_ext/priv-app/com.qualcomm.qti.services.systemhelper/oat
+    - Deleting /system_ext/priv-app/CarrierConfig/oat
+    - Adding SecSettings.apk from OneUI8.5
+      - Adding /system/system/priv-app/SecSettings/SecSettings.apk from prebuilts/samsung/dm3qxxx
+    - Adding /system/system/etc/permissions/signature-permissions-com.samsung.android.game.gamehome.xml from prebuilts/samsung/pa2qxxx
+    - Deleting "SEC_FLOATING_FEATURE_CONTEXTSERVICE_ENABLE_SURVEY_MODE" config in /system/system/etc/floating_feature.xml
+    - Deleting "SEC_FLOATING_FEATURE_COMMON_CONFIG_SMARTTUTOR_PACKAGES_PATH" config in /system/system/etc/floating_feature.xml
+    - Deleting /product/app/AssistantShell
+    - Deleting /product/app/DuoStub
+    - Deleting /product/overlay/GmsConfigOverlaySearchSelector.apk
+    - Deleting /product/priv-app/SearchSelector
+    - Deleting /system/dpolicy_system
+    - Deleting /system/system/app/DsmsAPK
+    - Deleting /system/system/app/FBAppManager_NS
+    - Deleting /system/system/app/FactoryAirCommandManager
+    - Deleting /system/system/app/FactoryCameraFB
+    - Deleting /system/system/app/HMT
+    - Deleting /system/system/app/LiveTranscribe
+    - Deleting /system/system/app/MAPSAgent
+    - Deleting /system/system/app/PlayAutoInstallConfig
+    - Deleting /system/system/app/SamsungPassAutofill_v1
+    - Deleting /system/system/app/SamsungTTSVoice_ar_AE_m00
+    - Deleting /system/system/app/SamsungTTSVoice_de_DE_f00
+    - Deleting /system/system/app/SamsungTTSVoice_en_GB_f00
+    - Deleting /system/system/app/SamsungTTSVoice_en_US_l03
+    - Deleting /system/system/app/SamsungTTSVoice_es_ES_f00
+    - Deleting /system/system/app/SamsungTTSVoice_es_MX_f00
+    - Deleting /system/system/app/SamsungTTSVoice_es_US_f00
+    - Deleting /system/system/app/SamsungTTSVoice_fr_FR_f00
+    - Deleting /system/system/app/SamsungTTSVoice_id_ID_f00
+    - Deleting /system/system/app/SamsungTTSVoice_hi_IN_f00
+    - Deleting /system/system/app/SamsungTTSVoice_pl_PL_f00
+    - Deleting /system/system/app/SamsungTTSVoice_it_IT_f00
+    - Deleting /system/system/app/SamsungTTSVoice_pt_BR_f00
+    - Deleting /system/system/app/SamsungTTSVoice_ru_RU_f00
+    - Deleting /system/system/app/SamsungTTSVoice_th_TH_f00
+    - Deleting /system/system/app/SamsungTTSVoice_vi_VN_f00
+    - Deleting /system/system/app/SmartReminder
+    - Deleting /system/system/app/VoiceAccess
+    - Deleting /system/system/app/WlanTest
+    - Deleting /system/system/bin/ssud
+    - Deleting /system/system/etc/default-permissions/default-permissions-com.samsung.android.messaging.xml
+    - Deleting /system/system/etc/default-permissions/default-permissions-com.samsung.android.visualars.xml
+    - Deleting /system/system/etc/default-permissions/default-permissions-com.sec.android.mimage.avatarstickers.xml
+    - Deleting /system/system/etc/default-permissions/default-permissions-meta.xml
+    - Deleting /system/system/etc/init/samsung_pass_authenticator_service.rc
+    - Deleting /system/system/etc/init/ssu.rc
+    - Deleting /system/system/etc/permissions/authfw.xml
+    - Deleting /system/system/etc/init/ssu_dm3qxxx.rc
+    - Deleting /system/system/etc/permissions/org.carconnectivity.android.digitalkey.rangingintent.xml
+    - Deleting /system/system/etc/permissions/org.carconnectivity.android.digitalkey.secureelement.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.microsoft.skydrive.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.mygalaxy.service.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.samsung.android.aremojieditor.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.samsung.android.app.updatecenter.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.samsung.android.authfw.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.samsung.android.carkey.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.samsung.android.dkey.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.samsung.android.dqagent.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.samsung.android.game.gamehome.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.samsung.android.ipsgeofence.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.samsung.android.messaging.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.samsung.android.providers.factory.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.samsung.android.settingshelper.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.samsung.android.samsungpass.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.samsung.android.spayfw.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.samsung.android.svcagent.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.samsung.android.visualars.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.samsung.ssu.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.sec.android.diagmonagent.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.sec.android.mimage.avatarstickers.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.sec.android.soagent.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.sec.bcservice.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-meta.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.wssyncmldm.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.sec.facatfunction.xml
+    - Deleting /system/system/etc/permissions/signature-permissions-com.samsung.android.samsungpass.xml
+    - Deleting /system/system/etc/permissions/signature-permissions-com.samsung.android.samsungpassautofill.xml
+    - Deleting /system/system/etc/permissions/signature-permissions-com.samsung.android.spayfw.xml
+    - Deleting /system/system/etc/permissions/signature-permissions-com.samsung.android.spay.xml
+    - Deleting /system/system/etc/permissions/signature-permissions-com.sec.android.mimage.avatarstickers.xml
+    - Deleting /system/system/etc/proca.db
+    - Deleting /system/system/etc/sysconfig/digitalkey.xml
+    - Deleting /system/system/etc/sysconfig/feature-a11y-preload-voacc.xml
+    - Deleting /system/system/etc/sysconfig/feature-a11y-preload.xml
+    - Deleting /system/system/etc/sysconfig/meta-hiddenapi-package-allowlist.xml
+    - Deleting /system/system/etc/sysconfig/preinstalled-packages-com.mygalaxy.service.xml
+    - Deleting /system/system/etc/sysconfig/preinstalled-packages-com.samsung.android.dkey.xml
+    - Deleting /system/system/etc/sysconfig/preinstalled-packages-com.samsung.android.spayfw.xml
+    - Deleting /system/system/etc/sysconfig/samsungauthframework.xml
+    - Deleting /system/system/etc/sysconfig/samsungpassapp.xml
+    - Deleting /system/system/etc/sysconfig/samsungsimunlock.xml
+    - Deleting /system/system/etc/sysconfig/settingshelper.xml
+    - Deleting /system/system/hidden/SmartTutor
+    - Deleting /system/system/lib64/android.security.securekeygeneration-ndk.so
+    - Deleting /system/system/lib64/libssu_keystore2.so
+    - Deleting /system/system/preload
+    - Deleting /system/system/priv-app/AREmojiEditor
+    - Deleting /system/system/priv-app/AppUpdateCenter
+    - Deleting /system/system/priv-app/AuthFramework
+    - Deleting /system/system/priv-app/AvatarEmojiSticker
+    - Deleting /system/system/priv-app/DeviceQualityAgent36
+    - Deleting /system/system/priv-app/BCService
+    - Deleting /system/system/priv-app/DiagMonAgent95
+    - Deleting /system/system/priv-app/DigitalKey
+    - Deleting /system/system/priv-app/FBInstaller_NS
+    - Deleting /system/system/priv-app/FBServices
+    - Deleting /system/system/priv-app/FacAtFunction
+    - Deleting /system/system/priv-app/FactoryTestProvider
+    - Deleting /system/system/priv-app/FotaAgent
+    - Deleting /system/system/priv-app/GameHome
+    - Deleting /system/system/priv-app/IpsGeofence
+    - Deleting /system/system/priv-app/MyGalaxyService
+    - Deleting /system/system/priv-app/SHClient
+    - Deleting /system/system/priv-app/OneDrive_Samsung_v3
+    - Deleting /system/system/priv-app/PaymentFramework
+    - Deleting /system/system/priv-app/SOAgent76
+    - Deleting /system/system/priv-app/SVCAgent
+    - Deleting /system/system/priv-app/SamsungCarKeyFw
+    - Deleting /system/system/priv-app/SamsungMessages
+    - Deleting /system/system/priv-app/SamsungPass
+    - Deleting /system/system/priv-app/SmartTouchCall
+    - Deleting /system/system/priv-app/SsuService
+    - Deleting /system/system/priv-app/YourPhone_P1_5
+    - Deleting /system_ext/framework/org.carconnectivity.android.digitalkey.rangingintent.jar
+    - Deleting /system_ext/framework/org.carconnectivity.android.digitalkey.secureelement.jar
+    - Deleting /vendor/etc/dpolicy
+    - Deleting /vendor/bin/install-recovery.sh
+    - Deleting /vendor/etc/init/vendor_flash_recovery.rc
+    - Deleting /vendor/recovery-from-boot.p
+  - Processing "Debug USB" by @salvogiangri
+    ! Non-debug build detected. Skipping
+  - Processing "Bluetooth Library Patcher" by @3arthur6, @duhansysl
+    - Extracting libbluetooth_jni.so from com.android.bt.apex
+      - Adding metadata for /system/lib64/libbluetooth_jni.so (uid:0 gid:0 mode:644 selabel:u:object_r:system_lib_file:s0)
+    - Patching "2897773948050037" to "289777392a000014" in /system/system/lib64/libbluetooth_jni.so
+  - Processing "Camera patches" by @salvogiangri
+    - Deleting /system/system/cameradata/portrait_data
+    - Adding /system/system/cameradata/portrait_data from out/fw/SM-S918B_EUX
+    - Adding /system/system/cameradata/singletake/service-feature.xml from out/fw/SM-S918B_EUX
+    - Adding /system/system/cameradata/aremoji-feature.xml from out/fw/SM-S918B_EUX
+    - Adding /system/system/cameradata/camera-feature.xml
+  - Processing "DVFS patches" by @salvogiangri, @ata-kaner
+    ! Nothing to do
+  - Processing "eSE patches" by @salvogiangri
+    ! Nothing to do
+  - Processing "Legacy patches" by @salvogiangri
+    ! Nothing to do
+  - Processing "Misc patches" by @salvogiangri
+    - Replacing "ro.oem_unlock_supported" prop with "0" in /system/system/build.prop
+    - Replacing "ro.oem_unlock_supported" prop with "0" in /vendor/build.prop
+    - Decoding /system/system/framework/framework.jar
+    - Replacing value "ro.product.model" of method "<clinit>()V" in /system/system/framework/framework.jar/smali_classes6/com/samsung/android/rune/CoreRune.smali with "ro.product.vendor.model"
+    - Replacing value "ro.product.device" of method "<clinit>()V" in /system/system/framework/framework.jar/smali_classes6/com/samsung/android/rune/CoreRune.smali with "ro.product.vendor.device"
+    - Decoding /system/system/framework/services.jar
+    - Replacing return value of method "-$$Nest$smisDisabled()Z" in /system/system/framework/services.jar/smali/com/android/server/RescueParty.smali to "const/4 v0, 0x1"
+    - Replacing value "ro.product.model" of method "<clinit>()V" in /system/system/framework/services.jar/smali/com/android/server/am/FreecessController.smali with "ro.product.vendor.model"
+    - Applying "Disable vendor mismatch warning" to /system/system/framework/services.jar
+  - Processing "NFC patches" by @salvogiangri
+    - Adding /system/system/etc/libnfc-nci.conf from out/fw/SM-S918B_EUX
+    - Adding /system/system/etc/libnfc-nci_temp.conf from out/fw/SM-S918B_EUX
+  - Processing "PROCA kernel patch" by @salvogiangri
+    - Extracting boot.img
+    - Patching PROCA offset in kernel image header
+    - Patching "70726f63615f636f6e66696700" to "6675636b5f755f73616d6d7900" in kernel image
+    - Repacking boot.img
+  - Processing "SEC Product Feature patches" by @salvogiangri
+  - Processing "/product RRO configs" by @salvogiangri
+    ! Nothing to do
+  - Processing "SELinux fix" by @ShaDisNX255, @Fede2782
+  - Processing "Platform signature spoof" by @salvogiangri, @ata-kaner
+    - Applying "Allow custom platform signature" to /system/system/framework/services.jar
+  - Processing "S Pen blobs" by @salvogiangri
+  - Processing "Stock blobs" by @salvogiangri
+    - Adding /system/system/etc/saiv/image_understanding/db/aic_classifier/aic_classifier_cnn.info from out/fw/SM-S918B_EUX
+    - Adding /system/system/etc/saiv/image_understanding/db/aic_detector/aic_detector_cnn.info from out/fw/SM-S918B_EUX
+    - Adding /system/system/media/bootsamsung.qmg from out/fw/SM-S918B_EUX
+    - Adding /system/system/media/bootsamsungloop.qmg from out/fw/SM-S918B_EUX
+    - Adding /system/system/media/shutdown.qmg from out/fw/SM-S918B_EUX
+    - Decoding /system/system/priv-app/SohService/SohService.apk
+    - Adding target BSOH blobs
+    - Deleting /system/system/saiv
+    - Adding /system/system/saiv from out/fw/SM-S918B_EUX
+    - Adding /system/system/saiv/image_understanding/db/smartscan_rectifier from out/fw/SM-S918B_EUX
+    - Adding /vendor/saiv/image_understanding/db/smartscan_rectifier from out/fw/SM-S918B_EUX
+    - Deleting /system/system/saiv/textrecognition
+    - Adding /system/system/saiv/textrecognition from out/fw/SM-S918B_EUX
+  - Processing "UWB blobs" by @salvogiangri
+  - Processing "Vendor interface objects blobs" by @salvogiangri
+    - Adding /system/system/etc/vintf/compatibility_matrix.device.xml
+    - Adding /system/system/etc/vintf/manifest.xml from out/fw/SM-S918B_EUX
+  - Processing "VNDK" by @salvogiangri, @Fede2782
+    ! Nothing to do
+Applying ROM mods
+  - Processing "PM Block List" by @salvogiangri
+    - Adding /system/system from unica/mods/blocklist
+    - Deleting /system/system/etc/ldu_blocklist.xml
+    - Applying "Allow custom PackageBlockListPolicy" to /system/system/framework/services.jar
+    - Removing "smali_classes2/com/samsung/android/server/pm/install/PackageBlockListPolicy$1.smali" from /system/system/framework/services.jar
+  - Processing "2024 boot animation" by @salvogiangri
+(scripts/internal/apply_modules.sh:61:source) No boot animation blobs available for 1440x3088 resolution. Skipping
+  - Processing "Custom boot sound" by @salvogiangri
+    - Adding /system/system from unica/mods/bootsound
+    - Adding "persist.sys.unica.bootsound" prop with "true" in /system/system/build.prop
+  - Processing "2018 call sounds" by @salvogiangri
+    - Decoding /system/system/priv-app/Telecom/Telecom.apk
+    - Adding 2018 call connect/disconnect sounds
+  - Processing "UN1CA Updates" by @salvogiangri
+    ! Build is not official. Skipping
+    - Decoding /system/system/priv-app/SecSettings/SecSettings.apk
+    - Applying "Launch UN1CA Updates from suggestions" to /system/system/priv-app/SecSettings/SecSettings.apk
+  - Processing "CSC mods" by @salvogiangri
+    - Replacing return value of method "isBrazilianCountryISO()Z" in /system/system/framework/framework.jar/smali_classes6/com/samsung/android/globalactions/util/SystemPropertiesWrapper.smali to "const/4 p0, 0x1"
+    - Decoding /system_ext/priv-app/SystemUI/SystemUI.apk
+    - Replacing return value of method "isSupportPowerOffLock()Z" in /system_ext/priv-app/SystemUI/SystemUI.apk/smali/com/android/systemui/bixby2/controller/DeviceController.smali to "const/4 p0, 0x1"
+    - Replacing return value of method "getAvailabilityStatus()I" in /system/system/priv-app/SecSettings/SecSettings.apk/smali_classes4/com/samsung/android/settings/homepage/TopLevelRemoteSupportPreferenceController.smali to "const/4 p0, 0x3"
+    - Applying "Enable real time network speed in status bar" to /system_ext/priv-app/SystemUI/SystemUI.apk
+    - Applying "Enable Smart View tile visibility settings" to /system_ext/priv-app/SystemUI/SystemUI.apk
+    - Applying "Introduce CscFeatureHooks" to /system/system/framework/framework.jar
+    - Applying "Enable real time network speed in status bar" to /system/system/priv-app/SecSettings/SecSettings.apk
+    - Applying "Enable Power off lock feature" to /system/system/priv-app/SecSettings/SecSettings.apk
+    - Applying "Enable quick switch to Secure Folder feature" to /system/system/priv-app/SecSettings/SecSettings.apk
+  - Processing "Dual Messenger for all apps" by @DavidArsene
+    - Decoding /system/system/app/DAAgent/DAAgent.apk
+    - Applying "Allow all apps in Dual Messenger" to /system/system/app/DAAgent/DAAgent.apk
+  - Processing "Nuke Knox" by @salvogiangri
+    - Deleting "security.mdf.result" prop in /system/system/build.prop
+    - Deleting "security.mdf" prop in /system/system/build.prop
+    - Deleting "ro.security.mdf.ver" prop in /system/system/build.prop
+    - Deleting "ro.security.mdf.release" prop in /system/system/build.prop
+    - Deleting "ro.security.wlan.ver" prop in /system/system/build.prop
+    - Deleting "ro.security.wlan.release" prop in /system/system/build.prop
+    - Deleting "ro.security.bt.ver" prop in /system/system/build.prop
+    - Deleting "ro.security.bt.release" prop in /system/system/build.prop
+    - Deleting "ro.security.bio.ver" prop in /system/system/build.prop
+    - Deleting "ro.security.bio.release" prop in /system/system/build.prop
+    - Deleting "ro.security.mdf.ux" prop in /system/system/build.prop
+    - Replacing "ro.security.fips.ux" prop with "Disabled" in /system/system/build.prop
+    - Deleting "ro.security.fips_bssl.ver" prop in /system/system/build.prop
+    - Replacing "ro.config.dmverity" prop with "N" in /system/system/build.prop
+    - Deleting "ro.security.ai.privacy" prop in /system/system/build.prop
+    - Deleting "ro.security.fips_skc.ver" prop in /vendor/build.prop
+    - Deleting "ro.security.fips_scrypto.ver" prop in /vendor/build.prop
+    - Deleting /system/system/app/BlockchainBasicKit
+    - Adding /system/system/bin/installd from prebuilts/samsung/a73xqxx
+    - Adding /system/system/bin/vdc from prebuilts/samsung/a73xqxx
+    - Adding /system/system/bin/vold from prebuilts/samsung/a73xqxx
+    - Deleting /system/system/bin/dualdard
+(unica/mods/deknox/customize.sh:32:DELETE_FROM_WORK_DIR) File not found: /system/system/bin/sdp_cryptod
+    - Deleting /system/system/etc/init/dualdard.rc
+    - Deleting /system/system/etc/init/kpp.init.rc
+    - Deleting /system/system/etc/init/kss.init.rc
+(unica/mods/deknox/customize.sh:36:DELETE_FROM_WORK_DIR) File not found: /system/system/etc/init/sdp_cryptod.rc
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.samsung.android.hdmapp.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.samsung.android.kgclient.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.samsung.android.knox.kfbp.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.samsung.android.knox.knnr.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.samsung.android.knox.mpos.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.samsung.android.knox.pushmanager.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.samsung.android.knox.sandbox.xml
+    - Deleting /system/system/etc/permissions/privapp-permissions-com.samsung.android.knox.zt.framework.xml
+    - Deleting /system/system/etc/permissions/signature-permissions-com.samsung.android.kgclient.xml
+    - Deleting /system/system/etc/sysconfig/preinstalled-packages-com.samsung.android.coldwalletservice.xml
+    - Deleting /system/system/lib/android.hardware.weaver@1.0.so
+    - Deleting /system/system/lib/hidl_comm_ddar_client.so
+    - Adding /system/system/lib/libandroid_servers.so from prebuilts/samsung/a73xqxx
+    - Deleting /system/system/lib/libdualdar.so
+    - Deleting /system/system/lib/libepm.so
+    - Deleting /system/system/lib/libhermes_cred.so
+    - Deleting /system/system/lib/libkeyutils.so
+    - Deleting /system/system/lib/libknox_filemanager.so
+    - Adding /system/system/lib/libmdf.so from prebuilts/samsung/a73xqxx
+(unica/mods/deknox/customize.sh:56:DELETE_FROM_WORK_DIR) File not found: /system/system/lib/libmdfpp_req.so
+    - Deleting /system/system/lib/libpersona.so
+(unica/mods/deknox/customize.sh:58:DELETE_FROM_WORK_DIR) File not found: /system/system/lib/libsdp_crypto.so
+(unica/mods/deknox/customize.sh:59:DELETE_FROM_WORK_DIR) File not found: /system/system/lib/libsdp_kekm.so
+(unica/mods/deknox/customize.sh:60:DELETE_FROM_WORK_DIR) File not found: /system/system/lib/libsdp_sdk.so
+    - Adding /system/system/lib/libsqlite.so from prebuilts/samsung/a73xqxx
+    - Deleting /system/system/lib/vendor.samsung.hardware.tlc.ddar@1.0.so
+    - Deleting /system/system/lib64/android.hardware.weaver@1.0.so
+    - Deleting /system/system/lib64/hidl_comm_ddar_client.so
+    - Adding /system/system/lib64/libandroid_servers.so from prebuilts/samsung/a73xqxx
+    - Deleting /system/system/lib64/libdualdar.so
+    - Adding /system/system/lib64/libepm.so from prebuilts/samsung/a73xqxx
+    - Adding /system/system/lib64/libmdf.so from prebuilts/samsung/a73xqxx
+(unica/mods/deknox/customize.sh:69:DELETE_FROM_WORK_DIR) File not found: /system/system/lib64/libmdfpp_req.so
+(unica/mods/deknox/customize.sh:70:DELETE_FROM_WORK_DIR) File not found: /system/system/lib64/libsdp_crypto.so
+(unica/mods/deknox/customize.sh:71:DELETE_FROM_WORK_DIR) File not found: /system/system/lib64/libsdp_kekm.so
+(unica/mods/deknox/customize.sh:72:DELETE_FROM_WORK_DIR) File not found: /system/system/lib64/libsdp_sdk.so
+    - Adding /system/system/lib64/libsqlite.so from prebuilts/samsung/a73xqxx
+    - Deleting /system/system/lib64/vendor.samsung.hardware.tlc.ddar@1.0.so
+    - Deleting /system/system/priv-app/HdmApk
+    - Deleting /system/system/priv-app/KnoxFrameBufferProvider
+    - Deleting /system/system/priv-app/KnoxGuard
+    - Deleting /system/system/priv-app/KnoxMposAgent
+    - Deleting /system/system/priv-app/KnoxNeuralNetworkRuntime
+    - Deleting /system/system/priv-app/KnoxPushManager
+    - Deleting /system/system/priv-app/KnoxSandbox
+    - Deleting /system/system/priv-app/KnoxZtFramework
+    - Adding /system/system/bin/apexd from prebuilts/samsung/a73xqxx
+    - Adding /system/system/bin/gsid from prebuilts/samsung/a73xqxx
+    - Adding /system/system/lib/service.incremental.so from prebuilts/samsung/a73xqxx
+    - Adding /system/system/lib64/service.incremental.so from prebuilts/samsung/a73xqxx
+    ! Nothing to do
+    - Applying "Add token argument in unlockCeStorage" to /system/system/framework/framework.jar
+    - Applying "Add token argument in unlockCeStorage" to /system/system/framework/services.jar
+    - Replacing SourceFile attribute in /system/system/framework/services.jar
+    - Decoding /system/system/app/Traceur/Traceur.apk
+    - Applying "Nuke Knox DualDAR" to /system/system/app/Traceur/Traceur.apk
+    - Applying "Nuke Knox DualDAR" to /system/system/framework/framework.jar
+    - Applying "Nuke MDF" to /system/system/
