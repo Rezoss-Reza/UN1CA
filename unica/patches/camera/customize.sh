@@ -55,6 +55,11 @@ if [ "$(GET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_3D_SU
 fi
 LOG_STEP_OUT
 
+#Adding OneUI8.5 SecSetting.apk, Rezoss 210126
+# LOG_STEP_IN "- Adding SecSettings.apk from OneUI8.5"
+# ADD_TO_WORK_DIR "dm3qxxx" "system" "system/priv-app/SecSettings/SecSettings.apk" 0 0 644 "u:object_r:system_file:s0"
+# LOG_STEP_OUT
+
 # Samsung Camera "hal3_mass-phone-release" app flavor
 if ! $SOURCE_CAMERA_SUPPORT_MASS_APP_FLAVOR; then
     if $TARGET_CAMERA_SUPPORT_MASS_APP_FLAVOR; then
