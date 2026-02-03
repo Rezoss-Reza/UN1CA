@@ -50,6 +50,9 @@
 /system/lib64/lib_SAG_EQ_ver2000\.so u:object_r:system_lib_file:s0
 /system/lib64/libLightObjectDetector_v1\.camera\.samsung\.so u:object_r:system_lib_file:s0
 /system/lib64/libFaceClustering\.camera\.samsung\.so u:object_r:system_lib_file:s0
+/system/lib64/libSR_StereoCapture\.camera\.samsung\.so u:object_r:system_lib_file:s0
+/system/lib64/libStereoWarp\.camera\.samsung\.so u:object_r:system_lib_file:s0
+/system/lib64/libFacelibStereoSolution\.camera\.samsung\.so u:object_r:system_lib_file:s0
 /system/media u:object_r:system_file:s0
 /system/media/audio u:object_r:system_file:s0
 /system/media/audio/notifications u:object_r:system_file:s0
