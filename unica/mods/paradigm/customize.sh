@@ -171,6 +171,10 @@ ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/lib_SoundAlive_play_plus_ver800
 ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/lib_SAG_EQ_ver2000.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/libLightObjectDetector_v1.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/libFaceClustering.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+
+ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/libSR_StereoCapture.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/libStereoSolution.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/libStereoWarp.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 LOG_STEP_OUT
 
 # Rezoss add LOG color correction (experimental)
