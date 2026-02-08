@@ -18,10 +18,10 @@ SET_FLOATING_FEATURE_CONFIG "BATTERY_SUPPORT_BSOH_SETTINGS" "TRUE"
 SET_FLOATING_FEATURE_CONFIG "BATTERY_SUPPORT_SBP_INFO_SETTINGS" "TRUE"
 
 BOMB_MODEL="SM-A236B"
-PLANT_MODEL="$TARGET_PRODUCT_NAME"
+PLANT_MODEL="SM-S918B"
 
 
-find . -type f -name "*.smali" | while read -r smali; do
+find "$APKTOOL_DIR/system/priv-app/SecSettings/SecSettings.apk/" -type f -name "*.smali" | while read -r smali; do
     if grep -q "$BOMB_MODEL" "$smali"; then
         
         # Replace bomb / plant 
@@ -31,3 +31,9 @@ find . -type f -name "*.smali" | while read -r smali; do
 
     fi
 done
+
+#JustForMe
+NOW_BUILD="$(GET_PROP "$FW_DIR/$SOURCE_FIRMWARE_PATH/system/system/build.prop" \
+    ro.build.display.id | cut -d. -f5)"
+
+SET_PROP "system" "ro.build.display.id" "UN1CA Built by Rezoss on $NOW_BUILD"
