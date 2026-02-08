@@ -2,7 +2,7 @@
 # Copyright (c) 2023 Salvo Giangreco
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-set -e
+set -ex
 
 #[
 source "$SRC_DIR/scripts/utils/module_utils.sh" || exit 1

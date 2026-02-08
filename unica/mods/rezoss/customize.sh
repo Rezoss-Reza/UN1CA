@@ -14,8 +14,8 @@ SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GALLERY_CONFIG_AI_EXPANSION" "
 # Scamsung only added this bomb in Galaxy A23
 
 # Add entries in floating feature
-SET_FLOATING_FEATURE_CONFIG "BATTERY_SUPPORT_BSOH_SETTINGS" "TRUE"
-SET_FLOATING_FEATURE_CONFIG "BATTERY_SUPPORT_SBP_INFO_SETTINGS" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_BATTERY_SUPPORT_BSOH_SETTINGS" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_BATTERY_SUPPORT_SBP_INFO_SETTINGS" "TRUE"
 
 BOMB_MODEL="SM-A236B"
 PLANT_MODEL="SM-S918B"
@@ -26,14 +26,9 @@ find "$APKTOOL_DIR/system/priv-app/SecSettings/SecSettings.apk/" -type f -name "
         
         # Replace bomb / plant 
         sed -i "s/$BOMB_MODEL/$PLANT_MODEL/g" "$smali"
-
-        sed -i "s/ro\.product\.model/$PLANT_MODEL/g" "$smali"
-
     fi
 done
 
 #JustForMe
-NOW_BUILD="$(GET_PROP "$FW_DIR/$SOURCE_FIRMWARE_PATH/system/system/build.prop" \
-    ro.build.display.id | cut -d. -f5)"
-
-SET_PROP "system" "ro.build.display.id" "UN1CA Built by Rezoss on $NOW_BUILD"
+NOW_BUILD="UN1CA 3.0.6 Built by Rezoss on $(GET_PROP "system" "ro.build.PDA")"
+SET_PROP "system" "ro.build.display.id" "${NOW_BUILD}"
