@@ -15,7 +15,9 @@ TARGET_FINGERPRINT="${TARGET_FINGERPRINT//$(GET_PROP "$FW_DIR/$TARGET_FIRMWARE_P
 
 TMP_DIR="$OUT_DIR/zip"
 
-ZIP_FILE_SUFFIX="-sign.zip"
+suffix="$(GET_PROP "system" "ro.build.PDA")"
+suffix="${suffix: -4}"
+ZIP_FILE_SUFFIX="-sign_${suffix}.zip"
 $DEBUG && ! $ROM_IS_OFFICIAL && ZIP_FILE_SUFFIX=".zip"
 
 ZIP_FILE_NAME="UN1CA_${ROM_VERSION}_$(date +%d%m%y-%H%M%S)_${TARGET_CODENAME}${ZIP_FILE_SUFFIX}"
