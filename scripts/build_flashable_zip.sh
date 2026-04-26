@@ -75,7 +75,9 @@ PREPARE_SCRIPT()
         if ! $DEBUG || $ROM_IS_OFFICIAL; then
             OUTPUT_FILE+="-sign"
         fi
-        OUTPUT_FILE+=".zip"
+		suffix="$(GET_PROP "system" "ro.build.PDA")"
+        suffix="${suffix: -4}"
+        OUTPUT_FILE+="_${suffix}.zip"
     fi
 }
 
