@@ -88,14 +88,14 @@ ADD_TO_WORK_DIR "pa2qxxx" "system" \
     0 0 644 "u:object_r:system_file:s0"
 
 # Gemini shortcut
-PRODUCT_DEBLOAT+="
-app/BardShell
-"
+# PRODUCT_DEBLOAT+="
+# app/BardShell
+# "
 
 # Gmail
-PRODUCT_DEBLOAT+="
-app/Gmail2
-"
+# PRODUCT_DEBLOAT+="
+# app/Gmail2
+# "
 
 # Google Assistant shortcut
 PRODUCT_DEBLOAT+="
@@ -103,9 +103,9 @@ app/AssistantShell
 "
 
 # Google Chrome
-PRODUCT_DEBLOAT+="
-app/Chrome
-"
+# PRODUCT_DEBLOAT+="
+# app/Chrome
+# "
 
 # Google Duo
 PRODUCT_DEBLOAT+="
@@ -113,9 +113,9 @@ app/DuoStub
 "
 
 # Google Maps
-PRODUCT_DEBLOAT+="
-app/Maps
-"
+# PRODUCT_DEBLOAT+="
+# app/Maps
+# "
 
 # Google PAI (Play Autoinstall)
 SYSTEM_DEBLOAT+="
@@ -333,6 +333,6 @@ system/etc/sysconfig/feature-a11y-preload-voacc.xml
 "
 
 # YouTube
-PRODUCT_DEBLOAT+="
-app/YouTube
-"
+# PRODUCT_DEBLOAT+="
+# app/YouTube
+# "
