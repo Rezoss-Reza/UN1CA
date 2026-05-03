@@ -118,6 +118,6 @@ fi
 
 cp -f new-boot.img "$WORK_DIR/kernel/boot.img"
 )
-rm -rf "TMP_DIR"
+rm -rf "$TMP_DIR"
 cd "$SRC_DIR"
 LOG_STEP_OUT
