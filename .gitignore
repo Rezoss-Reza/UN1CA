@@ -1,5 +1,23 @@
 out/
 
+# Local AI assistant/tooling metadata
+/.agents
+/.codex
+/.gemini
+/AGENTS.md
+/agents.md
+
+*.bak*
+*Zone.Identifier*
+*zone.identifier*
+
+# Full APKs stored as 50 MiB split chunks for GitHub.
+prebuilts/samsung/pa2qxxx/system/app/SketchBook/SketchBook.apk
+prebuilts/samsung/pa2qxxx/system/priv-app/MediaSearch/MediaSearch.apk
+prebuilts/samsung/pa2qxxx/system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk
+prebuilts/samsung/pa2qxxx/system/priv-app/SemanticSearchCore/SemanticSearchCore.apk
+prebuilts/samsung/pa2qxxx/system/priv-app/wallpaper-res/wallpaper-res.apk
+
 # Cert
 security/unica_ota.x509.pem
 security/unica_ota.pk8
