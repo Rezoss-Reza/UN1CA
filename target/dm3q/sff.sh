@@ -56,7 +56,6 @@ SEC_FLOATING_FEATURE_CAMERA_CONFIG_AUTOFRAMING=uhd
 SEC_FLOATING_FEATURE_CAMERA_CONFIG_LOG_VIDEO=V1.0
 SEC_FLOATING_FEATURE_CAMERA_CONFIG_MOTIONPHOTO_CAPTURE_MODE=[[3,1],[3,0.5]]
 SEC_FLOATING_FEATURE_CAMERA_CONFIG_SDK_FEATURE_INFO=version2,super_night,preview_dis,video_hdr,smooth_zoom,logical_rear_camera:camera_id=20,exposure_table_control,selfie_tone,physical_camera_tele:camera_id=52,physical_camera_tele2:camera_id=54
-SEC_FLOATING_FEATURE_CAMERA_CONFIG_VENDOR_LIB_INFO=food.samsung.v1,face_landmark.arcsoft.v2_1,beauty.samsung.v4,scene_detection.samsung.v1,facial_restoration.arcsoft.v1,facial_attribute.samsung.v1,human_tracking_hand.arcsoft.v4,fr_tracking.arcsoft.v1,smart_scan.samsung.v2,aimode.samsung.v2,aimfisp.samsung.v1,ai_clear_zoom.arcsoft.v1,macro_raw_sr.arcsoft.v1,super_resolution_raw.arcsoft.v2,aebhdr.arcsoft.v1,hybridhdr.arcsoft.v1,single_bokeh.samsung.v2,super_night.mpi.v2,swuwdc.arcsoft.v1,event_detection.samsung.v2,selfie_correction.samsung.v1,dual_bokeh.samsung.v1_1,image_codec.samsung.v1,pro_single_rgb.mpi.v1,image_enhance.arcsoft.v1,localtm.samsung.v1_1,stereo_photo.samsung.v1
 SEC_FLOATING_FEATURE_CAMERA_CONFIG_WINE_DETECTOR=V1_SNAP_CPU
 SEC_FLOATING_FEATURE_CAMERA_DOCUMENTSCAN_SOLUTIONS=AI_DEWARPING,SHADOW_REMOVAL,DEBLUR,OBJECT_REMOVAL,COLOR_ENHANCE
 SEC_FLOATING_FEATURE_CAMERA_SUPPORT_DUAL_PORTRAITVIDEO=TRUE

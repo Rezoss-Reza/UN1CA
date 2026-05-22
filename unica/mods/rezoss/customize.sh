@@ -9,7 +9,20 @@ DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.sa
 
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_SECURITY_CONFIG_DEVICEMONITOR_PACKAGE_NAME" "com.samsung.android.sm.devicesecurity.tcm"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME" "com.samsung.android.sm_cn"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GALLERY_CONFIG_AI_EXPANSION" "AI_Timelapse,singletake.hidt.support.on,singletake.capture.support.off,singletake.video_res.config.fhd,singletake"
+
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_VENDOR_LIB_INFO" "de_flicker.arcsoft.v1,ai_isp.samsung.v1,food.samsung.v1,beauty.samsung.v4,facial_restoration.arcsoft.v1,face_landmark.arcsoft.v2_1,facial_attribute.samsung.v1,human_tracking_hand.arcsoft.v4,fr_tracking.arcsoft.v1,ai_clear_zoom.arcsoft.v2,hybridhdr.arcsoft.v1,aebhdr.arcsoft.v1,super_night.mpi.v2,aimode.samsung.v3,super_resolution_tetra.samsung.v1,image_codec.samsung.v2,single_bokeh.samsung.v2,dual_bokeh.samsung.v2,image_enhance.arcsoft.v1,stereo_photo.samsung.v1,smart_scan.samsung.v2,swuwdc.arcsoft.v1,selfie_correction.samsung.v2,event_detection.samsung.v2,pro_single_rgb.mpi.v1,localtm.samsung.v1_1,mid_highres.samsung.v1" 
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_ACCESSIBILITY_SUPPORT_AI_CORE_IMAGE_DESCRIPTION" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GENAI_CONFIG_FOUNDATION_MODEL" "3B"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GENAI_CONFIG_LLM_VERSION" "0.40"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_DOCUMENTSCAN_SOLUTIONS" "AI_DEWARPING,SHADOW_REMOVAL,DEBLUR,OBJECT_REMOVAL,COLOR_ENHANCE,TEXT_REFLECTION_REMOVAL,MOIRE_REMOVAL,DOGEAR_REMOVAL,SCANNER_FILTER,DEFAULT_COLOR_FILTER,MAGNET"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_AUTO_EXPOSURE_LIMIT" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_MOTIONPHOTO_AUTO_TRIM_MODE" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_MOTIONPHOTO_SOUND_TIMING" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_MOTIONPHOTO_SOUND_TYPE" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GALLERY_CONFIG_LIVEFOCUS_EFFECT_DUAL_BOKEH" "BLUR,EFFECT,BIGBOKEH,PORTRAIT,RELIGHT,REFOCUS,LIGHT360,GENERIC_REFOCUS,GENERIC_REEDIT"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_REDUCE_FLASH_LIGHT" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_VIDEO_CONFIG_VIDEO_CLIPPING_MODE" "NPU,unifiedclipper"
+
 
 # Mod from AstroROM https://github.com/SameerAlSahab
 # Scamsung only added this bomb in Galaxy A23
@@ -17,10 +30,8 @@ SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GALLERY_CONFIG_AI_EXPANSION" "
 # Add entries in floating feature
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_BATTERY_SUPPORT_BSOH_SETTINGS" "TRUE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_BATTERY_SUPPORT_SBP_INFO_SETTINGS" "TRUE"
-
 BOMB_MODEL="SM-A236B"
 PLANT_MODEL="SM-S918B"
-
 
 find "$APKTOOL_DIR/system/priv-app/SecSettings/SecSettings.apk/" -type f -name "*.smali" | while read -r smali; do
     if grep -q "$BOMB_MODEL" "$smali"; then
@@ -33,29 +44,27 @@ done
 #JustForMe
 NOW_BUILD="UN1CA-ROM built by Rezoss on $(GET_PROP "system" "ro.build.PDA")"
 SET_PROP "system" "ro.build.display.id" "${NOW_BUILD}"
+SET_PROP "product" "ro.build.display.id" "${NOW_BUILD}"
 
-# ADD_TO_WORK_DIR "dm3qxxx" "system" "system/app/SamsungCalendar/SamsungCalendar.apk" 0 0 644 "u:object_r:system_file:s0"
-# ADD_TO_WORK_DIR "dm3qxxx" "system" "system/app/SamsungClock/SamsungClock.apk" 0 0 644 "u:object_r:system_file:s0"
+ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/libmediasndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/libvoice_booster.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/lib_sag_ai_sound_sep_v1.00.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/lib_sag_ai_sound_sep_v2.00.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/lib_SAG_EQ_ver2060.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/libSAG_VM_Energy_v300.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/libSAG_VM_Score_V300.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "pa2qxxx" "system" "system/lib64/lib_SoundAlive_play_plus_ver900.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "pa2qxxx" "system" "system/etc/audio_effects_common.conf" 0 0 644 "u:object_r:system_lib_file:s0"
+echo "/system/lib64/lib_sag_ai_sound_sep_v1.00.so" >> "$WORK_DIR/system/system/etc/irremovable_list.txt" 0 0 644 "u:object_r:system_lib_file:s0"
+
 ADD_TO_WORK_DIR "dm3qxxx" "system" "system/app/SamsungSans/SamsungSans.apk" 0 0 644 "u:object_r:system_file:s0"
-#ADD_TO_WORK_DIR "dm3qxxx" "system" "system/app/SamsungWeather/SamsungWeather.apk" 0 0 644 "u:object_r:system_file:s0"
-#ADD_TO_WORK_DIR "dm3qxxx" "system" "system/app/VisionIntelligence3.7/VisionIntelligence3.7.apk" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "dm3qxxx" "system" "system/app/VisionModel-Stub/VisionModel-Stub.apk" 0 0 644 "u:object_r:system_file:s0"
-
-# ADD_TO_WORK_DIR "dm3qxxx" "system" "system/priv-app/BudsUniteManager/BudsUniteManager.apk" 0 0 644 "u:object_r:system_file:s0"
-# ADD_TO_WORK_DIR "dm3qxxx" "system" "system/priv-app/CallAssistant/CallAssistant.apk" 0 0 644 "u:object_r:system_file:s0"
-# ADD_TO_WORK_DIR "dm3qxxx" "system" "system/priv-app/CallBGProvider/CallBGProvider.apk" 0 0 644 "u:object_r:system_file:s0"
-# ADD_TO_WORK_DIR "dm3qxxx" "system" "system/priv-app/CallLogBackup/CallLogBackup.apk" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "dm3qxxx" "system" "system/priv-app/OfflineLanguageModel_stub/OfflineLanguageModel_stub.apk" 0 0 644 "u:object_r:system_file:s0"
-# ADD_TO_WORK_DIR "dm3qxxx" "system" "system/priv-app/Routines/Routines.apk" 0 0 644 "u:object_r:system_file:s0"
-# ADD_TO_WORK_DIR "dm3qxxx" "system" "system/priv-app/SamsungContacts/SamsungContacts.apk" 0 0 644 "u:object_r:system_file:s0"
-# ADD_TO_WORK_DIR "dm3qxxx" "system" "system/priv-app/SamsungDialer/SamsungDialer.apk" 0 0 644 "u:object_r:system_file:s0"
-# ADD_TO_WORK_DIR "dm3qxxx" "system" "system/priv-app/SamsungGallery2018/SamsungGallery2018.apk" 0 0 644 "u:object_r:system_file:s0"
-# ADD_TO_WORK_DIR "dm3qxxx" "system" "system/priv-app/SamsungInCallUI/SamsungInCallUI.apk" 0 0 644 "u:object_r:system_file:s0"
-# ADD_TO_WORK_DIR "dm3qxxx" "system" "system/priv-app/SamsungMessages/SamsungMessages.apk" 0 0 644 "u:object_r:system_file:s0"
-# ADD_TO_WORK_DIR "dm3qxxx" "system" "system/priv-app/SecMyFiles2020/SecMyFiles2020.apk" 0 0 644 "u:object_r:system_file:s0"
-# ADD_TO_WORK_DIR "dm3qxxx" "system" "system/priv-app/SmartCallProvider/SmartCallProvider.apk" 0 0 644 "u:object_r:system_file:s0"
-# ADD_TO_WORK_DIR "dm3qxxx" "system" "system/priv-app/TelephonyUI/TelephonyUI.apk" 0 0 644 "u:object_r:system_file:s0"
-# ADD_TO_WORK_DIR "dm3qxxx" "system" "system/priv-app/wallpaper-res/wallpaper-res.apk" 0 0 644 "u:object_r:system_file:s0"
+
+LOG "- Patch product framework overlay doze auto-brightness"
+APPLY_PATCH "product" "overlay/framework-res__dm3qxxx__auto_generated_rro_product.apk" \
+    "$MODPATH/rro/framework-res__dm3qxxx__auto_generated_rro_product.apk/0001-Add-doze-auto-brightness-arrays.patch"
+
 LOG_STEP_OUT
 
 #Lets add Edgars plain kernel
@@ -121,3 +130,5 @@ cp -f new-boot.img "$WORK_DIR/kernel/boot.img"
 rm -rf "$TMP_DIR"
 cd "$SRC_DIR"
 LOG_STEP_OUT
+
+find "$APKTOOL_DIR" -type f -name "*.orig" -delete

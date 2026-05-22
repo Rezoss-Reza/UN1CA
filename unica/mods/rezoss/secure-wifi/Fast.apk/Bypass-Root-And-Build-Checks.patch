@@ -1,0 +1,27 @@
+Subject: [PATCH] Bypass Secure Wi-Fi root and eng build checks
+
+diff --git a/smali/x6/e.smali b/smali/x6/e.smali
+--- a/smali/x6/e.smali
++++ b/smali/x6/e.smali
+@@ -339,6 +339,10 @@
+ .method public static i()Z
+     .locals 4
+ 
++    const/4 v0, 0x0
++
++    return v0
++
+     const-string v0, "ro.boot.warranty_bit"
+ 
+     const-string v1, "0"
+@@ -387,6 +391,10 @@
+ .method public static j()Z
+     .locals 2
+ 
++    const/4 v0, 0x0
++
++    return v0
++
+     const-string v0, "ro.build.type"
+ 
+     invoke-static {v0}, Lp6/a;->a(Ljava/lang/String;)Ljava/lang/String;

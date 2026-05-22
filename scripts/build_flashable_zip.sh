@@ -60,7 +60,8 @@ PREPARE_SCRIPT()
         OUTPUT_FILE="$OUT_DIR/UN1CA_"
         OUTPUT_FILE+="$(grep "^version" <<< "$TARGET_BUILD_INFO" | cut -d "=" -f 2 -s)"
         OUTPUT_FILE+="_"
-        OUTPUT_FILE+="$(date -d "@$(grep "^timestamp" <<< "$TARGET_BUILD_INFO" | cut -d "=" -f 2 -s)" "+%Y%m%d")"
+        #OUTPUT_FILE+="$(date -d "@$(grep "^timestamp" <<< "$TARGET_BUILD_INFO" | cut -d "=" -f 2 -s)" "+%d%m%y-%H%M%S")"
+        OUTPUT_FILE+="$(date +%d%m%y-%H%M%S)"
         OUTPUT_FILE+="_"
         OUTPUT_FILE+="$(grep "^device" <<< "$TARGET_BUILD_INFO" | cut -d "=" -f 2 -s)"
         if $INCREMENTAL; then
