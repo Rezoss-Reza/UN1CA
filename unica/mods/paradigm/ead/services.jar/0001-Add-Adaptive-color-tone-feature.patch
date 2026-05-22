@@ -117,7 +117,7 @@ index 7c1a9f6d..07e68ab8 100644
 +    iget-boolean v4, p0, Lcom/samsung/android/displaysolution/EyeComfortSolutionService;->mEnvironmentAdaptiveDisplaySupported:Z
  
 -    iget-object v0, p0, Lcom/samsung/android/displaysolution/EyeComfortSolutionService;->mMdnieManager:Lcom/samsung/android/hardware/display/SemMdnieManager;
-+    if-nez v4, :cond_2
++    if-eqz v4, :cond_2
  
 -    if-eqz v0, :cond_2
 +    iget-object v3, p0, Lcom/samsung/android/displaysolution/EyeComfortSolutionService;->mMdnieManager:Lcom/samsung/android/hardware/display/SemMdnieManager;
@@ -755,7 +755,7 @@ index fe2732fd..8b3cda12 100644
 +
 +    aget p1, p3, p1
 +
-+    invoke-static {p1, v0, v1, p0}, Lcom/android/server/CustomizedBinderCallsStatsInternal$$ExternalSyntheticOutline0;->m(ILjava/lang/String;Ljava/lang/String;Ljava/lang/StringBuilder;)V
++    invoke-static {p0, p1, v0, v1}, Lcom/android/server/CustomizedBinderCallsStatsInternal$$ExternalSyntheticOutline0;->m(Ljava/lang/StringBuilder;ILjava/lang/String;Ljava/lang/String;)V
 +
 +    :cond_1
      return-void
@@ -822,7 +822,7 @@ index fe2732fd..8b3cda12 100644
 +
 +    aget p2, p3, p2
 +
-+    invoke-static {p2, p1, v0, p0}, Lcom/android/server/CustomizedBinderCallsStatsInternal$$ExternalSyntheticOutline0;->m(ILjava/lang/String;Ljava/lang/String;Ljava/lang/StringBuilder;)V
++    invoke-static {p0, p2, p1, v0}, Lcom/android/server/CustomizedBinderCallsStatsInternal$$ExternalSyntheticOutline0;->m(Ljava/lang/StringBuilder;ILjava/lang/String;Ljava/lang/String;)V
 +
 +    :cond_1
      return-void

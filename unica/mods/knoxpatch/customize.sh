@@ -50,6 +50,10 @@ if [ -f "$WORK_DIR/system/system/priv-app/KmxService/KmxService.apk" ]; then
     LOG "- Downloading latest Knox Matrix app"
     DOWNLOAD_FILE "$(GET_GALAXY_STORE_DOWNLOAD_URL "com.samsung.android.kmxservice")" \
         "$WORK_DIR/system/system/priv-app/KmxService/KmxService.apk"
+    # APPLY_PATCH "system" "system/priv-app/KmxService/KmxService.apk" \
+        # "$MODPATH/KmxService.apk/0001-Bypass-Knox-Matrix-FabricCertUtil-checks.patch"
+    APPLY_PATCH "system" "system/priv-app/KmxService/KmxService.apk" \
+        "$MODPATH/KmxService.apk/0002-Ignore-FabricEscrowVault-errors-in-KmxServiceReceiver.patch"
     SMALI_PATCH "system" "system/priv-app/KmxService/KmxService.apk" \
         "smali_classes2/com/samsung/android/kmxservice/common/util/RootOfTrust.smali" "return" \
         'getVerifiedBootState()I' '0'

@@ -151,13 +151,11 @@ SYSTEM_DEBLOAT+="
 system/priv-app/YourPhone_P1_5
 "
 
-ADD_TO_WORK_DIR "gta9pxxx" "system" "system/priv-app/YourPhone_Stub/YourPhone_Stub.apk" 0 0 644 "u:object_r:system_file:s0"
-
-# Live Transcribe
-SYSTEM_DEBLOAT+="
-system/app/LiveTranscribe
-system/etc/sysconfig/feature-a11y-preload.xml
-"
+# # Live Transcribe
+# SYSTEM_DEBLOAT+="
+# system/app/LiveTranscribe
+# system/etc/sysconfig/feature-a11y-preload.xml
+# "
 
 # Meta
 SYSTEM_DEBLOAT+="
@@ -205,26 +203,26 @@ system/priv-app/AREmojiEditor
 system/priv-app/AvatarEmojiSticker
 "
 
-# Samsung Calendar
-SYSTEM_DEBLOAT+="
-system/app/SamsungCalendar
-"
+# # Samsung Calendar
+# SYSTEM_DEBLOAT+="
+# system/app/SamsungCalendar
+# "
 
-# Samsung Clock
-SYSTEM_DEBLOAT+="
-system/app/ClockPackage
-"
+# # Samsung Clock
+# SYSTEM_DEBLOAT+="
+# system/app/ClockPackage
+# "
 
 # Samsung Free
 SYSTEM_DEBLOAT+="
 system/app/MinusOnePage
 "
 
-# Samsung Language Core
-SYSTEM_DEBLOAT+="
-system/etc/permissions/signature-permissions-com.samsung.android.offline.languagemodel.xml
-system/priv-app/OfflineLanguageModel_stub
-"
+# # Samsung Language Core
+# SYSTEM_DEBLOAT+="
+# system/etc/permissions/signature-permissions-com.samsung.android.offline.languagemodel.xml
+# system/priv-app/OfflineLanguageModel_stub
+# "
 
 # Samsung Messages
 SYSTEM_DEBLOAT+="
@@ -248,14 +246,13 @@ system/priv-app/AuthFramework
 system/priv-app/SamsungPass
 "
 
-# Samsung Reminder
-SYSTEM_DEBLOAT+="
-system/app/SmartReminder
-"
+# # Samsung Reminder
+# SYSTEM_DEBLOAT+="
+# system/app/SmartReminder
+# "
 
 # Samsung Visit In
 SYSTEM_DEBLOAT+="
-system/etc/permissions/com.samsung.feature.ipsgeofence.xml
 system/etc/permissions/privapp-permissions-com.samsung.android.ipsgeofence.xml
 system/priv-app/IpsGeofence
 "
