@@ -161,7 +161,7 @@ index a9e973951..04b46463a 100644
 -    move-result v3
 -
 -    if-eqz v3, :cond_2
-+    const/4 v1, 0x1
++    const/4 v3, 0x1
  
      invoke-static {v2}, Lcom/samsung/android/security/keystore/AttestationUtils;->deleteKey(Ljava/lang/String;)V
      :try_end_0

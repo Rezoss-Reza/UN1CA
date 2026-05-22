@@ -1386,28 +1386,28 @@ index 6ab57942f..554f77a5e 100644
  
 -    invoke-virtual {v13, v11}, Landroid/app/Notification$Builder;->setSmallIcon(I)Landroid/app/Notification$Builder;
 +    invoke-virtual {v13, v10}, Landroid/app/Notification$Builder;->setSmallIcon(I)Landroid/app/Notification$Builder;
- 
--    move-result-object v11
++
 +    move-result-object v10
  
--    invoke-virtual {v11, v3}, Landroid/app/Notification$Builder;->setOngoing(Z)Landroid/app/Notification$Builder;
+-    move-result-object v11
 +    invoke-virtual {v10, v2}, Landroid/app/Notification$Builder;->setOngoing(Z)Landroid/app/Notification$Builder;
  
--    move-result-object v11
+-    invoke-virtual {v11, v3}, Landroid/app/Notification$Builder;->setOngoing(Z)Landroid/app/Notification$Builder;
 +    move-result-object v10
  
--    invoke-virtual {v11, v6}, Landroid/app/Notification$Builder;->setTicker(Ljava/lang/CharSequence;)Landroid/app/Notification$Builder;
+-    move-result-object v11
 +    invoke-virtual {v10, v5}, Landroid/app/Notification$Builder;->setTicker(Ljava/lang/CharSequence;)Landroid/app/Notification$Builder;
  
--    move-result-object v11
+-    invoke-virtual {v11, v6}, Landroid/app/Notification$Builder;->setTicker(Ljava/lang/CharSequence;)Landroid/app/Notification$Builder;
 +    move-result-object v10
  
--    invoke-virtual {v11, v7}, Landroid/app/Notification$Builder;->setDefaults(I)Landroid/app/Notification$Builder;
+-    move-result-object v11
 +    const/4 v14, 0x0
  
--    move-result-object v11
+-    invoke-virtual {v11, v7}, Landroid/app/Notification$Builder;->setDefaults(I)Landroid/app/Notification$Builder;
 +    invoke-virtual {v10, v14}, Landroid/app/Notification$Builder;->setDefaults(I)Landroid/app/Notification$Builder;
-+
+ 
+-    move-result-object v11
 +    move-result-object v10
  
      iget-object v13, v1, Lcom/android/server/am/ActivityManagerService;->mContext:Landroid/content/Context;
@@ -1519,28 +1519,28 @@ index 6ab57942f..554f77a5e 100644
  
 -    invoke-virtual {v6, v7}, Lcom/android/server/am/FreecessController;->setScreenOnFreecessEnabled(Z)V
 +    const/4 v14, 0x0
- 
--    iput-boolean v7, v6, Lcom/android/server/am/FreecessController;->FREECESS_ENHANCEMENT:Z
++
 +    invoke-virtual {v5, v14}, Lcom/android/server/am/FreecessController;->setScreenOnFreecessEnabled(Z)V
  
--    iput-boolean v7, v6, Lcom/android/server/am/FreecessController;->mIsOLAFEnabled:Z
+-    iput-boolean v7, v6, Lcom/android/server/am/FreecessController;->FREECESS_ENHANCEMENT:Z
 +    iput-boolean v14, v5, Lcom/android/server/am/FreecessController;->FREECESS_ENHANCEMENT:Z
  
--    iput-boolean v7, v6, Lcom/android/server/am/FreecessController;->mIsFreecessEnable:Z
+-    iput-boolean v7, v6, Lcom/android/server/am/FreecessController;->mIsOLAFEnabled:Z
 +    iput-boolean v14, v5, Lcom/android/server/am/FreecessController;->mIsOLAFEnabled:Z
  
--    iget v11, v6, Lcom/android/server/am/FreecessController;->mConfigFreecess:I
+-    iput-boolean v7, v6, Lcom/android/server/am/FreecessController;->mIsFreecessEnable:Z
 +    iput-boolean v14, v5, Lcom/android/server/am/FreecessController;->mIsFreecessEnable:Z
  
--    if-ne v11, v5, :cond_16
+-    iget v11, v6, Lcom/android/server/am/FreecessController;->mConfigFreecess:I
 +    iget v10, v5, Lcom/android/server/am/FreecessController;->mConfigFreecess:I
  
--    sget-object v5, Lcom/android/server/am/FreecessHandler$FreecessHandlerHolder;->INSTANCE:Lcom/android/server/am/FreecessHandler;
+-    if-ne v11, v5, :cond_16
 +    if-ne v10, v4, :cond_10
  
--    new-instance v11, Lcom/android/server/am/FreecessHandler$NetLinkReceiverThread;
+-    sget-object v5, Lcom/android/server/am/FreecessHandler$FreecessHandlerHolder;->INSTANCE:Lcom/android/server/am/FreecessHandler;
 +    sget-object v4, Lcom/android/server/am/FreecessHandler$FreecessHandlerHolder;->INSTANCE:Lcom/android/server/am/FreecessHandler;
-+
+ 
+-    new-instance v11, Lcom/android/server/am/FreecessHandler$NetLinkReceiverThread;
 +    new-instance v10, Lcom/android/server/am/FreecessHandler$NetLinkReceiverThread;
  
      const-string v12, "Freecess_NLRCT"
@@ -1556,10 +1556,10 @@ index 6ab57942f..554f77a5e 100644
  
      const-string v12, "Freecess_BT"
  
--    invoke-direct {v11, v12, v7, v3}, Lcom/android/server/am/FreecessHandler$FreecessThread;-><init>(Ljava/lang/String;II)V
+-    invoke-direct {v11, v7, v3, v12}, Lcom/android/server/am/FreecessHandler$FreecessThread;-><init>(IILjava/lang/String;)V
 +    const/4 v14, 0x0
 +
-+    invoke-direct {v10, v12, v14, v2}, Lcom/android/server/am/FreecessHandler$FreecessThread;-><init>(Ljava/lang/String;II)V
++    invoke-direct {v10, v14, v2, v12}, Lcom/android/server/am/FreecessHandler$FreecessThread;-><init>(IILjava/lang/String;)V
  
 -    invoke-virtual {v11}, Landroid/os/HandlerThread;->start()V
 +    invoke-virtual {v10}, Landroid/os/HandlerThread;->start()V
@@ -1578,11 +1578,11 @@ index 6ab57942f..554f77a5e 100644
 -    const-string v11, "Freecess_HAMSL"
 +    const-string v10, "Freecess_HAMSL"
  
--    invoke-direct {v5, v11, v7, v2}, Lcom/android/server/am/FreecessHandler$FreecessThread;-><init>(Ljava/lang/String;II)V
+-    invoke-direct {v5, v7, v2, v11}, Lcom/android/server/am/FreecessHandler$FreecessThread;-><init>(IILjava/lang/String;)V
 +    const/4 v12, 0x2
  
 -    invoke-virtual {v5}, Landroid/os/HandlerThread;->start()V
-+    invoke-direct {v4, v10, v14, v12}, Lcom/android/server/am/FreecessHandler$FreecessThread;-><init>(Ljava/lang/String;II)V
++    invoke-direct {v4, v14, v12, v10}, Lcom/android/server/am/FreecessHandler$FreecessThread;-><init>(IILjava/lang/String;)V
  
 -    :cond_16
 -    const-string/jumbo v5, "camera"
@@ -2177,20 +2177,20 @@ index 6ab57942f..554f77a5e 100644
  
 -    move-result-object v5
 +    iget-object v4, v1, Lcom/android/server/am/ActivityManagerService;->mContext:Landroid/content/Context;
-+
-+    invoke-virtual {v4}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
  
 -    const-string/jumbo v6, "sem_sp_edition_flipfont_changed"
-+    move-result-object v4
++    invoke-virtual {v4}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
  
 -    invoke-static {v5, v6, v3}, Landroid/provider/Settings$Secure;->putInt(Landroid/content/ContentResolver;Ljava/lang/String;I)Z
-+    const-string/jumbo v5, "sem_sp_edition_flipfont_changed"
++    move-result-object v4
  
 -    :goto_11
 -    const-string/jumbo v3, "finishBooting"
-+    invoke-static {v4, v5, v2}, Landroid/provider/Settings$Secure;->putInt(Landroid/content/ContentResolver;Ljava/lang/String;I)Z
++    const-string/jumbo v5, "sem_sp_edition_flipfont_changed"
  
 -    const-string/jumbo v5, "NULL"
++    invoke-static {v4, v5, v2}, Landroid/provider/Settings$Secure;->putInt(Landroid/content/ContentResolver;Ljava/lang/String;I)Z
++
 +    :goto_c
 +    const-string/jumbo v2, "finishBooting"
  
@@ -25308,7 +25308,7 @@ index fa01e3a76..000000000
 -    const/4 v4, 0x0
 -
 -    :try_start_0
--    const-string v5, "31"
+-    const-string v5, "33"
 -
 -    invoke-static {v5}, Ljava/lang/Integer;->parseInt(Ljava/lang/String;)I
 -
@@ -25437,6 +25437,7 @@ index fa01e3a76..000000000
 -    :goto_3
 -    return-void
 -.end method
+
 diff --git a/smali/com/android/server/knox/dar/ddar/ta/TZNative.smali b/smali/com/android/server/knox/dar/ddar/ta/TZNative.smali
 deleted file mode 100644
 index 97f4f2942..000000000
