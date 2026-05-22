@@ -8,6 +8,7 @@ source "$SRC_DIR/scripts/utils/build_utils.sh" || exit 1
 FRAMEWORK_DIR="$TOOLS_DIR/apktool/framework"
 FRAMEWORK_TAG="$(GET_PROP "system" "ro.build.version.incremental")"
 
+
 FORCE=false
 PARTITION=""
 FILE=""
@@ -37,6 +38,7 @@ BUILD()
 
     # Build APK with --shorten-resource-paths (https://developer.android.com/tools/aapt2#optimize_options)
 	find "$APKTOOL_DIR" -type f -name "*.orig" -delete
+    REBALANCE_DEX
     EVAL "apktool b -j \"$THREAD_COUNT\" -p \"$FRAMEWORK_DIR\" -srp \"$OUTPUT_PATH\"" || exit 1
 
     local FILE_NAME
@@ -68,6 +70,38 @@ BUILD()
     if [ -f "${INPUT_FILE%/*}/$FILE_NAME.bprof" ]; then
         DELETE_FROM_WORK_DIR "$PARTITION" "${FILE%/*}/$FILE_NAME.bprof"
     fi
+}
+
+REBALANCE_DEX()
+{
+    case "$PARTITION:$FILE" in
+        "system:system/framework/framework.jar")
+            local FROM="$OUTPUT_PATH/smali/android/drm"
+            local TO="$OUTPUT_PATH/smali_classes8/android/drm"
+            if [ -d "$FROM" ] && [ ! -d "$TO" ]; then
+                LOG "- Moving android/drm to classes8.dex to keep framework.jar below the dex method limit"
+                mkdir -p "$(dirname "$TO")"
+                mv -f "$FROM" "$TO"
+            fi
+            ;;
+        "system_ext:priv-app/SystemUI/SystemUI.apk")
+            local FROM_DIR="$OUTPUT_PATH/smali_classes3/com/android/systemui/settings/brightness"
+            local TO_DIR="$OUTPUT_PATH/smali_classes6/com/android/systemui/settings/brightness"
+            local MOVED=false
+            local SMALI_FILE
+            for SMALI_FILE in \
+                    "$FROM_DIR"/'BrightnessDetailAdapter$initBrightnessDetail$8.smali' \
+                    "$FROM_DIR"/QuickBrightnessSeadView*.smali; do
+                [ -f "$SMALI_FILE" ] || continue
+                if ! $MOVED; then
+                    LOG "- Moving adaptive color tone helpers to classes6.dex to keep SystemUI classes3 below the dex method limit"
+                    mkdir -p "$TO_DIR"
+                    MOVED=true
+                fi
+                mv -f "$SMALI_FILE" "$TO_DIR/"
+            done
+            ;;
+    esac
 }
 
 DECODE()
