@@ -13,7 +13,7 @@ SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NA
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_VENDOR_LIB_INFO" "de_flicker.arcsoft.v1,ai_isp.samsung.v1,food.samsung.v1,beauty.samsung.v4,facial_restoration.arcsoft.v1,face_landmark.arcsoft.v2_1,facial_attribute.samsung.v1,human_tracking_hand.arcsoft.v4,fr_tracking.arcsoft.v1,ai_clear_zoom.arcsoft.v2,hybridhdr.arcsoft.v1,aebhdr.arcsoft.v1,super_night.mpi.v2,aimode.samsung.v3,super_resolution_tetra.samsung.v1,image_codec.samsung.v2,single_bokeh.samsung.v2,dual_bokeh.samsung.v2,image_enhance.arcsoft.v1,stereo_photo.samsung.v1,smart_scan.samsung.v2,swuwdc.arcsoft.v1,selfie_correction.samsung.v2,event_detection.samsung.v2,pro_single_rgb.mpi.v1,localtm.samsung.v1_1,mid_highres.samsung.v1" 
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_ACCESSIBILITY_SUPPORT_AI_CORE_IMAGE_DESCRIPTION" "TRUE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GENAI_CONFIG_FOUNDATION_MODEL" "3B"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GENAI_CONFIG_LLM_VERSION" "0.40"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GENAI_CONFIG_LLM_VERSION" "0.70"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_DOCUMENTSCAN_SOLUTIONS" "AI_DEWARPING,SHADOW_REMOVAL,DEBLUR,OBJECT_REMOVAL,COLOR_ENHANCE,TEXT_REFLECTION_REMOVAL,MOIRE_REMOVAL,DOGEAR_REMOVAL,SCANNER_FILTER,DEFAULT_COLOR_FILTER,MAGNET"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_AUTO_EXPOSURE_LIMIT" "TRUE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_MOTIONPHOTO_AUTO_TRIM_MODE" "TRUE"
@@ -61,9 +61,31 @@ ADD_TO_WORK_DIR "dm3qxxx" "system" "system/app/SamsungSans/SamsungSans.apk" 0 0 
 ADD_TO_WORK_DIR "dm3qxxx" "system" "system/app/VisionModel-Stub/VisionModel-Stub.apk" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "dm3qxxx" "system" "system/priv-app/OfflineLanguageModel_stub/OfflineLanguageModel_stub.apk" 0 0 644 "u:object_r:system_file:s0"
 
+# Enable built-in spoof to use Ambient Weather Wallpaper
+LOG "- Patch DressRoom Weather wallpaper AICore gate"
+APPLY_PATCH "system" "system/priv-app/DressRoom/DressRoom.apk" \
+    "$MODPATH/dressroom/DressRoom.apk/0001-Bypass-AICore-weather-feature-check.patch"
+
+LOG "- Patch SamsungAiCore Vision Model device mapping"
+APPLY_PATCH "system" "system/priv-app/SamsungAiCore/SamsungAiCore.apk" \
+    "$MODPATH/aicore/SamsungAiCore.apk/0001-Map-dm-series-to-pa3q-for-vision-model.patch"
+
+LOG "- Patch VisualCloudCore Galaxy Store model check"
+APPLY_PATCH "system" "system/app/VisualCloudCore/VisualCloudCore.apk" \
+    "$MODPATH/visualcloudcore/VisualCloudCore.apk/0001-Use-S25-Ultra-model-for-stub-update-check.patch"
+
 LOG "- Patch product framework overlay doze auto-brightness"
 APPLY_PATCH "product" "overlay/framework-res__dm3qxxx__auto_generated_rro_product.apk" \
     "$MODPATH/rro/framework-res__dm3qxxx__auto_generated_rro_product.apk/0001-Add-doze-auto-brightness-arrays.patch"
+
+# Enable Notification Priority/Summary for dm-series devices behind Samsung's m-series gate
+LOG "- Patch services.jar AI notification priority/summary model gate"
+APPLY_PATCH "system" "system/framework/services.jar" \
+    "$MODPATH/notification-priority/services.jar/0001-Allow-dm1q-dm2q-dm3q-AI-notification-priority.patch"
+
+LOG "- Patch SettingsProvider notification priority/summary defaults"
+APPLY_PATCH "system" "system/priv-app/SettingsProvider/SettingsProvider.apk" \
+    "$MODPATH/notification-priority/SettingsProvider.apk/0001-Enable-notification-priority-default.patch"
 
 LOG_STEP_OUT
 
@@ -127,8 +149,93 @@ fi
 
 cp -f new-boot.img "$WORK_DIR/kernel/boot.img"
 )
-rm -rf "$TMP_DIR"
+
 cd "$SRC_DIR"
+LOG_STEP_OUT
+
+#Lets patch init_boot with KernelSU-Next LKM
+LOG_STEP_IN "- Patch init_boot.img with KernelSU-Next LKM"
+KSU_KMI="android13-5.15"
+KSU_INIT_BOOT="$WORK_DIR/kernel/init_boot.img"
+#KSU_TMP_DIR="$MODPATH/tmp-ksu-next"
+
+if [ ! -f "$KSU_INIT_BOOT" ]; then
+  ABORT "File not found: ${KSU_INIT_BOOT//$SRC_DIR\//}"
+fi
+
+# rm -rf "$KSU_TMP_DIR"
+# mkdir -p "$KSU_TMP_DIR"
+
+LOG "- Get latest KernelSU-Next release"
+KSU_RELEASE_JSON="$(curl -fsSL "https://api.github.com/repos/KernelSU-Next/KernelSU-Next/releases/latest")" \
+  || ABORT "Failed to resolve KernelSU-Next latest release"
+KSU_RELEASE_TAG="$(echo "$KSU_RELEASE_JSON" | jq -r '.tag_name // empty')"
+LOG "- Using KernelSU-Next ${KSU_RELEASE_TAG:-latest}"
+
+KSU_HOST_ARCH="$(uname -m)"
+case "$KSU_HOST_ARCH" in
+  x86_64|amd64)
+    KSU_KSUD_REGEX="^ksud-(x86_64|amd64).*linux"
+    ;;
+  aarch64|arm64)
+    KSU_KSUD_REGEX="^ksud-aarch64.*linux"
+    ;;
+  *)
+    ABORT "Unsupported host architecture for KernelSU-Next ksud: $KSU_HOST_ARCH"
+    ;;
+esac
+
+KSU_KSUD_URL="$(echo "$KSU_RELEASE_JSON" | jq -r --arg regex "$KSU_KSUD_REGEX" '
+  .assets[]
+  | select(.name | test($regex))
+  | select(.name | test("android") | not)
+  | .browser_download_url
+' | head -n1)"
+if [ ! "$KSU_KSUD_URL" ]; then
+  ABORT "KernelSU-Next ksud asset not found for host architecture: $KSU_HOST_ARCH"
+fi
+
+KSU_MODULE_NAME="${KSU_KMI}_kernelsu.ko"
+KSU_MODULE_URL="$(echo "$KSU_RELEASE_JSON" | jq -r --arg name "$KSU_MODULE_NAME" '
+  .assets[]
+  | select(.name == $name)
+  | .browser_download_url
+' | head -n1)"
+if [ ! "$KSU_MODULE_URL" ]; then
+  ABORT "KernelSU-Next module asset not found: $KSU_MODULE_NAME"
+fi
+
+KSU_KSUD="$TMP_DIR/ksud"
+KSU_MODULE="$TMP_DIR/$KSU_MODULE_NAME"
+
+LOG "- Download ksud"
+curl -fL --retry 3 -o "$KSU_KSUD" "$KSU_KSUD_URL" \
+  || ABORT "Failed to download KernelSU-Next ksud"
+chmod +x "$KSU_KSUD"
+
+LOG "- Download $KSU_MODULE_NAME"
+curl -fL --retry 3 -o "$KSU_MODULE" "$KSU_MODULE_URL" \
+  || ABORT "Failed to download KernelSU-Next module: $KSU_MODULE_NAME"
+
+LOG "- Patching init_boot.img for KMI $KSU_KMI"
+cp -f "$KSU_INIT_BOOT" "$TMP_DIR/init_boot.img" \
+  || ABORT "Failed to copy init_boot.img"
+(
+  cd "$TMP_DIR" || exit 1
+  "$KSU_KSUD" boot-patch -b init_boot.img --magiskboot "$MAGISKBOOT" --module "$KSU_MODULE" --kmi "$KSU_KMI"
+) || ABORT "Failed to patch init_boot.img with KernelSU-Next"
+
+KSU_PATCHED_INIT_BOOT="$(find "$TMP_DIR" -maxdepth 1 -type f \( -name "*patched*.img" -o -name "new-boot.img" \) -printf "%T@ %p\n" | sort -nr | head -n1 | cut -d " " -f 2-)"
+if [ ! -f "$KSU_PATCHED_INIT_BOOT" ]; then
+  KSU_PATCHED_INIT_BOOT="$(find "$TMP_DIR" -maxdepth 1 -type f -name "*.img" ! -name "init_boot.img" -printf "%T@ %p\n" | sort -nr | head -n1 | cut -d " " -f 2-)"
+fi
+if [ ! -f "$KSU_PATCHED_INIT_BOOT" ]; then
+  ABORT "KernelSU-Next patched init_boot image was not generated"
+fi
+
+cp -f "$KSU_PATCHED_INIT_BOOT" "$KSU_INIT_BOOT" \
+  || ABORT "Failed to replace init_boot.img with KernelSU-Next patched image"
+rm -rf "$TMP_DIR"
 LOG_STEP_OUT
 
 find "$APKTOOL_DIR" -type f -name "*.orig" -delete

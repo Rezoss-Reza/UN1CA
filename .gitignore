@@ -8,6 +8,7 @@ out/
 /agents.md
 
 *.bak*
+*.log
 *Zone.Identifier*
 *zone.identifier*
 
