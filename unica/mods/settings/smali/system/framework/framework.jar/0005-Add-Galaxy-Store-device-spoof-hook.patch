@@ -1,0 +1,322 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: UN1CA <noreply@unica.local>
+Date: Sun, 24 May 2026 00:00:00 +0200
+Subject: [PATCH] Add Galaxy Store device spoof hook
+
+---
+diff --git a/smali_classes3/android/os/SystemProperties.smali b/smali_classes3/android/os/SystemProperties.smali
+index 09f8366..d667f40 100644
+--- a/smali_classes3/android/os/SystemProperties.smali
++++ b/smali_classes3/android/os/SystemProperties.smali
+@@ -383,6 +383,12 @@
+
+     if-nez v0, :cond_0
+
++    invoke-static {p0}, Lio/mesalabs/unica/SamsungPropsHooks;->onSystemPropertiesGet(Ljava/lang/String;)Ljava/lang/String;
++
++    move-result-object v0
++
++    if-nez v0, :cond_0
++
+     invoke-static {p0}, Landroid/os/SystemProperties;->native_get(Ljava/lang/String;)Ljava/lang/String;
+
+     move-result-object v0
+@@ -402,6 +408,12 @@
+
+     if-nez v0, :cond_0
+
++    invoke-static {p0}, Lio/mesalabs/unica/SamsungPropsHooks;->onSystemPropertiesGet(Ljava/lang/String;)Ljava/lang/String;
++
++    move-result-object v0
++
++    if-nez v0, :cond_0
++
+     invoke-static {p0, p1}, Landroid/os/SystemProperties;->native_get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+
+     move-result-object v0
+diff --git a/smali_classes6/io/mesalabs/unica/SamsungPropsHooks.smali b/smali_classes6/io/mesalabs/unica/SamsungPropsHooks.smali
+index 0dd7320..28d2d91 100644
+--- a/smali_classes6/io/mesalabs/unica/SamsungPropsHooks.smali
++++ b/smali_classes6/io/mesalabs/unica/SamsungPropsHooks.smali
+@@ -8,6 +8,8 @@
+
+ .field private static final blacklist FM_RADIO_PACKAGE_NAME:Ljava/lang/String; = "com.sec.android.app.fm"
+
++.field private static final blacklist GALAXY_STORE_PACKAGE_NAME:Ljava/lang/String; = "com.sec.android.app.samsungapps"
++
+ .field private static final blacklist GPHOTOS_PACKAGE_NAME:Ljava/lang/String; = "com.google.android.apps.photos"
+
+ .field private static final blacklist SMART_VIEW_PACKAGE_NAME:Ljava/lang/String; = "com.samsung.android.smartmirroring"
+@@ -115,6 +117,25 @@
+     sput-boolean v2, Lio/mesalabs/unica/SamsungPropsHooks;->sIsUserApp:Z
+
+     :goto_1
++    const-string p0, "com.sec.android.app.samsungapps"
++
++    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result p0
++
++    if-eqz p0, :cond_galaxy_store
++
++    invoke-static {}, Lio/mesalabs/unica/SamsungPropsHooks;->isGalaxyStoreSpoofEnabled()Z
++
++    move-result p0
++
++    if-eqz p0, :cond_galaxy_store
++
++    invoke-static {}, Lio/mesalabs/unica/SamsungPropsHooks;->spoofGalaxyStoreBuild()V
++
++    goto/16 :goto_2
++
++    :cond_galaxy_store
+     const-string p0, "com.sec.android.app.fm"
+
+     invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+@@ -249,6 +270,247 @@
+     return-void
+ .end method
+
++.method private static blacklist spoofGalaxyStoreBuild()V
++    .locals 2
++
++    const-string v0, "BRAND"
++
++    const-string/jumbo v1, "samsung"
++
++    invoke-static {v0, v1}, Lio/mesalabs/unica/SamsungPropsHooks;->setBuildField(Ljava/lang/String;Ljava/lang/String;)V
++
++    const-string v0, "MANUFACTURER"
++
++    invoke-static {v0, v1}, Lio/mesalabs/unica/SamsungPropsHooks;->setBuildField(Ljava/lang/String;Ljava/lang/String;)V
++
++    const-string v0, "DEVICE"
++
++    const-string v1, "m3q"
++
++    invoke-static {v0, v1}, Lio/mesalabs/unica/SamsungPropsHooks;->setBuildField(Ljava/lang/String;Ljava/lang/String;)V
++
++    const-string v0, "PRODUCT"
++
++    const-string v1, "m3qxxx"
++
++    invoke-static {v0, v1}, Lio/mesalabs/unica/SamsungPropsHooks;->setBuildField(Ljava/lang/String;Ljava/lang/String;)V
++
++    const-string v0, "MODEL"
++
++    const-string v1, "SM-S948B"
++
++    invoke-static {v0, v1}, Lio/mesalabs/unica/SamsungPropsHooks;->setBuildField(Ljava/lang/String;Ljava/lang/String;)V
++
++    const-string v0, "FINGERPRINT"
++
++    const-string/jumbo v1, "samsung/m3qxxx/m3q:16/BP4A.251205.006/S948BXXSAFZE1:user/release-keys"
++
++    invoke-static {v0, v1}, Lio/mesalabs/unica/SamsungPropsHooks;->setBuildField(Ljava/lang/String;Ljava/lang/String;)V
++
++    return-void
++.end method
++
++.method private static blacklist isGalaxyStoreSpoofEnabled()Z
++    .locals 2
++
++    const-string v0, "com.sec.android.app.samsungapps"
++
++    sget-object v1, Lio/mesalabs/unica/SamsungPropsHooks;->sPackageName:Ljava/lang/String;
++
++    if-nez v1, :cond_package_name
++
++    invoke-static {}, Landroid/app/ActivityThread;->currentPackageName()Ljava/lang/String;
++
++    move-result-object v1
++
++    :cond_package_name
++    invoke-virtual {v0, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v0
++
++    if-eqz v0, :cond_0
++
++    const-string v0, "persist.sys.unica.galaxy_store_spoof"
++
++    const/4 v1, 0x0
++
++    invoke-static {v0, v1}, Landroid/os/SemSystemProperties;->getBoolean(Ljava/lang/String;Z)Z
++
++    move-result v0
++
++    return v0
++
++    :cond_0
++    const/4 v0, 0x0
++
++    return v0
++.end method
++
++.method public static blacklist onSystemPropertiesGet(Ljava/lang/String;)Ljava/lang/String;
++    .locals 3
++
++    invoke-static {}, Lio/mesalabs/unica/SamsungPropsHooks;->isGalaxyStoreSpoofEnabled()Z
++
++    move-result v0
++
++    if-eqz v0, :cond_none
++
++    const-string v0, "ro.product."
++
++    invoke-virtual {p0, v0}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
++
++    move-result v0
++
++    if-eqz v0, :cond_boot_model
++
++    const-string v0, ".model"
++
++    invoke-virtual {p0, v0}, Ljava/lang/String;->endsWith(Ljava/lang/String;)Z
++
++    move-result v0
++
++    if-nez v0, :cond_model
++
++    const-string v0, ".device"
++
++    invoke-virtual {p0, v0}, Ljava/lang/String;->endsWith(Ljava/lang/String;)Z
++
++    move-result v0
++
++    if-nez v0, :cond_device
++
++    const-string v0, ".name"
++
++    invoke-virtual {p0, v0}, Ljava/lang/String;->endsWith(Ljava/lang/String;)Z
++
++    move-result v0
++
++    if-nez v0, :cond_name
++
++    const-string v0, ".brand"
++
++    invoke-virtual {p0, v0}, Ljava/lang/String;->endsWith(Ljava/lang/String;)Z
++
++    move-result v0
++
++    if-nez v0, :cond_samsung
++
++    const-string v0, ".manufacturer"
++
++    invoke-virtual {p0, v0}, Ljava/lang/String;->endsWith(Ljava/lang/String;)Z
++
++    move-result v0
++
++    if-nez v0, :cond_samsung
++
++    :cond_boot_model
++    const-string v0, "ro.boot.em.model"
++
++    invoke-virtual {p0, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v0
++
++    if-nez v0, :cond_model
++
++    const-string v0, "ro.build.product"
++
++    invoke-virtual {p0, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v0
++
++    if-nez v0, :cond_device
++
++    const-string v0, ".fingerprint"
++
++    invoke-virtual {p0, v0}, Ljava/lang/String;->endsWith(Ljava/lang/String;)Z
++
++    move-result v0
++
++    if-nez v0, :cond_fingerprint
++
++    const-string v0, ".description"
++
++    invoke-virtual {p0, v0}, Ljava/lang/String;->endsWith(Ljava/lang/String;)Z
++
++    move-result v0
++
++    if-nez v0, :cond_description
++
++    const/4 v0, 0x0
++
++    goto :goto_0
++
++    :cond_model
++    const-string v0, "SM-S948B"
++
++    goto :goto_0
++
++    :cond_device
++    const-string v0, "m3q"
++
++    goto :goto_0
++
++    :cond_name
++    const-string v0, "m3qxxx"
++
++    goto :goto_0
++
++    :cond_samsung
++    const-string/jumbo v0, "samsung"
++
++    goto :goto_0
++
++    :cond_fingerprint
++    const-string/jumbo v0, "samsung/m3qxxx/m3q:16/BP4A.251205.006/S948BXXSAFZE1:user/release-keys"
++
++    goto :goto_0
++
++    :cond_description
++    const-string v0, "m3qxxx-user 16 BP4A.251205.006 S948BXXSAFZE1 release-keys"
++
++    :goto_0
++    if-eqz v0, :cond_none
++
++    new-instance v1, Ljava/lang/StringBuilder;
++
++    const-string v2, "Spoofing \""
++
++    invoke-direct {v1, v2}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
++
++    invoke-virtual {v1, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    const-string v1, "\" prop to \""
++
++    invoke-virtual {p0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    const-string v1, "\""
++
++    invoke-virtual {p0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lio/mesalabs/unica/SamsungPropsHooks;->dlog(Ljava/lang/String;)V
++
++    return-object v0
++
++    :cond_none
++    const/4 v0, 0x0
++
++    return-object v0
++.end method
++
+ .method private static blacklist setBuildField(Ljava/lang/String;Ljava/lang/String;)V
+     .locals 2
