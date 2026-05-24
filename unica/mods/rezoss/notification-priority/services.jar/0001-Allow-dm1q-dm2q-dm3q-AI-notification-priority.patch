@@ -1,0 +1,36 @@
+AUTHOR Rezoss
+
+diff --git a/smali_classes2/com/android/server/notification/NmRune.smali b/smali_classes2/com/android/server/notification/NmRune.smali
+--- a/smali_classes2/com/android/server/notification/NmRune.smali
++++ b/smali_classes2/com/android/server/notification/NmRune.smali
+@@ -173,6 +173,30 @@
+
+     if-nez v4, :cond_2
+
++    const-string/jumbo v4, "dm1q"
++
++    invoke-virtual {v2, v4}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
++
++    move-result v4
++
++    if-nez v4, :cond_2
++
++    const-string/jumbo v4, "dm2q"
++
++    invoke-virtual {v2, v4}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
++
++    move-result v4
++
++    if-nez v4, :cond_2
++
++    const-string/jumbo v4, "dm3q"
++
++    invoke-virtual {v2, v4}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
++
++    move-result v4
++
++    if-nez v4, :cond_2
++
+     const-string/jumbo v4, "m1s"
+
+     invoke-virtual {v2, v4}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z

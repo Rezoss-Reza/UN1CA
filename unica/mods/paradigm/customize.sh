@@ -74,6 +74,8 @@ LOG_STEP_OUT
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_CONFIG_AI_VERSION" "20261"
 ADD_TO_WORK_DIR "pa2qxxx" "system" "system/app/SketchBook/SketchBook.apk" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "pa2qxxx" "system" "system/priv-app/SamsungAiCore/SamsungAiCore.apk" 0 0 644 "u:object_r:system_file:s0"
+ADD_TO_WORK_DIR "pa2qxxx" "system" \
+    "system/etc/permissions/privapp-permissions-com.samsung.android.aicore.xml" 0 0 644 "u:object_r:system_file:s0"
 # DOWNLOAD_FILE "$(GET_GALAXY_STORE_DOWNLOAD_URL "com.samsung.android.aicore")" \
     # "$WORK_DIR/system/system/priv-app/SamsungAiCore/SamsungAiCore.apk"
 SET_METADATA "system" "system/priv-app/SamsungAiCore" 0 0 755 "u:object_r:system_file:s0"
@@ -130,6 +132,26 @@ ADD_TO_WORK_DIR "pa2qxxx" "system" \
 ADD_TO_WORK_DIR "pa2qxxx" "system" \
     "system/etc/permissions/privapp-permissions-com.samsung.android.smartsuggestions.xml" 0 0 644 "u:object_r:system_file:s0"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_SUPPORT_PERSONALIZED_DATA_CORE" "TRUE"
+# SmartSuggestions resources and unrelated dex files currently fail full apktool rebuilds.
+# Patch only classes13.dex, then re-sign the APK with the normal platform key.
+LOG "- Enabling Now Nudge support in SamsungSmartSuggestions.apk"
+NOW_NUDGE_APK="$WORK_DIR/system/system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk"
+NOW_NUDGE_TMP="$TMP_DIR/now_nudge_smartsuggestions"
+NOW_NUDGE_CERT_PREFIX="aosp"
+$ROM_IS_OFFICIAL && NOW_NUDGE_CERT_PREFIX="unica"
+EVAL "rm -rf \"$NOW_NUDGE_TMP\" && mkdir -p \"$NOW_NUDGE_TMP\""
+EVAL "unzip -q -p \"$NOW_NUDGE_APK\" classes13.dex > \"$NOW_NUDGE_TMP/classes13.dex\""
+EVAL "python3 \"$MODPATH/now-nudge/patch_now_nudge_dex.py\" \"$NOW_NUDGE_TMP/classes13.dex\""
+EVAL "cp -a \"$NOW_NUDGE_APK\" \"$NOW_NUDGE_TMP/SamsungSmartSuggestions.apk\""
+EVAL "cd \"$NOW_NUDGE_TMP\" && zip -q -0 \"SamsungSmartSuggestions.apk\" classes13.dex"
+EVAL "signapk \"$SRC_DIR/security/${NOW_NUDGE_CERT_PREFIX}_platform.x509.pem\" \"$SRC_DIR/security/${NOW_NUDGE_CERT_PREFIX}_platform.pk8\" \"$NOW_NUDGE_TMP/SamsungSmartSuggestions.apk\" \"$NOW_NUDGE_TMP/SamsungSmartSuggestions.signed.apk\""
+EVAL "mv -f \"$NOW_NUDGE_TMP/SamsungSmartSuggestions.signed.apk\" \"$NOW_NUDGE_APK\""
+SET_METADATA "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" 0 0 644 "u:object_r:system_file:s0"
+EVAL "rm -rf \"$NOW_NUDGE_TMP\""
+unset NOW_NUDGE_APK NOW_NUDGE_TMP NOW_NUDGE_CERT_PREFIX
+LOG "- Forcing Now Nudge availability in SecSettings.apk"
+APPLY_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
+    "$MODPATH/now-nudge/SecSettings.apk/0001-Force-Now-Nudge-Galaxy-AI-availability.patch"
 # LOG "- Downloading Smart suggestions app with full-global-release flavor"
 # DOWNLOAD_FILE "$(GET_GALAXY_STORE_DOWNLOAD_URL "com.samsung.android.smartsuggestions")" \
     # "$WORK_DIR/system/system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk"
