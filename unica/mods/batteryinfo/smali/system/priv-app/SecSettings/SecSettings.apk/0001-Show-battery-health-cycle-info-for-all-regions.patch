@@ -1,0 +1,104 @@
+From 1111111111111111111111111111111111111111 Mon Sep 17 00:00:00 2001
+From: @CyberK1911 <sajid.es099@gmail.com>
+Date: Sun, 31 May 2026 18:53:46 +0530
+Subject: [PATCH] Show battery health and cycle info for all regions
+
+---
+ .../batteryinfo/BatteryRegulatoryPreferenceController.smali | 85 +------------------------------------------------
+ 1 file changed, 2 insertions(+), 81 deletions(-)
+
+--- a/smali_classes5/com/samsung/android/settings/deviceinfo/batteryinfo/BatteryRegulatoryPreferenceController.smali
++++ b/smali_classes5/com/samsung/android/settings/deviceinfo/batteryinfo/BatteryRegulatoryPreferenceController.smali
+@@ -1,86 +1,7 @@
+ .method public getAvailabilityStatus()I
+-    .registers 4
++    .registers 1
+-
++
+-    sget-object v0, Lcom/samsung/android/settings/Rune;->COMMON_CONFIG_PACKAGE_NAME_SMART_MANAGER:Ljava/lang/String;
+-
+-    const-string/jumbo v0, "ro.product.model"
+-
+-    invoke-static {v0}, Landroid/os/SystemProperties;->get(Ljava/lang/String;)Ljava/lang/String;
+-
+-    move-result-object v0
+-
+-    const-string v1, "SM-S918B"
+-
+-    invoke-virtual {v1, v0}, Ljava/lang/String;->equalsIgnoreCase(Ljava/lang/String;)Z
+-
+-    move-result v0
+-
+-    const/4 v1, 0x0
+-
+-    if-eqz v0, :cond_13
+-
+-    goto :goto_3f
+-
+-    :cond_13
+-    iget-object p0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
+-
+-    sget v0, Lcom/samsung/android/settings/deviceinfo/batteryinfo/BatteryInfoUtils;->mBatteryCount:I
+-
+-    const-class v0, Landroid/os/BatteryManager;
+-
+-    invoke-virtual {p0, v0}, Landroid/content/Context;->getSystemService(Ljava/lang/Class;)Ljava/lang/Object;
+-
+-    move-result-object p0
+-
+-    check-cast p0, Landroid/os/BatteryManager;
+-
+-    const/16 v0, 0x6a
+-
+-    invoke-virtual {p0, v0}, Landroid/os/BatteryManager;->semGetValueAsBoolean(I)Z
+-
+-    move-result p0
+-
+-    if-eqz p0, :cond_40
+-
+-    sget p0, Lcom/samsung/android/settings/deviceinfo/SecAboutDeviceItems;->ABOUTITEM_STATUS_EU_ECO_DESIGN:I
+-
+-    const/4 v0, -0x1
+-
+-    const/4 v2, 0x1
+-
+-    if-eq p0, v0, :cond_32
+-
+-    if-ne p0, v2, :cond_30
+-
+-    goto :goto_3d
+-
+-    :cond_30
+-    move v2, v1
+-
+-    goto :goto_3d
+-
+-    :cond_32
+-    sget-boolean p0, Lcom/samsung/android/settings/Rune;->FEATURE_BATTERY_INFO_EU_REGULATORY_ALL_REGION:Z
+-
+-    if-eqz p0, :cond_37
+-
+-    goto :goto_3d
+-
+-    :cond_37
+-    sget-boolean p0, Lcom/samsung/android/settings/Rune;->FEATURE_BATTERY_INFO_EU_REGULATORY:Z
+-
+-    if-eqz p0, :cond_30
+-
+-    sget-boolean v2, Lcom/samsung/android/settings/deviceinfo/batteryinfo/BatteryInfoUtils;->mIsCountryUnderEcoRegulatory:Z
+-
+-    :goto_3d
+-    if-eqz v2, :cond_40
+-
+-    :goto_3f
+-    return v1
+-
+-    :cond_40
+-    const/4 p0, 0x3
++    const/4 p0, 0x0
+-
++
+     return p0
+ .end method
+--
+2.51.1
