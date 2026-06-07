@@ -44,12 +44,15 @@
 /system/etc/mediasearch/data/versioninfo\.json u:object_r:system_file:s0
 /system/etc/permissions u:object_r:system_file:s0
 /system/etc/permissions/privapp-permissions-com\.samsung\.android\.aicore\.xml u:object_r:system_file:s0
+/system/etc/permissions/privapp-permissions-com\.samsung\.android\.aioskernelservice\.xml u:object_r:system_file:s0
 /system/etc/permissions/privapp-permissions-com\.samsung\.android\.app\.moments\.xml u:object_r:system_file:s0
 /system/etc/permissions/privapp-permissions-com\.samsung\.android\.sead\.xml u:object_r:system_file:s0
 /system/etc/permissions/privapp-permissions-com\.samsung\.mediasearch\.xml u:object_r:system_file:s0
 /system/etc/permissions/privapp-permissions-com\.samsung\.android\.smartsuggestions\.xml u:object_r:system_file:s0
+/system/etc/permissions/signature-permissions-com\.samsung\.android\.offline\.languagemodel\.xml u:object_r:system_file:s0
 /system/etc/permissions/signature-permissions-com\.samsung\.android\.game\.gamehome\.xml u:object_r:system_file:s0
 /system/etc/sysconfig u:object_r:system_file:s0
+/system/etc/sysconfig/aioskernelservice\.xml u:object_r:system_file:s0
 /system/etc/sysconfig/moments\.xml u:object_r:system_file:s0
 /system/etc/audio_ae_intervals\.conf u:object_r:system_file:s0
 /system/etc/fastScanner\.tflite u:object_r:system_file:s0
@@ -260,6 +263,8 @@
 /system/media/audio/ui u:object_r:system_file:s0
 /system/media/audio/ui/Media_preview_Over_the_horizon\.ogg u:object_r:system_file:s0
 /system/priv-app u:object_r:system_file:s0
+/system/priv-app/AIOSKernelService u:object_r:system_file:s0
+/system/priv-app/AIOSKernelService/AIOSKernelService\.apk u:object_r:system_file:s0
 /system/priv-app/EnvironmentAdaptiveDisplay u:object_r:system_file:s0
 /system/priv-app/EnvironmentAdaptiveDisplay/EnvironmentAdaptiveDisplay\.apk u:object_r:system_file:s0
 /system/priv-app/MediaSearch u:object_r:system_file:s0

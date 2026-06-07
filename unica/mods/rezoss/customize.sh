@@ -10,36 +10,298 @@ DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.sa
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_SECURITY_CONFIG_DEVICEMONITOR_PACKAGE_NAME" "com.samsung.android.sm.devicesecurity.tcm"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME" "com.samsung.android.sm_cn"
 
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_VENDOR_LIB_INFO" "de_flicker.arcsoft.v1,ai_isp.samsung.v1,food.samsung.v1,beauty.samsung.v4,facial_restoration.arcsoft.v1,face_landmark.arcsoft.v2_1,facial_attribute.samsung.v1,human_tracking_hand.arcsoft.v4,fr_tracking.arcsoft.v1,ai_clear_zoom.arcsoft.v2,hybridhdr.arcsoft.v1,aebhdr.arcsoft.v1,super_night.mpi.v2,aimode.samsung.v3,super_resolution_tetra.samsung.v1,image_codec.samsung.v2,single_bokeh.samsung.v2,dual_bokeh.samsung.v2,image_enhance.arcsoft.v1,stereo_photo.samsung.v1,smart_scan.samsung.v2,swuwdc.arcsoft.v1,selfie_correction.samsung.v2,event_detection.samsung.v2,pro_single_rgb.mpi.v1,localtm.samsung.v1_1,mid_highres.samsung.v1" 
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_VENDOR_LIB_INFO" "de_flicker.arcsoft.v1,de_flicker_hdr.arcsoft.v1,ai_isp.samsung.v1,food.samsung.v1,face_landmark.arcsoft.v2_1,beauty.samsung.v4,facial_restoration.arcsoft.v1,facial_attribute.samsung.v1,human_tracking_hand.arcsoft.v4,fr_tracking.arcsoft.v1,smart_scan.samsung.v2,aimode.samsung.v2,aimfisp.samsung.v1,ai_clear_zoom.arcsoft.v1,macro_raw_sr.arcsoft.v1,super_resolution_raw.arcsoft.v2,super_resolution_tetra.samsung.v1,aebhdr.arcsoft.v1,hybridhdr.arcsoft.v1,single_bokeh.samsung.v2,super_night.mpi.v2,swuwdc.arcsoft.v1,event_detection.samsung.v2,selfie_correction.samsung.v1,dual_bokeh.samsung.v1_1,image_codec.samsung.v2,pro_single_rgb.mpi.v1,image_enhance.arcsoft.v1,localtm.samsung.v1_1,stereo_photo.samsung.v1,compressed_raw_decoder.samsung.v1"
+# From S26U
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_AI_HIGH_RESOLUTION_MAX_CAPTURE" "-1"
+# WARNING: Might cause crash
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_AI_HIGH_RESOLUTION" "FALSE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_AI_HIGH_RESOLUTION_DRAFT_DOWNSCALE" "FALSE"
+# WARNING: Might Cause Crash
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_AFSENSITIVITY" "FALSE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_AFSMARTTRACKING" "FALSE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_AFSPEED" "FALSE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_CINEMATIC_PORTRAITVIDEO" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_FUSION_HIGH_RESOLUTION" "FALSE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_HIGH_RESOLUTION_SWBINNING" "FALSE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_ACCESSIBILITY_SUPPORT_AI_CORE_IMAGE_DESCRIPTION" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_NIGHT_INTEGRATED_PHOTO_MODE" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_SUPER_NIGHT_DRAFT_RAW" "TRUE"
+# WARNING: Might Cause Crash
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_VDIS_ON_MOTIONPHOTO" "FALSE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_VIDEO_SOFTENING" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_CONFIG_WAKEUP_MULTIAGENT_VERSION" "1"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_CONFIG_APPFUNCTION_AGENT_APPLIST" "ai.perplexity.app.android"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_SUPPORT_COMPUTER_CONTROL" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_PREWARMING_LEVEL" "1"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_LCD_SUPPORT_DOZE_AP_SLEEP" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_CFA_CODEC" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_VIDEO_SEARCH" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_VIDEOSERACH" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_SAMSUNG_SEARCH_SEMANTIC_SEARCH_VERSION" "510"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GENAI_CONFIG_FOUNDATION_MODEL" "3B"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GENAI_CONFIG_LLM_VERSION" "0.70"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_DOCUMENTSCAN_SOLUTIONS" "AI_DEWARPING,SHADOW_REMOVAL,DEBLUR,OBJECT_REMOVAL,COLOR_ENHANCE,TEXT_REFLECTION_REMOVAL,MOIRE_REMOVAL,DOGEAR_REMOVAL,SCANNER_FILTER,DEFAULT_COLOR_FILTER,MAGNET"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_DOCUMENTSCAN_SOLUTIONS" "AI_DEWARPING,SHADOW_REMOVAL,DEBLUR,OBJECT_REMOVAL"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_AUTO_EXPOSURE_LIMIT" "TRUE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_MOTIONPHOTO_AUTO_TRIM_MODE" "TRUE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_MOTIONPHOTO_SOUND_TIMING" "TRUE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_MOTIONPHOTO_SOUND_TYPE" "TRUE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GALLERY_CONFIG_LIVEFOCUS_EFFECT_DUAL_BOKEH" "BLUR,EFFECT,BIGBOKEH,PORTRAIT,RELIGHT,REFOCUS,LIGHT360,GENERIC_REFOCUS,GENERIC_REEDIT"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_REDUCE_FLASH_LIGHT" "TRUE"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_VIDEO_CONFIG_VIDEO_CLIPPING_MODE" "NPU,unifiedclipper"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_VIDEO_CONFIG_VIDEO_CLIPPING_MODE" "NPU,unifiedclipper,foundational_segmentation"
 
+_REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG()
+{
+    local CONFIG="$1"
+    local VALUE="$2"
+    local FILE="$WORK_DIR/vendor/etc/floating_feature.xml"
 
-# Mod from AstroROM https://github.com/SameerAlSahab
-# Scamsung only added this bomb in Galaxy A23
-
-# Add entries in floating feature
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_BATTERY_SUPPORT_BSOH_SETTINGS" "TRUE"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_BATTERY_SUPPORT_SBP_INFO_SETTINGS" "TRUE"
-BOMB_MODEL="SM-A236B"
-PLANT_MODEL="SM-S918B"
-
-find "$APKTOOL_DIR/system/priv-app/SecSettings/SecSettings.apk/" -type f -name "*.smali" | while read -r smali; do
-    if grep -q "$BOMB_MODEL" "$smali"; then
-        
-        # Replace bomb / plant 
-        sed -i "s/$BOMB_MODEL/$PLANT_MODEL/g" "$smali"
+    if [ ! -f "$FILE" ]; then
+        LOGW "File not found: ${FILE//$WORK_DIR/}"
+        return 0
     fi
+
+    if grep -q "$CONFIG" "$FILE"; then
+        LOG "- Replacing \"$CONFIG\" config with \"$VALUE\" in /vendor/etc/floating_feature.xml"
+        sed -i "$(sed -n "/<${CONFIG}>/=" "$FILE") c\ \ \ \ <${CONFIG}>${VALUE}</${CONFIG}>" "$FILE"
+    else
+        LOG "- Adding \"$CONFIG\" config with \"$VALUE\" in /vendor/etc/floating_feature.xml"
+        sed -i "/<\/SecFloatingFeatureSet>/d" "$FILE"
+        if ! grep -q "Added by unica/mods/rezoss" "$FILE"; then
+            echo "    <!-- Added by unica/mods/rezoss/customize.sh -->" >> "$FILE"
+        fi
+        echo "    <${CONFIG}>${VALUE}</${CONFIG}>" >> "$FILE"
+        echo "</SecFloatingFeatureSet>" >> "$FILE"
+    fi
+}
+
+_REZOSS_APPEND_UNIQUE_LINE()
+{
+    local FILE="$1"
+    local LINE="$2"
+
+    if ! grep -q -F "$LINE" "$FILE"; then
+        echo "$LINE" >> "$FILE"
+    fi
+}
+
+_REZOSS_ENSURE_VENDOR_CONFIG_FILE_CONTEXTS()
+{
+    local FC_FILE="$WORK_DIR/vendor/etc/selinux/vendor_file_contexts"
+
+    if [ ! -f "$FC_FILE" ]; then
+        LOGW "File not found: ${FC_FILE//$WORK_DIR/}"
+        return 0
+    fi
+
+    LOG "- Ensuring S26U vendor config/model file contexts"
+    _REZOSS_APPEND_UNIQUE_LINE "$FC_FILE" "/vendor/etc/aip(/.*)? u:object_r:vendor_configs_file:s0"
+    _REZOSS_APPEND_UNIQUE_LINE "$FC_FILE" "/vendor/etc/saiv/image_understanding/db/doc_rectifier(/.*)? u:object_r:vendor_configs_file:s0"
+    _REZOSS_APPEND_UNIQUE_LINE "$FC_FILE" "/vendor/etc/saiv/image_understanding/db/fm(/.*)? u:object_r:vendor_configs_file:s0"
+    _REZOSS_APPEND_UNIQUE_LINE "$FC_FILE" "/vendor/etc/saiv/image_understanding/db/ss_magnet(/.*)? u:object_r:vendor_configs_file:s0"
+    _REZOSS_APPEND_UNIQUE_LINE "$FC_FILE" "/vendor/etc/midas_enhancedocumentscan(/.*)? u:object_r:vendor_configs_file:s0"
+}
+
+_REZOSS_SET_VENDOR_CONFIG_DIR_METADATA()
+{
+    local ENTRY="$1"
+    local BASE="$WORK_DIR/vendor/$ENTRY"
+    local FILE
+    local REL
+
+    if [ ! -d "$BASE" ]; then
+        LOGW "Directory not found: ${BASE//$WORK_DIR/}"
+        return 0
+    fi
+
+    while IFS= read -r FILE; do
+        REL="${FILE#$WORK_DIR/vendor/}"
+        if [ -d "$FILE" ]; then
+            SET_METADATA "vendor" "$REL" 0 2000 755 "u:object_r:vendor_configs_file:s0"
+        else
+            SET_METADATA "vendor" "$REL" 0 0 644 "u:object_r:vendor_configs_file:s0"
+        fi
+    done < <(find "$BASE")
+}
+
+_REZOSS_SET_SYSTEM_LIB64_METADATA()
+{
+    local FILE="$1"
+
+    SET_METADATA "system" "system/lib64/$FILE" 0 0 644 "u:object_r:system_lib_file:s0"
+}
+
+_REZOSS_ENSURE_LOG_VIDEO_FILTER_SELINUX()
+{
+    local FC_FILE="$WORK_DIR/vendor/etc/selinux/vendor_file_contexts"
+    local CIL_FILE="$WORK_DIR/vendor/etc/selinux/vendor_sepolicy.cil"
+
+    if [ -f "$FC_FILE" ]; then
+        if ! grep -q -F "/data/vendor/LogVideofilters" "$FC_FILE"; then
+            LOG "- Adding LogVideofilters data file context"
+            echo "/data/vendor/LogVideofilters(/.*)? u:object_r:LogVideofilters_data_file:s0" >> "$FC_FILE"
+        fi
+    else
+        LOGW "File not found: ${FC_FILE//$WORK_DIR/}"
+    fi
+
+    if [ -f "$CIL_FILE" ]; then
+        LOG "- Ensuring LogVideofilters SELinux access"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(type LogVideofilters_data_file)"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(roletype object_r LogVideofilters_data_file)"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset file_type (LogVideofilters_data_file))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset data_file_type (LogVideofilters_data_file))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow hal_camera_default LogVideofilters_data_file (dir (ioctl read getattr lock open watch watch_reads search)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow hal_camera_default LogVideofilters_data_file (file (ioctl read getattr lock map open watch watch_reads)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow platform_app_33_0 LogVideofilters_data_file (dir (ioctl read getattr lock open watch watch_reads search)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow platform_app_33_0 LogVideofilters_data_file (file (ioctl read getattr lock map open watch watch_reads)))"
+    else
+        LOGW "File not found: ${CIL_FILE//$WORK_DIR/}"
+    fi
+}
+
+
+LOG "- Adding S26U Privacy Display, Gallery LOG, Camera LOG/LUT, and Horizon Lock support files"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/cameradata/logCubefiles" 0 0 755 "u:object_r:system_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libcontextanalyzer_jni.media.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/liblogProcessingEngine.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmediacontextanalyzer.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmpp.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmpp_common.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmppclient.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmppcolorgrade.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmppfilter.so" 0 0 644 "u:object_r:system_lib_file:s0"
+# Required by S26U Camera LOG/LUT preview.
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libppvdis_core.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libppvdis_interface.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libppvdis_wrapper.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libveframework.videoeditor.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libvideo-highlight-arm64-v8a.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/vendor.samsung.hardware.media.mpp-V5-ndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
+
+LOG "- Adding S26U camera node libraries for partial vendor-lib feature set"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libAIDeflicker.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libDeflickerHDR.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libsnapshotdebanding.arcsoft.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libStereoSolution.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libSR_StereoCapture.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libfoundational_segmentation.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+# S26U enhanced document-scan native libs.
+# WARNING: Might cause crash
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libDocColorEnhance.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libDocColorEnhance_Auto.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libDocMagnetEngine.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libDocObjectRemovalV2.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libDocScannerFilterV2.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libDocShadowRemoval.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libMoireFilterV2.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+for f in \
+    "libcontextanalyzer_jni.media.samsung.so" \
+    "liblogProcessingEngine.so" \
+    "libmediacontextanalyzer.so" \
+    "libmpp.so" \
+    "libmpp_common.so" \
+    "libmppclient.so" \
+    "libmppcolorgrade.so" \
+    "libmppfilter.so" \
+    "libppvdis_core.so" \
+    "libppvdis_interface.so" \
+    "libppvdis_wrapper.so" \
+    "libveframework.videoeditor.samsung.so" \
+    "libvideo-highlight-arm64-v8a.so" \
+    "vendor.samsung.hardware.media.mpp-V5-ndk.so" \
+    "libAIDeflicker.camera.samsung.so" \
+    "libDeflickerHDR.camera.samsung.so" \
+    "libsnapshotdebanding.arcsoft.so" \
+    "libStereoSolution.camera.samsung.so" \
+    "libSR_StereoCapture.camera.samsung.so" \
+    "libfoundational_segmentation.camera.samsung.so"; do
+    _REZOSS_SET_SYSTEM_LIB64_METADATA "$f"
 done
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libAIISP10.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libAIISP10Tuning.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libbayeraiphoto_wrapper_v1.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libBayerAIPhoto.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libBayerAIPhotoTuning.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
+# S26U high-res/fusion native stack.
+# WARNING: Disabled after repeated dm3q smooth_transition/SAT provider crashes.
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libAIHDR_core.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libAIHRWrapper.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libAIHR_ERAW_Wrapper.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libAIHighRes_interface.so" 0 0 644 "u:object_r:vendor_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libBayerSR10.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libBayerSR10Tuning.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libsecsuperresolution_wrapper_v1.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libTetraSR10.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libTetraSR10Tuning.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
+# S26U AI autofocus experiment.
+# WARNING: Might cause crash.
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libaiAutoFocus.so" 0 0 644 "u:object_r:vendor_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/aiAutoFocus_v1.0.24U.dlc" 0 0 644 "u:object_r:vendor_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/aiAutoFocus_v1.1.24U_TELE.dlc" 0 0 644 "u:object_r:vendor_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/aiAutoFocus_v1.1.24U_UW.dlc" 0 0 644 "u:object_r:vendor_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libDepthPortraitVideo_interface.so" 0 0 644 "u:object_r:vendor_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libRenderPortraitVideo_interface.so" 0 0 644 "u:object_r:vendor_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libSRCinematicVideo.so" 0 0 644 "u:object_r:vendor_file:s0"
+
+LOG "- Adding S26U AI high-res and video clipping model files"
+_REZOSS_ENSURE_VENDOR_CONFIG_FILE_CONTEXTS
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/aip/config" 0 2000 755 "u:object_r:vendor_configs_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/aip/model" 0 2000 755 "u:object_r:vendor_configs_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/saiv/image_understanding/db/fm" 0 2000 755 "u:object_r:vendor_configs_file:s0"
+# S26U enhanced document-scan configs/models.
+# WARNING: Might cause crash.
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/saiv/image_understanding/db/doc_rectifier" 0 2000 755 "u:object_r:vendor_configs_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/saiv/image_understanding/db/ss_magnet" 0 2000 755 "u:object_r:vendor_configs_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/midas_enhancedocumentscan" 0 2000 755 "u:object_r:vendor_configs_file:s0"
+for f in \
+    "etc/aip/config" \
+    "etc/aip/model" \
+    "etc/saiv/image_understanding/db/fm"; do
+    _REZOSS_SET_VENDOR_CONFIG_DIR_METADATA "$f"
+done
+
+# Transitive dependencies of the S26U video editor / LOG correction stack.
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmultisourceseparator.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libsbs.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libtensorflowlite_gpu_delegate.so" 0 0 644 "u:object_r:system_lib_file:s0"
+for f in \
+    "libmultisourceseparator.so" \
+    "libsbs.so" \
+    "libtensorflowlite_gpu_delegate.so"; do
+    _REZOSS_SET_SYSTEM_LIB64_METADATA "$f"
+done
+
+# Rezoss S26U Horizon Lock vendor VDIS experiment.
+# WARNING: Disabled after confirmed camera crash.
+# ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/camera/components/com.samsung.node.uniplugin_vdis.so" 0 0 644 "u:object_r:vendor_file:s0"
+# ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libvdis_interface.so" 0 0 644 "u:object_r:vendor_file:s0"
+# ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libvdis_core.so" 0 0 644 "u:object_r:vendor_file:s0"
+# ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libsecsettingsmanager.so" 0 0 644 "u:object_r:vendor_file:s0"
+# ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libIMUSensor.so" 0 0 644 "u:object_r:vendor_file:s0"
+
+# Optional deeper S26U sensor/OIS test.
+# WARNING: Disabled after crash.
+# ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libsensorndkbridge.so" 0 0 644 "u:object_r:vendor_file:s0"
+# ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libprotobuf-cpp-lite-21.12.so" 0 0 644 "u:object_r:vendor_file:s0"
+# ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/liboischannel.so" 0 0 644 "u:object_r:vendor_file:s0"
+# ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libois_channel_stub.so" 0 0 644 "u:object_r:vendor_file:s0"
+# ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libois_channel_factory_test_stub.so" 0 0 644 "u:object_r:vendor_file:s0"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_LCD_CONFIG_PRIVACY_DISPLAY" "1"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GALLERY_SUPPORT_LOG_CORRECT_COLOR" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_LOG_VIDEO" "V1.0"
+_REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_LCD_CONFIG_PRIVACY_DISPLAY" "1"
+_REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_AI_HIGH_RESOLUTION_MAX_CAPTURE" "0"
+_REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_MOTIONPHOTO_CAPTURE_MODE" "[[3,1]]"
+_REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_MOTIONPHOTO_DEFAULT_SOUND_TIMING" "recording_finishes"
+_REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_MOTIONPHOTO_DEFAULT_SOUND_TYPE" "motion_photo"
+_REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_DOCUMENTSCAN_SOLUTIONS" "AI_DEWARPING,SHADOW_REMOVAL,DEBLUR,OBJECT_REMOVAL"
+_REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_AI_HIGH_RESOLUTION_DRAFT_DOWNSCALE" "FALSE"
+_REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_PREWARMING_LEVEL" "0"
+_REZOSS_ENSURE_LOG_VIDEO_FILTER_SELINUX
+
+unset -f _REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG _REZOSS_APPEND_UNIQUE_LINE
+unset -f _REZOSS_ENSURE_LOG_VIDEO_FILTER_SELINUX
+
 
 #JustForMe
 NOW_BUILD="UN1CA-ROM built by Rezoss on $(GET_PROP "system" "ro.build.PDA")"
@@ -78,7 +340,7 @@ LOG "- Patch product framework overlay doze auto-brightness"
 APPLY_PATCH "product" "overlay/framework-res__dm3qxxx__auto_generated_rro_product.apk" \
     "$MODPATH/rro/framework-res__dm3qxxx__auto_generated_rro_product.apk/0001-Add-doze-auto-brightness-arrays.patch"
 
-# Enable Notification Priority/Summary for dm-series devices behind Samsung's m-series gate
+# Enable Notification Priority/Summary for dmxq-series devices behind Samsung's m-series gate
 LOG "- Patch services.jar AI notification priority/summary model gate"
 APPLY_PATCH "system" "system/framework/services.jar" \
     "$MODPATH/notification-priority/services.jar/0001-Allow-dm1q-dm2q-dm3q-AI-notification-priority.patch"
@@ -86,6 +348,13 @@ APPLY_PATCH "system" "system/framework/services.jar" \
 LOG "- Patch SettingsProvider notification priority/summary defaults"
 APPLY_PATCH "system" "system/priv-app/SettingsProvider/SettingsProvider.apk" \
     "$MODPATH/notification-priority/SettingsProvider.apk/0001-Enable-notification-priority-default.patch"
+
+LOG "- Sanitize Firewall province/country strings"
+DECODE_APK "system" "system/priv-app/Firewall/Firewall.apk"
+python3 "$MODPATH/firewall/patch_region_strings.py" \
+    "$APKTOOL_DIR/system/priv-app/Firewall/Firewall.apk" \
+    "$MODPATH/firewall/region_names.tsv" \
+    || ABORT "Failed to sanitize Firewall province/country strings"
 
 LOG_STEP_OUT
 
@@ -122,7 +391,7 @@ if [[ ! -x "$MAGISKBOOT" ]]; then
 
   curl -fL --retry 3 -o "$TMP_DIR/Magisk.apk" "$MAGISK_APK_URL"
 
-  unzip -p "$TMP_DIR/Magisk.apk" 'lib/x86_64/libmagiskboot.so' > "$MAGISKBOOT" 2>/dev/null || true  
+  unzip -p "$TMP_DIR/Magisk.apk" 'lib/x86_64/libmagiskboot.so' > "$MAGISKBOOT" 2>/dev/null || true
 
   chmod +x "$MAGISKBOOT"
 fi
@@ -237,5 +506,3 @@ cp -f "$KSU_PATCHED_INIT_BOOT" "$KSU_INIT_BOOT" \
   || ABORT "Failed to replace init_boot.img with KernelSU-Next patched image"
 rm -rf "$TMP_DIR"
 LOG_STEP_OUT
-
-find "$APKTOOL_DIR" -type f -name "*.orig" -delete

@@ -50,6 +50,7 @@ system/etc/permissions/privapp-permissions-com.samsung.mediasearch.xml 0 0 644 c
 system/etc/permissions/privapp-permissions-com.samsung.android.smartsuggestions.xml 0 0 644 capabilities=0x0
 system/etc/permissions/signature-permissions-com.samsung.android.game.gamehome.xml 0 0 644 capabilities=0x0
 system/etc/sysconfig 0 0 755 capabilities=0x0
+system/etc/sysconfig/aioskernelservice.xml 0 0 644 capabilities=0x0
 system/etc/sysconfig/moments.xml 0 0 644 capabilities=0x0
 system/etc/audio_ae_intervals.conf 0 0 644 capabilities=0x0
 system/etc/fastScanner.tflite 0 0 644 capabilities=0x0
