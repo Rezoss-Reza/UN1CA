@@ -107,12 +107,18 @@ SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
     'filled-new-array/range {v1 .. v164}, [Ljava/lang/String;' \
     '    const-string v177, "io.mesalabs.unica.settings.ui.UISettingsFragment"\n\n    filled-new-array/range {v1 .. v177}, [Ljava/lang/String;' \
     > /dev/null
+SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
+    "smali/com/android/settings/core/gateway/SettingsGateway.smali" "replace" \
+    '<clinit>()V' \
+    'filled-new-array/range {v1 .. v177}, [Ljava/lang/String;' \
+    '    const-string v178, "io.mesalabs.unica.settings.spoof.CameraFeatureFragment"\n\n    filled-new-array/range {v1 .. v178}, [Ljava/lang/String;' \
+    > /dev/null
 LOG "- Patching \"smali/com/android/settings/SettingsActivity.smali\" in /system/system/priv-app/SecSettings.apk"
 SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
     "smali/com/android/settings/SettingsActivity.smali" "replace" \
     'isValidFragment(Ljava/lang/String;)Z' \
     'const/16 v2, 0xab' \
-    'const/16 v2, 0xb1' \
+    'const/16 v2, 0xb2' \
     > /dev/null
 
 # # Add UN1CA Settings SearchIndexDataProvider(s)
