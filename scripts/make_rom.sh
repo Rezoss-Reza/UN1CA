@@ -135,6 +135,9 @@ if $BUILD_ROM; then
     if [ -d "$APKTOOL_DIR" ]; then
         LOG_STEP_IN true "Building APKs/JARs"
 
+        LOG "- Cleaning apktool patch leftovers"
+        find "$APKTOOL_DIR" -type f \( -name "*.orig" -o -name "*.rej" \) -delete
+
         while IFS= read -r f; do
             f="${f/$APKTOOL_DIR\//}"
             PARTITION="$(cut -d "/" -f 1 -s <<< "$f")"

@@ -37,7 +37,7 @@ BUILD()
     cp -a "$OUTPUT_PATH/original/META-INF" "$OUTPUT_PATH/build/apk/META-INF"
 
     # Build APK with --shorten-resource-paths (https://developer.android.com/tools/aapt2#optimize_options)
-	find "$APKTOOL_DIR" -type f -name "*.orig" -delete
+    find "$OUTPUT_PATH" -type f \( -name "*.orig" -o -name "*.rej" \) -delete
     REBALANCE_DEX
     EVAL "apktool b -j \"$THREAD_COUNT\" -p \"$FRAMEWORK_DIR\" -srp \"$OUTPUT_PATH\"" || exit 1
 
