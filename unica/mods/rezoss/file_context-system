@@ -51,7 +51,7 @@
 /system/lib64/DualOutFocusViewer_B\.so u:object_r:system_file:s0
 /system/lib64/libDocColorEnhance_Auto\.camera\.samsung\.so u:object_r:system_file:s0
 /system/cameradata/stereo_data u:object_r:system_file:s0
-/system/cameradata/stereo_data/SRGIE_Y_A16W8_V008_sm8750_snpe2279\.dlc u:object_r:system_file:s0
+/system/cameradata/stereo_data/15-02_StereoPhoto_GuidedImageEnhancement_v0\.0\.8\.dlc u:object_r:system_file:s0
 /system/cameradata/stereo_data/stereo_capture_feature\.json u:object_r:system_file:s0
 /system/cameradata/logCubefiles u:object_r:system_file:s0
 /system/cameradata/logCubefiles/3DLUT\.cube u:object_r:system_file:s0
