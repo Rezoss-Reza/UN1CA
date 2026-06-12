@@ -14,7 +14,7 @@ diff --git a/smali/com/samsung/android/aicore/VersionConfigLoader.smali b/smali/
 +
 +    move-result v1
 +
-+    if-nez v1, :cond_force_pa3q
++    if-nez v1, :cond_force_m3q
 +
 +    const-string v1, "dm2q"
 +
@@ -22,7 +22,7 @@ diff --git a/smali/com/samsung/android/aicore/VersionConfigLoader.smali b/smali/
 +
 +    move-result v1
 +
-+    if-nez v1, :cond_force_pa3q
++    if-nez v1, :cond_force_m3q
 +
 +    const-string v1, "dm3q"
 +
@@ -30,12 +30,12 @@ diff --git a/smali/com/samsung/android/aicore/VersionConfigLoader.smali b/smali/
 +
 +    move-result v1
 +
-+    if-nez v1, :cond_force_pa3q
++    if-nez v1, :cond_force_m3q
 +
 +    goto :goto_device_name
 +
-+    :cond_force_pa3q
-+    const-string v0, "pa3q"
++    :cond_force_m3q
++    const-string v0, "m3q"
 +
 +    :goto_device_name
      iput-object v0, p0, Lcom/samsung/android/aicore/VersionConfigLoader;->mDeviceName:Ljava/lang/String;
