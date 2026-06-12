@@ -7,7 +7,7 @@ diff --git a/smali/L/e.smali b/smali/L/e.smali
      :goto_9
      sget-object v9, Landroid/os/Build;->MODEL:Ljava/lang/String;
 
-+    const-string v9, "SM-S938B"
++    const-string v9, "SM-S948B"
 +
      const-string v10, "SAMSUNG-"
 
