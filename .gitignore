@@ -2,9 +2,16 @@ out/
 
 # Local AI assistant/tooling metadata
 /.agents
+/.agents/
 /.codex
 /.codex_backups
 /.gemini
+/.gemini/
+/GEMINI.md
+/Gemini.md
+/gemini.md
+/gemini/
+/agents/
 /AGENTS.md
 /agents.md
 
@@ -35,6 +42,8 @@ prebuilts/samsung/pa2qxxx/system/priv-app/MediaSearch/MediaSearch.apk
 prebuilts/samsung/pa2qxxx/system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk
 prebuilts/samsung/pa2qxxx/system/priv-app/SemanticSearchCore/SemanticSearchCore.apk
 prebuilts/samsung/pa2qxxx/system/priv-app/wallpaper-res/wallpaper-res.apk
+unica/mods/rezoss/system/priv-app/SamsungIntelliVoiceServices/SamsungIntelliVoiceServices.apk
+unica/mods/rezoss/system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk
 
 # Cert
 security/unica_ota.x509.pem

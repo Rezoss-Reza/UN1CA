@@ -10,7 +10,13 @@
 # instance fields
 .field public mExportLauncher:Landroidx/activity/result/ActivityResultLauncher;
 
+.field public mExpandedCategory:Ljava/lang/String;
+
 .field public mImportLauncher:Landroidx/activity/result/ActivityResultLauncher;
+
+.field public mCurrentCategory:Ljava/lang/String;
+
+.field public mSearchQuery:Ljava/lang/String;
 
 
 # direct methods
@@ -142,6 +148,82 @@
     return-object p0
 .end method
 
+.method public static containsIgnoreCase(Ljava/lang/String;Ljava/lang/String;)Z
+    .locals 1
+
+    if-eqz p0, :cond_0
+
+    invoke-virtual {p0}, Ljava/lang/String;->toLowerCase()Ljava/lang/String;
+
+    move-result-object p0
+
+    invoke-virtual {p0, p1}, Ljava/lang/String;->contains(Ljava/lang/CharSequence;)Z
+
+    move-result p0
+
+    return p0
+
+    :cond_0
+    const/4 p0, 0x0
+
+    return p0
+.end method
+
+.method public static matchesSearch(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z
+    .locals 1
+
+    invoke-static {p0}, Landroid/text/TextUtils;->isEmpty(Ljava/lang/CharSequence;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_0
+
+    const/4 p0, 0x1
+
+    return p0
+
+    :cond_0
+    invoke-virtual {p0}, Ljava/lang/String;->toLowerCase()Ljava/lang/String;
+
+    move-result-object p0
+
+    invoke-static {p1, p0}, Lio/mesalabs/unica/settings/spoof/CameraFeatureFragment;->containsIgnoreCase(Ljava/lang/String;Ljava/lang/String;)Z
+
+    move-result v0
+
+    if-nez v0, :cond_1
+
+    invoke-static {p2, p0}, Lio/mesalabs/unica/settings/spoof/CameraFeatureFragment;->containsIgnoreCase(Ljava/lang/String;Ljava/lang/String;)Z
+
+    move-result v0
+
+    if-nez v0, :cond_1
+
+    invoke-static {p3, p0}, Lio/mesalabs/unica/settings/spoof/CameraFeatureFragment;->containsIgnoreCase(Ljava/lang/String;Ljava/lang/String;)Z
+
+    move-result v0
+
+    if-nez v0, :cond_1
+
+    invoke-static {p4, p0}, Lio/mesalabs/unica/settings/spoof/CameraFeatureFragment;->containsIgnoreCase(Ljava/lang/String;Ljava/lang/String;)Z
+
+    move-result v0
+
+    if-nez v0, :cond_1
+
+    goto :cond_2
+
+    :cond_1
+    const/4 p0, 0x1
+
+    return p0
+
+    :cond_2
+    const/4 p0, 0x0
+
+    return p0
+.end method
+
 
 # virtual methods
 .method public final createPreferenceControllers(Landroid/content/Context;)Ljava/util/List;
@@ -185,7 +267,7 @@
 .end method
 
 .method public final onCreate(Landroid/os/Bundle;)V
-    .locals 3
+    .locals 4
 
     invoke-super {p0, p1}, Lcom/android/settings/dashboard/DashboardFragment;->onCreate(Landroid/os/Bundle;)V
 
@@ -193,6 +275,21 @@
 
     invoke-virtual {p0, p1}, Lcom/android/settings/SettingsPreferenceFragment;->setAnimationAllowed(Z)V
 
+    invoke-virtual {p0}, Landroidx/fragment/app/Fragment;->getArguments()Landroid/os/Bundle;
+
+    move-result-object v0
+
+    if-eqz v0, :cond_no_category_arg
+
+    const-string v1, "camera_feature_category"
+
+    invoke-virtual {v0, v1}, Landroid/os/Bundle;->getString(Ljava/lang/String;)Ljava/lang/String;
+
+    move-result-object v0
+
+    iput-object v0, p0, Lio/mesalabs/unica/settings/spoof/CameraFeatureFragment;->mExpandedCategory:Ljava/lang/String;
+
+    :cond_no_category_arg
     new-instance v0, Landroidx/activity/result/contract/ActivityResultContracts$StartActivityForResult;
 
     invoke-direct {v0}, Landroidx/activity/result/contract/ActivityResultContracts$StartActivityForResult;-><init>()V
@@ -231,13 +328,26 @@
 
     move-result-object v0
 
-    const-string v1, "unica_camera_feature_import"
+    const/4 v2, 0x1
+
+    const-string v1, "unica_camera_feature_search"
 
     invoke-virtual {v1, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 
     move-result v1
 
-    const/4 v2, 0x1
+    if-eqz v1, :cond_search
+
+    invoke-virtual {p0}, Lio/mesalabs/unica/settings/spoof/CameraFeatureFragment;->showSearchDialog()V
+
+    return v2
+
+    :cond_search
+    const-string v1, "unica_camera_feature_import"
+
+    invoke-virtual {v1, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v1
 
     if-eqz v1, :cond_1
 
@@ -378,6 +488,121 @@
 
     invoke-virtual {v0}, Landroidx/preference/PreferenceGroup;->removeAll()V
 
+    iget-object v2, p0, Lio/mesalabs/unica/settings/spoof/CameraFeatureFragment;->mExpandedCategory:Ljava/lang/String;
+
+    invoke-static {v2}, Landroid/text/TextUtils;->isEmpty(Ljava/lang/CharSequence;)Z
+
+    move-result v2
+
+    const-string v3, "unica_camera_feature_import"
+
+    invoke-virtual {p0, v3}, Landroidx/preference/PreferenceFragmentCompat;->findPreference(Ljava/lang/CharSequence;)Landroidx/preference/Preference;
+
+    move-result-object v3
+
+    if-eqz v3, :cond_visibility_import_done
+
+    invoke-virtual {v3, v2}, Landroidx/preference/Preference;->setVisible(Z)V
+
+    :cond_visibility_import_done
+    const-string v3, "unica_camera_feature_export"
+
+    invoke-virtual {p0, v3}, Landroidx/preference/PreferenceFragmentCompat;->findPreference(Ljava/lang/CharSequence;)Landroidx/preference/Preference;
+
+    move-result-object v3
+
+    if-eqz v3, :cond_visibility_export_done
+
+    invoke-virtual {v3, v2}, Landroidx/preference/Preference;->setVisible(Z)V
+
+    :cond_visibility_export_done
+    const-string v3, "unica_camera_feature_reset"
+
+    invoke-virtual {p0, v3}, Landroidx/preference/PreferenceFragmentCompat;->findPreference(Ljava/lang/CharSequence;)Landroidx/preference/Preference;
+
+    move-result-object v3
+
+    if-eqz v3, :cond_visibility_reset_done
+
+    invoke-virtual {v3, v2}, Landroidx/preference/Preference;->setVisible(Z)V
+
+    :cond_visibility_reset_done
+    const-string v3, "unica_camera_feature_search"
+
+    invoke-virtual {p0, v3}, Landroidx/preference/PreferenceFragmentCompat;->findPreference(Ljava/lang/CharSequence;)Landroidx/preference/Preference;
+
+    move-result-object v3
+
+    if-eqz v3, :cond_visibility_search_done
+
+    invoke-virtual {v3, v2}, Landroidx/preference/Preference;->setVisible(Z)V
+
+    :cond_visibility_search_done
+    const-string v3, "unica_camera_feature_actions_divider"
+
+    invoke-virtual {p0, v3}, Landroidx/preference/PreferenceFragmentCompat;->findPreference(Ljava/lang/CharSequence;)Landroidx/preference/Preference;
+
+    move-result-object v3
+
+    if-eqz v3, :cond_visibility_divider_done
+
+    invoke-virtual {v3, v2}, Landroidx/preference/Preference;->setVisible(Z)V
+
+    :cond_visibility_divider_done
+    if-nez v2, :cond_category_title_done
+
+    iget-object v3, p0, Lio/mesalabs/unica/settings/spoof/CameraFeatureFragment;->mExpandedCategory:Ljava/lang/String;
+
+    invoke-virtual {v0, v3}, Landroidx/preference/Preference;->setTitle(Ljava/lang/CharSequence;)V
+
+    invoke-virtual {p0}, Landroidx/preference/PreferenceFragmentCompat;->getPreferenceScreen()Landroidx/preference/PreferenceScreen;
+
+    move-result-object v4
+
+    if-eqz v4, :cond_category_title_done
+
+    invoke-virtual {v4, v3}, Landroidx/preference/Preference;->setTitle(Ljava/lang/CharSequence;)V
+
+    :cond_category_title_done
+    const-string v1, "unica_camera_feature_search"
+
+    invoke-virtual {p0, v1}, Landroidx/preference/PreferenceFragmentCompat;->findPreference(Ljava/lang/CharSequence;)Landroidx/preference/Preference;
+
+    move-result-object v1
+
+    if-eqz v1, :cond_search_summary_done
+
+    iget-object v2, p0, Lio/mesalabs/unica/settings/spoof/CameraFeatureFragment;->mSearchQuery:Ljava/lang/String;
+
+    invoke-static {v2}, Landroid/text/TextUtils;->isEmpty(Ljava/lang/CharSequence;)Z
+
+    move-result v3
+
+    if-eqz v3, :cond_search_summary_filtering
+
+    const-string v2, "Filter by feature name, attribute, or value."
+
+    goto :goto_search_summary
+
+    :cond_search_summary_filtering
+    new-instance v3, Ljava/lang/StringBuilder;
+
+    invoke-direct {v3}, Ljava/lang/StringBuilder;-><init>()V
+
+    const-string v5, "Filtering: "
+
+    invoke-virtual {v3, v5}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+
+    invoke-virtual {v3, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+
+    invoke-virtual {v3}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+
+    move-result-object v2
+
+    :goto_search_summary
+    invoke-virtual {v1, v2}, Landroidx/preference/Preference;->setSummary(Ljava/lang/CharSequence;)V
+
+    :cond_search_summary_done
     invoke-virtual {p0}, Lcom/android/settings/core/InstrumentedPreferenceFragment;->getPrefContext()Landroid/content/Context;
 
     move-result-object v1
@@ -391,6 +616,10 @@
     move-result-object v3
 
     const/4 v4, 0x0
+
+    const/4 v5, 0x0
+
+    iput-object v5, p0, Lio/mesalabs/unica/settings/spoof/CameraFeatureFragment;->mCurrentCategory:Ljava/lang/String;
 
     :cond_0
     :goto_0
@@ -416,15 +645,59 @@
 
     if-eqz v6, :cond_feature_row
 
-    new-instance v7, Landroidx/preference/SecPreferenceCategory;
+    iput-object v6, p0, Lio/mesalabs/unica/settings/spoof/CameraFeatureFragment;->mCurrentCategory:Ljava/lang/String;
 
-    invoke-direct {v7, v1}, Landroidx/preference/SecPreferenceCategory;-><init>(Landroid/content/Context;)V
+    iget-object v7, p0, Lio/mesalabs/unica/settings/spoof/CameraFeatureFragment;->mExpandedCategory:Ljava/lang/String;
+
+    invoke-static {v7}, Landroid/text/TextUtils;->isEmpty(Ljava/lang/CharSequence;)Z
+
+    move-result v7
+
+    if-eqz v7, :goto_0
+
+    iget-object v7, p0, Lio/mesalabs/unica/settings/spoof/CameraFeatureFragment;->mSearchQuery:Ljava/lang/String;
+
+    invoke-static {v7}, Landroid/text/TextUtils;->isEmpty(Ljava/lang/CharSequence;)Z
+
+    move-result v7
+
+    if-eqz v7, :goto_0
+
+    new-instance v7, Landroidx/preference/SecPreference;
+
+    const/4 v8, 0x0
+
+    invoke-direct {v7, v1, v8}, Landroidx/preference/SecPreference;-><init>(Landroid/content/Context;Landroid/util/AttributeSet;)V
+
+    const-string v8, "__category"
+
+    invoke-static {v8, v6}, Lio/mesalabs/unica/settings/spoof/CameraFeatureFragment;->buildKey(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+
+    move-result-object v8
+
+    invoke-virtual {v7, v8}, Landroidx/preference/Preference;->setKey(Ljava/lang/String;)V
 
     invoke-virtual {v7, v6}, Landroidx/preference/Preference;->setTitle(Ljava/lang/CharSequence;)V
+
+    const-string v8, "Open local name values"
+
+    invoke-virtual {v7, v8}, Landroidx/preference/Preference;->setSummary(Ljava/lang/CharSequence;)V
 
     invoke-virtual {v7, v4}, Landroidx/preference/Preference;->setOrder(I)V
 
     add-int/lit8 v4, v4, 0x1
+
+    const-string v8, "io.mesalabs.unica.settings.spoof.CameraFeatureFragment"
+
+    invoke-virtual {v7, v8}, Landroidx/preference/Preference;->setFragment(Ljava/lang/String;)V
+
+    invoke-virtual {v7}, Landroidx/preference/Preference;->getExtras()Landroid/os/Bundle;
+
+    move-result-object v8
+
+    const-string v9, "camera_feature_category"
+
+    invoke-virtual {v8, v9, v6}, Landroid/os/Bundle;->putString(Ljava/lang/String;Ljava/lang/String;)V
 
     invoke-virtual {v0, v7}, Landroidx/preference/PreferenceGroup;->addPreference(Landroidx/preference/Preference;)Z
 
@@ -493,6 +766,38 @@
 
     move-result-object v12
 
+    iget-object v13, p0, Lio/mesalabs/unica/settings/spoof/CameraFeatureFragment;->mSearchQuery:Ljava/lang/String;
+
+    invoke-static {v13}, Landroid/text/TextUtils;->isEmpty(Ljava/lang/CharSequence;)Z
+
+    move-result v14
+
+    if-eqz v14, :cond_search_filter
+
+    iget-object v14, p0, Lio/mesalabs/unica/settings/spoof/CameraFeatureFragment;->mCurrentCategory:Ljava/lang/String;
+
+    if-eqz v14, :cond_show_feature
+
+    iget-object v13, p0, Lio/mesalabs/unica/settings/spoof/CameraFeatureFragment;->mExpandedCategory:Ljava/lang/String;
+
+    if-eqz v13, :cond_1
+
+    invoke-virtual {v13, v14}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v14
+
+    if-eqz v14, :cond_1
+
+    goto :cond_show_feature
+
+    :cond_search_filter
+    invoke-static {v13, v6, v9, v10, v12}, Lio/mesalabs/unica/settings/spoof/CameraFeatureFragment;->matchesSearch(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z
+
+    move-result v14
+
+    if-eqz v14, :cond_1
+
+    :cond_show_feature
     invoke-static {v10}, Lio/mesalabs/unica/settings/spoof/CameraFeatureUtils;->isBooleanValue(Ljava/lang/String;)Z
 
     move-result v13
@@ -565,6 +870,65 @@
     goto :goto_1
 
     :cond_7
+    return-void
+.end method
+
+.method public final showSearchDialog()V
+    .locals 6
+
+    invoke-virtual {p0}, Lcom/android/settings/core/InstrumentedPreferenceFragment;->getPrefContext()Landroid/content/Context;
+
+    move-result-object v0
+
+    new-instance v1, Landroid/widget/EditText;
+
+    invoke-direct {v1, v0}, Landroid/widget/EditText;-><init>(Landroid/content/Context;)V
+
+    const/4 v2, 0x1
+
+    invoke-virtual {v1, v2}, Landroid/widget/EditText;->setSingleLine(Z)V
+
+    iget-object v2, p0, Lio/mesalabs/unica/settings/spoof/CameraFeatureFragment;->mSearchQuery:Ljava/lang/String;
+
+    invoke-static {v2}, Landroid/text/TextUtils;->isEmpty(Ljava/lang/CharSequence;)Z
+
+    move-result v3
+
+    if-nez v3, :cond_0
+
+    invoke-virtual {v1, v2}, Landroid/widget/EditText;->setText(Ljava/lang/CharSequence;)V
+
+    :cond_0
+    const/4 v2, 0x1
+
+    invoke-virtual {v1, v2}, Landroid/widget/EditText;->setSelectAllOnFocus(Z)V
+
+    new-instance v2, Landroid/app/AlertDialog$Builder;
+
+    invoke-direct {v2, v0}, Landroid/app/AlertDialog$Builder;-><init>(Landroid/content/Context;)V
+
+    const-string v0, "Search camera features"
+
+    invoke-virtual {v2, v0}, Landroid/app/AlertDialog$Builder;->setTitle(Ljava/lang/CharSequence;)Landroid/app/AlertDialog$Builder;
+
+    invoke-virtual {v2, v1}, Landroid/app/AlertDialog$Builder;->setView(Landroid/view/View;)Landroid/app/AlertDialog$Builder;
+
+    new-instance v0, Lio/mesalabs/unica/settings/spoof/CameraFeatureFragment$SearchDialogClickListener;
+
+    invoke-direct {v0, p0, v1}, Lio/mesalabs/unica/settings/spoof/CameraFeatureFragment$SearchDialogClickListener;-><init>(Lio/mesalabs/unica/settings/spoof/CameraFeatureFragment;Landroid/widget/EditText;)V
+
+    const-string p0, "Apply"
+
+    invoke-virtual {v2, p0, v0}, Landroid/app/AlertDialog$Builder;->setPositiveButton(Ljava/lang/CharSequence;Landroid/content/DialogInterface$OnClickListener;)Landroid/app/AlertDialog$Builder;
+
+    const-string p0, "Cancel"
+
+    const/4 v0, 0x0
+
+    invoke-virtual {v2, p0, v0}, Landroid/app/AlertDialog$Builder;->setNegativeButton(Ljava/lang/CharSequence;Landroid/content/DialogInterface$OnClickListener;)Landroid/app/AlertDialog$Builder;
+
+    invoke-virtual {v2}, Landroid/app/AlertDialog$Builder;->show()Landroid/app/AlertDialog;
+
     return-void
 .end method
 

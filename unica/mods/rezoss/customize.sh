@@ -1,6 +1,66 @@
 LOG_STEP_IN "- Rezoss experimental mods"
-ADD_TO_WORK_DIR "$MODPATH" "system" "." 0 0 755 "u:object_r:system_file:s0"
 
+# =============================================================================
+# Base Overlay
+# =============================================================================
+ADD_TO_WORK_DIR "$MODPATH" "system" "." 0 0 755 "u:object_r:system_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" \
+    "system/etc/default-permissions/default-permissions-com.samsung.android.smartsuggestions.xml" 0 0 644 "u:object_r:system_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" \
+    "system/etc/permissions/privapp-permissions-com.samsung.android.smartsuggestions.xml" 0 0 644 "u:object_r:system_file:s0"
+LOG "- Patching SmartSuggestions content visibility, Now Nudge, and Developer Mode access"
+REZOSS_SMARTSUGGESTIONS_APK="$WORK_DIR/system/system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk"
+REZOSS_SMARTSUGGESTIONS_TMP="$TMP_DIR/rezoss_smartsuggestions_dev_mode"
+REZOSS_SMARTSUGGESTIONS_CERT_PREFIX="aosp"
+$ROM_IS_OFFICIAL && REZOSS_SMARTSUGGESTIONS_CERT_PREFIX="unica"
+EVAL "rm -rf \"$REZOSS_SMARTSUGGESTIONS_TMP\" && mkdir -p \"$REZOSS_SMARTSUGGESTIONS_TMP\""
+EVAL "unzip -q -p \"$REZOSS_SMARTSUGGESTIONS_APK\" classes11.dex > \"$REZOSS_SMARTSUGGESTIONS_TMP/classes11.dex\""
+EVAL "unzip -q -p \"$REZOSS_SMARTSUGGESTIONS_APK\" classes14.dex > \"$REZOSS_SMARTSUGGESTIONS_TMP/classes14.dex\""
+EVAL "unzip -q -p \"$REZOSS_SMARTSUGGESTIONS_APK\" classes15.dex > \"$REZOSS_SMARTSUGGESTIONS_TMP/classes15.dex\""
+EVAL "unzip -q -p \"$REZOSS_SMARTSUGGESTIONS_APK\" AndroidManifest.xml > \"$REZOSS_SMARTSUGGESTIONS_TMP/AndroidManifest.xml\""
+EVAL "python3 \"$MODPATH/smartsuggestions/patch_contents_visibility_dex.py\" \"$REZOSS_SMARTSUGGESTIONS_TMP/classes14.dex\""
+EVAL "python3 \"$MODPATH/smartsuggestions/patch_now_nudge_dex.py\" \"$REZOSS_SMARTSUGGESTIONS_TMP/classes15.dex\""
+EVAL "python3 \"$MODPATH/smartsuggestions/patch_smartsuggestions_dev_mode.py\" \"$REZOSS_SMARTSUGGESTIONS_TMP/classes11.dex\" \"$REZOSS_SMARTSUGGESTIONS_TMP/classes15.dex\" \"$REZOSS_SMARTSUGGESTIONS_TMP/AndroidManifest.xml\""
+EVAL "cp -a \"$REZOSS_SMARTSUGGESTIONS_APK\" \"$REZOSS_SMARTSUGGESTIONS_TMP/SamsungSmartSuggestions.apk\""
+EVAL "cd \"$REZOSS_SMARTSUGGESTIONS_TMP\" && zip -q -0 \"SamsungSmartSuggestions.apk\" classes11.dex classes14.dex classes15.dex AndroidManifest.xml"
+EVAL "signapk \"$SRC_DIR/security/${REZOSS_SMARTSUGGESTIONS_CERT_PREFIX}_platform.x509.pem\" \"$SRC_DIR/security/${REZOSS_SMARTSUGGESTIONS_CERT_PREFIX}_platform.pk8\" \"$REZOSS_SMARTSUGGESTIONS_TMP/SamsungSmartSuggestions.apk\" \"$REZOSS_SMARTSUGGESTIONS_TMP/SamsungSmartSuggestions.signed.apk\""
+EVAL "mv -f \"$REZOSS_SMARTSUGGESTIONS_TMP/SamsungSmartSuggestions.signed.apk\" \"$REZOSS_SMARTSUGGESTIONS_APK\""
+SET_METADATA "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" 0 0 644 "u:object_r:system_file:s0"
+EVAL "rm -rf \"$REZOSS_SMARTSUGGESTIONS_TMP\""
+LOG "- Patch SmartSuggestions missing Kakao Navi provider crash"
+APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0002-Handle-missing-Kakao-Navi-provider.patch"
+LOG "- Patching SmartSuggestions Now Nudge experimental runtime gates"
+SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "smali_classes15/com/samsung/android/smartsuggestions/service/screenintelligence/setting/NowNudgesSettingHelper.smali" "return" \
+    'isAvailableAccount(Landroid/content/Context;)Z' \
+    'true' \
+    > /dev/null
+SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "smali_classes15/com/samsung/android/smartsuggestions/service/screenintelligence/setting/NowNudgesSettingHelper.smali" "return" \
+    'isOnNowNudgesInApp(Landroid/content/Context;)Z' \
+    'true' \
+    > /dev/null
+SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "smali_classes15/com/samsung/android/smartsuggestions/service/autofill/AutofillNudgeProvider.smali" "return" \
+    'checkAutofillSupported()Z' \
+    'true' \
+    > /dev/null
+SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "smali_classes15/com/samsung/android/smartsuggestions/service/autofill/AutofillNudgeProvider.smali" "return" \
+    'checkKeyboardLocale()Z' \
+    'true' \
+    > /dev/null
+SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "smali_classes15/com/samsung/android/smartsuggestions/service/policy/AutofillPolicyManager.smali" "return" \
+    'isNudgeAllowed(Landroid/content/ComponentName;)Z' \
+    'true' \
+    > /dev/null
+unset REZOSS_SMARTSUGGESTIONS_APK REZOSS_SMARTSUGGESTIONS_TMP REZOSS_SMARTSUGGESTIONS_CERT_PREFIX
+
+# =============================================================================
+# Device Care / Smart Manager CN
+# =============================================================================
 DELETE_FROM_WORK_DIR "system" "system/priv-app/SmartManager_v5"
 DELETE_FROM_WORK_DIR "system" "system/app/SmartManager_v6_DeviceSecurity"
 DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.android.lool.xml"
@@ -9,45 +69,71 @@ DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.sa
 
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_SECURITY_CONFIG_DEVICEMONITOR_PACKAGE_NAME" "com.samsung.android.sm.devicesecurity.tcm"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME" "com.samsung.android.sm_cn"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_SUPPORT_NAL_PRELOADAPP_REGULATION" "TRUE"
 
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_VENDOR_LIB_INFO" "de_flicker.arcsoft.v1,de_flicker_hdr.arcsoft.v1,ai_isp.samsung.v1,food.samsung.v1,face_landmark.arcsoft.v2_1,beauty.samsung.v4,facial_restoration.arcsoft.v1,facial_attribute.samsung.v1,human_tracking_hand.arcsoft.v4,fr_tracking.arcsoft.v1,smart_scan.samsung.v2,aimode.samsung.v2,aimfisp.samsung.v1,ai_clear_zoom.arcsoft.v1,macro_raw_sr.arcsoft.v1,super_resolution_raw.arcsoft.v2,super_resolution_tetra.samsung.v1,aebhdr.arcsoft.v1,hybridhdr.arcsoft.v1,single_bokeh.samsung.v2,super_night.mpi.v2,swuwdc.arcsoft.v1,event_detection.samsung.v2,selfie_correction.samsung.v1,dual_bokeh.samsung.v1_1,image_codec.samsung.v2,pro_single_rgb.mpi.v1,image_enhance.arcsoft.v1,localtm.samsung.v1_1,stereo_photo.samsung.v1,compressed_raw_decoder.samsung.v1"
-# From S26U
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_AI_HIGH_RESOLUTION_MAX_CAPTURE" "-1"
-# WARNING: Might cause crash
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_AI_HIGH_RESOLUTION" "TRUE"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_AI_HIGH_RESOLUTION_DRAFT_DOWNSCALE" "TRUE"
-# WARNING: Might Cause Crash
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_AFSENSITIVITY" "TRUE"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_AFSMARTTRACKING" "TRUE"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_AFSPEED" "TRUE"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_CINEMATIC_PORTRAITVIDEO" "TRUE"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_FUSION_HIGH_RESOLUTION" "TRUE"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_HIGH_RESOLUTION_SWBINNING" "TRUE"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_ACCESSIBILITY_SUPPORT_AI_CORE_IMAGE_DESCRIPTION" "TRUE"
+# =============================================================================
+# Floating Features - Camera
+# =============================================================================
+# Stock S23U does not define CAMERA_CONFIG_AUTOFRAMING; forcing "uhd" crashes smooth_transition on dm3q.
+# SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_AUTOFRAMING" "uhd"
+# SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_VENDOR_LIB_INFO" "de_flicker.arcsoft.v1,de_flicker_hdr.arcsoft.v1,food.samsung.v1,face_landmark.arcsoft.v2_1,beauty.samsung.v4,facial_restoration.arcsoft.v1,facial_attribute.samsung.v1,human_tracking_hand.arcsoft.v4,fr_tracking.arcsoft.v1,smart_scan.samsung.v2,aimode.samsung.v2,aimfisp.samsung.v1,ai_clear_zoom.arcsoft.v1,macro_raw_sr.arcsoft.v1,super_resolution_raw.arcsoft.v2,aebhdr.arcsoft.v1,hybridhdr.arcsoft.v1,single_bokeh.samsung.v2,super_night.mpi.v2,swuwdc.arcsoft.v1,event_detection.samsung.v2,selfie_correction.samsung.v1,dual_bokeh.samsung.v1_1,image_codec.samsung.v2,pro_single_rgb.mpi.v1,image_enhance.arcsoft.v1,localtm.samsung.v1_1,stereo_photo.samsung.v1,compressed_raw_decoder.samsung.v1"
+# Keep S26U autofocus/fusion/SW-binning paths disabled on dm3q; they crash the S23U vendor camera stack.
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_AFSENSITIVITY" "FALSE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_AFSMARTTRACKING" "FALSE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_AFSPEED" "FALSE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_CINEMATIC_PORTRAITVIDEO" "FALSE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_FUSION_HIGH_RESOLUTION" "FALSE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_HIGH_RESOLUTION_SWBINNING" "FALSE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_NIGHT_INTEGRATED_PHOTO_MODE" "TRUE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_SUPER_NIGHT_DRAFT_RAW" "TRUE"
 # WARNING: Might Cause Crash
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_VDIS_ON_MOTIONPHOTO" "FALSE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_VIDEO_SOFTENING" "TRUE"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_CONFIG_WAKEUP_MULTIAGENT_VERSION" "1"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_CONFIG_APPFUNCTION_AGENT_APPLIST" "ai.perplexity.app.android"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_SUPPORT_COMPUTER_CONTROL" "TRUE"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_PREWARMING_LEVEL" "1"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_LCD_SUPPORT_DOZE_AP_SLEEP" "TRUE"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_CFA_CODEC" "TRUE"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_VIDEO_SEARCH" "TRUE"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_VIDEOSERACH" "TRUE"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_SAMSUNG_SEARCH_SEMANTIC_SEARCH_VERSION" "510"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GENAI_CONFIG_FOUNDATION_MODEL" "3B"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_DOCUMENTSCAN_SOLUTIONS" "AI_DEWARPING,SHADOW_REMOVAL,DEBLUR,OBJECT_REMOVAL"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_DUAL_PORTRAITVIDEO" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_EDITABLE_PORTRAITVIDEO" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_PORTRAIT_INTELLIGENT_OPTIMIZATION_AI_ISP" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_SEAMLESS_PORTRAITVIDEO" "TRUE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_AUTO_EXPOSURE_LIMIT" "TRUE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_MOTIONPHOTO_AUTO_TRIM_MODE" "TRUE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_MOTIONPHOTO_SOUND_TIMING" "TRUE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_MOTIONPHOTO_SOUND_TYPE" "TRUE"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GALLERY_CONFIG_LIVEFOCUS_EFFECT_DUAL_BOKEH" "BLUR,EFFECT,BIGBOKEH,PORTRAIT,RELIGHT,REFOCUS,LIGHT360,GENERIC_REFOCUS,GENERIC_REEDIT"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_REDUCE_FLASH_LIGHT" "TRUE"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_VIDEO_CONFIG_VIDEO_CLIPPING_MODE" "NPU,unifiedclipper,foundational_segmentation"
 
+# =============================================================================
+# Floating Features - Display / Gallery / Media
+# =============================================================================
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_LCD_SUPPORT_DOZE_AP_SLEEP" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_CFA_CODEC" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_VIDEO_SEARCH" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_VIDEOSERACH" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GALLERY_CONFIG_LIVEFOCUS_EFFECT_DUAL_BOKEH" "BLUR,EFFECT,BIGBOKEH,PORTRAIT,RELIGHT,REFOCUS,LIGHT360,GENERIC_REFOCUS,GENERIC_REEDIT"
+#SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GALLERY_CONFIG_AI_EXPANSION" "AI_Timelapse,singletake.hidt.support.on,singletake.capture.support.off,singletake.video_res.config.fhd,singletake.video.previous_record"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_REDUCE_FLASH_LIGHT" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_TOUCH_FAST_RESPONSE" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_LCD_CONFIG_AOD_BRIGHTNESS_ANIMATION" "1"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_LCD_CONFIG_AOD_FULLSCREEN" "1"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_HDR2SDR_MAX_8K" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_HIERARCHICAL_B_ENCODING" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_LONGEXPOSURE_EFFECT_10BIT" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_PHOTOHDR" "TRUE"
+# Keep foundational_segmentation disabled on dm3q; the S26U FM engine crashes
+# PhotoEditor_AIFull on the S23U SNAP/vendor stack during contour/lasso execution.
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_VIDEO_CONFIG_VIDEO_CLIPPING_MODE" "NPU,unifiedclipper"
+
+# =============================================================================
+# Floating Features - Galaxy AI / Framework / Search
+# =============================================================================
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_ACCESSIBILITY_SUPPORT_AI_CORE_IMAGE_DESCRIPTION" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_CONFIG_WAKEUP_MULTIAGENT_VERSION" "1"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_CONFIG_APPFUNCTION_AGENT_APPLIST" "ai.perplexity.app.android"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_SUPPORT_COMPUTER_CONTROL" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_SUPPORT_PROVIDE_TSP_RAWDATA" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_SAMSUNG_SEARCH_SEMANTIC_SEARCH_VERSION" "510"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GENAI_CONFIG_FOUNDATION_MODEL" "3B"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GENAI_SUPPORT_TIME_WEATHER_WALLPAPER" "V7"
+
+# =============================================================================
+# Helpers
+# =============================================================================
 _REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG()
 {
     local CONFIG="$1"
@@ -93,7 +179,6 @@ _REZOSS_ENSURE_VENDOR_CONFIG_FILE_CONTEXTS()
     fi
 
     LOG "- Ensuring S26U vendor config/model file contexts"
-    _REZOSS_APPEND_UNIQUE_LINE "$FC_FILE" "/vendor/etc/aip(/.*)? u:object_r:vendor_configs_file:s0"
     _REZOSS_APPEND_UNIQUE_LINE "$FC_FILE" "/vendor/etc/saiv/image_understanding/db/doc_rectifier(/.*)? u:object_r:vendor_configs_file:s0"
     _REZOSS_APPEND_UNIQUE_LINE "$FC_FILE" "/vendor/etc/saiv/image_understanding/db/fm(/.*)? u:object_r:vendor_configs_file:s0"
     _REZOSS_APPEND_UNIQUE_LINE "$FC_FILE" "/vendor/etc/saiv/image_understanding/db/ss_magnet(/.*)? u:object_r:vendor_configs_file:s0"
@@ -158,7 +243,9 @@ _REZOSS_ENSURE_LOG_VIDEO_FILTER_SELINUX()
     fi
 }
 
-
+# =============================================================================
+# S26U Prebuilts - Gallery LOG / Camera LOG-LUT / Privacy Display
+# =============================================================================
 LOG "- Adding S26U Privacy Display, Gallery LOG, Camera LOG/LUT, and Horizon Lock support files"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/cameradata/logCubefiles" 0 0 755 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libcontextanalyzer_jni.media.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
@@ -169,6 +256,10 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmpp_common.so" 0 0 644 "u:obj
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmppclient.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmppcolorgrade.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmppfilter.so" 0 0 644 "u:object_r:system_lib_file:s0"
+
+# =============================================================================
+# S26U Prebuilts - Video Clipping / Preview Dependencies
+# =============================================================================
 # Required by S26U Camera LOG/LUT preview.
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libppvdis_core.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libppvdis_interface.so" 0 0 644 "u:object_r:system_lib_file:s0"
@@ -177,19 +268,62 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libveframework.videoeditor.samsu
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libvideo-highlight-arm64-v8a.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/vendor.samsung.hardware.media.mpp-V5-ndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
 
+# =============================================================================
+# S26U Prebuilts - Dual Recording Split View
+# =============================================================================
+# Disabled after S26U vendor nodes crashed on the dm3q/S23U camera provider stack.
+# Keep the existing dm3q/S23U SamsungCamera, recording node, sensor bridge,
+# dual calibration bins, and QTI/CHI provider stack active.
+# LOG "- Adding S26U Dual Recording Split View vendor nodes"
+# ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/SamsungCamera/SamsungCamera.apk" 0 0 644 "u:object_r:system_file:s0"
+# ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/SamsungCamera/SamsungCamera.apk.prof" 0 0 644 "u:object_r:system_file:s0"
+# ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libsecsettingsmanager.so" 0 0 644 "u:object_r:vendor_file:s0"
+# ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libsensorndkbridge.so" 0 0 644 "u:object_r:vendor_file:s0"
+# ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libunidatamanager.so" 0 0 644 "u:object_r:vendor_file:s0"
+# ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/camera/components/com.samsung.node.uniplugin_recording.so" 0 0 644 "u:object_r:vendor_file:s0"
+# ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/camera/components/com.samsung.node.uniplugin_meta_surface.so" 0 0 644 "u:object_r:vendor_file:s0"
+# ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/camera/components/com.samsung.node.uniplugin_record_portrait_depth_extract.so" 0 0 644 "u:object_r:vendor_file:s0"
+# ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/camera/components/com.samsung.node.uniplugin_record_portrait_render.so" 0 0 644 "u:object_r:vendor_file:s0"
+# ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/camera/multical_param.bin" 0 0 644 "u:object_r:vendor_file:s0"
+# ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/camera/t2_w_dual_calibration.bin" 0 0 644 "u:object_r:vendor_file:s0"
+# ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/camera/t2_t1_dual_calibration.bin" 0 0 644 "u:object_r:vendor_file:s0"
+
+# =============================================================================
+# S26U Prebuilts - Camera Core / Photo Processing Libraries
+# =============================================================================
 LOG "- Adding S26U camera node libraries for partial vendor-lib feature set"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libAIDeflicker.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libDeflickerHDR.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libsnapshotdebanding.arcsoft.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libStereoSolution.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libSR_StereoCapture.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libfoundational_segmentation.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+# Disabled after Photo Editor native crash in FoundationalSegmentationImpl.
+# ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libfoundational_segmentation.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+# S26U replacements previously carried by the rezoss static lib64 overlay.
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/DualOutFocusViewer_B.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libArtifactDetector_v1.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libC2paDps.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libGenSR_saicc_core.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libSR_DynamicRectifier.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libSR_NearDetector.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libStereoWarp.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libTextEnhancementV2.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libVirtualApertureCapture.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libframebooster.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libphotohdr.so" 0 0 644 "u:object_r:system_lib_file:s0"
+
+# =============================================================================
+# S26U Prebuilts - Enhanced Document Scan
+# =============================================================================
 # S26U enhanced document-scan native libs.
 # WARNING: Might cause crash
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libDocColorEnhance.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libDocColorEnhance_Auto.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libDocMagnetEngine.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libDocObjectRemovalV2.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+if [ -e "$WORK_DIR/system/system/lib64/libDocObjectRemovalV2.camera.samsung.so" ] || \
+        [ -L "$WORK_DIR/system/system/lib64/libDocObjectRemovalV2.camera.samsung.so" ]; then
+    DELETE_FROM_WORK_DIR "system" "system/lib64/libDocObjectRemovalV2.camera.samsung.so"
+fi
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libDocScannerFilterV2.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libDocShadowRemoval.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libMoireFilterV2.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
@@ -209,56 +343,67 @@ for f in \
     "libvideo-highlight-arm64-v8a.so" \
     "vendor.samsung.hardware.media.mpp-V5-ndk.so" \
     "libAIDeflicker.camera.samsung.so" \
+    "DualOutFocusViewer_B.so" \
+    "libArtifactDetector_v1.camera.samsung.so" \
+    "libC2paDps.camera.samsung.so" \
     "libDeflickerHDR.camera.samsung.so" \
+    "libDocColorEnhance.camera.samsung.so" \
+    "libDocColorEnhance_Auto.camera.samsung.so" \
+    "libDocMagnetEngine.camera.samsung.so" \
+    "libDocScannerFilterV2.camera.samsung.so" \
+    "libDocShadowRemoval.camera.samsung.so" \
+    "libGenSR_saicc_core.camera.samsung.so" \
+    "libMoireFilterV2.camera.samsung.so" \
+    "libSR_DynamicRectifier.camera.samsung.so" \
+    "libSR_NearDetector.camera.samsung.so" \
     "libsnapshotdebanding.arcsoft.so" \
     "libStereoSolution.camera.samsung.so" \
     "libSR_StereoCapture.camera.samsung.so" \
-    "libfoundational_segmentation.camera.samsung.so"; do
+    "libStereoWarp.camera.samsung.so" \
+    "libTextEnhancementV2.camera.samsung.so" \
+    "libVirtualApertureCapture.camera.samsung.so" \
+    "libframebooster.so" \
+    "libphotohdr.so" \
+    "libsamsungSoundbooster_plus_legacy.so" \
+    "libsoundboostereq_legacy.so"; do
     _REZOSS_SET_SYSTEM_LIB64_METADATA "$f"
 done
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libAIISP10.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libAIISP10Tuning.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libbayeraiphoto_wrapper_v1.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libBayerAIPhoto.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libBayerAIPhotoTuning.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
-# S26U high-res/fusion native stack.
-# WARNING: Disabled after repeated dm3q smooth_transition/SAT provider crashes.
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libAIHDR_core.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libAIHRWrapper.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libAIHR_ERAW_Wrapper.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libAIHighRes_interface.so" 0 0 644 "u:object_r:vendor_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libBayerSR10.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libBayerSR10Tuning.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libsecsuperresolution_wrapper_v1.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libTetraSR10.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libTetraSR10Tuning.camera.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
-# S26U AI autofocus experiment.
-# WARNING: Might cause crash.
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libaiAutoFocus.so" 0 0 644 "u:object_r:vendor_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/aiAutoFocus_v1.0.24U.dlc" 0 0 644 "u:object_r:vendor_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/aiAutoFocus_v1.1.24U_TELE.dlc" 0 0 644 "u:object_r:vendor_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/aiAutoFocus_v1.1.24U_UW.dlc" 0 0 644 "u:object_r:vendor_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libDepthPortraitVideo_interface.so" 0 0 644 "u:object_r:vendor_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libRenderPortraitVideo_interface.so" 0 0 644 "u:object_r:vendor_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libSRCinematicVideo.so" 0 0 644 "u:object_r:vendor_file:s0"
 
-LOG "- Adding S26U AI high-res and video clipping model files"
+# =============================================================================
+# S26U Prebuilts - Video Clipping / Document Scan Models
+# =============================================================================
+LOG "- Adding S26U video clipping and document-scan model files"
 _REZOSS_ENSURE_VENDOR_CONFIG_FILE_CONTEXTS
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/aip/config" 0 2000 755 "u:object_r:vendor_configs_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/aip/model" 0 2000 755 "u:object_r:vendor_configs_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/saiv/image_understanding/db/fm" 0 2000 755 "u:object_r:vendor_configs_file:s0"
+# Disabled with libfoundational_segmentation.camera.samsung.so.
+# ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/saiv/image_understanding/db/fm" 0 2000 755 "u:object_r:vendor_configs_file:s0"
 # S26U enhanced document-scan configs/models.
 # WARNING: Might cause crash.
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/saiv/image_understanding/db/doc_rectifier" 0 2000 755 "u:object_r:vendor_configs_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/saiv/image_understanding/db/ss_magnet" 0 2000 755 "u:object_r:vendor_configs_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/midas_enhancedocumentscan" 0 2000 755 "u:object_r:vendor_configs_file:s0"
-for f in \
-    "etc/aip/config" \
-    "etc/aip/model" \
-    "etc/saiv/image_understanding/db/fm"; do
-    _REZOSS_SET_VENDOR_CONFIG_DIR_METADATA "$f"
-done
+# for f in \
+#     "etc/saiv/image_understanding/db/fm"; do
+#     _REZOSS_SET_VENDOR_CONFIG_DIR_METADATA "$f"
+# done
 
+# =============================================================================
+# S26U Prebuilts - Compressed RAW Decoder
+# =============================================================================
+# WARNING: Uses S26U vendor camera-processing libraries on the S23U vendor stack.
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libAIHR_ERAW_Wrapper.camera.samsung.so" 0 0 644 "u:object_r:same_process_hal_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libhexa_deca_super_shot_er.arcsoft.so" 0 0 644 "u:object_r:same_process_hal_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libtetra_super_shot_er.arcsoft.so" 0 0 644 "u:object_r:same_process_hal_file:s0"
+if [ -f "$WORK_DIR/vendor/etc/public.libraries.txt" ]; then
+    _REZOSS_APPEND_UNIQUE_LINE "$WORK_DIR/vendor/etc/public.libraries.txt" "libAIHR_ERAW_Wrapper.camera.samsung.so"
+    _REZOSS_APPEND_UNIQUE_LINE "$WORK_DIR/vendor/etc/public.libraries.txt" "libhexa_deca_super_shot_er.arcsoft.so"
+    _REZOSS_APPEND_UNIQUE_LINE "$WORK_DIR/vendor/etc/public.libraries.txt" "libtetra_super_shot_er.arcsoft.so"
+else
+    LOGW "File not found: /vendor/etc/public.libraries.txt"
+fi
+
+# =============================================================================
+# S26U Prebuilts - Video Editor / LOG Transitive Dependencies
+# =============================================================================
 # Transitive dependencies of the S26U video editor / LOG correction stack.
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmultisourceseparator.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libsbs.so" 0 0 644 "u:object_r:system_lib_file:s0"
@@ -270,6 +415,9 @@ for f in \
     _REZOSS_SET_SYSTEM_LIB64_METADATA "$f"
 done
 
+# =============================================================================
+# Disabled Experiments - Camera Vendor Stack
+# =============================================================================
 # Rezoss S26U Horizon Lock vendor VDIS experiment.
 # WARNING: Disabled after confirmed camera crash.
 # ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/camera/components/com.samsung.node.uniplugin_vdis.so" 0 0 644 "u:object_r:vendor_file:s0"
@@ -285,28 +433,33 @@ done
 # ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/liboischannel.so" 0 0 644 "u:object_r:vendor_file:s0"
 # ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libois_channel_stub.so" 0 0 644 "u:object_r:vendor_file:s0"
 # ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libois_channel_factory_test_stub.so" 0 0 644 "u:object_r:vendor_file:s0"
+
+# =============================================================================
+# Vendor Floating Feature Mirror / SELinux Fixups
+# =============================================================================
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_LCD_CONFIG_PRIVACY_DISPLAY" "1"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GALLERY_SUPPORT_LOG_CORRECT_COLOR" "TRUE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_LOG_VIDEO" "V1.0"
 _REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_LCD_CONFIG_PRIVACY_DISPLAY" "1"
-_REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_AI_HIGH_RESOLUTION_MAX_CAPTURE" "0"
-_REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_MOTIONPHOTO_CAPTURE_MODE" "[[3,1]]"
-_REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_MOTIONPHOTO_DEFAULT_SOUND_TIMING" "recording_finishes"
-_REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_MOTIONPHOTO_DEFAULT_SOUND_TYPE" "motion_photo"
-_REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_DOCUMENTSCAN_SOLUTIONS" "AI_DEWARPING,SHADOW_REMOVAL,DEBLUR,OBJECT_REMOVAL"
-_REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_AI_HIGH_RESOLUTION_DRAFT_DOWNSCALE" "FALSE"
-_REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_PREWARMING_LEVEL" "0"
+_REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_VENDOR_LIB_INFO" "single_bokeh.samsung.v2,smart_scan.samsung.v2,beauty.samsung.v4"
+_REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_FUSION_HIGH_RESOLUTION" "FALSE"
+_REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_HIGH_RESOLUTION_SWBINNING" "FALSE"
 _REZOSS_ENSURE_LOG_VIDEO_FILTER_SELINUX
 
 unset -f _REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG _REZOSS_APPEND_UNIQUE_LINE
 unset -f _REZOSS_ENSURE_LOG_VIDEO_FILTER_SELINUX
 
 
-#JustForMe
+# =============================================================================
+# Build Display Branding
+# =============================================================================
 NOW_BUILD="UN1CA-ROM built by Rezoss on $(GET_PROP "system" "ro.build.PDA")"
 SET_PROP "system" "ro.build.display.id" "${NOW_BUILD}"
 SET_PROP "product" "ro.build.display.id" "${NOW_BUILD}"
 
+# =============================================================================
+# S26U Prebuilts - Audio / Voice Processing
+# =============================================================================
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmediasndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libvoice_booster.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/lib_sag_ai_sound_sep_v1.00.so" 0 0 644 "u:object_r:system_lib_file:s0"
@@ -315,12 +468,20 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/lib_SAG_EQ_ver2090.so" 0 0 644 "
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libSAG_VM_Energy_v300.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libSAG_VM_Score_V300.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/lib_SoundAlive_play_plus_ver900.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libsamsungSoundbooster_plus_legacy.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libsoundboostereq_legacy.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/audio_effects_common.conf" 0 0 644 "u:object_r:system_lib_file:s0"
 echo "/system/lib64/lib_sag_ai_sound_sep_v1.00.so" >> "$WORK_DIR/system/system/etc/irremovable_list.txt" 0 0 644 "u:object_r:system_lib_file:s0"
 
+# =============================================================================
+# Local System App Overlays
+# =============================================================================
 ADD_TO_WORK_DIR "dm3qxxx" "system" "system/app/SamsungSans/SamsungSans.apk" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "dm3qxxx" "system" "system/app/VisionModel-Stub/VisionModel-Stub.apk" 0 0 644 "u:object_r:system_file:s0"
 
+# =============================================================================
+# Ambient Weather Wallpaper / VisualCloudCore Patches
+# =============================================================================
 # Enable built-in spoof to use Ambient Weather Wallpaper
 LOG "- Patch DressRoom Weather wallpaper AICore gate"
 APPLY_PATCH "system" "system/priv-app/DressRoom/DressRoom.apk" \
@@ -334,19 +495,150 @@ LOG "- Patch product framework overlay doze auto-brightness"
 APPLY_PATCH "product" "overlay/framework-res__dm3qxxx__auto_generated_rro_product.apk" \
     "$MODPATH/rro/framework-res__dm3qxxx__auto_generated_rro_product.apk/0001-Add-doze-auto-brightness-arrays.patch"
 
+# =============================================================================
+# Notification Highlights / Galaxy AI Stack
+# =============================================================================
 # S26U Notification highlights requirements: expose the Galaxy AI common-AI gate, keep LLM/offline model metadata enabled for the backend, ensure the offline language model stub is present, remove the extra SecSettings LLM-version UI gate, allow dmxq devices in NmRune, and enable priority/summary defaults.
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_CONFIG_AI_VERSION" "20261"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_CONFIG_AI_VERSION" "20263"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_CONFIG_NOW_NUDGE_VERSION" "1"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GENAI_CONFIG_LLM_VERSION" "0.70"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GENAI_SUPPORT_OFFLINE_LANGUAGEMODEL" "TRUE"
+LOG "- Porting S26U SCS service binary"
+ADD_TO_WORK_DIR "$MODPATH" "system" "system/bin/scs" 0 2000 755 "u:object_r:scs_exec:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/app/SketchBook/SketchBook.apk" 0 0 644 "u:object_r:system_file:s0"
 LOG "- Overlay S26U Notification highlights AI APKs"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/SamsungIntelliVoiceServices/SamsungIntelliVoiceServices.apk" 0 0 644 "u:object_r:system_file:s0"
+ADD_TO_WORK_DIR "$MODPATH" "system" "system/priv-app/SamsungIntelliVoiceServices/SamsungIntelliVoiceServices.apk" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/SamsungAiCore/SamsungAiCore.apk" 0 0 644 "u:object_r:system_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/permissions/privapp-permissions-com.samsung.android.aicore.xml" 0 0 644 "u:object_r:system_file:s0"
+DELETE_FROM_WORK_DIR "system" "system/app/AIOSKernelService"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/AIOSKernelService/AIOSKernelService.apk" 0 0 644 "u:object_r:system_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/permissions/privapp-permissions-com.samsung.android.aioskernelservice.xml" 0 0 644 "u:object_r:system_file:s0"
+ADD_TO_WORK_DIR "pa2qxxx" "system" "system/etc/sysconfig/aioskernelservice.xml" 0 0 644 "u:object_r:system_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/permissions/signature-permissions-com.samsung.android.offline.languagemodel.xml" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/OfflineLanguageModel_stub/OfflineLanguageModel_stub.apk" 0 0 644 "u:object_r:system_file:s0"
+
+LOG "- Adding S26U NMT languagepack preload metadata"
+S26U_NMT_TARGET_PRELOAD="$WORK_DIR/system/system/etc/removable_preload.txt"
+if [ ! -f "$S26U_NMT_TARGET_PRELOAD" ]; then
+    LOGE "File not found: ${S26U_NMT_TARGET_PRELOAD//$SRC_DIR\//}"
+    return 1
+fi
+ADD_S26U_NMT_PRELOAD()
+{
+    local NMT_LANG="$1"
+    local PKG="com.samsung.android.nmt.apps.t2t.languagepack.$NMT_LANG"
+    local PRELOAD_BLOCK="$MODPATH/nmt-preload/$NMT_LANG.txt"
+
+    if grep -Fq "name='$PKG'" "$S26U_NMT_TARGET_PRELOAD"; then
+        return 0
+    fi
+
+    if [ ! -s "$PRELOAD_BLOCK" ]; then
+        LOGE "Missing S26U preload metadata for $PKG"
+        return 1
+    fi
+
+    LOG "- Adding $PKG to removable_preload.txt"
+    {
+        echo ""
+        cat "$PRELOAD_BLOCK"
+    } >> "$S26U_NMT_TARGET_PRELOAD"
+}
+for NMT_LANG in \
+    enar \
+    enesus \
+    enfil \
+    enid \
+    enko \
+    ennl \
+    enpt \
+    enro \
+    enru \
+    ensv \
+    entr \
+    enzh; do
+    ADD_S26U_NMT_PRELOAD "$NMT_LANG" || return 1
+done
+unset -f ADD_S26U_NMT_PRELOAD
+unset NMT_LANG S26U_NMT_TARGET_PRELOAD
+#ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/vendor.qti.hardware.dsp-V1-ndk.so" 0 0 644 "u:object_r:vendor_file:s0"
+# Causing bootloop
+# ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/android.hardware.common-V2-ndk.so" 0 0 644 "u:object_r:vendor_file:s0"
+# DOWNLOAD_FILE "$(GET_GALAXY_STORE_DOWNLOAD_URL "com.samsung.android.aicore")" \
+    # "$WORK_DIR/system/system/priv-app/SamsungAiCore/SamsungAiCore.apk"
+
+REZOSS_SIVS_MODEL_PATCHED_FILE="$APKTOOL_DIR/system/priv-app/SamsungIntelliVoiceServices/SamsungIntelliVoiceServices.apk/smali/com/samsung/android/intellivoiceservice/common/connection/server/LlmClientInterceptor.smali"
+REZOSS_SIVS_MODEL_PATCH_MARKER="$APKTOOL_DIR/system/priv-app/SamsungIntelliVoiceServices/SamsungIntelliVoiceServices.apk/.rezoss_s26u_device_model_patch_applied"
+if [ -f "$REZOSS_SIVS_MODEL_PATCHED_FILE" ] && grep -qF 'const-string v4, "SM-S948B"' "$REZOSS_SIVS_MODEL_PATCHED_FILE"; then
+    touch "$REZOSS_SIVS_MODEL_PATCH_MARKER"
+fi
+if [ ! -f "$REZOSS_SIVS_MODEL_PATCH_MARKER" ]; then
+    LOG "- Patch SamsungIntelliVoiceServices SCS device-model header to SM-S948B"
+    APPLY_PATCH "system" "system/priv-app/SamsungIntelliVoiceServices/SamsungIntelliVoiceServices.apk" \
+        "$MODPATH/sivs/SamsungIntelliVoiceServices.apk/0001-Use-S26U-device-model-for-SCS-requests.patch"
+    touch "$REZOSS_SIVS_MODEL_PATCH_MARKER"
+fi
+unset REZOSS_SIVS_MODEL_PATCHED_FILE REZOSS_SIVS_MODEL_PATCH_MARKER
 
 LOG "- Patch SamsungAiCore Vision Model device mapping"
 APPLY_PATCH "system" "system/priv-app/SamsungAiCore/SamsungAiCore.apk" \
     "$MODPATH/aicore/SamsungAiCore.apk/0001-Map-dm-series-to-m3q-for-vision-model.patch"
+
+LOG "- Patching AIOSKernelService service config for SM8550"
+APPLY_PATCH "system" "system/priv-app/AIOSKernelService/AIOSKernelService.apk" \
+    "$MODPATH/aioskernel/AIOSKernelService.apk/0001-Allow-SM8550-service-config.patch"
+LOG "- Patching AIOSKernelService QNN Skel name for Hexagon V73"
+APPLY_PATCH "system" "system/priv-app/AIOSKernelService/AIOSKernelService.apk" \
+    "$MODPATH/aioskernel/AIOSKernelService.apk/0002-Use-Hexagon-V73-QNN-skel.patch"
+# Replace the S26U V81 HTP binaries inside AIOSKernelService.apk with the S23U Hexagon V73 pair.
+local AIOS_DECODED_APK="$APKTOOL_DIR/system/priv-app/AIOSKernelService/AIOSKernelService.apk"
+local AIOS_DECODED_LIB="$AIOS_DECODED_APK/lib/arm64-v8a"
+local AIOS_DECODED_SSGEN_LIB="$AIOS_DECODED_APK/assets/ssgen/libs"
+local S23U_FW_DIR="$FW_DIR/SM-S918B_EUX"
+local AIOS_QNN_MISSING=0
+if [ ! -d "$AIOS_DECODED_LIB" ] || [ ! -d "$AIOS_DECODED_SSGEN_LIB" ]; then
+    LOGE "AIOSKernelService.apk decoded QNN directories are missing"
+    return 1
+fi
+for f in \
+    "$S23U_FW_DIR/vendor/lib64/snap/libQnnHtp.so" \
+    "$S23U_FW_DIR/vendor/lib64/snap/libQnnSystem.so" \
+    "$S23U_FW_DIR/vendor/lib64/snap/libQnnHtpV73Stub.so" \
+    "$S23U_FW_DIR/vendor/lib/rfsa/adsp/snap/libQnnHtpV73Skel.so"; do
+    if [ ! -f "$f" ]; then
+        LOGE "File not found: ${f//$SRC_DIR\//}"
+        AIOS_QNN_MISSING=1
+    fi
+done
+if [ "$AIOS_QNN_MISSING" != "0" ]; then
+    return 1
+fi
+LOG "- Replacing AIOSKernelService.apk QNN HTP V81 binaries with S23U Hexagon V73 binaries"
+cp -f "$S23U_FW_DIR/vendor/lib64/snap/libQnnHtp.so" "$AIOS_DECODED_LIB/libQnnHtp.so"
+cp -f "$S23U_FW_DIR/vendor/lib64/snap/libQnnSystem.so" "$AIOS_DECODED_LIB/libQnnSystem.so"
+cp -f "$S23U_FW_DIR/vendor/lib64/snap/libQnnHtpV73Stub.so" "$AIOS_DECODED_LIB/libQnnHtpV73Stub.so"
+cp -f "$S23U_FW_DIR/vendor/lib64/snap/libQnnHtpV73Stub.so" "$AIOS_DECODED_LIB/libQnnHtpV81Stub.so"
+cp -f "$S23U_FW_DIR/vendor/lib/rfsa/adsp/snap/libQnnHtpV73Skel.so" "$AIOS_DECODED_SSGEN_LIB/libQnnHtpV73Skel.so"
+cp -f "$S23U_FW_DIR/vendor/lib/rfsa/adsp/snap/libQnnHtpV73Skel.so" "$AIOS_DECODED_SSGEN_LIB/libQnnHtpV81Skel.so"
+if [ -f "$S23U_FW_DIR/vendor/lib64/libqnnengine.so" ]; then
+    cp -f "$S23U_FW_DIR/vendor/lib64/libqnnengine.so" "$AIOS_DECODED_LIB/libqnnengine.so"
+fi
+unset AIOS_DECODED_APK AIOS_DECODED_LIB AIOS_DECODED_SSGEN_LIB S23U_FW_DIR AIOS_QNN_MISSING
+SET_METADATA "system" "system/priv-app/AIOSKernelService" 0 0 755 "u:object_r:system_file:s0"
+SET_METADATA "system" "system/priv-app/AIOSKernelService/AIOSKernelService.apk" 0 0 644 "u:object_r:system_file:s0"
+
+LOG "- Re-signing AIOSKernelService.apk for SamsungAiCore signature-permission access"
+AIOS_KERNEL_APK="$WORK_DIR/system/system/priv-app/AIOSKernelService/AIOSKernelService.apk"
+AIOS_KERNEL_TMP="$TMP_DIR/aios_kernel_service"
+AIOS_KERNEL_CERT_PREFIX="aosp"
+$ROM_IS_OFFICIAL && AIOS_KERNEL_CERT_PREFIX="unica"
+EVAL "rm -rf \"$AIOS_KERNEL_TMP\" && mkdir -p \"$AIOS_KERNEL_TMP\""
+EVAL "signapk \"$SRC_DIR/security/${AIOS_KERNEL_CERT_PREFIX}_platform.x509.pem\" \"$SRC_DIR/security/${AIOS_KERNEL_CERT_PREFIX}_platform.pk8\" \"$AIOS_KERNEL_APK\" \"$AIOS_KERNEL_TMP/AIOSKernelService.signed.apk\""
+EVAL "zipalign -c -p 4 \"$AIOS_KERNEL_TMP/AIOSKernelService.signed.apk\""
+EVAL "mv -f \"$AIOS_KERNEL_TMP/AIOSKernelService.signed.apk\" \"$AIOS_KERNEL_APK\""
+SET_METADATA "system" "system/priv-app/AIOSKernelService/AIOSKernelService.apk" 0 0 644 "u:object_r:system_file:s0"
+EVAL "rm -rf \"$AIOS_KERNEL_TMP\""
+unset AIOS_KERNEL_APK AIOS_KERNEL_TMP AIOS_KERNEL_CERT_PREFIX
 
 for REZOSS_NOTI_AI_REQ in \
     "system/priv-app/SecSettings/SecSettings.apk" \
@@ -381,6 +673,9 @@ LOG "- Patch SettingsProvider notification priority/summary defaults"
 APPLY_PATCH "system" "system/priv-app/SettingsProvider/SettingsProvider.apk" \
     "$MODPATH/notification-priority/SettingsProvider.apk/0001-Enable-notification-priority-default.patch"
 
+# =============================================================================
+# Firewall Region String Cleanup
+# =============================================================================
 LOG "- Sanitize Firewall province/country strings"
 DECODE_APK "system" "system/priv-app/Firewall/Firewall.apk"
 python3 "$MODPATH/firewall/patch_region_strings.py" \
@@ -390,7 +685,9 @@ python3 "$MODPATH/firewall/patch_region_strings.py" \
 
 LOG_STEP_OUT
 
-#Lets add Edgars plain kernel
+# =============================================================================
+# Kernel - Edgar Kernel Replacement
+# =============================================================================
 LOG_STEP_IN "- Change Kernel with Edgars Kernel"
 LOG "- Get latest release kernel"
 
@@ -454,7 +751,9 @@ cp -f new-boot.img "$WORK_DIR/kernel/boot.img"
 cd "$SRC_DIR"
 LOG_STEP_OUT
 
-#Lets patch init_boot with KernelSU-Next LKM
+# =============================================================================
+# Kernel - KernelSU-Next LKM for init_boot
+# =============================================================================
 LOG_STEP_IN "- Patch init_boot.img with KernelSU-Next LKM"
 KSU_KMI="android13-5.15"
 KSU_INIT_BOOT="$WORK_DIR/kernel/init_boot.img"
