@@ -11,4 +11,6 @@
     <SecSwitchPreference android:title="@string/unica_gphotos_title" android:key="unica_gphotos" settings:controller="io.mesalabs.unica.settings.extra.GooglePhotosPreferenceController" />
     <SecSwitchPreference android:title="@string/unica_games_spoof_title" android:key="unica_games_spoof" settings:controller="io.mesalabs.unica.settings.extra.GamesPropsPreferenceController" />
     <SecSwitchPreference android:title="@string/unica_galaxy_store_spoof_title" android:key="unica_galaxy_store_spoof" settings:controller="io.mesalabs.unica.settings.extra.GalaxyStoreSpoofPreferenceController" />
+    <SecSwitchPreference android:title="@string/unica_now_nudge_experimental_title" android:key="unica_now_nudge_experimental" android:summary="@string/unica_now_nudge_experimental_summary" settings:controller="io.mesalabs.unica.settings.extra.NowNudgeExperimentalPreferenceController" />
+    <Preference android:title="@string/unica_scpm_allowlist_title" android:key="unica_scpm_allowlist" android:summary="@string/unica_scpm_allowlist_summary" android:fragment="io.mesalabs.unica.settings.extra.ScpmAllowlistFragment" />
 </PreferenceScreen>

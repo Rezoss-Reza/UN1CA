@@ -1,0 +1,25 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Rezoss <rezoss79@users.noreply.github.com>
+Date: Sat, 23 May 2026 00:00:00 +0200
+Subject: [PATCH] Enable Now Nudge support
+
+Force the SmartSuggestions Now Nudge rune to resolve as supported while
+preserving the original method structure, registers, labels, and
+try/catch flow.
+
+---
+ .../smartsuggestions/featureconfig/rune/Rune.smali             | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/smali_classes15/com/samsung/android/smartsuggestions/featureconfig/rune/Rune.smali b/smali_classes15/com/samsung/android/smartsuggestions/featureconfig/rune/Rune.smali
+--- a/smali_classes15/com/samsung/android/smartsuggestions/featureconfig/rune/Rune.smali
++++ b/smali_classes15/com/samsung/android/smartsuggestions/featureconfig/rune/Rune.smali
+@@ -5030,7 +5030,7 @@
+ .method private static final SUPPORT_NOW_NUDGE_delegate$lambda$146()Z
+     .locals 3
+
+-    const/4 v0, 0x0
++    const/4 v0, 0x1
+
+     :try_start_0
+     sget-object v1, Lcom/samsung/android/smartsuggestions/featureconfig/rune/Rune;->INSTANCE:Lcom/samsung/android/smartsuggestions/featureconfig/rune/Rune;

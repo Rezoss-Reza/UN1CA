@@ -15,8 +15,8 @@
     <local name="SHOOTING_MODE_SLOW_MOTION" back="SLOW_MOTION" front="SLOW_MOTION" enable="true" more="true" order="8" preview-size="1920x1080" capture-size="1920x1080"/>
     <local name="SHOOTING_MODE_HYPER_LAPSE" back="HYPER_LAPSE" front="HYPER_LAPSE" enable="true" more="true" order="9" preview-size="1920x1080" capture-size="1920x1080"/>
     <local name="SHOOTING_MODE_LIVE_FOCUS_VIDEO" back="LIVE_FOCUS_VIDEO" front="LIVE_FOCUS_VIDEO" enable="true" more="true" order="10" preview-size="1920x1080" capture-size="1920x1080"/>
-    <local name="SHOOTING_MODE_MULTI_RECORDING" back="MULTI_RECORDING" front="MULTI_RECORDING" enable="true" more="true" order="11" preview-size="1920x1080" capture-size="1920x1080"/>
-    <local name="SHOOTING_MODE_SINGLE_TAKE_VIDEO" back="SINGLE_TAKE_VIDEO" front="SINGLE_TAKE_VIDEO" enable="true" more="true" order="12" preview-size="1440x1080"/>
+    <local name="SHOOTING_MODE_MULTI_RECORDING" back="MULTI_RECORDING" front="MULTI_RECORDING" enable="false" more="true" order="11" preview-size="1920x1080" capture-size="1920x1080"/>
+    <local name="SHOOTING_MODE_SINGLE_TAKE_VIDEO" back="SINGLE_TAKE_VIDEO" front="SINGLE_TAKE_VIDEO" enable="false" more="true" order="12" preview-size="1440x1080"/>
     <local name="SHOOTING_MODE_QR" back="QR" enable="true" more="false" order="100" preview-size="2320x1080"/>
 
     <!-- Capture resolution - BACK -->
@@ -111,7 +111,7 @@
     <local name="FRONT_CAMCORDER_RESOLUTION_FEATURE_MAP_640X480" value="false" hdr="true" hdr10="false" snapshot-support="true"  snapshot-size="4000x3000" vdis="false" super-vdis="false" effect="true" object-tracking="false" external-storage-support="true" touch-af="true"/>
     <local name="FRONT_CAMCORDER_RESOLUTION_FEATURE_MAP_176X144" value="true"/>
 
-    <!-- WARNING: Migth cause crash. S26U Features -->
+    <!-- Support AI Highr Resolutions. S26U Features -->
     <local name="SUPPORT_AI_HIGH_RESOLUTION" value="false"/>
     <local name="SUPPORT_AI_HIGH_RESOLUTION_MEMORY_CHECK" value="false"/>
     <local name="SUPPORT_BACK_MULTI_HIGH_RESOLUTION" value="false"/>
@@ -212,14 +212,14 @@
 
     <local name="SUPPORT_FILTER_COMBINE" value="true"/>
     <local name="SUPPORT_MY_FILTER" value="true"/>
-	<local name="SUPPORT_50MP_PHOTO_FILTER" value="false"/>
+	<local name="SUPPORT_50MP_PHOTO_FILTER" value="true"/>
 
     <local name="SUPPORT_EXPAND_SHUTTER_SPEED" value="true"/>
 	
     <local name="MOTION_PHOTO_RECORDING_FPS" value="30"/>
     <local name="SUPPORT_MOTION_PHOTO_BEFORE_AND_AFTER_AS_DEFAULT_CAPTURE_MODE" value="true"/>
-    <local name="SUPPORT_24MP_MOTION_PHOTO" value="true"/>
-    <local name="SUPPORT_50MP_MOTION_PHOTO" value="true"/>
+    <local name="SUPPORT_24MP_MOTION_PHOTO" value="false"/>
+    <local name="SUPPORT_50MP_MOTION_PHOTO" value="false"/>
     <local name="SUPPORT_SWITCH_FACING_WHILE_RECORDING" value="true"/>
 
     <local name="SUPPORT_SELFIE_TONE_MODE" value="true"/>
@@ -319,7 +319,7 @@
     <local name="SUPPORT_HLG" value="true"/>
     <local name="SUPPORT_APV" value="true"/>
 	<local name="SUPPORT_PREVIEW_LUT" value="true"/>
-	<local name="SUPPORT_DUAL_RECORDING_IN_VIDEO_MODE" value="true"/>
+	<local name="SUPPORT_DUAL_RECORDING_IN_VIDEO_MODE" value="false"/>
     <local name="SUPPORT_CAMERA_ASSISTANT_ANAMORPHIC_LENS_HW_SCALER" value="true"/>
     <local name="SUPPORT_STEREO_CAPTURE" value="true"/>
 	<local name="SUPPORT_STEREO_CAPTURE_UHD_30" value="true"/>
@@ -327,7 +327,7 @@
     <local name="SUPPORT_ADVANCED_ZERO_SHUTTER_LAG" value="true"/>
     <!-- super steady features -->
     <local name="SUPPORT_SUPER_STEADY_CROP_ZOOM_X2" value="true"/>
-    <local name="SUPPORT_SUPER_STEADY_HORIZONTAL_LOCK" value="false"/>
+    <local name="SUPPORT_SUPER_STEADY_HORIZONTAL_LOCK" value="true"/>
     <!-- TEMP: shooting mode crop zoom features for Eureka -->
     <local name="SUPPORT_FOOD_CROP_ZOOM_X2" value="true"/>
     <local name="SUPPORT_HYPER_LAPSE_CROP_ZOOM_X2" value="true"/>
@@ -350,9 +350,8 @@
     <local name="SUPPORT_CAMERA_ASSISTANT_ZOOM_X100" value="true"/>
     <local name="SUPPORT_CAMERA_ASSISTANT_STEREO_CAPTURE" value="true"/>
     <local name="SUPPORT_CAMERA_ASSISTANT_OPTICAL_IMAGE_STABILIZATION" value="true"/>
-    <local name="SUPPORT_CAMERA_ASSISTANT_RECORDING_8K_WHEN_MIRRORING" value="true"/> <!-- S26 or higher/Ultra/QC -->
+    <local name="SUPPORT_CAMERA_ASSISTANT_RECORDING_8K_WHEN_MIRRORING" value="false"/>
     <local name="SUPPORT_CAMERA_ASSISTANT_ADDITIONAL_MODE_SINGLE_TAKE" value="true"/>
-    <local name="SUPPORT_CAMERA_ASSISTANT_ADDITIONAL_MODE_DUAL_RECORDING" value="true"/>
     <local name="SUPPORT_CAMERA_ASSISTANT_TOUCH_AF_AE_IN_PRO_VIDEO_MODE" value="true"/>
     <local name="SUPPORT_CAMERA_ASSISTANT_VIDEO_SOFTENING" value="true"/>
     <local name="SUPPORT_CAMERA_ASSISTANT_FOCUS_PEAKING" value="true"/>

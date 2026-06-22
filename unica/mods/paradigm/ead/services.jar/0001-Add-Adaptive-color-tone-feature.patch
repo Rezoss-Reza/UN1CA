@@ -1006,3 +1006,14 @@ index fe2732fd..8b3cda12 100644
      const/4 p0, 0x0
  
      return p0
+@@ -4975,1 +5389,10 @@
++    iget-boolean v13, p0, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->mEnvironmentAdaptiveDisplayEnabled:Z
++
++    if-eqz v13, :cond_ead_natural_off
++
++    if-eq v0, v3, :cond_c
++
++    if-eq v0, v7, :cond_c
++
++    :cond_ead_natural_off
+     iget v0, p0, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->mNaturalModeVersion:I
