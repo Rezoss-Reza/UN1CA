@@ -30,6 +30,15 @@ BUILD()
         exit 1
     fi
 
+    case "$PARTITION:$FILE" in
+        "system:system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk")
+            if (( THREAD_COUNT > 4 )); then
+                LOG "- Limiting apktool threads for ${INPUT_FILE//$WORK_DIR/} to 4 to avoid JVM heap exhaustion"
+                THREAD_COUNT=4
+            fi
+            ;;
+    esac
+
     LOG "- Building ${INPUT_FILE//$WORK_DIR/}"
 
     # Copy original META-INF
