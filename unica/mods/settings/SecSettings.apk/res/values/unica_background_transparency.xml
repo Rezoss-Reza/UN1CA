@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="unica_settings_bg_transparency_title">Settings background transparency</string>
+    <string name="unica_settings_bg_transparency_summary">0&#37; keeps the normal opaque Settings background. 100&#37; makes the Settings background fully transparent.</string>
+    <string name="unica_settings_bg_transparency_low">0&#37;</string>
+    <string name="unica_settings_bg_transparency_high">100&#37;</string>
+</resources>
