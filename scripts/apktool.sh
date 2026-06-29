@@ -2,6 +2,8 @@
 # Copyright (c) 2025 Salvo Giangreco
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+set -e
+
 # [
 source "$SRC_DIR/scripts/utils/build_utils.sh" || exit 1
 
@@ -96,19 +98,12 @@ REBALANCE_DEX()
         "system_ext:priv-app/SystemUI/SystemUI.apk")
             local FROM_DIR="$OUTPUT_PATH/smali_classes3/com/android/systemui/settings/brightness"
             local TO_DIR="$OUTPUT_PATH/smali_classes6/com/android/systemui/settings/brightness"
-            local MOVED=false
-            local SMALI_FILE
-            for SMALI_FILE in \
-                    "$FROM_DIR"/'BrightnessDetailAdapter$initBrightnessDetail$8.smali' \
-                    "$FROM_DIR"/QuickBrightnessSeadView*.smali; do
-                [ -f "$SMALI_FILE" ] || continue
-                if ! $MOVED; then
-                    LOG "- Moving adaptive color tone helpers to classes6.dex to keep SystemUI classes3 below the dex method limit"
-                    mkdir -p "$TO_DIR"
-                    MOVED=true
-                fi
-                mv -f "$SMALI_FILE" "$TO_DIR/"
-            done
+            if [ -d "$FROM_DIR" ]; then
+                LOG "- Moving brightness settings package to classes6.dex to keep SystemUI classes3 below the dex method limit"
+                mkdir -p "$TO_DIR"
+                find "$FROM_DIR" -mindepth 1 -maxdepth 1 -exec mv -f -t "$TO_DIR" {} +
+                rmdir "$FROM_DIR" 2>/dev/null || true
+            fi
             ;;
     esac
 }

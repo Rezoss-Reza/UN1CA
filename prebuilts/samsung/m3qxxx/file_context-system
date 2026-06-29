@@ -51,6 +51,7 @@
 /system/etc/permissions/privapp-permissions-com\.samsung\.android\.aioskernelservice\.xml u:object_r:system_file:s0
 /system/etc/permissions/privapp-permissions-com\.samsung\.android\.app\.moments\.xml u:object_r:system_file:s0
 /system/etc/permissions/privapp-permissions-com\.samsung\.android\.sead\.xml u:object_r:system_file:s0
+/system/etc/permissions/privapp-permissions-com\.sec\.android\.app\.soundalive_C\.xml u:object_r:system_file:s0
 /system/etc/permissions/privapp-permissions-com\.samsung\.mediasearch\.xml u:object_r:system_file:s0
 /system/etc/permissions/privapp-permissions-com\.samsung\.android\.smartsuggestions\.xml u:object_r:system_file:s0
 /system/etc/permissions/signature-permissions-com\.samsung\.android\.offline\.languagemodel\.xml u:object_r:system_file:s0
@@ -58,6 +59,7 @@
 /system/etc/sysconfig u:object_r:system_file:s0
 /system/etc/sysconfig/aioskernelservice\.xml u:object_r:system_file:s0
 /system/etc/sysconfig/moments\.xml u:object_r:system_file:s0
+/system/etc/sysconfig/preinstalled-packages-com\.sec\.android\.app\.soundalive_C\.xml u:object_r:system_file:s0
 /system/etc/audio_ae_intervals\.conf u:object_r:system_file:s0
 /system/etc/fastScanner\.tflite u:object_r:system_file:s0
 /system/etc/mss_v0\.23\.0_VMWO_2_fp32\.sorione u:object_r:system_file:s0
@@ -98,7 +100,13 @@
 /system/lib64/lib_SAG_EQ_ver2090\.so u:object_r:system_lib_file:s0
 /system/lib64/libSAG_VM_Energy_v300\.so u:object_r:system_lib_file:s0
 /system/lib64/libSAG_VM_Score_V300\.so u:object_r:system_lib_file:s0
+/system/lib64/libSoundAlive_VSP_ver316c_ARMCpp\.so u:object_r:system_lib_file:s0
+/system/lib64/lib_SoundAlive_AlbumArt_ver105\.so u:object_r:system_lib_file:s0
+/system/lib64/lib_SoundAlive_SRC192_ver205a\.so u:object_r:system_lib_file:s0
+/system/lib64/lib_SoundAlive_SRC384_ver320\.so u:object_r:system_lib_file:s0
+/system/lib64/lib_SoundAlive_SRC384_ver330\.so u:object_r:system_lib_file:s0
 /system/lib64/lib_SoundAlive_play_plus_ver900\.so u:object_r:system_lib_file:s0
+/system/lib64/lib_soundaliveresampler\.so u:object_r:system_lib_file:s0
 /system/lib64/libcontextanalyzer_jni\.media\.samsung\.so u:object_r:system_lib_file:s0
 /system/lib64/libmediacontextanalyzer\.so u:object_r:system_lib_file:s0
 /system/lib64/libvideo-highlight-arm64-v8a\.so u:object_r:system_lib_file:s0
@@ -313,6 +321,8 @@
 /system/priv-app/AudioMirroring/AudioMirroring\.apk u:object_r:system_file:s0
 /system/priv-app/EnvironmentAdaptiveDisplay u:object_r:system_file:s0
 /system/priv-app/EnvironmentAdaptiveDisplay/EnvironmentAdaptiveDisplay\.apk u:object_r:system_file:s0
+/system/priv-app/SoundAlive_C u:object_r:system_file:s0
+/system/priv-app/SoundAlive_C/SoundAlive_C\.apk u:object_r:system_file:s0
 /system/priv-app/MediaSearch u:object_r:system_file:s0
 /system/priv-app/MediaSearch/MediaSearch\.apk u:object_r:system_file:s0
 /system/priv-app/Moments u:object_r:system_file:s0
