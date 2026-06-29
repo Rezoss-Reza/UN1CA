@@ -1,0 +1,4 @@
+/vendor/lib64/libSecPhotoHdrEncoder\.uniplugin@1\.0\.so u:object_r:vendor_file:s0
+/vendor/lib64/libUniPluginUtils\.so u:object_r:vendor_file:s0
+/vendor/lib64/libimgproc_sw\.unifunc@common\.so u:object_r:vendor_file:s0
+/vendor/lib64/unihal_cutils\.so u:object_r:vendor_file:s0
