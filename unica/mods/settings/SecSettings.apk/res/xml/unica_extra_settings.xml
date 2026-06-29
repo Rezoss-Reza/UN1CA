@@ -7,6 +7,7 @@
     <com.samsung.android.settings.widget.SecInsetCategoryPreference />
     <SecSwitchPreference android:title="@string/unica_secure_ss_title" android:key="unica_secure_ss" settings:controller="io.mesalabs.unica.settings.wm.SecureScreenshotPreferenceController" />
     <SecSwitchPreference android:title="@string/unica_ss_detection_title" android:key="unica_ss_detection" settings:controller="io.mesalabs.unica.settings.wm.CaptureDetectionPreferenceController" />
+    <SecSwitchPreference android:title="@string/unica_mock_location_title" android:key="unica_mock_location" android:summary="@string/unica_mock_location_summary" settings:controller="io.mesalabs.unica.settings.extra.MockLocationPreferenceController" />
     <com.samsung.android.settings.widget.SecInsetCategoryPreference />
     <SecSwitchPreference android:title="@string/unica_gphotos_title" android:key="unica_gphotos" settings:controller="io.mesalabs.unica.settings.extra.GooglePhotosPreferenceController" />
     <SecSwitchPreference android:title="@string/unica_games_spoof_title" android:key="unica_games_spoof" settings:controller="io.mesalabs.unica.settings.extra.GamesPropsPreferenceController" />

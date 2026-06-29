@@ -313,6 +313,30 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libframebooster.so" 0 0 644 "u:o
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libphotohdr.so" 0 0 644 "u:object_r:system_lib_file:s0"
 
 # =============================================================================
+# S26U Prebuilts - PhotoHDR Simba / HEIF Stack
+# =============================================================================
+# System-side test stack only. Keep the existing libphotohdr.so and imagecodec
+# APEX contents unchanged for this pass.
+LOG "- Adding S26U PhotoHDR Simba/HEIF system stack"
+for f in \
+    "libsimba.media.samsung.so" \
+    "libsimba.decoder.media.samsung.so" \
+    "libsimba.cfa.media.samsung.so" \
+    "libheifcapture.so" \
+    "libheifcapture_jni.media.samsung.so" \
+    "libheif.so" \
+    "libheifcodec_jni.so" \
+    "libheifregiondec_jni.so" \
+    "libsheif.so" \
+    "libsheifdecadapter.so" \
+    "libsecultrahdr.so" \
+    "libultrahdr.so" \
+    "libjpegsq.media.samsung.so"; do
+    ADD_TO_WORK_DIR "$MODPATH" "system" "lib64/$f" 0 0 644 "u:object_r:system_lib_file:s0"
+    _REZOSS_SET_SYSTEM_LIB64_METADATA "$f"
+done
+
+# =============================================================================
 # S26U Prebuilts - Enhanced Document Scan
 # =============================================================================
 # S26U enhanced document-scan native libs.
@@ -374,17 +398,16 @@ done
 # =============================================================================
 LOG "- Adding S26U video clipping and document-scan model files"
 _REZOSS_ENSURE_VENDOR_CONFIG_FILE_CONTEXTS
-# Disabled with libfoundational_segmentation.camera.samsung.so.
-# ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/saiv/image_understanding/db/fm" 0 2000 755 "u:object_r:vendor_configs_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/saiv/image_understanding/db/fm" 0 2000 755 "u:object_r:vendor_configs_file:s0"
 # S26U enhanced document-scan configs/models.
 # WARNING: Might cause crash.
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/saiv/image_understanding/db/doc_rectifier" 0 2000 755 "u:object_r:vendor_configs_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/saiv/image_understanding/db/ss_magnet" 0 2000 755 "u:object_r:vendor_configs_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/midas_enhancedocumentscan" 0 2000 755 "u:object_r:vendor_configs_file:s0"
-# for f in \
-#     "etc/saiv/image_understanding/db/fm"; do
-#     _REZOSS_SET_VENDOR_CONFIG_DIR_METADATA "$f"
-# done
+for f in \
+    "etc/saiv/image_understanding/db/fm"; do
+    _REZOSS_SET_VENDOR_CONFIG_DIR_METADATA "$f"
+done
 
 # =============================================================================
 # S26U Prebuilts - Compressed RAW Decoder
@@ -433,6 +456,20 @@ done
 # ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/liboischannel.so" 0 0 644 "u:object_r:vendor_file:s0"
 # ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libois_channel_stub.so" 0 0 644 "u:object_r:vendor_file:s0"
 # ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libois_channel_factory_test_stub.so" 0 0 644 "u:object_r:vendor_file:s0"
+
+# =============================================================================
+# S26U Prebuilts - PhotoHDR Vendor Encoder Plugin
+# =============================================================================
+# Direct plugin stack only. Vendor Simba/HEIF/libphotohdr remains on the existing
+# target stack for this pass.
+LOG "- Adding S26U PhotoHDR vendor encoder plugin stack"
+for f in \
+    "libSecPhotoHdrEncoder.uniplugin@1.0.so" \
+    "libUniPluginUtils.so" \
+    "libimgproc_sw.unifunc@common.so" \
+    "unihal_cutils.so"; do
+    ADD_TO_WORK_DIR "$MODPATH" "vendor" "lib64/$f" 0 0 644 "u:object_r:vendor_file:s0"
+done
 
 # =============================================================================
 # Vendor Floating Feature Mirror / SELinux Fixups
