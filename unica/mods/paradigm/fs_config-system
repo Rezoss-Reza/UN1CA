@@ -59,7 +59,6 @@ system/etc/fastScanner.tflite 0 0 644 capabilities=0x0
 system/etc/mss_v0.23.0_VMWO_2_fp32.sorione 0 0 644 capabilities=0x0
 system/etc/public.libraries-audio.samsung.txt 0 0 644 capabilities=0x0
 system/etc/ringtones_count_list.txt 0 0 644 capabilities=0x0
-system/etc/audio_effects_common.conf 0 0 644 capabilities=0x0
 system/hidden 0 0 755 capabilities=0x0
 system/hidden/INTERNAL_SDCARD 0 0 755 capabilities=0x0
 system/hidden/INTERNAL_SDCARD/Music 0 0 755 capabilities=0x0

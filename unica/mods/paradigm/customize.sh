@@ -93,7 +93,7 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/audio_ae_intervals.conf" 0 0 644 "
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/fastScanner.tflite" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/mss_v0.23.0_VMWO_2_fp32.sorione" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/public.libraries-audio.samsung.txt" 0 0 644 "u:object_r:system_file:s0"
-# Keep SoundAlive_C aligned with the S26U OneUI9 AudioEraserProvider/SCPM policy behavior.
+# Keep SoundAlive_C aligned with the S26U One UI 8.5 AudioEraserProvider/SCPM policy behavior.
 DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.sec.android.app.soundalive_B2.xml"
 DELETE_FROM_WORK_DIR "system" "system/priv-app/SoundAlive_B2"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/permissions/privapp-permissions-com.sec.android.app.soundalive_C.xml" 0 0 644 "u:object_r:system_file:s0"
@@ -111,14 +111,22 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/bin/audiomirroring" 0 2000 755 "u:obje
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiomirroring.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiomirroring_jni.audiomirroring.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiomirroringservice.so" 0 0 644 "u:object_r:system_lib_file:s0"
-# Keep APlayer matched with the S26U Audio Eraser backend. This also affects general media playback.
+# Keep APlayer on the One UI 8.5 media stack.
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaplayer.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.common.types-V1-ndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.common.types-V4-cpp.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.common.types-V4-ndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.eraser.types-V1-ndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmediasndk.mediacore.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmediasndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmultisourceseparator.audio.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmultisourceseparator.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libsbs.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libtensorflowlite.audio.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libvoice_booster.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libsoundboostereq_legacy.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/lib_sag_ai_sound_sep_v1.00.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/lib_sag_ai_sound_sep_v2.00.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libtensorflowlite_gpu_delegate.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libveframework.videoeditor.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/android.media.audio.eraser.types-V1-ndk.so" 0 0 644 "u:object_r:vendor_file:s0"
@@ -186,6 +194,20 @@ ADD_TO_WORK_DIR "m3qxxx" "system" \
     "system/priv-app/MediaSearch/MediaSearch.apk" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" \
     "system/priv-app/SemanticSearchCore/SemanticSearchCore.apk" 0 0 644 "u:object_r:system_file:s0"
+DECODE_APK "system" "system/priv-app/SemanticSearchCore/SemanticSearchCore.apk"
+SEMANTIC_SEARCH_CORE_DECODED="$APKTOOL_DIR/system/priv-app/SemanticSearchCore/SemanticSearchCore.apk"
+SEMANTIC_SEARCH_CORE_PATCH="$MODPATH/semanticsearch/SemanticSearchCore.apk/0001-Bypass-QNN-HTP-neural-entrypoints.patch"
+EVAL "find \"$SEMANTIC_SEARCH_CORE_DECODED\" -type f \( -name \"*.orig\" -o -name \"*.rej\" \) -delete"
+if LC_ALL=C patch --dry-run -p1 -d "$SEMANTIC_SEARCH_CORE_DECODED" -N --forward -l < "$SEMANTIC_SEARCH_CORE_PATCH" > /dev/null 2>&1; then
+    LOG "- Applying \"$(grep "^Subject:" "$SEMANTIC_SEARCH_CORE_PATCH" | sed "s/.*PATCH] //")\" to /system/system/priv-app/SemanticSearchCore/SemanticSearchCore.apk"
+    EVAL "LC_ALL=C patch -p1 -d \"$SEMANTIC_SEARCH_CORE_DECODED\" -N --forward -l < \"$SEMANTIC_SEARCH_CORE_PATCH\"" || return 1
+elif LC_ALL=C patch --dry-run -R -p1 -d "$SEMANTIC_SEARCH_CORE_DECODED" -l < "$SEMANTIC_SEARCH_CORE_PATCH" > /dev/null 2>&1; then
+    LOG "- SemanticSearchCore.apk QNN HTP neural entrypoints already bypassed"
+else
+    LOGE "SemanticSearchCore.apk QNN HTP bypass patch state is inconsistent"
+    return 1
+fi
+unset SEMANTIC_SEARCH_CORE_DECODED SEMANTIC_SEARCH_CORE_PATCH
 # ADD_TO_WORK_DIR "pa2qxxx" "system" \
     # "system/priv-app/SemanticSearchCore/SemanticSearchCore.apk" 0 0 644 "u:object_r:system_file:s0"
 DECODE_APK "system" "system/priv-app/SecSettingsIntelligence/SecSettingsIntelligence.apk"

@@ -8,6 +8,15 @@ ADD_TO_WORK_DIR "m3qxxx" "system" \
     "system/etc/default-permissions/default-permissions-com.samsung.android.smartsuggestions.xml" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" \
     "system/etc/permissions/privapp-permissions-com.samsung.android.smartsuggestions.xml" 0 0 644 "u:object_r:system_file:s0"
+LOG "- Adding Samsung Messages for Now Nudge in-app support"
+ADD_TO_WORK_DIR "m3qxxx" "system" \
+    "system/priv-app/SamsungMessages/SamsungMessages.apk" 0 0 644 "u:object_r:system_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" \
+    "system/etc/permissions/privapp-permissions-com.samsung.android.messaging.xml" 0 0 644 "u:object_r:system_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" \
+    "system/etc/default-permissions/default-permissions-com.samsung.android.messaging.xml" 0 0 644 "u:object_r:system_file:s0"
+APPLY_PATCH "system" "system/priv-app/SamsungMessages/SamsungMessages.apk" \
+    "$MODPATH/samsungmessages/SamsungMessages.apk/0001-Advertise-Now-Nudge-in-app-revision.patch"
 LOG "- Patching SmartSuggestions content visibility, Now Nudge, and Developer Mode access"
 REZOSS_SMARTSUGGESTIONS_APK="$WORK_DIR/system/system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk"
 REZOSS_SMARTSUGGESTIONS_TMP="$TMP_DIR/rezoss_smartsuggestions_dev_mode"
@@ -30,6 +39,12 @@ EVAL "rm -rf \"$REZOSS_SMARTSUGGESTIONS_TMP\""
 LOG "- Patch SmartSuggestions missing Kakao Navi provider crash"
 APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
     "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0002-Handle-missing-Kakao-Navi-provider.patch"
+LOG "- Patching SmartSuggestions Custom Card max-count gate"
+APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0003-Allow-custom-card-creation-past-max-count.patch"
+LOG "- Patching SmartSuggestions Custom Card SA token refresh gate"
+APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0004-Use-existing-SA-token-before-proactive-refresh.patch"
 LOG "- Patching SmartSuggestions Now Nudge experimental runtime gates"
 SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
     "smali_classes15/com/samsung/android/smartsuggestions/service/screenintelligence/setting/NowNudgesSettingHelper.smali" "return" \
@@ -55,6 +70,16 @@ SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSugges
     "smali_classes15/com/samsung/android/smartsuggestions/service/policy/AutofillPolicyManager.smali" "return" \
     'isNudgeAllowed(Landroid/content/ComponentName;)Z' \
     'true' \
+    > /dev/null
+SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "smali_classes15/com/samsung/android/smartsuggestions/service/smartreply/SmartReplyResolver.smali" "return" \
+    'isInAppNudgePackage(Landroid/content/Context;Ljava/lang/String;)Z' \
+    'true' \
+    > /dev/null
+SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "smali_classes15/com/samsung/android/smartsuggestions/service/smartreply/SmartReplyResolver.smali" "return" \
+    'getInAppNudgeRevisionFromMessageApp(Landroid/content/Context;)I' \
+    '1' \
     > /dev/null
 unset REZOSS_SMARTSUGGESTIONS_APK REZOSS_SMARTSUGGESTIONS_TMP REZOSS_SMARTSUGGESTIONS_CERT_PREFIX
 
@@ -495,22 +520,6 @@ SET_PROP "system" "ro.build.display.id" "${NOW_BUILD}"
 SET_PROP "product" "ro.build.display.id" "${NOW_BUILD}"
 
 # =============================================================================
-# S26U Prebuilts - Audio / Voice Processing
-# =============================================================================
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmediasndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libvoice_booster.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/lib_sag_ai_sound_sep_v1.00.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/lib_sag_ai_sound_sep_v2.00.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/lib_SAG_EQ_ver2090.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libSAG_VM_Energy_v300.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libSAG_VM_Score_V300.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/lib_SoundAlive_play_plus_ver900.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libsamsungSoundbooster_plus_legacy.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libsoundboostereq_legacy.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/audio_effects_common.conf" 0 0 644 "u:object_r:system_lib_file:s0"
-echo "/system/lib64/lib_sag_ai_sound_sep_v1.00.so" >> "$WORK_DIR/system/system/etc/irremovable_list.txt" 0 0 644 "u:object_r:system_lib_file:s0"
-
-# =============================================================================
 # Local System App Overlays
 # =============================================================================
 ADD_TO_WORK_DIR "dm3qxxx" "system" "system/app/SamsungSans/SamsungSans.apk" 0 0 644 "u:object_r:system_file:s0"
@@ -684,7 +693,6 @@ for REZOSS_NOTI_AI_REQ in \
     "system/priv-app/SamsungIntelliVoiceServices/SamsungIntelliVoiceServices.apk" \
     "system/priv-app/SamsungAiCore/SamsungAiCore.apk" \
     "system/priv-app/AIOSKernelService/AIOSKernelService.apk" \
-    "system/priv-app/OfflineLanguageModel_stub/OfflineLanguageModel_stub.apk" \
     "system/etc/permissions/privapp-permissions-com.samsung.android.intellivoiceservice.xml" \
     "system/etc/permissions/privapp-permissions-com.samsung.android.aicore.xml" \
     "system/etc/permissions/privapp-permissions-com.samsung.android.aioskernelservice.xml" \
@@ -859,7 +867,7 @@ cp -f "$KSU_INIT_BOOT" "$TMP_DIR/init_boot.img" \
   || ABORT "Failed to copy init_boot.img"
 (
   cd "$TMP_DIR" || exit 1
-  "$KSU_KSUD" boot-patch -b init_boot.img --magiskboot "$MAGISKBOOT" --module "$KSU_MODULE" --kmi "$KSU_KMI"
+  "$KSU_KSUD" boot-patch -b init_boot.img --module "$KSU_MODULE" --kmi "$KSU_KMI"
 ) || ABORT "Failed to patch init_boot.img with KernelSU-Next"
 
 KSU_PATCHED_INIT_BOOT="$(find "$TMP_DIR" -maxdepth 1 -type f \( -name "*patched*.img" -o -name "new-boot.img" \) -printf "%T@ %p\n" | sort -nr | head -n1 | cut -d " " -f 2-)"
