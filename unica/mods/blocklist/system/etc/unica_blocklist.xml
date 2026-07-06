@@ -4,4 +4,22 @@
     <package name="com.aura.oobe.samsung.gl"/>
     <package name="com.dti.samsung"/>
     <package name="com.ironsource.appcloud.oobe.hutchison"/>
+    <package name="com.samsung.android.smartsuggestions"/>
+    <package name="com.samsung.android.intellivoiceservice"/>
+    <package name="com.samsung.android.aicore"/>
+    <package name="com.samsung.android.aioskernelservice"/>
+    <package name="com.samsung.android.audiomirroring"/>
+    <package name="com.samsung.android.honeyboard"/>
+    <package name="com.sec.android.app.camera"/>
+    <package name="com.samsung.android.app.sharelive"/>
+    <package name="com.samsung.android.visual.cloudcore"/>
+    <package name="com.samsung.android.app.moments"/>
+    <package name="com.samsung.android.kmxservice"/>
+    <package name="com.samsung.android.da.daagent"/>
+    <package name="com.samsung.android.setting.multisound"/>
+    <package name="com.samsung.android.secsoundpicker"/>
+    <package name="com.sec.android.app.firewall"/>
+    <package name="com.samsung.android.game.gametools"/>
+    <package name="com.samsung.android.ssco"/>
+    <package name="com.sec.android.app.soundalive"/>
 </packages>

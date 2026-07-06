@@ -33,7 +33,7 @@
 .method public getMin()I
     .locals 0
 
-    const/4 p0, 0x0
+    const/16 p0, 0x46
 
     return p0
 .end method
@@ -84,7 +84,7 @@
     return-object p0
 
     :cond_0
-    const-string p0, "0% keeps the normal opaque Settings background. 100% makes it fully transparent."
+    const-string p0, "Min starts at 70% transparency. Middle is 85%. Max makes it fully transparent."
 
     return-object p0
 .end method

@@ -8,11 +8,21 @@ from pathlib import Path
 
 
 TARGET_CLASS = "Lcom/samsung/android/smartsuggestions/featureconfig/rune/Rune;"
-TARGET_METHODS = (
-    "SUPPORT_NOW_NUDGE_delegate$lambda$146",
-    "SUPPORT_NOW_NUDGE_delegate$lambda$115",
-    "SUPPORT_NOW_NUDGE_delegate$lambda$111",
-)
+TARGET_METHOD_GROUPS = {
+    "Now Nudge": (
+        "SUPPORT_NOW_NUDGE_delegate$lambda$146",
+        "SUPPORT_NOW_NUDGE_delegate$lambda$115",
+        "SUPPORT_NOW_NUDGE_delegate$lambda$111",
+    ),
+    "Now Nudge in-app": (
+        "SUPPORT_IN_APP_NUDGE_delegate$lambda$20",
+    ),
+}
+TARGET_METHODS = {
+    method_name: group_name
+    for group_name, method_names in TARGET_METHOD_GROUPS.items()
+    for method_name in method_names
+}
 
 
 def read_uleb128(data, offset):
@@ -42,7 +52,7 @@ def update_dex_header(data):
     data[8:12] = struct.pack("<I", checksum)
 
 
-def find_target_code_offset(data):
+def find_target_code_offsets(data):
     if not data.startswith(b"dex\n"):
         raise RuntimeError("not a dex file")
 
@@ -96,9 +106,9 @@ def find_target_code_offset(data):
             if owner == TARGET_CLASS and name in TARGET_METHODS:
                 if code_off == 0:
                     raise RuntimeError("target method has no code item")
-                return code_off, name
+                yield code_off, name
 
-        raise RuntimeError(f"target method not found in target class: {', '.join(TARGET_METHODS)}")
+        return
 
     raise RuntimeError("target class not found")
 
@@ -109,25 +119,36 @@ def main():
 
     dex_path = Path(sys.argv[1])
     data = bytearray(dex_path.read_bytes())
-    code_off, method_name = find_target_code_offset(data)
-    insn_off = code_off + 16
+    found_groups = set()
+    changed = False
 
-    if data[insn_off] != 0x12:
-        raise RuntimeError(f"unexpected first opcode at 0x{insn_off:x}: 0x{data[insn_off]:02x}")
+    for code_off, method_name in find_target_code_offsets(data):
+        found_groups.add(TARGET_METHODS[method_name])
+        insn_off = code_off + 16
 
-    if data[insn_off + 1] == 0x10:
-        print(f"Now Nudge rune already patched in {method_name}")
-        return
+        if data[insn_off] != 0x12:
+            raise RuntimeError(f"unexpected first opcode at 0x{insn_off:x}: 0x{data[insn_off]:02x}")
 
-    if data[insn_off + 1] != 0x00:
-        raise RuntimeError(
-            f"unexpected const/4 operand at 0x{insn_off + 1:x}: 0x{data[insn_off + 1]:02x}"
-        )
+        if data[insn_off + 1] == 0x10:
+            print(f"{TARGET_METHODS[method_name]} rune already patched in {method_name}")
+            continue
 
-    data[insn_off + 1] = 0x10
-    update_dex_header(data)
-    dex_path.write_bytes(data)
-    print(f"Patched Now Nudge rune {method_name} at dex offset 0x{insn_off:x}")
+        if data[insn_off + 1] != 0x00:
+            raise RuntimeError(
+                f"unexpected const/4 operand at 0x{insn_off + 1:x}: 0x{data[insn_off + 1]:02x}"
+            )
+
+        data[insn_off + 1] = 0x10
+        changed = True
+        print(f"Patched {TARGET_METHODS[method_name]} rune {method_name} at dex offset 0x{insn_off:x}")
+
+    missing_groups = set(TARGET_METHOD_GROUPS) - found_groups
+    if missing_groups:
+        raise RuntimeError(f"target method group(s) not found: {', '.join(sorted(missing_groups))}")
+
+    if changed:
+        update_dex_header(data)
+        dex_path.write_bytes(data)
 
 
 if __name__ == "__main__":

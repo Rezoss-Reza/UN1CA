@@ -5,6 +5,8 @@ REGION_KEY="unica_scpm_region_bypass"
 PKG_FILE="/data/system/unica_scpm_allowlist_packages.txt"
 FLAGS_FILE="/data/system/unica_scpm_allowlist_flags"
 NOTI_FILE="/data/system/notification_ai_scpm_policies.json"
+NOTI_SOURCE_FILE="/system/etc/unica/notification_ai_scpm_policies.json"
+NOTI_PKG_FILE="/data/system/unica_notification_ai_allowlist_packages.txt"
 AUDIO_JSON="/data/system/unica_audiomirroring_allowlist.json"
 LOG_FILE="/data/system/unica_scpm_allowlist_apply.log"
 AUDIO_PACKAGE="com.samsung.android.audiomirroring"
@@ -14,6 +16,94 @@ AUDIO_PREF_FILE="$AUDIO_PREF_DIR/AudioMirroring.xml"
 
 log_msg() {
     printf '%s %s\n' "$(date '+%Y-%m-%d %H:%M:%S' 2>/dev/null)" "$*" >> "$LOG_FILE" 2>/dev/null
+}
+
+packages_to_json() {
+    awk '
+        BEGIN { printf "["; first = 1 }
+        {
+            value = $0
+            gsub(/\\/, "\\\\", value)
+            gsub(/"/, "\\\"", value)
+            if (!first) {
+                printf ","
+            }
+            printf "\"%s\"", value
+            first = 0
+        }
+        END { print "]" }
+    ' "$1"
+}
+
+apply_noti_json() {
+    NOTI_ENABLED="$(getprop persist.sys.unica.noti_ai_json 2>/dev/null)"
+    case "$NOTI_ENABLED" in
+        1|true|TRUE|True)
+            ;;
+        *)
+            rm -f "$NOTI_FILE" "$NOTI_PKG_FILE"
+            log_msg "notification ai json disabled"
+            return
+            ;;
+    esac
+
+    if [ ! -r "$NOTI_SOURCE_FILE" ]; then
+        rm -f "$NOTI_FILE" "$NOTI_PKG_FILE"
+        log_msg "missing $NOTI_SOURCE_FILE"
+        return
+    fi
+
+    if [ -s "$PKG_FILE" ]; then
+        awk -F\" '
+            FNR == NR {
+                for (i = 2; i <= NF; i += 2) {
+                    value = $i
+                    if (value ~ /^[A-Za-z0-9_]+([.][A-Za-z0-9_]+)+$/ && !seen[value]++) {
+                        print value
+                    }
+                }
+                next
+            }
+            /^[A-Za-z0-9_]+([.][A-Za-z0-9_]+)+$/ && !seen[$0]++ { print }
+        ' "$NOTI_SOURCE_FILE" "$PKG_FILE" > "$NOTI_PKG_FILE"
+    else
+        awk -F\" '
+            {
+                for (i = 2; i <= NF; i += 2) {
+                    value = $i
+                    if (value ~ /^[A-Za-z0-9_]+([.][A-Za-z0-9_]+)+$/ && !seen[value]++) {
+                        print value
+                    }
+                }
+            }
+        ' "$NOTI_SOURCE_FILE" > "$NOTI_PKG_FILE"
+    fi
+
+    if [ ! -s "$NOTI_PKG_FILE" ]; then
+        rm -f "$NOTI_FILE" "$NOTI_PKG_FILE"
+        log_msg "no valid notification ai package names"
+        return
+    fi
+
+    NOTI_JSON="$(packages_to_json "$NOTI_PKG_FILE")"
+    NOTI_PKG_COUNT="$(wc -l < "$NOTI_PKG_FILE" 2>/dev/null)"
+
+    cat > "$NOTI_FILE" <<EOF
+{
+  "policy_version": 1000000000,
+  "summary_policies": [10, 3, 3, 9, 12, 40],
+  "summary_exclude_keywords": "\uBD80\uACE0, \u8A03\u544A, \uC0AC\uB9DD, \uBCC4\uC138",
+  "summary_allow_list": $NOTI_JSON,
+  "except_scenarios": []
+}
+EOF
+    chown system system "$NOTI_FILE"
+    chown system system "$NOTI_PKG_FILE"
+    chmod 0600 "$NOTI_FILE"
+    chmod 0600 "$NOTI_PKG_FILE"
+    restorecon "$NOTI_FILE" 2>/dev/null
+    restorecon "$NOTI_PKG_FILE" 2>/dev/null
+    log_msg "wrote $NOTI_FILE packages=$NOTI_PKG_COUNT custom=$PKG_COUNT"
 }
 
 REGION_BYPASS="$(settings get system "$REGION_KEY" 2>/dev/null)"
@@ -43,6 +133,9 @@ restorecon "$FLAGS_FILE" 2>/dev/null
 PACKAGES_RAW="$(settings get system "$PACKAGES_KEY" 2>/dev/null)"
 if [ -z "$PACKAGES_RAW" ] || [ "$PACKAGES_RAW" = "null" ]; then
     log_msg "no packages in $PACKAGES_KEY"
+    rm -f "$PKG_FILE"
+    PKG_COUNT="0"
+    apply_noti_json
     exit 0
 fi
 
@@ -53,6 +146,8 @@ printf '%s\n' "$PACKAGES_RAW" | awk '
 if [ ! -s "$PKG_FILE" ]; then
     log_msg "no valid package names after filtering"
     rm -f "$PKG_FILE"
+    PKG_COUNT="0"
+    apply_noti_json
     exit 0
 fi
 
@@ -62,22 +157,9 @@ chmod 0600 "$PKG_FILE"
 restorecon "$PKG_FILE" 2>/dev/null
 log_msg "prepared $PKG_COUNT packages"
 
-JSON="$(
-    awk '
-        BEGIN { printf "["; first = 1 }
-        {
-            value = $0
-            gsub(/\\/, "\\\\", value)
-            gsub(/"/, "\\\"", value)
-            if (!first) {
-                printf ","
-            }
-            printf "\"%s\"", value
-            first = 0
-        }
-        END { print "]" }
-    ' "$PKG_FILE"
-)"
+apply_noti_json
+
+JSON="$(packages_to_json "$PKG_FILE")"
 
 cat > "$AUDIO_JSON" <<EOF
 $JSON
@@ -85,19 +167,6 @@ EOF
 chown system system "$AUDIO_JSON"
 chmod 0600 "$AUDIO_JSON"
 restorecon "$AUDIO_JSON" 2>/dev/null
-
-cat > "$NOTI_FILE" <<EOF
-{
-  "policy_version": 1000000000,
-  "summary_policies": [10, 3, 3, 9, 12, 40],
-  "summary_exclude_keywords": "\uBD80\uACE0, \u8A03\u544A, \uC0AC\uB9DD, \uBCC4\uC138",
-  "summary_allow_list": $JSON,
-  "except_scenarios": []
-}
-EOF
-chown system system "$NOTI_FILE"
-chmod 0600 "$NOTI_FILE"
-restorecon "$NOTI_FILE" 2>/dev/null
 
 APP_UID="$(cmd package list packages -U "$AUDIO_PACKAGE" 2>/dev/null | sed -n 's/.*uid://p' | head -n 1)"
 if [ -z "$APP_UID" ]; then
