@@ -8,6 +8,8 @@ log_msg() {
     printf '%s %s\n' "$(date '+%Y-%m-%d %H:%M:%S' 2>/dev/null)" "$*" >> "$LOG_FILE" 2>/dev/null
 }
 
+log_msg "start"
+
 STATE="$(settings get system "$STATE_KEY" 2>/dev/null)"
 case "$STATE" in
     0|false|FALSE)

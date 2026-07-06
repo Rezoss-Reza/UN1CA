@@ -1,0 +1,27 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Rezoss <rezoss79@users.noreply.github.com>
+Date: Fri, 3 Jul 2026 00:00:00 +0200
+Subject: [PATCH] Use existing SA token before proactive refresh
+
+When SmartSuggestions already has Samsung Account auth in memory, do not
+force a proactive custom-card token refresh just because the 23 hour
+refresh interval expired. This keeps the existing token usable for the
+first request and still leaves the forced refresh path after a real
+AUTH_SA_ERROR untouched.
+
+---
+ .../aiagent/data/source/CustomCardScsSuggestionClient.smali      | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/smali_classes14/com/samsung/android/smartsuggestions/feature/aisuggestion/aiagent/data/source/CustomCardScsSuggestionClient.smali b/smali_classes14/com/samsung/android/smartsuggestions/feature/aisuggestion/aiagent/data/source/CustomCardScsSuggestionClient.smali
+--- a/smali_classes14/com/samsung/android/smartsuggestions/feature/aisuggestion/aiagent/data/source/CustomCardScsSuggestionClient.smali
++++ b/smali_classes14/com/samsung/android/smartsuggestions/feature/aisuggestion/aiagent/data/source/CustomCardScsSuggestionClient.smali
+@@ -700,7 +700,7 @@
+ 
+     move-result p2
+ 
+-    if-nez p2, :cond_3
++    if-nez p2, :goto_2
+ 
+     sget-object p0, Ljava/lang/Boolean;->TRUE:Ljava/lang/Boolean;
+ 
