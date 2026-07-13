@@ -8,11 +8,7 @@ from pathlib import Path
 
 
 PATCHES = (
-    (
-        "Lcom/samsung/android/smartsuggestions/feature/aisuggestion/category/spec/CategorySpecKt;",
-        "isChecked",
-        True,
-    ),
+    # Keep CategorySpecKt.isChecked() unpatched so category toggles follow user state.
     (
         "Lcom/samsung/android/smartsuggestions/feature/aisuggestion/category/spec/CategorySpecKt;",
         "isVisible",

@@ -94,12 +94,15 @@
 /system/lib64/libmppfilter\.so u:object_r:system_lib_file:s0
 /system/lib64/libveframework\.videoeditor\.samsung\.so u:object_r:system_lib_file:s0
 /system/lib64/vendor\.samsung\.hardware\.media\.mpp-V5-ndk\.so u:object_r:system_lib_file:s0
+/system/lib64/android\.media\.audio\.eraser\.types-V2-ndk\.so u:object_r:system_lib_file:s0
 /system/lib64/libvoice_booster\.so u:object_r:system_lib_file:s0
 /system/lib64/lib_sag_ai_sound_sep_v1\.00\.so u:object_r:system_lib_file:s0
 /system/lib64/lib_sag_ai_sound_sep_v2\.00\.so u:object_r:system_lib_file:s0
+/system/lib64/libtensorflowlite_jni\.so u:object_r:system_lib_file:s0
 /system/lib64/lib_SAG_EQ_ver2090\.so u:object_r:system_lib_file:s0
 /system/lib64/libSAG_VM_Energy_v300\.so u:object_r:system_lib_file:s0
 /system/lib64/libSAG_VM_Score_V300\.so u:object_r:system_lib_file:s0
+/system/lib64/libaudiosaplus_sec_legacy\.so u:object_r:system_lib_file:s0
 /system/lib64/libSoundAlive_VSP_ver316c_ARMCpp\.so u:object_r:system_lib_file:s0
 /system/lib64/lib_SoundAlive_AlbumArt_ver105\.so u:object_r:system_lib_file:s0
 /system/lib64/lib_SoundAlive_SRC192_ver205a\.so u:object_r:system_lib_file:s0

@@ -9,6 +9,7 @@
     "com.whatsapp.w4b",
     "com.snapchat.android",
     "org.telegram.messenger",
+    "org.telegram.messenger.web",
     "com.samsung.android.messaging",
     "com.zing.zalo",
     "com.viber.voip",

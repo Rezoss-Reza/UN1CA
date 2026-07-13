@@ -72,6 +72,8 @@
 /system/lib64/libsbs\.so u:object_r:system_lib_file:s0
 /system/lib64/libtensorflowlite_gpu_delegate\.so u:object_r:system_lib_file:s0
 /system/lib64/libveframework\.videoeditor\.samsung\.so u:object_r:system_lib_file:s0
+/system/lib64/android\.media\.audio\.eraser\.types-V2-ndk\.so u:object_r:system_lib_file:s0
+/system/lib64/libtensorflowlite_jni\.so u:object_r:system_lib_file:s0
 /system/lib64/libmediasndk\.so u:object_r:system_lib_file:s0
 /system/lib64/libvoice_booster\.so u:object_r:system_lib_file:s0
 /system/lib64/lib_sag_ai_sound_sep_v1\.00\.so u:object_r:system_lib_file:s0
@@ -79,6 +81,7 @@
 /system/lib64/lib_SAG_EQ_ver2060\.so u:object_r:system_lib_file:s0
 /system/lib64/libSAG_VM_Energy_v300\.so u:object_r:system_lib_file:s0
 /system/lib64/libSAG_VM_Score_V300\.so u:object_r:system_lib_file:s0
+/system/lib64/libaudiosaplus_sec_legacy\.so u:object_r:system_lib_file:s0
 /system/lib64/lib_SoundAlive_play_plus_ver900\.so u:object_r:system_lib_file:s0
 /system/lib64/libcontextanalyzer_jni\.media\.samsung\.so u:object_r:system_lib_file:s0
 /system/lib64/libmediacontextanalyzer\.so u:object_r:system_lib_file:s0

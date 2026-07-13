@@ -1,0 +1,34 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Rezoss <rezoss79@users.noreply.github.com>
+Date: Fri, 3 Jul 2026 00:00:00 +0200
+Subject: [PATCH] Relax Custom Card runtime policy
+
+Remove the saved-card max-count block and use an existing Samsung Account
+token before proactive refresh. Daily policy and AUTH_SA_ERROR recovery remain.
+
+---
+diff --git a/smali_classes14/com/samsung/android/smartsuggestions/feature/aisuggestion/aiagent/data/repository/CustomCardRepositoryImpl.smali b/smali_classes14/com/samsung/android/smartsuggestions/feature/aisuggestion/aiagent/data/repository/CustomCardRepositoryImpl.smali
+--- a/smali_classes14/com/samsung/android/smartsuggestions/feature/aisuggestion/aiagent/data/repository/CustomCardRepositoryImpl.smali
++++ b/smali_classes14/com/samsung/android/smartsuggestions/feature/aisuggestion/aiagent/data/repository/CustomCardRepositoryImpl.smali
+@@ -3599,7 +3599,7 @@
+ 
+     move-result v0
+ 
+-    if-le v0, p0, :cond_2
++    if-le v0, p0, :goto_0
+ 
+     :goto_0
+     const/4 p0, 0x1
+
+diff --git a/smali_classes14/com/samsung/android/smartsuggestions/feature/aisuggestion/aiagent/data/source/CustomCardScsSuggestionClient.smali b/smali_classes14/com/samsung/android/smartsuggestions/feature/aisuggestion/aiagent/data/source/CustomCardScsSuggestionClient.smali
+--- a/smali_classes14/com/samsung/android/smartsuggestions/feature/aisuggestion/aiagent/data/source/CustomCardScsSuggestionClient.smali
++++ b/smali_classes14/com/samsung/android/smartsuggestions/feature/aisuggestion/aiagent/data/source/CustomCardScsSuggestionClient.smali
+@@ -700,7 +700,7 @@
+ 
+     move-result p2
+ 
+-    if-nez p2, :cond_3
++    if-nez p2, :goto_2
+ 
+     sget-object p0, Ljava/lang/Boolean;->TRUE:Ljava/lang/Boolean;
+ 
