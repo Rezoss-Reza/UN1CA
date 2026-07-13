@@ -331,7 +331,8 @@
     <!-- TEMP: shooting mode crop zoom features for Eureka -->
     <local name="SUPPORT_FOOD_CROP_ZOOM_X2" value="true"/>
     <local name="SUPPORT_HYPER_LAPSE_CROP_ZOOM_X2" value="true"/>
-    <local name="SUPPORT_NIGHT_CROP_ZOOM_X2" value="true"/>
+    <!-- The stock dm3q CHI graph has no Night crop-zoom x2 pipeline. -->
+    <local name="SUPPORT_NIGHT_CROP_ZOOM_X2" value="false"/>
 
     <local name="SUPPORT_FRAME_WATERMARK" value="true"/>
 

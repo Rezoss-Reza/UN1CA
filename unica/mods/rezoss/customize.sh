@@ -4,6 +4,23 @@ LOG_STEP_IN "- Rezoss experimental mods"
 # Base Overlay
 # =============================================================================
 ADD_TO_WORK_DIR "$MODPATH" "system" "." 0 0 755 "u:object_r:system_file:s0"
+ADD_TO_WORK_DIR "$MODPATH" "system_ext" "." 0 0 755 "u:object_r:system_file:s0"
+LOG "- Porting S26U OneUI9 ShareLive and Mosey"
+DELETE_FROM_WORK_DIR "system" "system/priv-app/ShareLive/oat"
+DELETE_FROM_WORK_DIR "system" "system/priv-app/ShareLive/ShareLive.apk.prof"
+DELETE_FROM_WORK_DIR "system" "system/priv-app/ShareLive/ShareLive.apk.bprof"
+DELETE_FROM_WORK_DIR "system_ext" "priv-app/MoseyApp"
+DELETE_FROM_WORK_DIR "system_ext" "etc/permissions/privapp-permissions-com.google.android.mosey.xml"
+DELETE_FROM_WORK_DIR "system_ext" "etc/default-permissions/default-permissions-com.google.android.mosey.xml"
+DELETE_FROM_WORK_DIR "system_ext" "etc/sysconfig/preinstalled-packages-com.google.android.mosey.xml"
+SET_METADATA "system" "system/priv-app/ShareLive" 0 0 755 "u:object_r:system_file:s0"
+SET_METADATA "system" "system/priv-app/ShareLive/ShareLive.apk" 0 0 644 "u:object_r:system_file:s0"
+SET_METADATA "system" "system/priv-app/MoseyApp" 0 0 755 "u:object_r:system_file:s0"
+SET_METADATA "system" "system/priv-app/MoseyApp/MoseyApp.apk" 0 0 644 "u:object_r:system_file:s0"
+SET_METADATA "system_ext" "bin/mosey_server" 0 2000 755 "u:object_r:mosey_server_exec:s0"
+SET_METADATA "system_ext" "lib64/libmosey_daemon_ffi.so" 0 0 644 "u:object_r:system_lib_file:s0"
+SET_METADATA "system_ext" "etc/init/mosey.rc" 0 0 644 "u:object_r:system_file:s0"
+SET_METADATA "system_ext" "etc/vintf/manifest/manifest_mosey.xml" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" \
     "system/etc/default-permissions/default-permissions-com.samsung.android.smartsuggestions.xml" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" \
@@ -36,15 +53,15 @@ EVAL "signapk \"$SRC_DIR/security/${REZOSS_SMARTSUGGESTIONS_CERT_PREFIX}_platfor
 EVAL "mv -f \"$REZOSS_SMARTSUGGESTIONS_TMP/SamsungSmartSuggestions.signed.apk\" \"$REZOSS_SMARTSUGGESTIONS_APK\""
 SET_METADATA "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" 0 0 644 "u:object_r:system_file:s0"
 EVAL "rm -rf \"$REZOSS_SMARTSUGGESTIONS_TMP\""
-LOG "- Patch SmartSuggestions missing Kakao Navi provider crash"
+LOG "- Patching SmartSuggestions Custom Card runtime policy"
 APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
-    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0002-Handle-missing-Kakao-Navi-provider.patch"
-LOG "- Patching SmartSuggestions Custom Card max-count gate"
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0002-Relax-Custom-Card-runtime-policy.patch"
+LOG "- Patching SmartSuggestions Now Nudge chat and autofill compatibility"
 APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
-    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0003-Allow-custom-card-creation-past-max-count.patch"
-LOG "- Patching SmartSuggestions Custom Card SA token refresh gate"
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0003-Enable-Now-Nudge-chat-and-autofill-compatibility.patch"
+LOG "- Patching SmartSuggestions Samsung Messages content capture SmartReply path"
 APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
-    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0004-Use-existing-SA-token-before-proactive-refresh.patch"
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0004-Enable-Samsung-Messages-content-capture-SmartReply.patch"
 LOG "- Patching SmartSuggestions Now Nudge experimental runtime gates"
 SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
     "smali_classes15/com/samsung/android/smartsuggestions/service/screenintelligence/setting/NowNudgesSettingHelper.smali" "return" \
@@ -54,6 +71,11 @@ SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSugges
 SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
     "smali_classes15/com/samsung/android/smartsuggestions/service/screenintelligence/setting/NowNudgesSettingHelper.smali" "return" \
     'isOnNowNudgesInApp(Landroid/content/Context;)Z' \
+    'true' \
+    > /dev/null
+SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "smali_classes15/com/samsung/android/smartsuggestions/service/screenintelligence/setting/NowNudgesSettingHelper.smali" "return" \
+    'isNowNudgesSwitchOn(Landroid/content/Context;)Z' \
     'true' \
     > /dev/null
 SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
@@ -69,11 +91,6 @@ SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSugges
 SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
     "smali_classes15/com/samsung/android/smartsuggestions/service/policy/AutofillPolicyManager.smali" "return" \
     'isNudgeAllowed(Landroid/content/ComponentName;)Z' \
-    'true' \
-    > /dev/null
-SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
-    "smali_classes15/com/samsung/android/smartsuggestions/service/smartreply/SmartReplyResolver.smali" "return" \
-    'isInAppNudgePackage(Landroid/content/Context;Ljava/lang/String;)Z' \
     'true' \
     > /dev/null
 SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
@@ -109,8 +126,11 @@ SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_AFSPEED" "FALSE
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_CINEMATIC_PORTRAITVIDEO" "FALSE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_FUSION_HIGH_RESOLUTION" "FALSE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_HIGH_RESOLUTION_SWBINNING" "FALSE"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_NIGHT_INTEGRATED_PHOTO_MODE" "TRUE"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_SUPER_NIGHT_DRAFT_RAW" "TRUE"
+# These S26U capture pipelines are not exposed by the stock dm3q camera stack.
+# Advertising them makes SamsungCamera submit an unsupported night request and
+# triggers CHI recovery (Usecase::DumpSystemEvent) in the camera provider.
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_NIGHT_INTEGRATED_PHOTO_MODE" "FALSE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_SUPER_NIGHT_DRAFT_RAW" "FALSE"
 # WARNING: Might Cause Crash
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_VDIS_ON_MOTIONPHOTO" "FALSE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_VIDEO_SOFTENING" "TRUE"
@@ -263,6 +283,97 @@ _REZOSS_ENSURE_LOG_VIDEO_FILTER_SELINUX()
         _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow hal_camera_default LogVideofilters_data_file (file (ioctl read getattr lock map open watch watch_reads)))"
         _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow platform_app_33_0 LogVideofilters_data_file (dir (ioctl read getattr lock open watch watch_reads search)))"
         _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow platform_app_33_0 LogVideofilters_data_file (file (ioctl read getattr lock map open watch watch_reads)))"
+    else
+        LOGW "File not found: ${CIL_FILE//$WORK_DIR/}"
+    fi
+}
+
+_REZOSS_ENSURE_MOSEY_SELINUX()
+{
+    local SYSTEM_EXT_DIR="$WORK_DIR/system_ext"
+    if ! $TARGET_OS_BUILD_SYSTEM_EXT_PARTITION; then
+        SYSTEM_EXT_DIR="$WORK_DIR/system/system/system_ext"
+    fi
+
+    local FC_FILE="$SYSTEM_EXT_DIR/etc/selinux/system_ext_file_contexts"
+    local SEAPP_FILE="$SYSTEM_EXT_DIR/etc/selinux/system_ext_seapp_contexts"
+    local SVC_FILE="$SYSTEM_EXT_DIR/etc/selinux/system_ext_service_contexts"
+    local CIL_FILE="$SYSTEM_EXT_DIR/etc/selinux/system_ext_sepolicy.cil"
+
+    if [ -f "$FC_FILE" ]; then
+        LOG "- Ensuring Mosey daemon file contexts"
+        _REZOSS_APPEND_UNIQUE_LINE "$FC_FILE" "/system_ext/bin/mosey_server                                               u:object_r:mosey_server_exec:s0"
+        _REZOSS_APPEND_UNIQUE_LINE "$FC_FILE" "/system/system_ext/bin/mosey_server                                        u:object_r:mosey_server_exec:s0"
+    else
+        LOGW "File not found: ${FC_FILE//$WORK_DIR/}"
+    fi
+
+    if [ -f "$SEAPP_FILE" ]; then
+        LOG "- Ensuring Mosey app seapp context"
+        _REZOSS_APPEND_UNIQUE_LINE "$SEAPP_FILE" "user=_app isPrivApp=true name=com.google.android.mosey domain=mosey_app type=app_data_file levelFrom=all"
+    else
+        LOGW "File not found: ${SEAPP_FILE//$WORK_DIR/}"
+    fi
+
+    if [ -f "$SVC_FILE" ]; then
+        LOG "- Ensuring Mosey service context"
+        _REZOSS_APPEND_UNIQUE_LINE "$SVC_FILE" "com.google.android.moseyservice.IMoseyService/default 				u:object_r:mosey_service:s0"
+    else
+        LOGW "File not found: ${SVC_FILE//$WORK_DIR/}"
+    fi
+
+    if [ -f "$CIL_FILE" ]; then
+        LOG "- Ensuring Mosey daemon SELinux policy"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(type mosey_server)"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(roletype object_r mosey_server)"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(type mosey_server_exec)"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(roletype object_r mosey_server_exec)"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(type mosey_service)"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(roletype object_r mosey_service)"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset domain (mosey_server))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset coredomain (mosey_server))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset file_type (mosey_server_exec))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset exec_type (mosey_server_exec))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset system_file_type (mosey_server_exec))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset service_manager_type (mosey_service))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset hal_service_type (mosey_service))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow dumpstate mosey_server (binder (call transfer)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server dumpstate (binder (transfer)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow dumpstate mosey_server (fd (use)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow dumpstate mosey_service (service_manager (find)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_app sec_pass_data_file (file (ioctl read getattr lock map open watch watch_reads)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_app mosey_service (service_manager (find)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_app mosey_server (binder (call transfer)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server mosey_app (binder (transfer)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_app mosey_server (fd (use)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server servicemanager (binder (call transfer)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow servicemanager mosey_server (binder (call transfer)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow init mosey_server_exec (file (read getattr map execute open)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow init mosey_server (process (transition)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server mosey_server_exec (file (read getattr map execute open entrypoint)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(dontaudit init mosey_server (process (noatsecure)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow init mosey_server (process (siginh rlimitinh)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typetransition init mosey_server_exec process mosey_server)"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server mosey_service (service_manager (add find)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server dumpstate (fifo_file (write)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server dumpstate (fd (use)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (capability (net_admin net_raw)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server sysfs_net (dir (ioctl read getattr lock open watch watch_reads search)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server sysfs_net (file (ioctl read getattr lock map open watch watch_reads)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server sysfs_net (lnk_file (ioctl read getattr lock map open watch watch_reads)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (udp_socket (ioctl create)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allowx mosey_server self (ioctl udp_socket ((range 0x8913 0x8914) 0x8916 0x8922 0x8924 0x8936 0x8946 0x8994 0x89f1)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (unix_dgram_socket (ioctl)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allowx mosey_server self (ioctl unix_dgram_socket ((range 0x8913 0x8914) 0x8946 0x8994)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (packet_socket (ioctl read write create getattr setattr lock append map bind connect listen accept getopt setopt shutdown)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allowx mosey_server self (ioctl packet_socket (0x8913 0x8927 0x8933)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (netlink_route_socket (read write create nlmsg_read nlmsg_write nlmsg_readpriv nlmsg_getneigh)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server mosey_server (netlink_netfilter_socket (create)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server tun_device (chr_file (ioctl read write getattr lock append map open watch watch_reads)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allowx mosey_server tun_device (ioctl chr_file (0x54ca 0x54d2)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (tun_socket (create)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (netlink_generic_socket (ioctl read write create getattr setattr lock append map bind connect getopt setopt shutdown)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allowx mosey_server self (ioctl netlink_generic_socket (0x8946)))"
     else
         LOGW "File not found: ${CIL_FILE//$WORK_DIR/}"
     fi
@@ -434,20 +545,9 @@ for f in \
     _REZOSS_SET_VENDOR_CONFIG_DIR_METADATA "$f"
 done
 
-# =============================================================================
-# S26U Prebuilts - Compressed RAW Decoder
-# =============================================================================
-# WARNING: Uses S26U vendor camera-processing libraries on the S23U vendor stack.
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libAIHR_ERAW_Wrapper.camera.samsung.so" 0 0 644 "u:object_r:same_process_hal_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libhexa_deca_super_shot_er.arcsoft.so" 0 0 644 "u:object_r:same_process_hal_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libtetra_super_shot_er.arcsoft.so" 0 0 644 "u:object_r:same_process_hal_file:s0"
-if [ -f "$WORK_DIR/vendor/etc/public.libraries.txt" ]; then
-    _REZOSS_APPEND_UNIQUE_LINE "$WORK_DIR/vendor/etc/public.libraries.txt" "libAIHR_ERAW_Wrapper.camera.samsung.so"
-    _REZOSS_APPEND_UNIQUE_LINE "$WORK_DIR/vendor/etc/public.libraries.txt" "libhexa_deca_super_shot_er.arcsoft.so"
-    _REZOSS_APPEND_UNIQUE_LINE "$WORK_DIR/vendor/etc/public.libraries.txt" "libtetra_super_shot_er.arcsoft.so"
-else
-    LOGW "File not found: /vendor/etc/public.libraries.txt"
-fi
+# Do not install the S26U compressed-RAW stack on dm3q. These libraries execute
+# inside the S23U camera-provider process and can stall its Night capture graph.
+# Keep the matching libraries from the untouched target firmware instead.
 
 # =============================================================================
 # S26U Prebuilts - Video Editor / LOG Transitive Dependencies
@@ -507,9 +607,11 @@ _REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_V
 _REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_FUSION_HIGH_RESOLUTION" "FALSE"
 _REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_HIGH_RESOLUTION_SWBINNING" "FALSE"
 _REZOSS_ENSURE_LOG_VIDEO_FILTER_SELINUX
+_REZOSS_ENSURE_MOSEY_SELINUX
 
 unset -f _REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG _REZOSS_APPEND_UNIQUE_LINE
 unset -f _REZOSS_ENSURE_LOG_VIDEO_FILTER_SELINUX
+unset -f _REZOSS_ENSURE_MOSEY_SELINUX
 
 
 # =============================================================================
@@ -731,154 +833,241 @@ python3 "$MODPATH/firewall/patch_region_strings.py" \
 LOG_STEP_OUT
 
 # =============================================================================
-# Kernel - Edgar Kernel Replacement
+# Kernel fallback helpers
 # =============================================================================
-LOG_STEP_IN "- Change Kernel with Edgars Kernel"
-LOG "- Get latest release kernel"
+REZOSS_ARCHIVED_KERNEL_DIR="$SRC_DIR/out/archived/kernel"
 
-rm -rf "$MODPATH/tmp"
-mkdir -p "$MODPATH/tmp"
-TMP_DIR="$MODPATH/tmp"
-RELEASE_JSON="$(curl -fsSL "https://api.github.com/repos/Rezoss-Reza/s23-ksu-next-susfs/releases/latest")"
-ZIP_URL="$(echo "$RELEASE_JSON" | jq -r '
-  .assets[]
-  | select(.name | test("\\.zip$"))
-  | .browser_download_url
-' | head -n1)"
-ZIP_NAME="$(basename "$ZIP_URL")"
-curl -fL --retry 3 -o "$TMP_DIR/$ZIP_NAME" "$ZIP_URL"
+_REZOSS_RESTORE_ARCHIVED_KERNEL_IMAGE()
+{
+  local IMAGE_NAME="$1"
+  local ARCHIVED_IMAGE="$REZOSS_ARCHIVED_KERNEL_DIR/$IMAGE_NAME"
+  local TARGET_IMAGE="$WORK_DIR/kernel/$IMAGE_NAME"
 
-LOG "- Extracting Image.gz"
-rm -rf "$TMP_DIR/zip_extract"
-mkdir -p "$TMP_DIR/zip_extract"
-unzip -o "$TMP_DIR/$ZIP_NAME" -d "$TMP_DIR/zip_extract" >/dev/null
-IMAGE_GZ="$(find "$TMP_DIR/zip_extract" -type f -name 'Image.gz' | head -n1)"
+  if [ ! -f "$ARCHIVED_IMAGE" ]; then
+    ABORT "Archived kernel image not found: ${ARCHIVED_IMAGE//$SRC_DIR\//}"
+    return 1
+  fi
 
-LOG "- Download magiskboot from magisk github"
-MAGISKBOOT="$TMP_DIR/magiskboot"
-if [[ ! -x "$MAGISKBOOT" ]]; then
-  LOG "[*] magiskboot not found, downloading Magisk app to extract it..."
+  LOG "- Restoring $IMAGE_NAME from ${ARCHIVED_IMAGE//$SRC_DIR\//}"
+  cp -f "$ARCHIVED_IMAGE" "$TARGET_IMAGE" \
+    || {
+      ABORT "Failed to restore $IMAGE_NAME from archived kernel"
+      return 1
+    }
+}
 
-  MAGISK_APK_URL="$(curl -fsSL https://api.github.com/repos/topjohnwu/Magisk/releases/latest \
-    | jq -r '.assets[] | select(.name | test("Magisk-v.*\\.apk$")) | .browser_download_url' \
-    | head -n1)"
+_REZOSS_RESTORE_ARCHIVED_KERNEL()
+{
+  local RESTORE_BOOT="$1"
+  local RESTORE_INIT_BOOT="$2"
 
-  curl -fL --retry 3 -o "$TMP_DIR/Magisk.apk" "$MAGISK_APK_URL"
+  if [ "$RESTORE_BOOT" = "true" ]; then
+    _REZOSS_RESTORE_ARCHIVED_KERNEL_IMAGE "boot.img" || return 1
+  fi
+  if [ "$RESTORE_INIT_BOOT" = "true" ]; then
+    _REZOSS_RESTORE_ARCHIVED_KERNEL_IMAGE "init_boot.img" || return 1
+  fi
+}
 
-  unzip -p "$TMP_DIR/Magisk.apk" 'lib/x86_64/libmagiskboot.so' > "$MAGISKBOOT" 2>/dev/null || true
+_REZOSS_CHANGE_EDGARS_KERNEL_IMPL()
+{
+  local TMP_DIR="$MODPATH/tmp"
+  local RELEASE_JSON ZIP_URL ZIP_NAME IMAGE_GZ MAGISKBOOT MAGISK_APK_URL
 
-  chmod +x "$MAGISKBOOT"
-fi
+  LOG "- Get latest release kernel"
+  rm -rf "$TMP_DIR" || return 1
+  mkdir -p "$TMP_DIR" || return 1
 
-# ===== UNPACK BOOT.IMG =====
-LOG "- Copying original boot image..."
-cp -f "$WORK_DIR/kernel/boot.img" "$TMP_DIR/boot.img"
-(
-LOG "- Unpacking boot.img..."
-cd "$TMP_DIR" && "$MAGISKBOOT" unpack boot.img
+  RELEASE_JSON="$(curl -fsSL "https://api.github.com/repos/Rezoss-Reza/s23-ksu-next-susfs/releases/latest")" \
+    || return 1
+  ZIP_URL="$(echo "$RELEASE_JSON" | jq -r '
+    .assets[]
+    | select(.name | test("\\.zip$"))
+    | .browser_download_url
+  ' | head -n1)" || return 1
+  if [ ! "$ZIP_URL" ] || [ "$ZIP_URL" = "null" ]; then
+    LOGE "Edgars Kernel zip asset not found"
+    return 1
+  fi
 
-# ===== REPLACE KERNEL =====
-LOG "- Replacing kernel with new Image.gz..."
-cp -f "$IMAGE_GZ" "$TMP_DIR/kernel"
+  ZIP_NAME="$(basename "$ZIP_URL")" || return 1
+  curl -fL --retry 3 -o "$TMP_DIR/$ZIP_NAME" "$ZIP_URL" || return 1
 
-# ===== REPACK =====
-LOG "- Repacking boot image..."
-"$MAGISKBOOT" repack boot.img
+  LOG "- Extracting Image.gz"
+  rm -rf "$TMP_DIR/zip_extract" || return 1
+  mkdir -p "$TMP_DIR/zip_extract" || return 1
+  unzip -o "$TMP_DIR/$ZIP_NAME" -d "$TMP_DIR/zip_extract" >/dev/null || return 1
+  IMAGE_GZ="$(find "$TMP_DIR/zip_extract" -type f -name 'Image.gz' | head -n1)"
+  if [ ! -f "$IMAGE_GZ" ]; then
+    LOGE "Image.gz not found in Edgars Kernel release zip"
+    return 1
+  fi
 
-if [[ ! -f new-boot.img ]]; then
-  LOG "Repack failed: new-boot.img not generated."
-  exit 1
-fi
+  LOG "- Download magiskboot from magisk github"
+  MAGISKBOOT="$TMP_DIR/magiskboot"
+  if [[ ! -x "$MAGISKBOOT" ]]; then
+    LOG "[*] magiskboot not found, downloading Magisk app to extract it..."
 
-cp -f new-boot.img "$WORK_DIR/kernel/boot.img"
-)
+    MAGISK_APK_URL="$(curl -fsSL https://api.github.com/repos/topjohnwu/Magisk/releases/latest \
+      | jq -r '.assets[] | select(.name | test("Magisk-v.*\\.apk$")) | .browser_download_url' \
+      | head -n1)" || return 1
+    if [ ! "$MAGISK_APK_URL" ] || [ "$MAGISK_APK_URL" = "null" ]; then
+      LOGE "Magisk APK asset not found"
+      return 1
+    fi
 
-cd "$SRC_DIR"
-LOG_STEP_OUT
+    curl -fL --retry 3 -o "$TMP_DIR/Magisk.apk" "$MAGISK_APK_URL" || return 1
+    unzip -p "$TMP_DIR/Magisk.apk" 'lib/x86_64/libmagiskboot.so' > "$MAGISKBOOT" 2>/dev/null || return 1
+    chmod +x "$MAGISKBOOT" || return 1
+  fi
+
+  if [ ! -f "$WORK_DIR/kernel/boot.img" ]; then
+    LOGE "File not found: ${WORK_DIR//$SRC_DIR\//}/kernel/boot.img"
+    return 1
+  fi
+
+  # ===== UNPACK BOOT.IMG =====
+  LOG "- Copying original boot image..."
+  cp -f "$WORK_DIR/kernel/boot.img" "$TMP_DIR/boot.img" || return 1
+  (
+    LOG "- Unpacking boot.img..."
+    cd "$TMP_DIR" || exit 1
+    "$MAGISKBOOT" unpack boot.img || exit 1
+
+    # ===== REPLACE KERNEL =====
+    LOG "- Replacing kernel with new Image.gz..."
+    cp -f "$IMAGE_GZ" "$TMP_DIR/kernel" || exit 1
+
+    # ===== REPACK =====
+    LOG "- Repacking boot image..."
+    "$MAGISKBOOT" repack boot.img || exit 1
+
+    if [[ ! -f new-boot.img ]]; then
+      LOG "Repack failed: new-boot.img not generated."
+      exit 1
+    fi
+
+    cp -f new-boot.img "$WORK_DIR/kernel/boot.img" || exit 1
+  ) || return 1
+
+  cd "$SRC_DIR" || return 1
+}
+
+_REZOSS_CHANGE_EDGARS_KERNEL()
+{
+  local STATUS=0
+
+  LOG_STEP_IN "- Change Kernel with Edgars Kernel"
+  _REZOSS_CHANGE_EDGARS_KERNEL_IMPL || STATUS=$?
+  LOG_STEP_OUT
+
+  return "$STATUS"
+}
+
+_REZOSS_PATCH_KSU_NEXT_INIT_BOOT_IMPL()
+{
+  local TMP_DIR="$MODPATH/tmp"
+  local KSU_KMI="android13-5.15"
+  local KSU_INIT_BOOT="$WORK_DIR/kernel/init_boot.img"
+  local KSU_RELEASE_JSON KSU_RELEASE_TAG KSU_HOST_ARCH KSU_KSUD_REGEX
+  local KSU_KSUD_URL KSU_MODULE_NAME KSU_MODULE_URL KSU_KSUD KSU_MODULE
+  local KSU_PATCHED_INIT_BOOT
+
+  if [ ! -f "$KSU_INIT_BOOT" ]; then
+    LOGE "File not found: ${KSU_INIT_BOOT//$SRC_DIR\//}"
+    return 1
+  fi
+
+  LOG "- Get latest KernelSU-Next release"
+  KSU_RELEASE_JSON="$(curl -fsSL "https://api.github.com/repos/KernelSU-Next/KernelSU-Next/releases/latest")" \
+    || return 1
+  KSU_RELEASE_TAG="$(echo "$KSU_RELEASE_JSON" | jq -r '.tag_name // empty')" || return 1
+  LOG "- Using KernelSU-Next ${KSU_RELEASE_TAG:-latest}"
+
+  KSU_HOST_ARCH="$(uname -m)" || return 1
+  case "$KSU_HOST_ARCH" in
+    x86_64|amd64)
+      KSU_KSUD_REGEX="^ksud-(x86_64|amd64).*linux"
+      ;;
+    aarch64|arm64)
+      KSU_KSUD_REGEX="^ksud-aarch64.*linux"
+      ;;
+    *)
+      LOGE "Unsupported host architecture for KernelSU-Next ksud: $KSU_HOST_ARCH"
+      return 1
+      ;;
+  esac
+
+  KSU_KSUD_URL="$(echo "$KSU_RELEASE_JSON" | jq -r --arg regex "$KSU_KSUD_REGEX" '
+    .assets[]
+    | select(.name | test($regex))
+    | select(.name | test("android") | not)
+    | .browser_download_url
+  ' | head -n1)" || return 1
+  if [ ! "$KSU_KSUD_URL" ] || [ "$KSU_KSUD_URL" = "null" ]; then
+    LOGE "KernelSU-Next ksud asset not found for host architecture: $KSU_HOST_ARCH"
+    return 1
+  fi
+
+  KSU_MODULE_NAME="${KSU_KMI}_kernelsu.ko"
+  KSU_MODULE_URL="$(echo "$KSU_RELEASE_JSON" | jq -r --arg name "$KSU_MODULE_NAME" '
+    .assets[]
+    | select(.name == $name)
+    | .browser_download_url
+  ' | head -n1)" || return 1
+  if [ ! "$KSU_MODULE_URL" ] || [ "$KSU_MODULE_URL" = "null" ]; then
+    LOGE "KernelSU-Next module asset not found: $KSU_MODULE_NAME"
+    return 1
+  fi
+
+  KSU_KSUD="$TMP_DIR/ksud"
+  KSU_MODULE="$TMP_DIR/$KSU_MODULE_NAME"
+
+  LOG "- Download ksud"
+  curl -fL --retry 3 -o "$KSU_KSUD" "$KSU_KSUD_URL" || return 1
+  chmod +x "$KSU_KSUD" || return 1
+
+  LOG "- Download $KSU_MODULE_NAME"
+  curl -fL --retry 3 -o "$KSU_MODULE" "$KSU_MODULE_URL" || return 1
+
+  LOG "- Patching init_boot.img for KMI $KSU_KMI"
+  cp -f "$KSU_INIT_BOOT" "$TMP_DIR/init_boot.img" || return 1
+  (
+    cd "$TMP_DIR" || exit 1
+    "$KSU_KSUD" boot-patch -b init_boot.img --module "$KSU_MODULE" --kmi "$KSU_KMI"
+  ) || return 1
+
+  KSU_PATCHED_INIT_BOOT="$(find "$TMP_DIR" -maxdepth 1 -type f \( -name "*patched*.img" -o -name "new-boot.img" \) -printf "%T@ %p\n" | sort -nr | head -n1 | cut -d " " -f 2-)"
+  if [ ! -f "$KSU_PATCHED_INIT_BOOT" ]; then
+    KSU_PATCHED_INIT_BOOT="$(find "$TMP_DIR" -maxdepth 1 -type f -name "*.img" ! -name "init_boot.img" -printf "%T@ %p\n" | sort -nr | head -n1 | cut -d " " -f 2-)"
+  fi
+  if [ ! -f "$KSU_PATCHED_INIT_BOOT" ]; then
+    LOGE "KernelSU-Next patched init_boot image was not generated"
+    return 1
+  fi
+
+  cp -f "$KSU_PATCHED_INIT_BOOT" "$KSU_INIT_BOOT" || return 1
+  rm -rf "$TMP_DIR" || LOGW "Failed to remove temporary kernel directory: ${TMP_DIR//$SRC_DIR\//}"
+}
+
+_REZOSS_PATCH_KSU_NEXT_INIT_BOOT()
+{
+  local STATUS=0
+
+  LOG_STEP_IN "- Patch init_boot.img with KernelSU-Next LKM"
+  _REZOSS_PATCH_KSU_NEXT_INIT_BOOT_IMPL || STATUS=$?
+  LOG_STEP_OUT
+
+  return "$STATUS"
+}
 
 # =============================================================================
-# Kernel - KernelSU-Next LKM for init_boot
+# Kernel - Edgar Kernel Replacement and KernelSU-Next LKM
 # =============================================================================
-LOG_STEP_IN "- Patch init_boot.img with KernelSU-Next LKM"
-KSU_KMI="android13-5.15"
-KSU_INIT_BOOT="$WORK_DIR/kernel/init_boot.img"
-#KSU_TMP_DIR="$MODPATH/tmp-ksu-next"
-
-if [ ! -f "$KSU_INIT_BOOT" ]; then
-  ABORT "File not found: ${KSU_INIT_BOOT//$SRC_DIR\//}"
+if ! _REZOSS_CHANGE_EDGARS_KERNEL; then
+  LOGW "Edgars Kernel replacement failed; restoring archived boot.img and init_boot.img"
+  _REZOSS_RESTORE_ARCHIVED_KERNEL "true" "true"
+elif ! _REZOSS_PATCH_KSU_NEXT_INIT_BOOT; then
+  LOGW "KernelSU-Next init_boot patch failed; restoring archived init_boot.img"
+  _REZOSS_RESTORE_ARCHIVED_KERNEL "false" "true"
 fi
-
-# rm -rf "$KSU_TMP_DIR"
-# mkdir -p "$KSU_TMP_DIR"
-
-LOG "- Get latest KernelSU-Next release"
-KSU_RELEASE_JSON="$(curl -fsSL "https://api.github.com/repos/KernelSU-Next/KernelSU-Next/releases/latest")" \
-  || ABORT "Failed to resolve KernelSU-Next latest release"
-KSU_RELEASE_TAG="$(echo "$KSU_RELEASE_JSON" | jq -r '.tag_name // empty')"
-LOG "- Using KernelSU-Next ${KSU_RELEASE_TAG:-latest}"
-
-KSU_HOST_ARCH="$(uname -m)"
-case "$KSU_HOST_ARCH" in
-  x86_64|amd64)
-    KSU_KSUD_REGEX="^ksud-(x86_64|amd64).*linux"
-    ;;
-  aarch64|arm64)
-    KSU_KSUD_REGEX="^ksud-aarch64.*linux"
-    ;;
-  *)
-    ABORT "Unsupported host architecture for KernelSU-Next ksud: $KSU_HOST_ARCH"
-    ;;
-esac
-
-KSU_KSUD_URL="$(echo "$KSU_RELEASE_JSON" | jq -r --arg regex "$KSU_KSUD_REGEX" '
-  .assets[]
-  | select(.name | test($regex))
-  | select(.name | test("android") | not)
-  | .browser_download_url
-' | head -n1)"
-if [ ! "$KSU_KSUD_URL" ]; then
-  ABORT "KernelSU-Next ksud asset not found for host architecture: $KSU_HOST_ARCH"
-fi
-
-KSU_MODULE_NAME="${KSU_KMI}_kernelsu.ko"
-KSU_MODULE_URL="$(echo "$KSU_RELEASE_JSON" | jq -r --arg name "$KSU_MODULE_NAME" '
-  .assets[]
-  | select(.name == $name)
-  | .browser_download_url
-' | head -n1)"
-if [ ! "$KSU_MODULE_URL" ]; then
-  ABORT "KernelSU-Next module asset not found: $KSU_MODULE_NAME"
-fi
-
-KSU_KSUD="$TMP_DIR/ksud"
-KSU_MODULE="$TMP_DIR/$KSU_MODULE_NAME"
-
-LOG "- Download ksud"
-curl -fL --retry 3 -o "$KSU_KSUD" "$KSU_KSUD_URL" \
-  || ABORT "Failed to download KernelSU-Next ksud"
-chmod +x "$KSU_KSUD"
-
-LOG "- Download $KSU_MODULE_NAME"
-curl -fL --retry 3 -o "$KSU_MODULE" "$KSU_MODULE_URL" \
-  || ABORT "Failed to download KernelSU-Next module: $KSU_MODULE_NAME"
-
-LOG "- Patching init_boot.img for KMI $KSU_KMI"
-cp -f "$KSU_INIT_BOOT" "$TMP_DIR/init_boot.img" \
-  || ABORT "Failed to copy init_boot.img"
-(
-  cd "$TMP_DIR" || exit 1
-  "$KSU_KSUD" boot-patch -b init_boot.img --module "$KSU_MODULE" --kmi "$KSU_KMI"
-) || ABORT "Failed to patch init_boot.img with KernelSU-Next"
-
-KSU_PATCHED_INIT_BOOT="$(find "$TMP_DIR" -maxdepth 1 -type f \( -name "*patched*.img" -o -name "new-boot.img" \) -printf "%T@ %p\n" | sort -nr | head -n1 | cut -d " " -f 2-)"
-if [ ! -f "$KSU_PATCHED_INIT_BOOT" ]; then
-  KSU_PATCHED_INIT_BOOT="$(find "$TMP_DIR" -maxdepth 1 -type f -name "*.img" ! -name "init_boot.img" -printf "%T@ %p\n" | sort -nr | head -n1 | cut -d " " -f 2-)"
-fi
-if [ ! -f "$KSU_PATCHED_INIT_BOOT" ]; then
-  ABORT "KernelSU-Next patched init_boot image was not generated"
-fi
-
-cp -f "$KSU_PATCHED_INIT_BOOT" "$KSU_INIT_BOOT" \
-  || ABORT "Failed to replace init_boot.img with KernelSU-Next patched image"
-rm -rf "$TMP_DIR"
-LOG_STEP_OUT
