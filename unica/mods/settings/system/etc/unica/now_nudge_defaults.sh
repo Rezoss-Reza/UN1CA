@@ -23,6 +23,7 @@ settings put global sss_enabled 1 >/dev/null 2>&1
 settings put global now_nudge_setting 1 >/dev/null 2>&1
 settings put global now_nudge_enabled 1 >/dev/null 2>&1
 settings put system ai_info_confirmed 1 >/dev/null 2>&1
+settings put system suggested_replies_state 1 >/dev/null 2>&1
 settings put secure content_capture_enabled 1 >/dev/null 2>&1
 
 log_msg "enabled Now Nudge defaults"

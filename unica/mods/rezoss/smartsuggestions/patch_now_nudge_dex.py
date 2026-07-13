@@ -17,6 +17,9 @@ TARGET_METHOD_GROUPS = {
     "Now Nudge in-app": (
         "SUPPORT_IN_APP_NUDGE_delegate$lambda$20",
     ),
+    "Now Nudge autofill": (
+        "SUPPORT_AUTOFILL_NUDGE_delegate$lambda$160",
+    ),
 }
 TARGET_METHODS = {
     method_name: group_name

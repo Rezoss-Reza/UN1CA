@@ -10,6 +10,31 @@ if [ ! "$(GET_PROP "system" "ro.unica.codename")" ]; then
     unset ROM_CODENAME
 fi
 
+_PARADIGM_SET_VENDOR_FLOATING_FEATURE_CONFIG()
+{
+    local CONFIG="$1"
+    local VALUE="$2"
+    local FILE="$WORK_DIR/vendor/etc/floating_feature.xml"
+
+    if [ ! -f "$FILE" ]; then
+        LOGW "File not found: ${FILE//$WORK_DIR/}"
+        return 0
+    fi
+
+    if grep -q "$CONFIG" "$FILE"; then
+        LOG "- Replacing \"$CONFIG\" config with \"$VALUE\" in /vendor/etc/floating_feature.xml"
+        sed -i "$(sed -n "/<${CONFIG}>/=" "$FILE") c\ \ \ \ <${CONFIG}>${VALUE}</${CONFIG}>" "$FILE"
+    else
+        LOG "- Adding \"$CONFIG\" config with \"$VALUE\" in /vendor/etc/floating_feature.xml"
+        sed -i "/<\/SecFloatingFeatureSet>/d" "$FILE"
+        if ! grep -q "Added by unica/mods/paradigm" "$FILE"; then
+            echo "    <!-- Added by unica/mods/paradigm/customize.sh -->" >> "$FILE"
+        fi
+        echo "    <${CONFIG}>${VALUE}</${CONFIG}>" >> "$FILE"
+        echo "</SecFloatingFeatureSet>" >> "$FILE"
+    fi
+}
+
 # 2025 Audio Pack
 LOG_STEP_IN "- Adding 2025 Audio Pack"
 DELETE_FROM_WORK_DIR "system" "system/hidden/INTERNAL_SDCARD/Music/Samsung/Over_the_Horizon.mp3"
@@ -98,12 +123,19 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/audio_ae_intervals.conf" 0 0 644 "
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/fastScanner.tflite" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/mss_v0.23.0_VMWO_2_fp32.sorione" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/public.libraries-audio.samsung.txt" 0 0 644 "u:object_r:system_file:s0"
-# Keep SoundAlive_C aligned with the S26U One UI 8.5 AudioEraserProvider/SCPM policy behavior.
+# Keep SoundAlive_C and its native wrappers aligned on the One UI 9 ver900 path.
 DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.sec.android.app.soundalive_B2.xml"
 DELETE_FROM_WORK_DIR "system" "system/priv-app/SoundAlive_B2"
+DELETE_FROM_WORK_DIR "system" "system/lib/libaudiosaplus_sec_legacy.so"
+DELETE_FROM_WORK_DIR "system" "system/lib/lib_SoundAlive_play_plus_ver800.so"
+DELETE_FROM_WORK_DIR "system" "system/lib64/lib_SoundAlive_play_plus_ver800.so"
+DELETE_FROM_WORK_DIR "vendor" "lib/soundfx/libaudiosaplus_sec.so"
+DELETE_FROM_WORK_DIR "vendor" "lib/lib_SoundAlive_play_plus_ver800.so"
+DELETE_FROM_WORK_DIR "vendor" "lib64/lib_SoundAlive_play_plus_ver800.so"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/permissions/privapp-permissions-com.sec.android.app.soundalive_C.xml" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/sysconfig/preinstalled-packages-com.sec.android.app.soundalive_C.xml" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/SoundAlive_C" 0 0 755 "u:object_r:system_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiosaplus_sec_legacy.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libSoundAlive_VSP_ver316c_ARMCpp.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/lib_SoundAlive_AlbumArt_ver105.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/lib_SoundAlive_SRC192_ver205a.so" 0 0 644 "u:object_r:system_lib_file:s0"
@@ -122,12 +154,14 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.common.types
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.common.types-V4-cpp.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.common.types-V4-ndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.eraser.types-V1-ndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.eraser.types-V2-ndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmediasndk.mediacore.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmediasndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmultisourceseparator.audio.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmultisourceseparator.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libsbs.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libtensorflowlite.audio.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libtensorflowlite_jni.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libvoice_booster.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libsoundboostereq_legacy.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/lib_sag_ai_sound_sep_v1.00.so" 0 0 644 "u:object_r:system_lib_file:s0"
@@ -135,11 +169,19 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/lib_sag_ai_sound_sep_v2.00.so" 0
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libtensorflowlite_gpu_delegate.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libveframework.videoeditor.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/android.media.audio.eraser.types-V1-ndk.so" 0 0 644 "u:object_r:vendor_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libtensorflowlite.adv_audio.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/soundfx/libaudiosaplus_sec.so" 0 0 644 "u:object_r:vendor_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/lib_SoundAlive_3DPosition_ver202.so" 0 0 644 "u:object_r:vendor_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/lib_SoundAlive_AlbumArt_ver105.so" 0 0 644 "u:object_r:vendor_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/lib_SoundAlive_play_plus_ver900.so" 0 0 644 "u:object_r:vendor_file:s0"
+_AUDIO_ERASER_SOUNDALIVE_VERSION="eq_custom,uhq_onoff,karaoke,adapt,spk_stereo,dvfs_20_percent,dvfs_max_45_percent,voice_boost,dolby_game_spk_off"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_AUDIO_CONFIG_SOUNDALIVE_VERSION" "$_AUDIO_ERASER_SOUNDALIVE_VERSION"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_AUDIO_CONFIG_MULTISOURCE_SEPARATOR" "{FastScanning_6, SourceSeparator_4, Version_1.3.0}"
+_PARADIGM_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_AUDIO_CONFIG_SOUNDALIVE_VERSION" "$_AUDIO_ERASER_SOUNDALIVE_VERSION"
+_PARADIGM_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_AUDIO_CONFIG_MULTISOURCE_SEPARATOR" "{FastScanning_6, SourceSeparator_4, Version_1.3.0}"
+unset _AUDIO_ERASER_SOUNDALIVE_VERSION
 LOG_STEP_OUT
+unset -f _PARADIGM_SET_VENDOR_FLOATING_FEATURE_CONFIG
 
 # Now brief
 # Requires SEC_FLOATING_FEATURE_COMMON_CONFIG_AI_VERSION >= 20251
