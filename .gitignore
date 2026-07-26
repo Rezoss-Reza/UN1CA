@@ -29,6 +29,7 @@ __pycache__/
 *.codex
 
 # Full APKs stored as 50 MiB split chunks for GitHub.
+prebuilts/samsung/dm3qxxx/system/app/SamsungSans/SamsungSans.apk
 prebuilts/samsung/m3qxxx/system/app/VideoEditorLite_Dream_N/VideoEditorLite_Dream_N.apk
 prebuilts/samsung/m3qxxx/system/app/SketchBook/SketchBook.apk
 prebuilts/samsung/m3qxxx/system/priv-app/MediaSearch/MediaSearch.apk
