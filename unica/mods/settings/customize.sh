@@ -125,20 +125,26 @@ SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
     'filled-new-array/range {v1 .. v178}, [Ljava/lang/String;' \
     '    const-string v179, "io.mesalabs.unica.settings.extra.ScpmAllowlistFragment"\n\n    filled-new-array/range {v1 .. v179}, [Ljava/lang/String;' \
     > /dev/null
+SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
+    "smali/com/android/settings/core/gateway/SettingsGateway.smali" "replace" \
+    '<clinit>()V' \
+    'filled-new-array/range {v1 .. v179}, [Ljava/lang/String;' \
+    '    const-string v180, "io.mesalabs.unica.settings.extra.NowNudgeReplyFallbacksFragment"\n\n    filled-new-array/range {v1 .. v180}, [Ljava/lang/String;' \
+    > /dev/null
 
 # Mark Privacy Display custom app fragment as "valid"
 SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
     "smali/com/android/settings/core/gateway/SettingsGateway.smali" "replace" \
     '<clinit>()V' \
-    'filled-new-array/range {v1 .. v179}, [Ljava/lang/String;' \
-    '    const-string v180, "com.samsung.android.settings.bpd.PdCustomAppsSettings"\n\n    filled-new-array/range {v1 .. v180}, [Ljava/lang/String;' \
+    'filled-new-array/range {v1 .. v180}, [Ljava/lang/String;' \
+    '    const-string v181, "com.samsung.android.settings.bpd.PdCustomAppsSettings"\n\n    filled-new-array/range {v1 .. v181}, [Ljava/lang/String;' \
     > /dev/null
 LOG "- Patching \"smali/com/android/settings/SettingsActivity.smali\" in /system/system/priv-app/SecSettings.apk"
 SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
     "smali/com/android/settings/SettingsActivity.smali" "replace" \
     'isValidFragment(Ljava/lang/String;)Z' \
     'const/16 v2, 0xab' \
-    'const/16 v2, 0xb4' \
+    'const/16 v2, 0xb5' \
     > /dev/null
 
 # Add UN1CA Settings SearchIndexDataProvider(s)
@@ -178,7 +184,8 @@ for f in \
     "io/mesalabs/unica/settings/spoof/SpoofSettingsFragment" \
     "io/mesalabs/unica/settings/ui/UISettingsFragment" \
     "io/mesalabs/unica/settings/spoof/CameraFeatureFragment" \
-    "io/mesalabs/unica/settings/extra/ScpmAllowlistFragment"; do
+    "io/mesalabs/unica/settings/extra/ScpmAllowlistFragment" \
+    "io/mesalabs/unica/settings/extra/NowNudgeReplyFallbacksFragment"; do
     ADD_UNICA_SETTINGS_SEARCH_INDEX_DATA_PROVIDER "$f" || return 1
 done
 

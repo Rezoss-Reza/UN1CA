@@ -179,30 +179,30 @@ def patch_is_dev_mode_enabled_cache(data):
     return True
 
 
-def patch_is_already_allowed(data):
+def patch_is_already_allowed(data, label):
     code_off = find_code_item(data, DEV_UTILS, "isAlreadyAllowed")
     start, end = code_bounds(data, code_off)
     off = find_code_unit(data, start, end, {0x29, 0x38})
     if off is None:
         raise RuntimeError("isAlreadyAllowed gate branch not found")
     if data[off] == 0x29:
-        print("classes15.dex: isAlreadyAllowed already forced allowed")
+        print(f"{label}: isAlreadyAllowed already forced allowed")
         return False
     data[off] = 0x29
     data[off + 1] = 0x00
-    print(f"classes15.dex: forced isAlreadyAllowed at 0x{off:x}")
+    print(f"{label}: forced isAlreadyAllowed at 0x{off:x}")
     return True
 
 
-def patch_password_handler(data):
+def patch_password_handler(data, label):
     code_off = find_code_item(data, PASSWORD_HANDLER, "invokeSuspend")
     start, end = code_bounds(data, code_off)
     off = find_code_unit(data, start, end, {0x38})
     if off is None:
-        print("classes15.dex: password mismatch branch already absent")
+        print(f"{label}: password mismatch branch already absent")
         return False
     data[off : off + 4] = b"\x00\x00\x00\x00"
-    print(f"classes15.dex: bypassed password mismatch branch at 0x{off:x}")
+    print(f"{label}: bypassed password mismatch branch at 0x{off:x}")
     return True
 
 
@@ -326,13 +326,26 @@ def patch_classes11(path):
         Path(path).write_bytes(data)
 
 
-def patch_classes15(path):
+def patch_settings_dex(path):
+    label = Path(path).name
     data = bytearray(Path(path).read_bytes())
-    changed = patch_is_already_allowed(data)
-    changed |= patch_password_handler(data)
+    changed = False
+    found = False
+    for patcher, class_name in (
+        (patch_is_already_allowed, DEV_UTILS),
+        (patch_password_handler, PASSWORD_HANDLER),
+    ):
+        try:
+            changed |= patcher(data, label)
+            found = True
+        except RuntimeError as exc:
+            if f"class not found: {class_name}" not in str(exc):
+                raise
+            print(f"{label}: {class_name} not present; skipping")
     if changed:
         update_dex_header(data)
         Path(path).write_bytes(data)
+    return found
 
 
 def patch_manifest(path):
@@ -342,16 +355,20 @@ def patch_manifest(path):
 
 
 def main():
-    if len(sys.argv) != 4:
+    if len(sys.argv) < 4:
         print(
             "usage: patch_smartsuggestions_dev_mode.py "
-            "<classes11.dex> <classes15.dex> <AndroidManifest.xml>",
+            "<classes11.dex> <settings.dex> [<settings.dex> ...] <AndroidManifest.xml>",
             file=sys.stderr,
         )
         return 2
     patch_classes11(sys.argv[1])
-    patch_classes15(sys.argv[2])
-    patch_manifest(sys.argv[3])
+    found_settings_dex = False
+    for path in sys.argv[2:-1]:
+        found_settings_dex |= patch_settings_dex(path)
+    if not found_settings_dex:
+        raise RuntimeError("developer mode settings classes not found in supplied dex files")
+    patch_manifest(sys.argv[-1])
     return 0
 
 

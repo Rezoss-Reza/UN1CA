@@ -10,6 +10,7 @@ from pathlib import Path
 TARGET_CLASS = "Lcom/samsung/android/smartsuggestions/featureconfig/rune/Rune;"
 TARGET_METHOD_GROUPS = {
     "Now Nudge": (
+        "SUPPORT_NOW_NUDGE_delegate$lambda$149",
         "SUPPORT_NOW_NUDGE_delegate$lambda$146",
         "SUPPORT_NOW_NUDGE_delegate$lambda$115",
         "SUPPORT_NOW_NUDGE_delegate$lambda$111",
@@ -18,6 +19,7 @@ TARGET_METHOD_GROUPS = {
         "SUPPORT_IN_APP_NUDGE_delegate$lambda$20",
     ),
     "Now Nudge autofill": (
+        "SUPPORT_AUTOFILL_NUDGE_delegate$lambda$163",
         "SUPPORT_AUTOFILL_NUDGE_delegate$lambda$160",
     ),
 }

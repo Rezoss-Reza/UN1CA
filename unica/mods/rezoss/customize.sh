@@ -1,3 +1,5 @@
+SKIPUNZIP=1
+
 LOG_STEP_IN "- Rezoss experimental mods"
 
 # =============================================================================
@@ -5,22 +7,13 @@ LOG_STEP_IN "- Rezoss experimental mods"
 # =============================================================================
 ADD_TO_WORK_DIR "$MODPATH" "system" "." 0 0 755 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "$MODPATH" "system_ext" "." 0 0 755 "u:object_r:system_file:s0"
-LOG "- Porting S26U OneUI9 ShareLive and Mosey"
-DELETE_FROM_WORK_DIR "system" "system/priv-app/ShareLive/oat"
-DELETE_FROM_WORK_DIR "system" "system/priv-app/ShareLive/ShareLive.apk.prof"
-DELETE_FROM_WORK_DIR "system" "system/priv-app/ShareLive/ShareLive.apk.bprof"
-DELETE_FROM_WORK_DIR "system_ext" "priv-app/MoseyApp"
-DELETE_FROM_WORK_DIR "system_ext" "etc/permissions/privapp-permissions-com.google.android.mosey.xml"
-DELETE_FROM_WORK_DIR "system_ext" "etc/default-permissions/default-permissions-com.google.android.mosey.xml"
-DELETE_FROM_WORK_DIR "system_ext" "etc/sysconfig/preinstalled-packages-com.google.android.mosey.xml"
-SET_METADATA "system" "system/priv-app/ShareLive" 0 0 755 "u:object_r:system_file:s0"
-SET_METADATA "system" "system/priv-app/ShareLive/ShareLive.apk" 0 0 644 "u:object_r:system_file:s0"
-SET_METADATA "system" "system/priv-app/MoseyApp" 0 0 755 "u:object_r:system_file:s0"
-SET_METADATA "system" "system/priv-app/MoseyApp/MoseyApp.apk" 0 0 644 "u:object_r:system_file:s0"
-SET_METADATA "system_ext" "bin/mosey_server" 0 2000 755 "u:object_r:mosey_server_exec:s0"
-SET_METADATA "system_ext" "lib64/libmosey_daemon_ffi.so" 0 0 644 "u:object_r:system_lib_file:s0"
-SET_METADATA "system_ext" "etc/init/mosey.rc" 0 0 644 "u:object_r:system_file:s0"
-SET_METADATA "system_ext" "etc/vintf/manifest/manifest_mosey.xml" 0 0 644 "u:object_r:system_file:s0"
+LOG "- Adding optional AOSP zip boot animation support"
+ADD_TO_WORK_DIR "$MODPATH/bootanimation_zip" "system" \
+    "system/bin/bootanimation_zip" 0 2000 755 "u:object_r:bootanim_exec:s0"
+ADD_TO_WORK_DIR "$MODPATH/bootanimation_zip" "system" \
+    "system/lib64/libbootanimation.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "$MODPATH/bootanimation_zip" "system" \
+    "system/media/bootanimation.zip" 0 0 644 "u:object_r:bootanim_oem_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" \
     "system/etc/default-permissions/default-permissions-com.samsung.android.smartsuggestions.xml" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" \
@@ -34,34 +27,77 @@ ADD_TO_WORK_DIR "m3qxxx" "system" \
     "system/etc/default-permissions/default-permissions-com.samsung.android.messaging.xml" 0 0 644 "u:object_r:system_file:s0"
 APPLY_PATCH "system" "system/priv-app/SamsungMessages/SamsungMessages.apk" \
     "$MODPATH/samsungmessages/SamsungMessages.apk/0001-Advertise-Now-Nudge-in-app-revision.patch"
-LOG "- Patching SmartSuggestions content visibility, Now Nudge, and Developer Mode access"
+LOG "- Patching SmartSuggestions Developer Mode access"
 REZOSS_SMARTSUGGESTIONS_APK="$WORK_DIR/system/system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk"
 REZOSS_SMARTSUGGESTIONS_TMP="$TMP_DIR/rezoss_smartsuggestions_dev_mode"
 REZOSS_SMARTSUGGESTIONS_CERT_PREFIX="aosp"
 $ROM_IS_OFFICIAL && REZOSS_SMARTSUGGESTIONS_CERT_PREFIX="unica"
 EVAL "rm -rf \"$REZOSS_SMARTSUGGESTIONS_TMP\" && mkdir -p \"$REZOSS_SMARTSUGGESTIONS_TMP\""
 EVAL "unzip -q -p \"$REZOSS_SMARTSUGGESTIONS_APK\" classes11.dex > \"$REZOSS_SMARTSUGGESTIONS_TMP/classes11.dex\""
+EVAL "unzip -q -p \"$REZOSS_SMARTSUGGESTIONS_APK\" classes13.dex > \"$REZOSS_SMARTSUGGESTIONS_TMP/classes13.dex\""
 EVAL "unzip -q -p \"$REZOSS_SMARTSUGGESTIONS_APK\" classes14.dex > \"$REZOSS_SMARTSUGGESTIONS_TMP/classes14.dex\""
 EVAL "unzip -q -p \"$REZOSS_SMARTSUGGESTIONS_APK\" classes15.dex > \"$REZOSS_SMARTSUGGESTIONS_TMP/classes15.dex\""
 EVAL "unzip -q -p \"$REZOSS_SMARTSUGGESTIONS_APK\" AndroidManifest.xml > \"$REZOSS_SMARTSUGGESTIONS_TMP/AndroidManifest.xml\""
 EVAL "python3 \"$MODPATH/smartsuggestions/patch_contents_visibility_dex.py\" \"$REZOSS_SMARTSUGGESTIONS_TMP/classes14.dex\""
 EVAL "python3 \"$MODPATH/smartsuggestions/patch_now_nudge_dex.py\" \"$REZOSS_SMARTSUGGESTIONS_TMP/classes15.dex\""
-EVAL "python3 \"$MODPATH/smartsuggestions/patch_smartsuggestions_dev_mode.py\" \"$REZOSS_SMARTSUGGESTIONS_TMP/classes11.dex\" \"$REZOSS_SMARTSUGGESTIONS_TMP/classes15.dex\" \"$REZOSS_SMARTSUGGESTIONS_TMP/AndroidManifest.xml\""
+EVAL "python3 \"$MODPATH/smartsuggestions/patch_smartsuggestions_dev_mode.py\" \"$REZOSS_SMARTSUGGESTIONS_TMP/classes11.dex\" \"$REZOSS_SMARTSUGGESTIONS_TMP/classes13.dex\" \"$REZOSS_SMARTSUGGESTIONS_TMP/classes15.dex\" \"$REZOSS_SMARTSUGGESTIONS_TMP/AndroidManifest.xml\""
 EVAL "cp -a \"$REZOSS_SMARTSUGGESTIONS_APK\" \"$REZOSS_SMARTSUGGESTIONS_TMP/SamsungSmartSuggestions.apk\""
-EVAL "cd \"$REZOSS_SMARTSUGGESTIONS_TMP\" && zip -q -0 \"SamsungSmartSuggestions.apk\" classes11.dex classes14.dex classes15.dex AndroidManifest.xml"
+EVAL "cd \"$REZOSS_SMARTSUGGESTIONS_TMP\" && zip -q -0 \"SamsungSmartSuggestions.apk\" classes11.dex classes13.dex classes14.dex classes15.dex AndroidManifest.xml"
 EVAL "signapk \"$SRC_DIR/security/${REZOSS_SMARTSUGGESTIONS_CERT_PREFIX}_platform.x509.pem\" \"$SRC_DIR/security/${REZOSS_SMARTSUGGESTIONS_CERT_PREFIX}_platform.pk8\" \"$REZOSS_SMARTSUGGESTIONS_TMP/SamsungSmartSuggestions.apk\" \"$REZOSS_SMARTSUGGESTIONS_TMP/SamsungSmartSuggestions.signed.apk\""
 EVAL "mv -f \"$REZOSS_SMARTSUGGESTIONS_TMP/SamsungSmartSuggestions.signed.apk\" \"$REZOSS_SMARTSUGGESTIONS_APK\""
 SET_METADATA "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" 0 0 644 "u:object_r:system_file:s0"
 EVAL "rm -rf \"$REZOSS_SMARTSUGGESTIONS_TMP\""
-LOG "- Patching SmartSuggestions Custom Card runtime policy"
+LOG "- Patching SmartSuggestions native library extraction"
+REZOSS_SMARTSUGGESTIONS_DECODED="$APKTOOL_DIR/system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk"
+EVAL "rm -rf \"$REZOSS_SMARTSUGGESTIONS_DECODED\""
+DECODE_APK "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk"
+EVAL "sed -i 's/android:extractNativeLibs=\"false\"/android:extractNativeLibs=\"true\"/g' \"$REZOSS_SMARTSUGGESTIONS_DECODED/AndroidManifest.xml\""
+if ! grep -q 'android:extractNativeLibs="true"' "$REZOSS_SMARTSUGGESTIONS_DECODED/AndroidManifest.xml"; then
+    LOGE "Failed to enable native library extraction for SamsungSmartSuggestions.apk"
+    return 1
+fi
+unset REZOSS_SMARTSUGGESTIONS_DECODED
+LOG "- Applying SmartSuggestions China compatibility patch"
 APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
-    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0002-Relax-Custom-Card-runtime-policy.patch"
-LOG "- Patching SmartSuggestions Now Nudge chat and autofill compatibility"
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0010-China-SmartSuggestions-compatibility.patch"
 APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
-    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0003-Enable-Now-Nudge-chat-and-autofill-compatibility.patch"
-LOG "- Patching SmartSuggestions Samsung Messages content capture SmartReply path"
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0011-Enable-Netflix-custom-card-helpers-and-forced-skills.patch"
 APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
-    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0004-Enable-Samsung-Messages-content-capture-SmartReply.patch"
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0012-Bind-event-travel-custom-card-sources.patch"
+APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0013-Allow-calendar-travel-custom-card-prompts.patch"
+APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0016-Use-data-backed-Now-Nudge-reply-fallbacks.patch"
+APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0018-Reuse-OfflineLanguageCore-Suggestion-metadata.patch"
+APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0019-Use-JSON-category-rules-for-Now-Nudge-fallbacks.patch"
+APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0017-Add-Telegram-ContentCapture-allowlist.patch"
+APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0020-Restore-CHN-Now-Nudge-conversation-bridge.patch"
+APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0021-Add-Telegram-class-text-parser-fallback.patch"
+APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0022-Prefer-JSON-fallback-before-AIOS-chat-replies.patch"
+APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0023-Ignore-stale-Now-Nudge-fallback-data.patch"
+APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0014-Allow-Now-Brief-recall-calendar-reminder-fallback.patch"
+APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0015-Force-Now-Brief-non-empty-fallback.patch"
+# Temporarily disabled for CHN SmartSuggestions testing.
+# LOG "- Patching SmartSuggestions China custom-card feature gates"
+# SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+#     "smali_classes15/com/samsung/android/smartsuggestions/featureconfig/rune/Rune.smali" "return" \
+#     'getSUPPORT_AI_SUGGESTION_CUSTOM_CARD_CHN()Z' \
+#     'true' \
+#     > /dev/null
+# SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+#     "smali_classes15/com/samsung/android/smartsuggestions/featureconfig/rune/Rune.smali" "return" \
+#     'getSUPPORT_AI_SUGGESTION_EDITABLE_CARD_CHN()Z' \
+#     'true' \
+#     > /dev/null
 LOG "- Patching SmartSuggestions Now Nudge experimental runtime gates"
 SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
     "smali_classes15/com/samsung/android/smartsuggestions/service/screenintelligence/setting/NowNudgesSettingHelper.smali" "return" \
@@ -259,6 +295,152 @@ _REZOSS_SET_SYSTEM_LIB64_METADATA()
     SET_METADATA "system" "system/lib64/$FILE" 0 0 644 "u:object_r:system_lib_file:s0"
 }
 
+_REZOSS_GET_SEPOLICY_API_SUFFIX()
+{
+    local CIL_FILE="$1"
+
+    if grep -q "(type init_34_0)" "$CIL_FILE"; then
+        echo "34_0"
+    else
+        echo "33_0"
+    fi
+}
+
+_REZOSS_CIL_HAS_SYMBOL()
+{
+    local SYMBOL="$1"
+    shift
+
+    local FILE
+    for FILE in "$@"; do
+        [ -f "$FILE" ] || continue
+        if grep -q " ${SYMBOL}[ )]" "$FILE" || grep -q "(${SYMBOL}[ )]" "$FILE"; then
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+_REZOSS_GET_MOSEY_APP_DOMAIN()
+{
+    local API_SUFFIX="$1"
+    local SYSTEM_EXT_SELINUX
+    local VERSIONED_DOMAIN="mosey_app_${API_SUFFIX}"
+    local VERSIONED_MAPPING="${API_SUFFIX/_/.}.cil"
+
+    if $TARGET_OS_BUILD_SYSTEM_EXT_PARTITION; then
+        SYSTEM_EXT_SELINUX="$WORK_DIR/system_ext/etc/selinux"
+    else
+        SYSTEM_EXT_SELINUX="$WORK_DIR/system/system/system_ext/etc/selinux"
+    fi
+
+    if _REZOSS_CIL_HAS_SYMBOL "$VERSIONED_DOMAIN" \
+        "$SYSTEM_EXT_SELINUX/mapping/$VERSIONED_MAPPING" \
+        "$WORK_DIR/vendor/etc/selinux/plat_pub_versioned.cil"; then
+        echo "$VERSIONED_DOMAIN"
+        return
+    fi
+
+    if _REZOSS_CIL_HAS_SYMBOL "mosey_app" \
+        "$SYSTEM_EXT_SELINUX/system_ext_sepolicy.cil" \
+        "$WORK_DIR/product/etc/selinux/product_sepolicy.cil"; then
+        echo "mosey_app"
+        return
+    fi
+
+    echo "priv_app_${API_SUFFIX}"
+}
+
+_REZOSS_DROP_MOSEY_APP_VENDOR_RULES()
+{
+    local CIL_FILE="$1"
+
+    sed -i -E \
+        -e '/^\(allow (mosey_app(_[0-9]+_[0-9]+)?|priv_app_[0-9]+_[0-9]+) mosey_(server|service) /d' \
+        -e '/^\(allow mosey_server (mosey_app(_[0-9]+_[0-9]+)?|priv_app_[0-9]+_[0-9]+) /d' \
+        "$CIL_FILE"
+}
+
+_REZOSS_ENSURE_MOSEY_VENDOR_SELINUX()
+{
+    local FC_FILE="$WORK_DIR/vendor/etc/selinux/vendor_file_contexts"
+    local SERVICE_FILE="$WORK_DIR/vendor/etc/selinux/vendor_service_contexts"
+    local CIL_FILE="$WORK_DIR/vendor/etc/selinux/vendor_sepolicy.cil"
+    local API_SUFFIX
+    local APP_DOMAIN
+
+    if [ -f "$FC_FILE" ]; then
+        LOG "- Ensuring S24U Mosey vendor file context"
+        _REZOSS_APPEND_UNIQUE_LINE "$FC_FILE" "/vendor/bin/mosey_server u:object_r:mosey_server_exec:s0"
+    else
+        LOGW "File not found: ${FC_FILE//$WORK_DIR/}"
+    fi
+
+    if [ -f "$SERVICE_FILE" ]; then
+        LOG "- Ensuring S24U Mosey service contexts"
+        _REZOSS_APPEND_UNIQUE_LINE "$SERVICE_FILE" "com.google.pixel.moseyservice.IMoseyService/default u:object_r:mosey_service:s0"
+        _REZOSS_APPEND_UNIQUE_LINE "$SERVICE_FILE" "com.google.android.moseyservice.IMoseyService/default u:object_r:mosey_service:s0"
+    else
+        LOGW "File not found: ${SERVICE_FILE//$WORK_DIR/}"
+    fi
+
+    if [ -f "$CIL_FILE" ]; then
+        API_SUFFIX="$(_REZOSS_GET_SEPOLICY_API_SUFFIX "$CIL_FILE")"
+        APP_DOMAIN="$(_REZOSS_GET_MOSEY_APP_DOMAIN "$API_SUFFIX")"
+        LOG "- Ensuring S24U Mosey vendor SELinux policy (${API_SUFFIX}, ${APP_DOMAIN})"
+        _REZOSS_DROP_MOSEY_APP_VENDOR_RULES "$CIL_FILE"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(type mosey_server)"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(roletype object_r mosey_server)"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(type mosey_server_exec)"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(roletype object_r mosey_server_exec)"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(type mosey_service)"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(roletype object_r mosey_service)"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset domain (mosey_server))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset file_type (mosey_server_exec))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset exec_type (mosey_server_exec))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset vendor_file_type (mosey_server_exec))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset service_manager_type (mosey_service))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset vendor_service (mosey_service))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset hal_service_type (mosey_service))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow ${APP_DOMAIN} mosey_server (binder (call transfer)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server ${APP_DOMAIN} (binder (transfer)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow ${APP_DOMAIN} mosey_server (fd (use)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow ${APP_DOMAIN} mosey_service (service_manager (find)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server servicemanager_${API_SUFFIX} (binder (call transfer)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow servicemanager_${API_SUFFIX} mosey_server (binder (call transfer)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow servicemanager_${API_SUFFIX} mosey_server (dir (search)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow servicemanager_${API_SUFFIX} mosey_server (file (read open)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow servicemanager_${API_SUFFIX} mosey_server (process (getattr)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow init_${API_SUFFIX} mosey_server_exec (file (read getattr map execute open)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow init_${API_SUFFIX} mosey_server (process (transition)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server mosey_server_exec (file (read getattr map execute open entrypoint)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(dontaudit init_${API_SUFFIX} mosey_server (process (noatsecure)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow init_${API_SUFFIX} mosey_server (process (siginh rlimitinh)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typetransition init_${API_SUFFIX} mosey_server_exec process mosey_server)"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server mosey_service (service_manager (add find)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (capability (net_admin net_raw)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server sysfs_net_${API_SUFFIX} (dir (ioctl read getattr lock open watch watch_reads search)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server sysfs_net_${API_SUFFIX} (file (ioctl read getattr lock map open watch watch_reads)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server sysfs_net_${API_SUFFIX} (lnk_file (ioctl read getattr lock map open watch watch_reads)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (udp_socket (ioctl create)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allowx mosey_server self (ioctl udp_socket ((range 0x8913 0x8914) 0x8916 0x8922 0x8924 0x8936 0x8946 0x8994 0x89f1)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (unix_dgram_socket (ioctl)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allowx mosey_server self (ioctl unix_dgram_socket ((range 0x8913 0x8914) 0x8946 0x8994)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (packet_socket (ioctl read write create getattr setattr lock append map bind connect listen accept getopt setopt shutdown)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allowx mosey_server self (ioctl packet_socket (0x8913 0x8927 0x8933)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (netlink_route_socket (read write create nlmsg_read nlmsg_write nlmsg_readpriv nlmsg_getneigh)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server mosey_server (netlink_netfilter_socket (create)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server tun_device_${API_SUFFIX} (chr_file (ioctl read write getattr lock append map open watch watch_reads)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allowx mosey_server tun_device_${API_SUFFIX} (ioctl chr_file (0x54ca 0x54d2)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (tun_socket (create)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (netlink_generic_socket (ioctl read write create getattr setattr lock append map bind connect getopt setopt shutdown)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allowx mosey_server self (ioctl netlink_generic_socket (0x8946)))"
+    else
+        LOGW "File not found: ${CIL_FILE//$WORK_DIR/}"
+    fi
+}
+
 _REZOSS_ENSURE_LOG_VIDEO_FILTER_SELINUX()
 {
     local FC_FILE="$WORK_DIR/vendor/etc/selinux/vendor_file_contexts"
@@ -288,96 +470,60 @@ _REZOSS_ENSURE_LOG_VIDEO_FILTER_SELINUX()
     fi
 }
 
-_REZOSS_ENSURE_MOSEY_SELINUX()
+_REZOSS_ENSURE_BOOTANIMATION_SELINUX()
 {
-    local SYSTEM_EXT_DIR="$WORK_DIR/system_ext"
-    if ! $TARGET_OS_BUILD_SYSTEM_EXT_PARTITION; then
-        SYSTEM_EXT_DIR="$WORK_DIR/system/system/system_ext"
-    fi
+    local SYSTEM_EXT_SELINUX
+    local CIL_FILE
 
-    local FC_FILE="$SYSTEM_EXT_DIR/etc/selinux/system_ext_file_contexts"
-    local SEAPP_FILE="$SYSTEM_EXT_DIR/etc/selinux/system_ext_seapp_contexts"
-    local SVC_FILE="$SYSTEM_EXT_DIR/etc/selinux/system_ext_service_contexts"
-    local CIL_FILE="$SYSTEM_EXT_DIR/etc/selinux/system_ext_sepolicy.cil"
-
-    if [ -f "$FC_FILE" ]; then
-        LOG "- Ensuring Mosey daemon file contexts"
-        _REZOSS_APPEND_UNIQUE_LINE "$FC_FILE" "/system_ext/bin/mosey_server                                               u:object_r:mosey_server_exec:s0"
-        _REZOSS_APPEND_UNIQUE_LINE "$FC_FILE" "/system/system_ext/bin/mosey_server                                        u:object_r:mosey_server_exec:s0"
+    if $TARGET_OS_BUILD_SYSTEM_EXT_PARTITION; then
+        SYSTEM_EXT_SELINUX="$WORK_DIR/system_ext/etc/selinux"
     else
-        LOGW "File not found: ${FC_FILE//$WORK_DIR/}"
+        SYSTEM_EXT_SELINUX="$WORK_DIR/system/system/system_ext/etc/selinux"
     fi
 
-    if [ -f "$SEAPP_FILE" ]; then
-        LOG "- Ensuring Mosey app seapp context"
-        _REZOSS_APPEND_UNIQUE_LINE "$SEAPP_FILE" "user=_app isPrivApp=true name=com.google.android.mosey domain=mosey_app type=app_data_file levelFrom=all"
-    else
-        LOGW "File not found: ${SEAPP_FILE//$WORK_DIR/}"
-    fi
-
-    if [ -f "$SVC_FILE" ]; then
-        LOG "- Ensuring Mosey service context"
-        _REZOSS_APPEND_UNIQUE_LINE "$SVC_FILE" "com.google.android.moseyservice.IMoseyService/default 				u:object_r:mosey_service:s0"
-    else
-        LOGW "File not found: ${SVC_FILE//$WORK_DIR/}"
-    fi
+    CIL_FILE="$SYSTEM_EXT_SELINUX/system_ext_sepolicy.cil"
 
     if [ -f "$CIL_FILE" ]; then
-        LOG "- Ensuring Mosey daemon SELinux policy"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(type mosey_server)"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(roletype object_r mosey_server)"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(type mosey_server_exec)"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(roletype object_r mosey_server_exec)"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(type mosey_service)"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(roletype object_r mosey_service)"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset domain (mosey_server))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset coredomain (mosey_server))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset file_type (mosey_server_exec))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset exec_type (mosey_server_exec))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset system_file_type (mosey_server_exec))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset service_manager_type (mosey_service))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset hal_service_type (mosey_service))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow dumpstate mosey_server (binder (call transfer)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server dumpstate (binder (transfer)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow dumpstate mosey_server (fd (use)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow dumpstate mosey_service (service_manager (find)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_app sec_pass_data_file (file (ioctl read getattr lock map open watch watch_reads)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_app mosey_service (service_manager (find)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_app mosey_server (binder (call transfer)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server mosey_app (binder (transfer)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_app mosey_server (fd (use)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server servicemanager (binder (call transfer)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow servicemanager mosey_server (binder (call transfer)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow init mosey_server_exec (file (read getattr map execute open)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow init mosey_server (process (transition)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server mosey_server_exec (file (read getattr map execute open entrypoint)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(dontaudit init mosey_server (process (noatsecure)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow init mosey_server (process (siginh rlimitinh)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typetransition init mosey_server_exec process mosey_server)"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server mosey_service (service_manager (add find)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server dumpstate (fifo_file (write)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server dumpstate (fd (use)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (capability (net_admin net_raw)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server sysfs_net (dir (ioctl read getattr lock open watch watch_reads search)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server sysfs_net (file (ioctl read getattr lock map open watch watch_reads)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server sysfs_net (lnk_file (ioctl read getattr lock map open watch watch_reads)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (udp_socket (ioctl create)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allowx mosey_server self (ioctl udp_socket ((range 0x8913 0x8914) 0x8916 0x8922 0x8924 0x8936 0x8946 0x8994 0x89f1)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (unix_dgram_socket (ioctl)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allowx mosey_server self (ioctl unix_dgram_socket ((range 0x8913 0x8914) 0x8946 0x8994)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (packet_socket (ioctl read write create getattr setattr lock append map bind connect listen accept getopt setopt shutdown)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allowx mosey_server self (ioctl packet_socket (0x8913 0x8927 0x8933)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (netlink_route_socket (read write create nlmsg_read nlmsg_write nlmsg_readpriv nlmsg_getneigh)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server mosey_server (netlink_netfilter_socket (create)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server tun_device (chr_file (ioctl read write getattr lock append map open watch watch_reads)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allowx mosey_server tun_device (ioctl chr_file (0x54ca 0x54d2)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (tun_socket (create)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (netlink_generic_socket (ioctl read write create getattr setattr lock append map bind connect getopt setopt shutdown)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allowx mosey_server self (ioctl netlink_generic_socket (0x8946)))"
+        LOG "- Ensuring optional AOSP bootanimation SELinux access"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "; Added by unica/mods/rezoss/customize.sh for optional AOSP zip boot animation"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell self (capability (dac_override dac_read_search sys_admin)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell bootanim_data_file (dir (ioctl read write create getattr setattr lock rename open watch watch_reads add_name remove_name search)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell bootanim_data_file (file (ioctl read write create getattr setattr lock append map unlink rename open watch watch_reads)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell media_rw_data_file (dir (ioctl read getattr lock open watch watch_reads search)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell media_rw_data_file (file (ioctl read getattr lock map open watch watch_reads)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell bootanim_exec (file (ioctl read getattr lock map open watch watch_reads)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell bootanim_oem_file (file (ioctl read getattr lock map open watch watch_reads mounton)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell bootanim_exec (file (mounton)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell ctl_restart_prop (property_service (set)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell ctl_restart_prop (file (read getattr map open)))"
     else
         LOGW "File not found: ${CIL_FILE//$WORK_DIR/}"
     fi
 }
+
+_REZOSS_ENSURE_BOOTANIMATION_SELINUX
+
+# =============================================================================
+# S24U OneUI 8.5 Quick Share Apple Devices Extension
+# =============================================================================
+REZOSS_ENABLE_MOSEY_APPLE_SHARING="${REZOSS_ENABLE_MOSEY_APPLE_SHARING:-true}"
+if [[ "$REZOSS_ENABLE_MOSEY_APPLE_SHARING" == "true" ]]; then
+    LOG "- Adding S24U OneUI 8.5 Mosey Quick Share extension"
+    ADD_TO_WORK_DIR "$MODPATH" "vendor" "bin/mosey_server" 0 2000 755 "u:object_r:mosey_server_exec:s0"
+    ADD_TO_WORK_DIR "$MODPATH" "vendor" "lib64/libmosey_daemon_ffi.so" 0 0 644 "u:object_r:vendor_file:s0"
+    ADD_TO_WORK_DIR "$MODPATH" "vendor" "etc/init/mosey.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    ADD_TO_WORK_DIR "$MODPATH" "vendor" "etc/vintf/manifest/manifest_mosey.xml" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    _REZOSS_ENSURE_MOSEY_VENDOR_SELINUX
+else
+    LOG "- Skipping S24U OneUI 8.5 Mosey Quick Share extension; REZOSS_ENABLE_MOSEY_APPLE_SHARING=false"
+    DELETE_FROM_WORK_DIR "system" "system/etc/default-permissions/default-permissions-com.google.android.mosey.xml"
+    DELETE_FROM_WORK_DIR "system" "system/etc/init/rezoss_mosey_permissions.rc"
+    DELETE_FROM_WORK_DIR "system" "system/etc/unica/rezoss_mosey_permissions.sh"
+    DELETE_FROM_WORK_DIR "system_ext" "priv-app/MoseyApp"
+    DELETE_FROM_WORK_DIR "system_ext" "etc/default-permissions/default-permissions-com.google.android.mosey.xml"
+    DELETE_FROM_WORK_DIR "system_ext" "etc/permissions/privapp-permissions-com.google.android.mosey.xml"
+fi
+unset REZOSS_ENABLE_MOSEY_APPLE_SHARING
 
 # =============================================================================
 # S26U Prebuilts - Gallery LOG / Camera LOG-LUT / Privacy Display
@@ -607,11 +753,11 @@ _REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_V
 _REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_FUSION_HIGH_RESOLUTION" "FALSE"
 _REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_HIGH_RESOLUTION_SWBINNING" "FALSE"
 _REZOSS_ENSURE_LOG_VIDEO_FILTER_SELINUX
-_REZOSS_ENSURE_MOSEY_SELINUX
 
 unset -f _REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG _REZOSS_APPEND_UNIQUE_LINE
-unset -f _REZOSS_ENSURE_LOG_VIDEO_FILTER_SELINUX
-unset -f _REZOSS_ENSURE_MOSEY_SELINUX
+unset -f _REZOSS_ENSURE_MOSEY_VENDOR_SELINUX _REZOSS_GET_MOSEY_APP_DOMAIN
+unset -f _REZOSS_DROP_MOSEY_APP_VENDOR_RULES _REZOSS_CIL_HAS_SYMBOL _REZOSS_GET_SEPOLICY_API_SUFFIX
+unset -f _REZOSS_ENSURE_LOG_VIDEO_FILTER_SELINUX _REZOSS_ENSURE_BOOTANIMATION_SELINUX
 
 
 # =============================================================================
@@ -651,8 +797,6 @@ SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_CONFIG_AI_VERSION" "202
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_CONFIG_NOW_NUDGE_VERSION" "1"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GENAI_CONFIG_LLM_VERSION" "0.70"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GENAI_SUPPORT_OFFLINE_LANGUAGEMODEL" "TRUE"
-LOG "- Porting S26U SCS service binary"
-ADD_TO_WORK_DIR "$MODPATH" "system" "system/bin/scs" 0 2000 755 "u:object_r:scs_exec:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/app/SketchBook/SketchBook.apk" 0 0 644 "u:object_r:system_file:s0"
 LOG "- Overlay S26U Notification highlights AI APKs"
 ADD_TO_WORK_DIR "$MODPATH" "system" "system/priv-app/SamsungIntelliVoiceServices/SamsungIntelliVoiceServices.apk" 0 0 644 "u:object_r:system_file:s0"
@@ -664,6 +808,19 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/permissions/privapp-permissions-co
 ADD_TO_WORK_DIR "pa2qxxx" "system" "system/etc/sysconfig/aioskernelservice.xml" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/permissions/signature-permissions-com.samsung.android.offline.languagemodel.xml" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/OfflineLanguageModel_stub/OfflineLanguageModel_stub.apk" 0 0 644 "u:object_r:system_file:s0"
+
+LOG "- Re-signing OfflineLanguageModel_stub.apk for custom Offline Language Core updates"
+OFFLINELM_STUB_APK="$WORK_DIR/system/system/priv-app/OfflineLanguageModel_stub/OfflineLanguageModel_stub.apk"
+OFFLINELM_STUB_TMP="$TMP_DIR/offline_language_model_stub"
+OFFLINELM_STUB_CERT_PREFIX="aosp"
+$ROM_IS_OFFICIAL && OFFLINELM_STUB_CERT_PREFIX="unica"
+EVAL "rm -rf \"$OFFLINELM_STUB_TMP\" && mkdir -p \"$OFFLINELM_STUB_TMP\""
+EVAL "signapk \"$SRC_DIR/security/${OFFLINELM_STUB_CERT_PREFIX}_platform.x509.pem\" \"$SRC_DIR/security/${OFFLINELM_STUB_CERT_PREFIX}_platform.pk8\" \"$OFFLINELM_STUB_APK\" \"$OFFLINELM_STUB_TMP/OfflineLanguageModel_stub.signed.apk\""
+EVAL "zipalign -c -p 4 \"$OFFLINELM_STUB_TMP/OfflineLanguageModel_stub.signed.apk\""
+EVAL "mv -f \"$OFFLINELM_STUB_TMP/OfflineLanguageModel_stub.signed.apk\" \"$OFFLINELM_STUB_APK\""
+SET_METADATA "system" "system/priv-app/OfflineLanguageModel_stub/OfflineLanguageModel_stub.apk" 0 0 644 "u:object_r:system_file:s0"
+EVAL "rm -rf \"$OFFLINELM_STUB_TMP\""
+unset OFFLINELM_STUB_APK OFFLINELM_STUB_TMP OFFLINELM_STUB_CERT_PREFIX
 
 LOG "- Adding S26U NMT languagepack preload metadata"
 S26U_NMT_TARGET_PRELOAD="$WORK_DIR/system/system/etc/removable_preload.txt"
@@ -738,14 +895,29 @@ APPLY_PATCH "system" "system/priv-app/AIOSKernelService/AIOSKernelService.apk" \
 LOG "- Patching AIOSKernelService QNN Skel name for Hexagon V73"
 APPLY_PATCH "system" "system/priv-app/AIOSKernelService/AIOSKernelService.apk" \
     "$MODPATH/aioskernel/AIOSKernelService.apk/0002-Use-Hexagon-V73-QNN-skel.patch"
+LOG "- Spoofing AIOSKernelService build flavor for SM8550"
+APPLY_PATCH "system" "system/priv-app/AIOSKernelService/AIOSKernelService.apk" \
+    "$MODPATH/aioskernel/AIOSKernelService.apk/0003-Spoof-SM8550-build-flavor.patch"
 # Replace the S26U V81 HTP binaries inside AIOSKernelService.apk with the S23U Hexagon V73 pair.
 local AIOS_DECODED_APK="$APKTOOL_DIR/system/priv-app/AIOSKernelService/AIOSKernelService.apk"
 local AIOS_DECODED_LIB="$AIOS_DECODED_APK/lib/arm64-v8a"
 local AIOS_DECODED_SSGEN_LIB="$AIOS_DECODED_APK/assets/ssgen/libs"
+local AIOS_SSN_LIB="$AIOS_DECODED_LIB/libssneural_vndk.so"
+local AIOS_SSN_PATCHED_LIB="$TMP_DIR/aios_libssneural_vndk.so"
+local AIOS_SNAP_QNN_LIB="$AIOS_DECODED_LIB/libsnap_qnn.so"
+local AIOS_SNAP_QNN_PATCHED_LIB="$TMP_DIR/aios_libsnap_qnn.so"
 local S23U_FW_DIR="$FW_DIR/SM-S918B_EUX"
 local AIOS_QNN_MISSING=0
 if [ ! -d "$AIOS_DECODED_LIB" ] || [ ! -d "$AIOS_DECODED_SSGEN_LIB" ]; then
     LOGE "AIOSKernelService.apk decoded QNN directories are missing"
+    return 1
+fi
+if [ ! -f "$AIOS_SSN_LIB" ]; then
+    LOGE "AIOSKernelService.apk libssneural_vndk.so is missing"
+    return 1
+fi
+if [ ! -f "$AIOS_SNAP_QNN_LIB" ]; then
+    LOGE "AIOSKernelService.apk libsnap_qnn.so is missing"
     return 1
 fi
 for f in \
@@ -771,7 +943,16 @@ cp -f "$S23U_FW_DIR/vendor/lib/rfsa/adsp/snap/libQnnHtpV73Skel.so" "$AIOS_DECODE
 if [ -f "$S23U_FW_DIR/vendor/lib64/libqnnengine.so" ]; then
     cp -f "$S23U_FW_DIR/vendor/lib64/libqnnengine.so" "$AIOS_DECODED_LIB/libqnnengine.so"
 fi
-unset AIOS_DECODED_APK AIOS_DECODED_LIB AIOS_DECODED_SSGEN_LIB S23U_FW_DIR AIOS_QNN_MISSING
+LOG "- Patching AIOSKernelService native SSNeural SM8550 support gate"
+EVAL "python3 \"$MODPATH/aioskernel/patch_sm8550_chipset.py\" \"$AIOS_SSN_LIB\" \"$AIOS_SSN_PATCHED_LIB\""
+EVAL "mv -f \"$AIOS_SSN_PATCHED_LIB\" \"$AIOS_SSN_LIB\""
+LOG "- Patching AIOSKernelService QNN logging null guard"
+EVAL "python3 \"$MODPATH/aioskernel/patch_qnn_logging_nullguard.py\" \"$AIOS_SNAP_QNN_LIB\" \"$AIOS_SNAP_QNN_PATCHED_LIB\""
+EVAL "mv -f \"$AIOS_SNAP_QNN_PATCHED_LIB\" \"$AIOS_SNAP_QNN_LIB\""
+LOG "- Patching AIOSKernelService QNN backend V73 fallback"
+EVAL "python3 \"$MODPATH/aioskernel/patch_qnn_backend_v73_fallback.py\" \"$AIOS_SNAP_QNN_LIB\" \"$AIOS_SNAP_QNN_PATCHED_LIB\""
+EVAL "mv -f \"$AIOS_SNAP_QNN_PATCHED_LIB\" \"$AIOS_SNAP_QNN_LIB\""
+unset AIOS_DECODED_APK AIOS_DECODED_LIB AIOS_DECODED_SSGEN_LIB AIOS_SSN_LIB AIOS_SSN_PATCHED_LIB AIOS_SNAP_QNN_LIB AIOS_SNAP_QNN_PATCHED_LIB S23U_FW_DIR AIOS_QNN_MISSING
 SET_METADATA "system" "system/priv-app/AIOSKernelService" 0 0 755 "u:object_r:system_file:s0"
 SET_METADATA "system" "system/priv-app/AIOSKernelService/AIOSKernelService.apk" 0 0 644 "u:object_r:system_file:s0"
 

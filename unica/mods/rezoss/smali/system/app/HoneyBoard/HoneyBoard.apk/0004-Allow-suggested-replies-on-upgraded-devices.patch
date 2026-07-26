@@ -1,0 +1,28 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Rezoss <rezoss79@users.noreply.github.com>
+Date: Wed, 15 Jul 2026 00:00:00 +0200
+Subject: [PATCH] Allow suggested replies on upgraded devices
+
+HoneyBoard restricts its modern suggested-replies capability to devices
+launched on API 35 or newer. Allow the capability on upgraded devices while
+leaving the account, work-profile, user preference, and policy checks intact.
+
+---
+ smali_classes2/nk/c.smali | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/smali_classes2/nk/c.smali b/smali_classes2/nk/c.smali
+--- a/smali_classes2/nk/c.smali
++++ b/smali_classes2/nk/c.smali
+@@ -9829,7 +9829,7 @@
+ .method public final k3()Z
+     .locals 0
+ 
+-    sget-boolean p0, Lnk/c;->M:Z
++    const/4 p0, 0x1
+ 
+     return p0
+ .end method
+-- 
+2.51.0
+

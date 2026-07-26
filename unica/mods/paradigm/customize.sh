@@ -239,24 +239,62 @@ ADD_TO_WORK_DIR "m3qxxx" "system" \
     "system/etc/permissions/privapp-permissions-com.samsung.mediasearch.xml" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" \
     "system/priv-app/MediaSearch/MediaSearch.apk" 0 0 644 "u:object_r:system_file:s0"
+# The S26U v5 package initializes an SM8850 V81/NPU model on dm3q. Keep the
+# S26U provider surface and alias its bundled HTP payloads to the SM8550/V73
+# pair so the native QNN path can be tested on dm3q.
+LOG "- Adding S26U SemanticSearchCore with SM8550/V73 QNN payloads"
 ADD_TO_WORK_DIR "m3qxxx" "system" \
     "system/priv-app/SemanticSearchCore/SemanticSearchCore.apk" 0 0 644 "u:object_r:system_file:s0"
 DECODE_APK "system" "system/priv-app/SemanticSearchCore/SemanticSearchCore.apk"
 SEMANTIC_SEARCH_CORE_DECODED="$APKTOOL_DIR/system/priv-app/SemanticSearchCore/SemanticSearchCore.apk"
-SEMANTIC_SEARCH_CORE_PATCH="$MODPATH/semanticsearch/SemanticSearchCore.apk/0001-Bypass-QNN-HTP-neural-entrypoints.patch"
+SEMANTIC_SEARCH_CORE_LIB="$SEMANTIC_SEARCH_CORE_DECODED/lib/arm64-v8a"
+SEMANTIC_SEARCH_CORE_SHARED="$SEMANTIC_SEARCH_CORE_DECODED/assets/shared"
+SEMANTIC_SEARCH_CORE_FW="$FW_DIR/SM-S918B_EUX"
+SEMANTIC_SEARCH_CORE_QNN_MISSING=0
+if [ ! -d "$SEMANTIC_SEARCH_CORE_LIB" ] || [ ! -d "$SEMANTIC_SEARCH_CORE_SHARED" ]; then
+    LOGE "SemanticSearchCore.apk decoded QNN directories are missing"
+    return 1
+fi
+for f in \
+    "$SEMANTIC_SEARCH_CORE_FW/vendor/lib64/snap/libQnnHtp.so" \
+    "$SEMANTIC_SEARCH_CORE_FW/vendor/lib64/snap/libQnnSystem.so" \
+    "$SEMANTIC_SEARCH_CORE_FW/vendor/lib64/snap/libQnnHtpV73Stub.so" \
+    "$SEMANTIC_SEARCH_CORE_FW/vendor/lib/rfsa/adsp/snap/libQnnHtpV73Skel.so"; do
+    if [ ! -f "$f" ]; then
+        LOGE "File not found: ${f//$SRC_DIR\//}"
+        SEMANTIC_SEARCH_CORE_QNN_MISSING=1
+    fi
+done
+if [ "$SEMANTIC_SEARCH_CORE_QNN_MISSING" != "0" ]; then
+    return 1
+fi
+LOG "- Replacing SemanticSearchCore.apk QNN HTP V81 binaries with S23U Hexagon V73 binaries"
+cp -f "$SEMANTIC_SEARCH_CORE_FW/vendor/lib64/snap/libQnnHtp.so" "$SEMANTIC_SEARCH_CORE_LIB/libQnnHtp.so"
+cp -f "$SEMANTIC_SEARCH_CORE_FW/vendor/lib64/snap/libQnnSystem.so" "$SEMANTIC_SEARCH_CORE_LIB/libQnnSystem.so"
+cp -f "$SEMANTIC_SEARCH_CORE_FW/vendor/lib64/snap/libQnnHtpV73Stub.so" "$SEMANTIC_SEARCH_CORE_LIB/libQnnHtpV73Stub.so"
+cp -f "$SEMANTIC_SEARCH_CORE_FW/vendor/lib64/snap/libQnnHtpV73Stub.so" "$SEMANTIC_SEARCH_CORE_LIB/libQnnHtpV81Stub.so"
+cp -f "$SEMANTIC_SEARCH_CORE_FW/vendor/lib/rfsa/adsp/snap/libQnnHtpV73Skel.so" "$SEMANTIC_SEARCH_CORE_SHARED/libQnnHtpV73Skel.so"
+cp -f "$SEMANTIC_SEARCH_CORE_FW/vendor/lib/rfsa/adsp/snap/libQnnHtpV73Skel.so" "$SEMANTIC_SEARCH_CORE_SHARED/libQnnHtpV81Skel.so"
+EVAL "sed -i 's/qc-sm8850-release/qc-sm8550-release/g' \"$SEMANTIC_SEARCH_CORE_DECODED/AndroidManifest.xml\""
+EVAL "sed -i 's/android:extractNativeLibs=\"false\"/android:extractNativeLibs=\"true\"/g' \"$SEMANTIC_SEARCH_CORE_DECODED/AndroidManifest.xml\""
+if ! grep -q 'android:extractNativeLibs="true"' "$SEMANTIC_SEARCH_CORE_DECODED/AndroidManifest.xml"; then
+    LOGE "Failed to enable native library extraction for SemanticSearchCore.apk"
+    return 1
+fi
+SEMANTIC_SEARCH_CORE_BYPASS_PATCH="$MODPATH/semanticsearch/SemanticSearchCore.apk/0001-Bypass-QNN-HTP-neural-entrypoints.patch"
 EVAL "find \"$SEMANTIC_SEARCH_CORE_DECODED\" -type f \( -name \"*.orig\" -o -name \"*.rej\" \) -delete"
-if LC_ALL=C patch --dry-run -p1 -d "$SEMANTIC_SEARCH_CORE_DECODED" -N --forward -l < "$SEMANTIC_SEARCH_CORE_PATCH" > /dev/null 2>&1; then
-    LOG "- Applying \"$(grep "^Subject:" "$SEMANTIC_SEARCH_CORE_PATCH" | sed "s/.*PATCH] //")\" to /system/system/priv-app/SemanticSearchCore/SemanticSearchCore.apk"
-    EVAL "LC_ALL=C patch -p1 -d \"$SEMANTIC_SEARCH_CORE_DECODED\" -N --forward -l < \"$SEMANTIC_SEARCH_CORE_PATCH\"" || return 1
-elif LC_ALL=C patch --dry-run -R -p1 -d "$SEMANTIC_SEARCH_CORE_DECODED" -l < "$SEMANTIC_SEARCH_CORE_PATCH" > /dev/null 2>&1; then
-    LOG "- SemanticSearchCore.apk QNN HTP neural entrypoints already bypassed"
+if LC_ALL=C patch --dry-run -R -p1 -d "$SEMANTIC_SEARCH_CORE_DECODED" -l < "$SEMANTIC_SEARCH_CORE_BYPASS_PATCH" > /dev/null 2>&1; then
+    LOG "- SemanticSearchCore QNN HTP bypass patch already applied"
+elif LC_ALL=C patch --dry-run -p1 -d "$SEMANTIC_SEARCH_CORE_DECODED" -N --forward -l < "$SEMANTIC_SEARCH_CORE_BYPASS_PATCH" > /dev/null 2>&1; then
+    LOG "- Bypassing SemanticSearchCore native QNN HTP neural entrypoints"
+    EVAL "LC_ALL=C patch -p1 -d \"$SEMANTIC_SEARCH_CORE_DECODED\" -N --forward -l < \"$SEMANTIC_SEARCH_CORE_BYPASS_PATCH\"" || return 1
 else
     LOGE "SemanticSearchCore.apk QNN HTP bypass patch state is inconsistent"
     return 1
 fi
-unset SEMANTIC_SEARCH_CORE_DECODED SEMANTIC_SEARCH_CORE_PATCH
-# ADD_TO_WORK_DIR "pa2qxxx" "system" \
-    # "system/priv-app/SemanticSearchCore/SemanticSearchCore.apk" 0 0 644 "u:object_r:system_file:s0"
+EVAL "find \"$SEMANTIC_SEARCH_CORE_DECODED\" -type f \( -name \"*.orig\" -o -name \"*.rej\" \) -delete"
+unset SEMANTIC_SEARCH_CORE_DECODED SEMANTIC_SEARCH_CORE_LIB SEMANTIC_SEARCH_CORE_SHARED
+unset SEMANTIC_SEARCH_CORE_FW SEMANTIC_SEARCH_CORE_QNN_MISSING SEMANTIC_SEARCH_CORE_BYPASS_PATCH
 DECODE_APK "system" "system/priv-app/SecSettingsIntelligence/SecSettingsIntelligence.apk"
 LOG "- Enabling Semantic search feature in /system/system/priv-app/SecSettingsIntelligence/SecSettingsIntelligence.apk"
 EVAL "cp -a \"$MODPATH/semanticsearch/SecSettingsIntelligence.apk/res/raw/\"* \"$APKTOOL_DIR/system/priv-app/SecSettingsIntelligence/SecSettingsIntelligence.apk/res/raw\""
