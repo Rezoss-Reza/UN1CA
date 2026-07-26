@@ -189,11 +189,16 @@ _REBUILD_SPLIT_FILES_IN_WORK_DIR()
     while IFS= read -r SPLIT_FILE; do
         [ "$SPLIT_FILE" ] || continue
         [ -e "${SPLIT_FILE%.*}.01" ] || continue
-        [ ! -e "${SPLIT_FILE%.*}" ] || continue
 
         SPLIT_REL="${SPLIT_FILE#$SOURCE_DIR/}"
         TARGET_SPLIT="$TARGET_DIR/$SPLIT_REL"
         TARGET_FILE="${TARGET_SPLIT%.*}"
+
+        if [ -e "${SPLIT_FILE%.*}" ]; then
+            LOG "- Removing copied split chunks for $(sed -e "s|$WORK_DIR||" -e "s|/\.||" <<< "$TARGET_FILE")"
+            EVAL "rm -f \"$TARGET_FILE.\"[0-9][0-9]" || return 1
+            continue
+        fi
 
         LOG "- Rebuilding split file $(sed -e "s|$WORK_DIR||" -e "s|/\.||" <<< "$TARGET_FILE")"
         EVAL "cat \"$TARGET_FILE.\"[0-9][0-9] > \"$TARGET_FILE\"" || return 1
