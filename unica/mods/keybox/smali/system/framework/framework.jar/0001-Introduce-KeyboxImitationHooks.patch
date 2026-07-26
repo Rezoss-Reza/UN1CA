@@ -3813,7 +3813,7 @@ index 00000000..1c11edcf
 +
 +.field private static final blacklist SQL_CREATE_ENTRIES:Ljava/lang/String; = "CREATE TABLE key_entries (key_id INTEGER PRIMARY KEY NOT NULL, key_alias TEXT NOT NULL, key_material BLOB NOT NULL, key_metadata BLOB NOT NULL, key_max_usage_count INTEGER NOT NULL)"
 +
-+.field private static final blacklist SQL_CREATE_GRANTS:Ljava/lang/String; = "CREATE TABLE grant_entries (grant_id INTEGER PRIMARY KEY NOT NULL, grantee_uid INTEGER NOT NULL, key_id INTEGER NOT NULL, access_vector INTEGER NOT NULL, UNIQUE (grantee_uid, key_id))"
++.field private static final blacklist SQL_CREATE_GRANTS:Ljava/lang/String; = "CREATE TABLE IF NOT EXISTS grant_entries (grant_id INTEGER PRIMARY KEY NOT NULL, grantee_uid INTEGER NOT NULL, key_id INTEGER NOT NULL, access_vector INTEGER NOT NULL, UNIQUE (grantee_uid, key_id))"
 +
 +.field private static final blacklist SQL_DELETE_ENTRIES:Ljava/lang/String; = "DROP TABLE IF EXISTS key_entries"
 +
@@ -4629,7 +4629,7 @@ index 00000000..1c11edcf
 +
 +    invoke-virtual {p1, p0}, Landroid/database/sqlite/SQLiteDatabase;->execSQL(Ljava/lang/String;)V
 +
-+    const-string p0, "CREATE TABLE grant_entries (grant_id INTEGER PRIMARY KEY NOT NULL, grantee_uid INTEGER NOT NULL, key_id INTEGER NOT NULL, access_vector INTEGER NOT NULL, UNIQUE (grantee_uid, key_id))"
++    const-string p0, "CREATE TABLE IF NOT EXISTS grant_entries (grant_id INTEGER PRIMARY KEY NOT NULL, grantee_uid INTEGER NOT NULL, key_id INTEGER NOT NULL, access_vector INTEGER NOT NULL, UNIQUE (grantee_uid, key_id))"
 +
 +    invoke-virtual {p1, p0}, Landroid/database/sqlite/SQLiteDatabase;->execSQL(Ljava/lang/String;)V
 +
@@ -4668,7 +4668,7 @@ index 00000000..1c11edcf
 +
 +    if-ge p2, p0, :cond_1
 +
-+    const-string p0, "CREATE TABLE grant_entries (grant_id INTEGER PRIMARY KEY NOT NULL, grantee_uid INTEGER NOT NULL, key_id INTEGER NOT NULL, access_vector INTEGER NOT NULL, UNIQUE (grantee_uid, key_id))"
++    const-string p0, "CREATE TABLE IF NOT EXISTS grant_entries (grant_id INTEGER PRIMARY KEY NOT NULL, grantee_uid INTEGER NOT NULL, key_id INTEGER NOT NULL, access_vector INTEGER NOT NULL, UNIQUE (grantee_uid, key_id))"
 +
 +    invoke-virtual {p1, p0}, Landroid/database/sqlite/SQLiteDatabase;->execSQL(Ljava/lang/String;)V
 +

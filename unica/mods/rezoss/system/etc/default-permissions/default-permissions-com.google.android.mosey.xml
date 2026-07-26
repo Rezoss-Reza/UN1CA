@@ -16,15 +16,14 @@
 -->
 <exceptions>
   <exception package="com.google.android.mosey">
-    <permission name="android.permission.BLUETOOTH_SCAN"/>
-    <permission name="android.permission.BLUETOOTH_ADVERTISE" />
+    <permission name="android.permission.BLUETOOTH_SCAN" fixed="true" />
+    <permission name="android.permission.BLUETOOTH_ADVERTISE" fixed="true" />
     <permission name="android.permission.BLUETOOTH_CONNECT" />
-    <permission name="android.permission.NEARBY_WIFI_DEVICES" />
-    <permission name="android.permission.ACCESS_FINE_LOCATION" />
-    <permission name="android.permission.ACCESS_COARSE_LOCATION" />
-    <permission name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-    <permission name="android.permission.ACCESS_MEDIA_LOCATION" />
+    <permission name="android.permission.NEARBY_WIFI_DEVICES" fixed="true" />
+    <permission name="android.permission.ACCESS_FINE_LOCATION" fixed="true" />
+    <permission name="android.permission.ACCESS_COARSE_LOCATION" fixed="true" />
+    <permission name="android.permission.ACCESS_BACKGROUND_LOCATION" fixed="true" />
+    <permission name="android.permission.ACCESS_MEDIA_LOCATION" fixed="true" />
     <permission name="android.permission.ACCESS_LOCAL_NETWORK"/>
   </exception>
 </exceptions>
-

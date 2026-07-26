@@ -21,6 +21,32 @@ THREAD_COUNT=""
 INPUT_FILE=""
 OUTPUT_PATH=""
 
+PREPARE_SMARTSUGGESTIONS_PACKAGING()
+{
+    local YML="$OUTPUT_PATH/apktool.yml"
+    local RES_DIR="$OUTPUT_PATH/res"
+    local ENTRY
+    local ADDED=0
+
+    [ -f "$YML" ] || return 0
+    [ -d "$RES_DIR" ] || return 0
+
+    if ! grep -q "^doNotCompress:" "$YML"; then
+        printf "\n%s\n" "doNotCompress:" >> "$YML"
+    fi
+
+    while IFS= read -r ENTRY; do
+        if ! grep -q -F -- "- $ENTRY" "$YML"; then
+            printf "%s\n" "- $ENTRY" >> "$YML"
+            ADDED=$((ADDED + 1))
+        fi
+    done < <(find "$RES_DIR" -type f -path "*/raw*/alias_index.7z" -printf "res/%P\n" | sort)
+
+    if (( ADDED > 0 )); then
+        LOG "- Keeping $ADDED SmartSuggestions alias_index.7z resources uncompressed"
+    fi
+}
+
 BUILD()
 {
     if [ ! -d "$OUTPUT_PATH" ]; then
@@ -28,12 +54,16 @@ BUILD()
         exit 1
     fi
 
+    local SHORTEN_RESOURCE_PATHS=true
+
     case "$PARTITION:$FILE" in
         "system:system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk")
             if (( THREAD_COUNT > 4 )); then
                 LOG "- Limiting apktool threads for ${INPUT_FILE//$WORK_DIR/} to 4 to avoid JVM heap exhaustion"
                 THREAD_COUNT=4
             fi
+            SHORTEN_RESOURCE_PATHS=false
+            PREPARE_SMARTSUGGESTIONS_PACKAGING
             ;;
     esac
 
@@ -43,10 +73,15 @@ BUILD()
     mkdir -p "$OUTPUT_PATH/build/apk"
     cp -a "$OUTPUT_PATH/original/META-INF" "$OUTPUT_PATH/build/apk/META-INF"
 
-    # Build APK with --shorten-resource-paths (https://developer.android.com/tools/aapt2#optimize_options)
+    # Most APKs are rebuilt with shortened resource paths. SmartSuggestions is
+    # kept expanded because its known working CHN build uses expanded res paths.
     find "$OUTPUT_PATH" -type f \( -name "*.orig" -o -name "*.rej" \) -delete
     REBALANCE_DEX
-    EVAL "apktool -JXmx${HEAP_SIZE}m b -j \"$THREAD_COUNT\" -p \"$FRAMEWORK_DIR\" -srp \"$OUTPUT_PATH\"" || exit 1
+    if $SHORTEN_RESOURCE_PATHS; then
+        EVAL "apktool -JXmx${HEAP_SIZE}m b -j \"$THREAD_COUNT\" -p \"$FRAMEWORK_DIR\" -srp \"$OUTPUT_PATH\"" || exit 1
+    else
+        EVAL "apktool -JXmx${HEAP_SIZE}m b -j \"$THREAD_COUNT\" -p \"$FRAMEWORK_DIR\" \"$OUTPUT_PATH\"" || exit 1
+    fi
 
     local FILE_NAME
     FILE_NAME="$(basename "$INPUT_FILE")"

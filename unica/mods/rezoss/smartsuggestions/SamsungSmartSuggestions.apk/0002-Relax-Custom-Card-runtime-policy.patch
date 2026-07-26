@@ -32,3 +32,32 @@ diff --git a/smali_classes14/com/samsung/android/smartsuggestions/feature/aisugg
  
      sget-object p0, Ljava/lang/Boolean;->TRUE:Ljava/lang/Boolean;
  
+diff --git a/smali_classes15/com/samsung/android/smartsuggestions/feature/aisuggestion/sa/SAServiceManager.smali b/smali_classes15/com/samsung/android/smartsuggestions/feature/aisuggestion/sa/SAServiceManager.smali
+--- a/smali_classes15/com/samsung/android/smartsuggestions/feature/aisuggestion/sa/SAServiceManager.smali
++++ b/smali_classes15/com/samsung/android/smartsuggestions/feature/aisuggestion/sa/SAServiceManager.smali
+@@ -1999,6 +1999,13 @@
+ 
+     invoke-static {p0, p1}, Liz/b;->w(Lcom/samsung/android/smartsuggestions/feature/aisuggestion/ui/log/b;Ljava/lang/String;)V
+ 
++    if-eqz p1, :cond_rezoss_inflight_return
++
++    invoke-direct {p0}, Lcom/samsung/android/smartsuggestions/feature/aisuggestion/sa/SAServiceManager;->stopSAService()V
++
++    invoke-direct {p0}, Lcom/samsung/android/smartsuggestions/feature/aisuggestion/sa/SAServiceManager;->startServiceAndUpdateToken()V
++
++    :cond_rezoss_inflight_return
+     return-void
+ 
+     :cond_1
+diff --git a/smali_classes15/com/samsung/android/smartsuggestions/feature/aisuggestion/sa/b.smali b/smali_classes15/com/samsung/android/smartsuggestions/feature/aisuggestion/sa/b.smali
+--- a/smali_classes15/com/samsung/android/smartsuggestions/feature/aisuggestion/sa/b.smali
++++ b/smali_classes15/com/samsung/android/smartsuggestions/feature/aisuggestion/sa/b.smali
+@@ -132,6 +132,8 @@
+ 
+     invoke-static {p0, p1}, Liz/b;->l(Lcom/samsung/android/smartsuggestions/feature/aisuggestion/ui/log/b;Ljava/lang/String;)V
+ 
++    invoke-static {p0}, Lcom/samsung/android/smartsuggestions/feature/aisuggestion/sa/SAServiceManager;->access$stopSAService(Lcom/samsung/android/smartsuggestions/feature/aisuggestion/sa/SAServiceManager;)V
++
+     return-void
+ .end method
+ 
