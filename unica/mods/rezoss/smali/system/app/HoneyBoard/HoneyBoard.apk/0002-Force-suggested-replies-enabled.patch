@@ -8,21 +8,20 @@ enabled even when the preference key is missing from a fresh data profile.
 Now Nudge chips depend on this keyboard-side gate.
 
 ---
- smali_classes2/tk/d.smali | 2 ++
+ smali/e9/a.smali | 2 ++
  1 file changed, 2 insertions(+)
 
-diff --git a/smali_classes2/tk/d.smali b/smali_classes2/tk/d.smali
---- a/smali_classes2/tk/d.smali
-+++ b/smali_classes2/tk/d.smali
-@@ -524,6 +524,8 @@
-     move v3, v2
+diff --git a/smali/e9/a.smali b/smali/e9/a.smali
+--- a/smali/e9/a.smali
++++ b/smali/e9/a.smali
+@@ -74,6 +74,8 @@
+     move v0, v1
  
      :goto_0
-+    const/4 v3, 0x1
++    const/4 v0, 0x1
 +
-     invoke-direct {p0}, Ltk/d;->q()Lqo/f;
+     sget-object p1, Le9/c;->g:Lkotlin/Lazy;
  
-     move-result-object v0
+     invoke-interface {p1}, Lkotlin/Lazy;->getValue()Ljava/lang/Object;
 -- 
 2.51.0
-
