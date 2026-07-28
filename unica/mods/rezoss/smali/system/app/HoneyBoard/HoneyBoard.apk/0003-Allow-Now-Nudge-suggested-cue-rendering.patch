@@ -9,21 +9,18 @@ local suggested-cue gate so Now Nudge can reach the strip when the keyboard
 input view, textboard binding, and main input connection checks pass.
 
 ---
- smali_classes2/ml/a.smali | 2 +-
+ smali/x9/a.smali | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/smali_classes2/ml/a.smali b/smali_classes2/ml/a.smali
---- a/smali_classes2/ml/a.smali
-+++ b/smali_classes2/ml/a.smali
-@@ -319,7 +319,7 @@
+diff --git a/smali/x9/a.smali b/smali/x9/a.smali
+--- a/smali/x9/a.smali
++++ b/smali/x9/a.smali
+@@ -621,5 +621,5 @@
+     :goto_f
+-    if-eqz v0, :cond_13
++    goto :cond_13
  
-     move-result v0
- 
--    if-eqz v0, :cond_3
-+    goto :cond_3
- 
-     const-string p1, "inaccessible mode"
+     const-string p0, "inaccessible mode"
  
 -- 
 2.51.0
-
