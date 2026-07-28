@@ -8,21 +8,18 @@ launched on API 35 or newer. Allow the capability on upgraded devices while
 leaving the account, work-profile, user preference, and policy checks intact.
 
 ---
- smali_classes2/nk/c.smali | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ smali/Y8/a.smali | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/smali_classes2/nk/c.smali b/smali_classes2/nk/c.smali
---- a/smali_classes2/nk/c.smali
-+++ b/smali_classes2/nk/c.smali
-@@ -9829,7 +9829,7 @@
- .method public final k3()Z
-     .locals 0
+diff --git a/smali/Y8/a.smali b/smali/Y8/a.smali
+--- a/smali/Y8/a.smali
++++ b/smali/Y8/a.smali
+@@ -1770,4 +1770,6 @@
+     :goto_1e
++    const/4 v1, 0x1
++
+     sput-boolean v1, LY8/a;->K:Z
  
--    sget-boolean p0, Lnk/c;->M:Z
-+    const/4 p0, 0x1
- 
-     return p0
- .end method
+     invoke-static {}, LY8/a;->e()LYa/b;
 -- 
 2.51.0
-
