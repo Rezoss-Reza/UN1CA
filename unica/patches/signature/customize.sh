@@ -7,6 +7,7 @@ fi
 
 APPLY_PATCH "system" "system/framework/services.jar" "$MODPATH/services.jar/0001-Allow-custom-platform-signature.patch"
 APPLY_PATCH "system" "system/framework/services.jar" "$MODPATH/services.jar/0002-Allow-custom-OfflineLanguageModel-update.patch"
+APPLY_PATCH "system" "system/framework/services.jar" "$MODPATH/services.jar/0003-Allow-disabling-signature-verification.patch"
 
 CERT_SIGNATURE="$(sed "/CERTIFICATE/d" "$SRC_DIR/security/${CERT_PREFIX}_platform.x509.pem" | tr -d "\n" | base64 -d | xxd -p -c 0)"
 SMALI_PATCH "system" "system/framework/services.jar" \
