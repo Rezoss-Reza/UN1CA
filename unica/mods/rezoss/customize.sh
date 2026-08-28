@@ -196,9 +196,9 @@ SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_HDR2SDR_MAX_8K" "
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_HIERARCHICAL_B_ENCODING" "TRUE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_LONGEXPOSURE_EFFECT_10BIT" "TRUE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_PHOTOHDR" "TRUE"
-# Keep foundational_segmentation disabled on dm3q; the S26U FM engine crashes
-# PhotoEditor_AIFull on the S23U SNAP/vendor stack during contour/lasso execution.
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_VIDEO_CONFIG_VIDEO_CLIPPING_MODE" "NPU,unifiedclipper"
+# WARNING: The S26U FM engine previously crashed PhotoEditor_AIFull on the S23U
+# SNAP/vendor stack during contour/lasso execution.
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_VIDEO_CONFIG_VIDEO_CLIPPING_MODE" "NPU,unifiedclipper,foundational_segmentation"
 
 # =============================================================================
 # Floating Features - Galaxy AI / Framework / Search
@@ -247,6 +247,26 @@ _REZOSS_APPEND_UNIQUE_LINE()
 
     if ! grep -q -F "$LINE" "$FILE"; then
         echo "$LINE" >> "$FILE"
+    fi
+}
+
+_REZOSS_ENSURE_FOUNDATIONAL_SEGMENTATION_SYSTEM_CONFIGS()
+{
+    local PUBLIC_LIBS_FILE="$WORK_DIR/system/system/etc/public.libraries-camera.samsung.txt"
+    local IRREMOVABLE_FILE="$WORK_DIR/system/system/etc/irremovable_list.txt"
+
+    if [ -f "$PUBLIC_LIBS_FILE" ]; then
+        LOG "- Ensuring foundational segmentation camera public library"
+        _REZOSS_APPEND_UNIQUE_LINE "$PUBLIC_LIBS_FILE" "libfoundational_segmentation.camera.samsung.so"
+    else
+        LOGW "File not found: ${PUBLIC_LIBS_FILE//$WORK_DIR/}"
+    fi
+
+    if [ -f "$IRREMOVABLE_FILE" ]; then
+        LOG "- Ensuring foundational segmentation irremovable entry"
+        _REZOSS_APPEND_UNIQUE_LINE "$IRREMOVABLE_FILE" "/system/lib64/libfoundational_segmentation.camera.samsung.so"
+    else
+        LOGW "File not found: ${IRREMOVABLE_FILE//$WORK_DIR/}"
     fi
 }
 
@@ -579,8 +599,8 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libDeflickerHDR.camera.samsung.s
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libsnapshotdebanding.arcsoft.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libStereoSolution.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libSR_StereoCapture.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
-# Disabled after Photo Editor native crash in FoundationalSegmentationImpl.
-# ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libfoundational_segmentation.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libfoundational_segmentation.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+_REZOSS_ENSURE_FOUNDATIONAL_SEGMENTATION_SYSTEM_CONFIGS
 # S26U replacements previously carried by the rezoss static lib64 overlay.
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/DualOutFocusViewer_B.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libArtifactDetector_v1.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
@@ -658,6 +678,7 @@ for f in \
     "libDocMagnetEngine.camera.samsung.so" \
     "libDocScannerFilterV2.camera.samsung.so" \
     "libDocShadowRemoval.camera.samsung.so" \
+    "libfoundational_segmentation.camera.samsung.so" \
     "libGenSR_saicc_core.camera.samsung.so" \
     "libMoireFilterV2.camera.samsung.so" \
     "libSR_DynamicRectifier.camera.samsung.so" \
@@ -731,14 +752,11 @@ done
 # =============================================================================
 # S26U Prebuilts - PhotoHDR Vendor Encoder Plugin
 # =============================================================================
-# Direct plugin stack only. Vendor Simba/HEIF/libphotohdr remains on the existing
-# target stack for this pass.
-LOG "- Adding S26U PhotoHDR vendor encoder plugin stack"
+# Keep dm3q UniHAL support libraries from the S23U vendor stack. Importing the
+# S26U copies here changes shared dependencies used by object-tracking AF.
+LOG "- Adding S26U PhotoHDR vendor encoder plugin"
 for f in \
-    "libSecPhotoHdrEncoder.uniplugin@1.0.so" \
-    "libUniPluginUtils.so" \
-    "libimgproc_sw.unifunc@common.so" \
-    "unihal_cutils.so"; do
+    "libSecPhotoHdrEncoder.uniplugin@1.0.so"; do
     ADD_TO_WORK_DIR "$MODPATH" "vendor" "lib64/$f" 0 0 644 "u:object_r:vendor_file:s0"
 done
 
@@ -755,6 +773,7 @@ _REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_
 _REZOSS_ENSURE_LOG_VIDEO_FILTER_SELINUX
 
 unset -f _REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG _REZOSS_APPEND_UNIQUE_LINE
+unset -f _REZOSS_ENSURE_FOUNDATIONAL_SEGMENTATION_SYSTEM_CONFIGS
 unset -f _REZOSS_ENSURE_MOSEY_VENDOR_SELINUX _REZOSS_GET_MOSEY_APP_DOMAIN
 unset -f _REZOSS_DROP_MOSEY_APP_VENDOR_RULES _REZOSS_CIL_HAS_SYMBOL _REZOSS_GET_SEPOLICY_API_SUFFIX
 unset -f _REZOSS_ENSURE_LOG_VIDEO_FILTER_SELINUX _REZOSS_ENSURE_BOOTANIMATION_SELINUX
@@ -799,7 +818,11 @@ SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GENAI_CONFIG_LLM_VERSION" "0.7
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GENAI_SUPPORT_OFFLINE_LANGUAGEMODEL" "TRUE"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/app/SketchBook/SketchBook.apk" 0 0 644 "u:object_r:system_file:s0"
 LOG "- Overlay S26U Notification highlights AI APKs"
-ADD_TO_WORK_DIR "$MODPATH" "system" "system/priv-app/SamsungIntelliVoiceServices/SamsungIntelliVoiceServices.apk" 0 0 644 "u:object_r:system_file:s0"
+LOG "- Downloading latest Samsung Intelligence Voice Service app"
+DOWNLOAD_FILE "$(GET_GALAXY_STORE_DOWNLOAD_URL "com.samsung.android.intellivoiceservice")" \
+    "$WORK_DIR/system/system/priv-app/SamsungIntelliVoiceServices/SamsungIntelliVoiceServices.apk"
+SET_METADATA "system" "system/priv-app/SamsungIntelliVoiceServices" 0 0 755 "u:object_r:system_file:s0"
+SET_METADATA "system" "system/priv-app/SamsungIntelliVoiceServices/SamsungIntelliVoiceServices.apk" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/SamsungAiCore/SamsungAiCore.apk" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/permissions/privapp-permissions-com.samsung.android.aicore.xml" 0 0 644 "u:object_r:system_file:s0"
 DELETE_FROM_WORK_DIR "system" "system/app/AIOSKernelService"
@@ -898,6 +921,9 @@ APPLY_PATCH "system" "system/priv-app/AIOSKernelService/AIOSKernelService.apk" \
 LOG "- Spoofing AIOSKernelService build flavor for SM8550"
 APPLY_PATCH "system" "system/priv-app/AIOSKernelService/AIOSKernelService.apk" \
     "$MODPATH/aioskernel/AIOSKernelService.apk/0003-Spoof-SM8550-build-flavor.patch"
+LOG "- Refusing AIOSKernelService LLM/LLMV before QNN execution on SM8550"
+APPLY_PATCH "system" "system/priv-app/AIOSKernelService/AIOSKernelService.apk" \
+    "$MODPATH/aioskernel/AIOSKernelService.apk/0004-Refuse-LLM-LLMV-before-QNN-execution.patch"
 # Replace the S26U V81 HTP binaries inside AIOSKernelService.apk with the S23U Hexagon V73 pair.
 local AIOS_DECODED_APK="$APKTOOL_DIR/system/priv-app/AIOSKernelService/AIOSKernelService.apk"
 local AIOS_DECODED_LIB="$AIOS_DECODED_APK/lib/arm64-v8a"

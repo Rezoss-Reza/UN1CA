@@ -1,0 +1,6 @@
+{
+    "fm_vision_encoder_base.dlc":"SNPE_2.40.0.251030",
+    "fm_prompt_encoder_4d.tflite":"v21_CPU",
+    "fm_segmentation_decoder_touch.dlc":"v21_SNPE_2.40.0.251030",
+    "fm_segmentation_decoder_lasso.dlc":"v21_SNPE_2.40.0.251030",
+}
