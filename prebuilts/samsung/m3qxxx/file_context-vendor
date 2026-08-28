@@ -31,6 +31,7 @@
 /vendor/etc/saiv/image_understanding/db u:object_r:vendor_configs_file:s0
 /vendor/etc/saiv/image_understanding/db/fm u:object_r:vendor_configs_file:s0
 /vendor/etc/saiv/image_understanding/db/fm/fm_prompt_encoder_4d\.tflite u:object_r:vendor_configs_file:s0
+/vendor/etc/saiv/image_understanding/db/fm/fm_seg\.info u:object_r:vendor_configs_file:s0
 /vendor/etc/saiv/image_understanding/db/fm/fm_segmentation_decoder_lasso\.dlc u:object_r:vendor_configs_file:s0
 /vendor/etc/saiv/image_understanding/db/fm/fm_segmentation_decoder_touch\.dlc u:object_r:vendor_configs_file:s0
 /vendor/etc/saiv/image_understanding/db/fm/fm_vision_encoder_base\.dlc u:object_r:vendor_configs_file:s0
