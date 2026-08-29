@@ -18,7 +18,7 @@ EVAL "echo \"ro.unica.device u:object_r:build_prop:s0 exact string\" >> \"$WORK_
 FINGERPRINT="unica/${TARGET_CODENAME}:"
 
 # version value is UN1CA version
-FINGERPRINT+="$(grep -o "^[0-9]\+\.[0-9]\+\.[0-9]\+" <<< "$ROM_VERSION")/"
+FINGERPRINT+="$(grep -o "[0-9]\+\.[0-9]\+\.[0-9]\+" <<< "$ROM_VERSION")/"
 
 # build ID value is the UN1CA commit
 FINGERPRINT+="$(cut -d "-" -f 2 <<< "$ROM_VERSION")"

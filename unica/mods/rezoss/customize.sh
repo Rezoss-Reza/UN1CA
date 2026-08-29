@@ -81,6 +81,8 @@ APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSugges
 APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
     "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0023-Ignore-stale-Now-Nudge-fallback-data.patch"
 APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0024-Detect-Now-Nudge-fallback-language-from-message.patch"
+APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
     "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0014-Allow-Now-Brief-recall-calendar-reminder-fallback.patch"
 APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
     "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0015-Force-Now-Brief-non-empty-fallback.patch"
@@ -268,6 +270,26 @@ _REZOSS_ENSURE_FOUNDATIONAL_SEGMENTATION_SYSTEM_CONFIGS()
     fi
 }
 
+_REZOSS_ENSURE_DVS_SYSTEM_CONFIGS()
+{
+    local PUBLIC_LIBS_FILE="$WORK_DIR/system/system/etc/public.libraries-camera.samsung.txt"
+    local IRREMOVABLE_FILE="$WORK_DIR/system/system/etc/irremovable_list.txt"
+
+    if [ -f "$PUBLIC_LIBS_FILE" ]; then
+        LOG "- Ensuring DVS camera public library"
+        _REZOSS_APPEND_UNIQUE_LINE "$PUBLIC_LIBS_FILE" "libdvs.camera.samsung.so"
+    else
+        LOGW "File not found: ${PUBLIC_LIBS_FILE//$WORK_DIR/}"
+    fi
+
+    if [ -f "$IRREMOVABLE_FILE" ]; then
+        LOG "- Ensuring DVS irremovable entry"
+        _REZOSS_APPEND_UNIQUE_LINE "$IRREMOVABLE_FILE" "/system/lib64/libdvs.camera.samsung.so"
+    else
+        LOGW "File not found: ${IRREMOVABLE_FILE//$WORK_DIR/}"
+    fi
+}
+
 _REZOSS_ENSURE_VENDOR_CONFIG_FILE_CONTEXTS()
 {
     local FC_FILE="$WORK_DIR/vendor/etc/selinux/vendor_file_contexts"
@@ -279,6 +301,7 @@ _REZOSS_ENSURE_VENDOR_CONFIG_FILE_CONTEXTS()
 
     LOG "- Ensuring S26U vendor config/model file contexts"
     _REZOSS_APPEND_UNIQUE_LINE "$FC_FILE" "/vendor/etc/saiv/image_understanding/db/doc_rectifier(/.*)? u:object_r:vendor_configs_file:s0"
+    _REZOSS_APPEND_UNIQUE_LINE "$FC_FILE" "/vendor/etc/saiv/image_understanding/db/dvs(/.*)? u:object_r:vendor_configs_file:s0"
     _REZOSS_APPEND_UNIQUE_LINE "$FC_FILE" "/vendor/etc/saiv/image_understanding/db/fm(/.*)? u:object_r:vendor_configs_file:s0"
     _REZOSS_APPEND_UNIQUE_LINE "$FC_FILE" "/vendor/etc/saiv/image_understanding/db/ss_magnet(/.*)? u:object_r:vendor_configs_file:s0"
     _REZOSS_APPEND_UNIQUE_LINE "$FC_FILE" "/vendor/etc/midas_enhancedocumentscan(/.*)? u:object_r:vendor_configs_file:s0"
@@ -507,7 +530,9 @@ _REZOSS_ENSURE_BOOTANIMATION_SELINUX()
         _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell self (capability (dac_override dac_read_search sys_admin)))"
         _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell bootanim_exec (file (ioctl read getattr lock map open watch watch_reads)))"
         _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell bootanim_oem_file (file (ioctl read getattr lock map open watch watch_reads)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell system_data_file (file (ioctl read getattr lock map open watch watch_reads)))"
         _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell bootanim_exec (file (mounton)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow bootanim system_data_file (file (ioctl read getattr lock map open watch watch_reads)))"
         _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell ctl_restart_prop (property_service (set)))"
         _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell ctl_restart_prop (file (read getattr map open)))"
     else
@@ -594,7 +619,9 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libsnapshotdebanding.arcsoft.so"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libStereoSolution.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libSR_StereoCapture.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libfoundational_segmentation.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libdvs.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 _REZOSS_ENSURE_FOUNDATIONAL_SEGMENTATION_SYSTEM_CONFIGS
+_REZOSS_ENSURE_DVS_SYSTEM_CONFIGS
 # S26U replacements previously carried by the rezoss static lib64 overlay.
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/DualOutFocusViewer_B.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libArtifactDetector_v1.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
@@ -672,6 +699,7 @@ for f in \
     "libDocMagnetEngine.camera.samsung.so" \
     "libDocScannerFilterV2.camera.samsung.so" \
     "libDocShadowRemoval.camera.samsung.so" \
+    "libdvs.camera.samsung.so" \
     "libfoundational_segmentation.camera.samsung.so" \
     "libGenSR_saicc_core.camera.samsung.so" \
     "libMoireFilterV2.camera.samsung.so" \
@@ -696,12 +724,14 @@ done
 LOG "- Adding S26U video clipping and document-scan model files"
 _REZOSS_ENSURE_VENDOR_CONFIG_FILE_CONTEXTS
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/saiv/image_understanding/db/fm" 0 2000 755 "u:object_r:vendor_configs_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/saiv/image_understanding/db/dvs" 0 2000 755 "u:object_r:vendor_configs_file:s0"
 # S26U enhanced document-scan configs/models.
 # WARNING: Might cause crash.
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/saiv/image_understanding/db/doc_rectifier" 0 2000 755 "u:object_r:vendor_configs_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/saiv/image_understanding/db/ss_magnet" 0 2000 755 "u:object_r:vendor_configs_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/midas_enhancedocumentscan" 0 2000 755 "u:object_r:vendor_configs_file:s0"
 for f in \
+    "etc/saiv/image_understanding/db/dvs" \
     "etc/saiv/image_understanding/db/fm"; do
     _REZOSS_SET_VENDOR_CONFIG_DIR_METADATA "$f"
 done
@@ -767,7 +797,7 @@ _REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_
 _REZOSS_ENSURE_LOG_VIDEO_FILTER_SELINUX
 
 unset -f _REZOSS_SET_VENDOR_FLOATING_FEATURE_CONFIG _REZOSS_APPEND_UNIQUE_LINE
-unset -f _REZOSS_ENSURE_FOUNDATIONAL_SEGMENTATION_SYSTEM_CONFIGS
+unset -f _REZOSS_ENSURE_FOUNDATIONAL_SEGMENTATION_SYSTEM_CONFIGS _REZOSS_ENSURE_DVS_SYSTEM_CONFIGS
 unset -f _REZOSS_ENSURE_MOSEY_VENDOR_SELINUX _REZOSS_GET_MOSEY_APP_DOMAIN
 unset -f _REZOSS_DROP_MOSEY_APP_VENDOR_RULES _REZOSS_CIL_HAS_SYMBOL _REZOSS_GET_SEPOLICY_API_SUFFIX
 unset -f _REZOSS_ENSURE_LOG_VIDEO_FILTER_SELINUX _REZOSS_ENSURE_BOOTANIMATION_SELINUX
@@ -789,6 +819,11 @@ ADD_TO_WORK_DIR "dm3qxxx" "system" "system/app/VisionModel-Stub/VisionModel-Stub
 # =============================================================================
 # Ambient Weather Wallpaper / VisualCloudCore Patches
 # =============================================================================
+LOG "- Overlay S26U AODService for DressRoom clock plugin API"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/AODService_v80/AODService_v80.apk" 0 0 644 "u:object_r:system_file:s0"
+
+LOG "- Overlay S26U DressRoom for unified clipper stretch clock"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/DressRoom/DressRoom.apk" 0 0 644 "u:object_r:system_file:s0"
 # Enable built-in spoof to use Ambient Weather Wallpaper
 LOG "- Patch DressRoom Weather wallpaper AICore gate"
 APPLY_PATCH "system" "system/priv-app/DressRoom/DressRoom.apk" \
