@@ -4,6 +4,7 @@ LOG_TAG="RezossBootAnim"
 SYSTEM_ZIP="/system/media/bootanimation.zip"
 AOSP_BOOTANIM="/system/bin/bootanimation_zip"
 SYSTEM_BOOTANIM="/system/bin/bootanimation"
+WAIT_TIMEOUT=30
 MODE="apply"
 BIND_CHANGED=0
 
@@ -41,6 +42,26 @@ bind_file()
     return 1
 }
 
+wait_for_system_zip()
+{
+    WAITED=0
+
+    while [ "$WAITED" -lt "$WAIT_TIMEOUT" ]; do
+        if [ -s "$SYSTEM_ZIP" ]; then
+            return 0
+        fi
+
+        if [ "$(getprop sys.boot_completed 2>/dev/null)" = "1" ]; then
+            return 1
+        fi
+
+        sleep 1
+        WAITED=$((WAITED + 1))
+    done
+
+    [ -s "$SYSTEM_ZIP" ]
+}
+
 restart_bootanim()
 {
     if [ "$(getprop sys.boot_completed 2>/dev/null)" = "1" ]; then
@@ -65,7 +86,7 @@ restart_bootanim()
 
 apply_system_zip()
 {
-    if [ ! -s "$SYSTEM_ZIP" ]; then
+    if ! wait_for_system_zip; then
         log_msg "no /system/media/bootanimation.zip, keeping Samsung QMG bootanimation"
         return 0
     fi
