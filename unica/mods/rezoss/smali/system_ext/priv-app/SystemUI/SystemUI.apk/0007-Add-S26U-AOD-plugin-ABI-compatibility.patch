@@ -1,0 +1,431 @@
+From 04b63626c87ce0a2a79b909d9541141d399a0d1e Mon Sep 17 00:00:00 2001
+From: Rezoss <rezoss@local>
+Date: Sat, 29 Aug 2026 00:00:00 +0200
+Subject: [PATCH] Add S26U AOD plugin ABI compatibility
+
+diff --git a/smali_classes2/com/android/systemui/plugins/keyguardstatusview/PluginFaceWidgetMediaData.smali b/smali_classes2/com/android/systemui/plugins/keyguardstatusview/PluginFaceWidgetMediaData.smali
+@@ -69,6 +69,8 @@
+ .field song:Ljava/lang/CharSequence;
+ 
+ .field token:Landroid/media/session/MediaSession$Token;
++
++.field useSemanticActions:Z
+ 
+ .field userId:I
+ 
+@@ -165,6 +167,43 @@
+     return-void
+ .end method
+ 
++.method public constructor <init>(IZIILjava/lang/String;Landroid/graphics/drawable/Drawable;Ljava/lang/CharSequence;Ljava/lang/CharSequence;Landroid/graphics/drawable/Icon;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Landroid/media/session/MediaSession$Token;Landroid/app/PendingIntent;Lcom/android/systemui/plugins/keyguardstatusview/PluginFaceWidgetMediaData$PluginFaceWidgetMediaDeviceData;ZLjava/lang/Runnable;ZLjava/lang/String;ZZIZ)V
++    .locals 0
++    .annotation system Ldalvik/annotation/Signature;
++        value = {
++            "(IZII",
++            "Ljava/lang/String;",
++            "Landroid/graphics/drawable/Drawable;",
++            "Ljava/lang/CharSequence;",
++            "Ljava/lang/CharSequence;",
++            "Landroid/graphics/drawable/Icon;",
++            "Ljava/util/List<",
++            "Lcom/android/systemui/plugins/keyguardstatusview/PluginFaceWidgetMediaData$PluginFaceWidgetMediaAction;",
++            ">;",
++            "Ljava/util/List<",
++            "Ljava/lang/Integer;",
++            ">;",
++            "Ljava/lang/String;",
++            "Landroid/media/session/MediaSession$Token;",
++            "Landroid/app/PendingIntent;",
++            "Lcom/android/systemui/plugins/keyguardstatusview/PluginFaceWidgetMediaData$PluginFaceWidgetMediaDeviceData;",
++            "Z",
++            "Ljava/lang/Runnable;",
++            "Z",
++            "Ljava/lang/String;",
++            "ZZIZ)V"
++        }
++    .end annotation
++
++    invoke-direct/range {p0 .. p22}, Lcom/android/systemui/plugins/keyguardstatusview/PluginFaceWidgetMediaData;-><init>(IZIILjava/lang/String;Landroid/graphics/drawable/Drawable;Ljava/lang/CharSequence;Ljava/lang/CharSequence;Landroid/graphics/drawable/Icon;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Landroid/media/session/MediaSession$Token;Landroid/app/PendingIntent;Lcom/android/systemui/plugins/keyguardstatusview/PluginFaceWidgetMediaData$PluginFaceWidgetMediaDeviceData;ZLjava/lang/Runnable;ZLjava/lang/String;ZZI)V
++
++    move/from16 p1, p23
++
++    iput-boolean p1, p0, Lcom/android/systemui/plugins/keyguardstatusview/PluginFaceWidgetMediaData;->useSemanticActions:Z
++
++    return-void
++.end method
++
+ 
+ # virtual methods
+ .method public getActions()Ljava/util/List;
+@@ -311,6 +350,14 @@
+     return-object p0
+ .end method
+ 
++.method public getUseSemanticActions()Z
++    .locals 0
++
++    iget-boolean p0, p0, Lcom/android/systemui/plugins/keyguardstatusview/PluginFaceWidgetMediaData;->useSemanticActions:Z
++
++    return p0
++.end method
++
+ .method public getUserId()I
+     .locals 0
+ 
+@@ -543,6 +590,14 @@
+     return-void
+ .end method
+ 
++.method public setUseSemanticActions(Z)V
++    .locals 0
++
++    iput-boolean p1, p0, Lcom/android/systemui/plugins/keyguardstatusview/PluginFaceWidgetMediaData;->useSemanticActions:Z
++
++    return-void
++.end method
++
+ .method public setUserId(I)V
+     .locals 0
+ 
+diff --git a/smali_classes2/com/android/systemui/plugins/keyguardstatusview/PluginFaceWidgetMediaData$PluginFaceWidgetMediaAction.smali b/smali_classes2/com/android/systemui/plugins/keyguardstatusview/PluginFaceWidgetMediaData$PluginFaceWidgetMediaAction.smali
+@@ -9,6 +9,10 @@
+ .field contentDescription:Ljava/lang/CharSequence;
+ 
+ .field drawable:Landroid/graphics/drawable/Drawable;
++
++.field isLottie:Z
++
++.field playbackStateAction:J
+ 
+ 
+ # direct methods
+@@ -22,6 +26,18 @@
+     iput-object p2, p0, Lcom/android/systemui/plugins/keyguardstatusview/PluginFaceWidgetMediaData$PluginFaceWidgetMediaAction;->action:Ljava/lang/Runnable;
+ 
+     iput-object p3, p0, Lcom/android/systemui/plugins/keyguardstatusview/PluginFaceWidgetMediaData$PluginFaceWidgetMediaAction;->contentDescription:Ljava/lang/CharSequence;
++
++    return-void
++.end method
++
++.method public constructor <init>(Landroid/graphics/drawable/Drawable;Ljava/lang/Runnable;Ljava/lang/CharSequence;JZ)V
++    .locals 0
++
++    invoke-direct {p0, p1, p2, p3}, Lcom/android/systemui/plugins/keyguardstatusview/PluginFaceWidgetMediaData$PluginFaceWidgetMediaAction;-><init>(Landroid/graphics/drawable/Drawable;Ljava/lang/Runnable;Ljava/lang/CharSequence;)V
++
++    iput-wide p4, p0, Lcom/android/systemui/plugins/keyguardstatusview/PluginFaceWidgetMediaData$PluginFaceWidgetMediaAction;->playbackStateAction:J
++
++    iput-boolean p6, p0, Lcom/android/systemui/plugins/keyguardstatusview/PluginFaceWidgetMediaData$PluginFaceWidgetMediaAction;->isLottie:Z
+ 
+     return-void
+ .end method
+@@ -52,6 +68,22 @@
+     return-object p0
+ .end method
+ 
++.method public getPlaybackStateAction()J
++    .locals 2
++
++    iget-wide v0, p0, Lcom/android/systemui/plugins/keyguardstatusview/PluginFaceWidgetMediaData$PluginFaceWidgetMediaAction;->playbackStateAction:J
++
++    return-wide v0
++.end method
++
++.method public isLottie()Z
++    .locals 0
++
++    iget-boolean p0, p0, Lcom/android/systemui/plugins/keyguardstatusview/PluginFaceWidgetMediaData$PluginFaceWidgetMediaAction;->isLottie:Z
++
++    return p0
++.end method
++
+ .method public setAction(Ljava/lang/Runnable;)V
+     .locals 0
+ 
+@@ -68,6 +100,14 @@
+     return-void
+ .end method
+ 
++.method public setLottie(Z)V
++    .locals 0
++
++    iput-boolean p1, p0, Lcom/android/systemui/plugins/keyguardstatusview/PluginFaceWidgetMediaData$PluginFaceWidgetMediaAction;->isLottie:Z
++
++    return-void
++.end method
++
+ .method public setDrawable(Landroid/graphics/drawable/Drawable;)V
+     .locals 0
+ 
+@@ -75,3 +115,11 @@
+ 
+     return-void
+ .end method
++
++.method public setPlaybackStateAction(J)V
++    .locals 0
++
++    iput-wide p1, p0, Lcom/android/systemui/plugins/keyguardstatusview/PluginFaceWidgetMediaData$PluginFaceWidgetMediaAction;->playbackStateAction:J
++
++    return-void
++.end method
+diff --git a/smali_classes2/com/android/systemui/plugins/keyguardstatusview/PluginOngoingMediaAction.smali b/smali_classes2/com/android/systemui/plugins/keyguardstatusview/PluginOngoingMediaAction.smali
+@@ -11,6 +11,10 @@
+ .field private mDrawable:Landroid/graphics/drawable/Drawable;
+ 
+ .field private mIcon:Landroid/graphics/drawable/Icon;
++
++.field private mIsLottie:Z
++
++.field private mPlaybackStateAction:J
+ 
+ .field private mRunnable:Ljava/lang/Runnable;
+ 
+@@ -36,6 +40,18 @@
+     iput p4, p0, Lcom/android/systemui/plugins/keyguardstatusview/PluginOngoingMediaAction;->mColor:I
+ 
+     iput-object p5, p0, Lcom/android/systemui/plugins/keyguardstatusview/PluginOngoingMediaAction;->mContentDescription:Ljava/lang/String;
++
++    return-void
++.end method
++
++.method public constructor <init>(Landroid/graphics/drawable/Icon;Ljava/lang/Runnable;Landroid/graphics/drawable/Drawable;ILjava/lang/String;JZ)V
++    .locals 0
++
++    invoke-direct/range {p0 .. p5}, Lcom/android/systemui/plugins/keyguardstatusview/PluginOngoingMediaAction;-><init>(Landroid/graphics/drawable/Icon;Ljava/lang/Runnable;Landroid/graphics/drawable/Drawable;ILjava/lang/String;)V
++
++    iput-wide p6, p0, Lcom/android/systemui/plugins/keyguardstatusview/PluginOngoingMediaAction;->mPlaybackStateAction:J
++
++    iput-boolean p8, p0, Lcom/android/systemui/plugins/keyguardstatusview/PluginOngoingMediaAction;->mIsLottie:Z
+ 
+     return-void
+ .end method
+@@ -74,12 +90,28 @@
+     return-object p0
+ .end method
+ 
++.method public getPlaybackStateAction()J
++    .locals 2
++
++    iget-wide v0, p0, Lcom/android/systemui/plugins/keyguardstatusview/PluginOngoingMediaAction;->mPlaybackStateAction:J
++
++    return-wide v0
++.end method
++
+ .method public getRunnable()Ljava/lang/Runnable;
+     .locals 0
+ 
+     iget-object p0, p0, Lcom/android/systemui/plugins/keyguardstatusview/PluginOngoingMediaAction;->mRunnable:Ljava/lang/Runnable;
+ 
+     return-object p0
++.end method
++
++.method public isLottie()Z
++    .locals 0
++
++    iget-boolean p0, p0, Lcom/android/systemui/plugins/keyguardstatusview/PluginOngoingMediaAction;->mIsLottie:Z
++
++    return p0
+ .end method
+ 
+ .method public run()V
+diff --git a/smali_classes2/com/android/systemui/plugins/keyguardstatusview/PluginKeyguardUpdateMonitor.smali b/smali_classes2/com/android/systemui/plugins/keyguardstatusview/PluginKeyguardUpdateMonitor.smali
+@@ -17,6 +17,9 @@
+ .end method
+ 
+ .method public abstract isDeviceProvisioned()Z
++.end method
++
++.method public abstract isEncryptedOrLockdown(I)Z
+ .end method
+ 
+ .method public abstract isEnabledBioUnlock()Z
+diff --git a/smali_classes2/com/android/systemui/facewidget/plugin/FaceWidgetKeyguardUpdateMonitorWrapper.smali b/smali_classes2/com/android/systemui/facewidget/plugin/FaceWidgetKeyguardUpdateMonitorWrapper.smali
+@@ -91,6 +91,18 @@
+     return p0
+ .end method
+ 
++.method public final isEncryptedOrLockdown(I)Z
++    .locals 0
++
++    iget-object p0, p0, Lcom/android/systemui/facewidget/plugin/FaceWidgetKeyguardUpdateMonitorWrapper;->mKeyguardUpdateMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
++
++    invoke-virtual {p0, p1}, Lcom/android/keyguard/KeyguardUpdateMonitor;->isEncryptedOrLockdown(I)Z
++
++    move-result p0
++
++    return p0
++.end method
++
+ .method public final isEnabledBioUnlock()Z
+     .locals 0
+ 
+diff --git a/smali_classes2/com/android/systemui/plugins/keyguardstatusview/PluginKeyguardStatusView$Callback.smali b/smali_classes2/com/android/systemui/plugins/keyguardstatusview/PluginKeyguardStatusView$Callback.smali
+@@ -75,6 +75,12 @@
+     .end annotation
+ .end method
+ 
++.method public abstract getKeyguardStatusViewSecureLockDeviceEnabledStatusChangeController()Lcom/android/systemui/plugins/keyguardstatusview/PluginKeyguardStatusViewSecureLockDeviceEnabledStatusChangeController;
++    .annotation runtime Lcom/android/systemui/plugins/annotations/VersionCheck;
++        version = 0xfb1
++    .end annotation
++.end method
++
+ .method public abstract getKeyguardUpdateMonitor()Lcom/android/systemui/plugins/keyguardstatusview/PluginKeyguardUpdateMonitor;
+ .end method
+ 
+@@ -200,6 +206,12 @@
+ .method public abstract putMediaPlayerLastExpandedToPrefs(Z)V
+     .annotation runtime Lcom/android/systemui/plugins/annotations/VersionCheck;
+         version = 0x7d7
++    .end annotation
++.end method
++
++.method public abstract registerNowBarActivityListener(Landroid/os/Bundle;Lcom/android/systemui/plugins/keyguardstatusview/NowBarActivityListener;)V
++    .annotation runtime Lcom/android/systemui/plugins/annotations/VersionCheck;
++        version = 0xfb0
+     .end annotation
+ .end method
+ 
+@@ -269,6 +281,12 @@
+     .end annotation
+ .end method
+ 
++.method public abstract unregisterNowBarActivityListener()V
++    .annotation runtime Lcom/android/systemui/plugins/annotations/VersionCheck;
++        version = 0xfb0
++    .end annotation
++.end method
++
+ .method public abstract updateAnimateScreenOff()V
+     .annotation runtime Lcom/android/systemui/plugins/annotations/VersionCheck;
+         version = 0x401
+diff --git a/smali_classes2/com/android/systemui/facewidget/plugin/PluginFaceWidgetManager.smali b/smali_classes2/com/android/systemui/facewidget/plugin/PluginFaceWidgetManager.smali
+@@ -817,6 +817,14 @@
+     return-object p0
+ .end method
+ 
++.method public final getKeyguardStatusViewSecureLockDeviceEnabledStatusChangeController()Lcom/android/systemui/plugins/keyguardstatusview/PluginKeyguardStatusViewSecureLockDeviceEnabledStatusChangeController;
++    .locals 1
++
++    const/4 v0, 0x0
++
++    return-object v0
++.end method
++
+ .method public final getKeyguardUpdateMonitor()Lcom/android/systemui/plugins/keyguardstatusview/PluginKeyguardUpdateMonitor;
+     .locals 0
+ 
+@@ -1688,6 +1696,12 @@
+     return-void
+ .end method
+ 
++.method public final registerNowBarActivityListener(Landroid/os/Bundle;Lcom/android/systemui/plugins/keyguardstatusview/NowBarActivityListener;)V
++    .locals 0
++
++    return-void
++.end method
++
+ .method public final removeMediaData(Ljava/util/List;)V
+     .locals 4
+ 
+@@ -1899,6 +1913,12 @@
+     return-void
+ .end method
+ 
++.method public final unregisterNowBarActivityListener()V
++    .locals 0
++
++    return-void
++.end method
++
+ .method public final updateAnimateScreenOff()V
+     .locals 0
+ 
+diff --git a/smali_classes2/com/android/systemui/plugins/keyguardstatusview/PluginWallpaperChangeListener.smali b/smali_classes2/com/android/systemui/plugins/keyguardstatusview/PluginWallpaperChangeListener.smali
+--- a/smali_classes2/com/android/systemui/plugins/keyguardstatusview/PluginWallpaperChangeListener.smali
++++ b/smali_classes2/com/android/systemui/plugins/keyguardstatusview/PluginWallpaperChangeListener.smali
+@@ -1,18 +1,36 @@
+ .class public interface abstract Lcom/android/systemui/plugins/keyguardstatusview/PluginWallpaperChangeListener;
+ .super Ljava/lang/Object;
+ .source "qb/111793335 7a1e230d1398a8c8b3b100bf004c3f8d57f3a02f5c8f0b189b95939e74a910e7"
+ 
+ 
+ # annotations
+ .annotation runtime Lcom/android/systemui/plugins/annotations/SupportVersionChecker;
+ .end annotation
+ 
++
++# direct methods
++.method public static synthetic access$onWallpaperChanged$jd(Lcom/android/systemui/plugins/keyguardstatusview/PluginWallpaperChangeListener;I)V
++    .locals 0
++
++    invoke-super {p0, p1}, Lcom/android/systemui/plugins/keyguardstatusview/PluginWallpaperChangeListener;->onWallpaperChanged(I)V
++
++    return-void
++.end method
++
++.method public static synthetic access$onWallpaperSceneSwitched$jd(Lcom/android/systemui/plugins/keyguardstatusview/PluginWallpaperChangeListener;IILjava/lang/String;)V
++    .locals 0
++
++    invoke-super {p0, p1, p2, p3}, Lcom/android/systemui/plugins/keyguardstatusview/PluginWallpaperChangeListener;->onWallpaperSceneSwitched(IILjava/lang/String;)V
++
++    return-void
++.end method
++
+ 
+ # virtual methods
+ .method public onWallpaperChanged(I)V
+     .locals 0
+ 
+     return-void
+ .end method
+ 
+ .method public onWallpaperSceneSwitched(IILjava/lang/String;)V
+diff --git a/smali_classes2/com/android/systemui/plugins/keyguardstatusview/NowBarActivityListener.smali b/smali_classes2/com/android/systemui/plugins/keyguardstatusview/NowBarActivityListener.smali
+new file mode 100644
+--- /dev/null
++++ b/smali_classes2/com/android/systemui/plugins/keyguardstatusview/NowBarActivityListener.smali
+@@ -0,0 +1,8 @@
++.class public interface abstract Lcom/android/systemui/plugins/keyguardstatusview/NowBarActivityListener;
++.super Ljava/lang/Object;
++.source "NowBarActivityListener.java"
++
++
++# virtual methods
++.method public abstract onFractionValueChanged(F)V
++.end method
+diff --git a/smali_classes2/com/android/systemui/plugins/keyguardstatusview/PluginKeyguardStatusViewSecureLockDeviceEnabledStatusChangeController.smali b/smali_classes2/com/android/systemui/plugins/keyguardstatusview/PluginKeyguardStatusViewSecureLockDeviceEnabledStatusChangeController.smali
+new file mode 100644
+--- /dev/null
++++ b/smali_classes2/com/android/systemui/plugins/keyguardstatusview/PluginKeyguardStatusViewSecureLockDeviceEnabledStatusChangeController.smali
+@@ -0,0 +1,14 @@
++.class public interface abstract Lcom/android/systemui/plugins/keyguardstatusview/PluginKeyguardStatusViewSecureLockDeviceEnabledStatusChangeController;
++.super Ljava/lang/Object;
++.source "PluginKeyguardStatusViewSecureLockDeviceEnabledStatusChangeController.java"
++
++
++# virtual methods
++.method public abstract registerListener(Lcom/android/systemui/plugins/keyguardstatusview/PluginKeyguardStatusViewSecureLockDeviceEnabledStatusChangeListener;)V
++.end method
++
++.method public abstract unregisterAllListener()V
++.end method
++
++.method public abstract unregisterListener(Lcom/android/systemui/plugins/keyguardstatusview/PluginKeyguardStatusViewSecureLockDeviceEnabledStatusChangeListener;)V
++.end method
+diff --git a/smali_classes2/com/android/systemui/plugins/keyguardstatusview/PluginKeyguardStatusViewSecureLockDeviceEnabledStatusChangeListener.smali b/smali_classes2/com/android/systemui/plugins/keyguardstatusview/PluginKeyguardStatusViewSecureLockDeviceEnabledStatusChangeListener.smali
+new file mode 100644
+--- /dev/null
++++ b/smali_classes2/com/android/systemui/plugins/keyguardstatusview/PluginKeyguardStatusViewSecureLockDeviceEnabledStatusChangeListener.smali
+@@ -0,0 +1,11 @@
++.class public interface abstract Lcom/android/systemui/plugins/keyguardstatusview/PluginKeyguardStatusViewSecureLockDeviceEnabledStatusChangeListener;
++.super Ljava/lang/Object;
++.source "PluginKeyguardStatusViewSecureLockDeviceEnabledStatusChangeListener.java"
++
++
++# virtual methods
++.method public abstract onSecureLockDeviceAvailableStatusChanged(I)V
++.end method
++
++.method public abstract onSecureLockDeviceEnabledStatusChanged(Z)V
++.end method
