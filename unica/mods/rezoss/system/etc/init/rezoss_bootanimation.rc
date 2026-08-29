@@ -1,5 +1,8 @@
 on post-fs-data
     exec_background -- /system/bin/sh /system/etc/unica/rezoss_bootanimation.sh --apply
 
+on property:init.svc.bootanim=running
+    exec_background -- /system/bin/sh /system/etc/unica/rezoss_bootanimation.sh --apply
+
 on boot
     exec_background -- /system/bin/sh /system/etc/unica/rezoss_bootanimation.sh --apply

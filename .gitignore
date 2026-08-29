@@ -32,7 +32,9 @@ __pycache__/
 prebuilts/samsung/dm3qxxx/system/app/SamsungSans/SamsungSans.apk
 prebuilts/samsung/m3qxxx/system/app/VideoEditorLite_Dream_N/VideoEditorLite_Dream_N.apk
 prebuilts/samsung/m3qxxx/system/app/SketchBook/SketchBook.apk
+prebuilts/samsung/m3qxxx/system/priv-app/AODService_v80/AODService_v80.apk
 prebuilts/samsung/m3qxxx/system/priv-app/MediaSearch/MediaSearch.apk
+prebuilts/samsung/m3qxxx/system/priv-app/DressRoom/DressRoom.apk
 prebuilts/samsung/m3qxxx/system/priv-app/SamsungCamera/SamsungCamera.apk
 prebuilts/samsung/m3qxxx/system/priv-app/SamsungGallery2018/SamsungGallery2018.apk
 prebuilts/samsung/m3qxxx/system/priv-app/SamsungMessages/SamsungMessages.apk
