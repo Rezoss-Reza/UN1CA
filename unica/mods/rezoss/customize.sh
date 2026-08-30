@@ -845,6 +845,10 @@ LOG "- Patch stock DressRoom Ambient Weather feature gate"
 APPLY_PATCH "system" "system/priv-app/DressRoom/DressRoom.apk" \
     "$MODPATH/dressroom/DressRoom.apk/0001-Bypass-AICore-weather-feature-check.patch"
 
+LOG "- Patch DressRoom UN1CA lockscreen font picker integration"
+APPLY_PATCH "system" "system/priv-app/DressRoom/DressRoom.apk" \
+    "$MODPATH/dressroom/DressRoom.apk/0002-Expose-UN1CA-selected-fonts-to-lockscreen-picker.patch"
+
 LOG "- Patch AODService UN1CA clock font list integration"
 APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
     "$MODPATH/aodservice/AODService_v80.apk/0001-Expose-UN1CA-Font-Selector-fonts-to-clock-picker.patch"
@@ -856,6 +860,10 @@ APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
 LOG "- Patch AODService stretch clock font type startup backfill"
 APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
     "$MODPATH/aodservice/AODService_v80.apk/0003-Backfill-AOD-stretch-font-type-on-startup.patch"
+
+LOG "- Patch AODService stretch clock font render normalization"
+APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
+    "$MODPATH/aodservice/AODService_v80.apk/0004-Normalize-stretch-font-data-before-AOD-render.patch"
 
 LOG "- Patch VisualCloudCore Galaxy Store model check"
 APPLY_PATCH "system" "system/app/VisualCloudCore/VisualCloudCore.apk" \
