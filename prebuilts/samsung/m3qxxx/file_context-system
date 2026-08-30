@@ -319,10 +319,6 @@
 /system/media/audio/ui u:object_r:system_file:s0
 /system/media/audio/ui/Media_preview_Over_the_horizon\.ogg u:object_r:system_file:s0
 /system/priv-app u:object_r:system_file:s0
-/system/priv-app/AODService_v80 u:object_r:system_file:s0
-/system/priv-app/AODService_v80/AODService_v80\.apk u:object_r:system_file:s0
-/system/priv-app/DressRoom u:object_r:system_file:s0
-/system/priv-app/DressRoom/DressRoom\.apk u:object_r:system_file:s0
 /system/priv-app/AIOSKernelService u:object_r:system_file:s0
 /system/priv-app/AIOSKernelService/AIOSKernelService\.apk u:object_r:system_file:s0
 /system/priv-app/AudioMirroring u:object_r:system_file:s0
