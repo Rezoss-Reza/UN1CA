@@ -865,6 +865,14 @@ LOG "- Patch AODService stretch clock font render normalization"
 APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
     "$MODPATH/aodservice/AODService_v80.apk/0004-Normalize-stretch-font-data-before-AOD-render.patch"
 
+LOG "- Patch AODService AOD stretch font heights"
+APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
+    "$MODPATH/aodservice/AODService_v80.apk/0005-Preserve-AOD-stretch-font-heights.patch"
+
+LOG "- Patch AODService AOD stretch renderer gate"
+APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
+    "$MODPATH/aodservice/AODService_v80.apk/0006-Allow-AOD-stretch-render-when-font-heights-exist.patch"
+
 LOG "- Patch VisualCloudCore Galaxy Store model check"
 APPLY_PATCH "system" "system/app/VisualCloudCore/VisualCloudCore.apk" \
     "$MODPATH/visualcloudcore/VisualCloudCore.apk/0001-Use-S25-Ultra-model-for-stub-update-check.patch"

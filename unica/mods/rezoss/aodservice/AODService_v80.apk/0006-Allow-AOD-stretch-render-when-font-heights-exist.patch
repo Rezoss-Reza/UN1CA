@@ -1,0 +1,54 @@
+AUTHOR Rezoss
+
+diff -ruN base/smali_classes3/com/samsung/android/uniform/widget/clock/DigitalHorizontalClockView.smali mod/smali_classes3/com/samsung/android/uniform/widget/clock/DigitalHorizontalClockView.smali
+--- base/smali_classes3/com/samsung/android/uniform/widget/clock/DigitalHorizontalClockView.smali	2026-08-30 20:14:30.700982594 +0200
++++ mod/smali_classes3/com/samsung/android/uniform/widget/clock/DigitalHorizontalClockView.smali	2026-08-30 20:14:30.726742880 +0200
+@@ -1054,21 +1054,21 @@
+ 
+     move-result-object v0
+ 
+     invoke-virtual {p0, p1, v1, v0}, Lcom/samsung/android/uniform/widget/clock/AbsClockView;->z(ILjava/lang/String;[Landroid/widget/TextView;)V
+ 
+     goto :goto_0
+ 
+     :pswitch_0
+     iget v0, p0, Lcom/samsung/android/uniform/widget/clock/AbsClockView;->t:I
+ 
+-    invoke-static {v0}, Laod/Bs;->p(I)Z
++    invoke-virtual {p1}, Lcom/samsung/android/clockpack/plugins/clock/ClockFontData;->hasFontHeights()Z
+ 
+     move-result v0
+ 
+     const/16 v2, 0x324
+ 
+     if-eqz v0, :cond_2
+ 
+     const/4 v0, 0x0
+ 
+     invoke-static {p1, v0}, Laod/PO;->I(Lcom/samsung/android/clockpack/plugins/clock/ClockFontData;I)Ljava/lang/String;
+diff -ruN base/smali_classes3/com/samsung/android/uniform/widget/clock/DigitalVerticalClockView.smali mod/smali_classes3/com/samsung/android/uniform/widget/clock/DigitalVerticalClockView.smali
+--- base/smali_classes3/com/samsung/android/uniform/widget/clock/DigitalVerticalClockView.smali	2026-08-30 20:14:30.707058539 +0200
++++ mod/smali_classes3/com/samsung/android/uniform/widget/clock/DigitalVerticalClockView.smali	2026-08-30 20:14:30.728030673 +0200
+@@ -628,21 +628,21 @@
+ 
+     move-result-object v0
+ 
+     invoke-virtual {p0, p1, v1, v0}, Lcom/samsung/android/uniform/widget/clock/AbsClockView;->z(ILjava/lang/String;[Landroid/widget/TextView;)V
+ 
+     goto :goto_0
+ 
+     :pswitch_0
+     iget v0, p0, Lcom/samsung/android/uniform/widget/clock/AbsClockView;->t:I
+ 
+-    invoke-static {v0}, Laod/Bs;->p(I)Z
++    invoke-virtual {p1}, Lcom/samsung/android/clockpack/plugins/clock/ClockFontData;->hasFontHeights()Z
+ 
+     move-result v0
+ 
+     const/16 v2, 0x325
+ 
+     if-eqz v0, :cond_2
+ 
+     const/4 v0, 0x0
+ 
+     invoke-static {p1, v0}, Laod/PO;->I(Lcom/samsung/android/clockpack/plugins/clock/ClockFontData;I)Ljava/lang/String;
