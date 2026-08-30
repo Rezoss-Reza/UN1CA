@@ -845,6 +845,18 @@ LOG "- Patch stock DressRoom Ambient Weather feature gate"
 APPLY_PATCH "system" "system/priv-app/DressRoom/DressRoom.apk" \
     "$MODPATH/dressroom/DressRoom.apk/0001-Bypass-AICore-weather-feature-check.patch"
 
+LOG "- Patch AODService UN1CA clock font list integration"
+APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
+    "$MODPATH/aodservice/AODService_v80.apk/0001-Expose-UN1CA-Font-Selector-fonts-to-clock-picker.patch"
+
+LOG "- Patch AODService stretch clock font type sync"
+APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
+    "$MODPATH/aodservice/AODService_v80.apk/0002-Mirror-stretch-clock-font-type-to-AOD.patch"
+
+LOG "- Patch AODService stretch clock font type startup backfill"
+APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
+    "$MODPATH/aodservice/AODService_v80.apk/0003-Backfill-AOD-stretch-font-type-on-startup.patch"
+
 LOG "- Patch VisualCloudCore Galaxy Store model check"
 APPLY_PATCH "system" "system/app/VisualCloudCore/VisualCloudCore.apk" \
     "$MODPATH/visualcloudcore/VisualCloudCore.apk/0001-Use-S25-Ultra-model-for-stub-update-check.patch"
