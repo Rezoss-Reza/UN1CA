@@ -196,9 +196,10 @@ SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_HDR2SDR_MAX_8K" "
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_HIERARCHICAL_B_ENCODING" "TRUE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_LONGEXPOSURE_EFFECT_10BIT" "TRUE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_PHOTOHDR" "TRUE"
-# WARNING: The S26U FM engine previously crashed PhotoEditor_AIFull on the S23U
-# SNAP/vendor stack during contour/lasso execution.
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_VIDEO_CONFIG_VIDEO_CLIPPING_MODE" "NPU,unifiedclipper,foundational_segmentation"
+# WARNING: The S26U FM/unified clipper route previously crashed PhotoEditor_AIFull
+# on the S23U SNAP/vendor stack during contour/lasso execution.
+# SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_VIDEO_CONFIG_VIDEO_CLIPPING_MODE" "NPU,unifiedclipper,foundational_segmentation"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_VIDEO_CONFIG_VIDEO_CLIPPING_MODE" "NPU"
 
 # =============================================================================
 # Floating Features - Galaxy AI / Framework / Search
@@ -813,19 +814,34 @@ SET_PROP "product" "ro.build.display.id" "${NOW_BUILD}"
 # =============================================================================
 # Local System App Overlays
 # =============================================================================
-ADD_TO_WORK_DIR "dm3qxxx" "system" "system/app/SamsungSans/SamsungSans.apk" 0 0 644 "u:object_r:system_file:s0"
+# The legacy SamsungSans overlay bundles over 1k asset fonts. One UI 9 Studio
+# loads installed decoration fonts into a 512 MB heap and can OOM on this APK.
+# Keep the stock Monotype preload set and expose SamsungSans only as a source
+# bank for the UN1CA Font Selector.
+DELETE_FROM_WORK_DIR "system" "system/app/SamsungSans"
+SAMSUNGSANS_SOURCE_APK="$SRC_DIR/prebuilts/samsung/dm3qxxx/system/app/SamsungSans/SamsungSans.apk"
+SAMSUNGSANS_BANK_APK="$WORK_DIR/system/system/etc/unica/font_selector/SamsungSans.apk"
+if [ -f "$SAMSUNGSANS_SOURCE_APK" ] || [ -f "$SAMSUNGSANS_SOURCE_APK.00" ]; then
+    LOG "- Adding SamsungSans source bank for UN1CA Font Selector"
+    EVAL "mkdir -p \"$(dirname "$SAMSUNGSANS_BANK_APK")\""
+    if [ -f "$SAMSUNGSANS_SOURCE_APK" ]; then
+        EVAL "cp -a \"$SAMSUNGSANS_SOURCE_APK\" \"$SAMSUNGSANS_BANK_APK\""
+    else
+        EVAL "cat \"$SAMSUNGSANS_SOURCE_APK.\"[0-9][0-9] > \"$SAMSUNGSANS_BANK_APK\""
+    fi
+    SET_METADATA "system" "system/etc/unica" 0 0 755 "u:object_r:system_file:s0"
+    SET_METADATA "system" "system/etc/unica/font_selector" 0 0 755 "u:object_r:system_file:s0"
+    SET_METADATA "system" "system/etc/unica/font_selector/SamsungSans.apk" 0 0 644 "u:object_r:system_file:s0"
+else
+    LOGW "SamsungSans source bank not found; UN1CA Font Selector will show a missing-source message"
+fi
+unset SAMSUNGSANS_SOURCE_APK SAMSUNGSANS_BANK_APK
 ADD_TO_WORK_DIR "dm3qxxx" "system" "system/app/VisionModel-Stub/VisionModel-Stub.apk" 0 0 644 "u:object_r:system_file:s0"
 
 # =============================================================================
 # Ambient Weather Wallpaper / VisualCloudCore Patches
 # =============================================================================
-LOG "- Overlay S26U AODService for DressRoom clock plugin API"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/AODService_v80/AODService_v80.apk" 0 0 644 "u:object_r:system_file:s0"
-
-LOG "- Overlay S26U DressRoom for unified clipper stretch clock"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/DressRoom/DressRoom.apk" 0 0 644 "u:object_r:system_file:s0"
-# Enable built-in spoof to use Ambient Weather Wallpaper
-LOG "- Patch DressRoom Weather wallpaper AICore gate"
+LOG "- Patch stock DressRoom Ambient Weather feature gate"
 APPLY_PATCH "system" "system/priv-app/DressRoom/DressRoom.apk" \
     "$MODPATH/dressroom/DressRoom.apk/0001-Bypass-AICore-weather-feature-check.patch"
 

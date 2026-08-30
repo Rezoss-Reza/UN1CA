@@ -18,6 +18,16 @@
     <string name="unica_camera_feature_summary">Edit Samsung Camera feature flags and values.</string>
     <string name="unica_camera_feature_title">Camera Feature</string>
     <string name="unica_camera_feature_values_title">camera-feature.xml values</string>
+    <string name="unica_font_selector_available_title">Fonts available in Display &gt; Font</string>
+    <string name="unica_font_selector_missing">SamsungSans source is missing.</string>
+    <string name="unica_font_selector_preview">UN1CA 8.5 UnOfficial by Rezoss</string>
+    <string name="unica_font_selector_saved">Font availability updated.</string>
+    <string name="unica_font_selector_save_failed">Unable to update font availability.</string>
+    <string name="unica_font_selector_search_summary">Filter by font name.</string>
+    <string name="unica_font_selector_search_title">Search fonts</string>
+    <string name="unica_font_selector_selected_suffix"> (selected)</string>
+    <string name="unica_font_selector_summary">Choose which SamsungSans fonts appear in Display &gt; Font.</string>
+    <string name="unica_font_selector_title">Font Selector</string>
     <string name="unica_device_name_title">Device name</string>
     <string name="unica_dialog_reboot_msg">To apply the changes, a restart is required.</string>
     <string name="unica_dialog_reboot_negative">Not now</string>
