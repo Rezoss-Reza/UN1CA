@@ -5,6 +5,7 @@ if [ ! -f "$SRC_DIR/security/${CERT_PREFIX}_platform.x509.pem" ]; then
     ABORT "File not found: security/${CERT_PREFIX}_platform.x509.pem"
 fi
 
+APPLY_PATCH "system" "system/framework/framework.jar" "$MODPATH/framework.jar/0001-Allow-CorePatch-style-SigningDetails-bypass.patch"
 APPLY_PATCH "system" "system/framework/services.jar" "$MODPATH/services.jar/0001-Allow-custom-platform-signature.patch"
 APPLY_PATCH "system" "system/framework/services.jar" "$MODPATH/services.jar/0002-Allow-custom-OfflineLanguageModel-update.patch"
 APPLY_PATCH "system" "system/framework/services.jar" "$MODPATH/services.jar/0003-Allow-disabling-signature-verification.patch"

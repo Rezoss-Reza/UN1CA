@@ -174,18 +174,8 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/bin/audiomirroring" 0 2000 755 "u:obje
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiomirroring.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiomirroring_jni.audiomirroring.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiomirroringservice.so" 0 0 644 "u:object_r:system_lib_file:s0"
-# Keep the S26U One UI 8.5 audioserver/CoreFx bridge that applies
-# g_voice_booster_preset_all to the stage-only VoiceBooster effect.
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/bin/audioserver" 0 2000 755 "u:object_r:audioserver_exec:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudioflinger.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudioflinger_datapath.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudioflinger_fastpath.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudioflinger_timing.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudioflinger_utils.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiopolicymanagerdefault.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libcorefx.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libsecaudioinfo.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libsecaudioinfo.so" 0 0 644 "u:object_r:vendor_file:s0"
+# Keep dm3q's stock audioserver/AudioFlinger/AudioPolicy stack. The S26U
+# framework-audio bridge leaves AudioPolicyManager uninitialized on dm3q.
 # S26U allows mono incall music uplink. S23U's stereo-only policy can drop
 # the mono CALL_SCREENING/VOICE_TX AudioTrack before it reaches PAL.
 _PARADIGM_PATCH_CALL_SCREENING_AUDIO_POLICY \
