@@ -5,7 +5,7 @@ Subject: [PATCH] Allow local Audio Eraser packages
 
 Accept exact packages from Settings.System.unica_scpm_allowlist_packages
 when SystemUI filters active playback apps for the Audio Eraser panel. This
-keeps the stock SoundAlive AudioEraserProvider/SCPM flow intact, but lets the
+keeps the stock SoundAlive SAContentProvider command flow intact, but lets the
 UN1CA SCPM Allowlist menu add extra media apps locally.
 ---
  ...dioPlaybackStartable$audioPlaybackCallback$1$onPlaybackConfigChanged$1.smali | 56 +++++++++++-

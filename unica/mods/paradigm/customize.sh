@@ -35,6 +35,29 @@ _PARADIGM_SET_VENDOR_FLOATING_FEATURE_CONFIG()
     fi
 }
 
+_PARADIGM_PATCH_CALL_SCREENING_AUDIO_POLICY()
+{
+    local FILE="$1"
+    local CHANNEL_MASKS="$2"
+
+    if [ ! -f "$FILE" ]; then
+        LOGW "File not found: ${FILE//$WORK_DIR/}"
+        return 0
+    fi
+
+    if ! grep -q 'mixPort name="incall_music_uplink"' "$FILE"; then
+        LOGW "incall_music_uplink mixPort not found: /${FILE//$WORK_DIR\//}"
+        return 0
+    fi
+
+    if sed -n '/mixPort name="incall_music_uplink"/,/<\/mixPort>/p' "$FILE" | grep -q 'AUDIO_CHANNEL_OUT_MONO'; then
+        return 0
+    fi
+
+    LOG "- Allowing mono incall_music_uplink for call screening in /${FILE//$WORK_DIR\//}"
+    sed -i "/mixPort name=\"incall_music_uplink\"/,/<\\/mixPort>/s|channelMasks=\"AUDIO_CHANNEL_OUT_STEREO\"|channelMasks=\"$CHANNEL_MASKS\"|" "$FILE"
+}
+
 # 2025 Audio Pack
 LOG_STEP_IN "- Adding 2025 Audio Pack"
 DELETE_FROM_WORK_DIR "system" "system/hidden/INTERNAL_SDCARD/Music/Samsung/Over_the_Horizon.mp3"
@@ -123,18 +146,21 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/audio_ae_intervals.conf" 0 0 644 "
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/fastScanner.tflite" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/mss_v0.23.0_VMWO_2_fp32.sorione" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/public.libraries-audio.samsung.txt" 0 0 644 "u:object_r:system_file:s0"
-# Keep SoundAlive_C and its native wrappers aligned on the One UI 9 ver900 path.
+# Keep SoundAlive_B2 and its native wrappers aligned on the S26U One UI 8.5 ver900 path.
 DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.sec.android.app.soundalive_B2.xml"
 DELETE_FROM_WORK_DIR "system" "system/priv-app/SoundAlive_B2"
+DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.sec.android.app.soundalive_C.xml"
+DELETE_FROM_WORK_DIR "system" "system/etc/sysconfig/preinstalled-packages-com.sec.android.app.soundalive_C.xml"
+DELETE_FROM_WORK_DIR "system" "system/priv-app/SoundAlive_C"
 DELETE_FROM_WORK_DIR "system" "system/lib/libaudiosaplus_sec_legacy.so"
 DELETE_FROM_WORK_DIR "system" "system/lib/lib_SoundAlive_play_plus_ver800.so"
 DELETE_FROM_WORK_DIR "system" "system/lib64/lib_SoundAlive_play_plus_ver800.so"
 DELETE_FROM_WORK_DIR "vendor" "lib/soundfx/libaudiosaplus_sec.so"
 DELETE_FROM_WORK_DIR "vendor" "lib/lib_SoundAlive_play_plus_ver800.so"
 DELETE_FROM_WORK_DIR "vendor" "lib64/lib_SoundAlive_play_plus_ver800.so"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/permissions/privapp-permissions-com.sec.android.app.soundalive_C.xml" 0 0 644 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/sysconfig/preinstalled-packages-com.sec.android.app.soundalive_C.xml" 0 0 644 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/SoundAlive_C" 0 0 755 "u:object_r:system_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/permissions/privapp-permissions-com.sec.android.app.soundalive_B2.xml" 0 0 644 "u:object_r:system_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/SoundAlive_B2" 0 0 755 "u:object_r:system_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/SoundAlive_B2/SoundAlive_B2.apk" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiosaplus_sec_legacy.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libSoundAlive_VSP_ver316c_ARMCpp.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/lib_SoundAlive_AlbumArt_ver105.so" 0 0 644 "u:object_r:system_lib_file:s0"
@@ -148,13 +174,32 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/bin/audiomirroring" 0 2000 755 "u:obje
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiomirroring.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiomirroring_jni.audiomirroring.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiomirroringservice.so" 0 0 644 "u:object_r:system_lib_file:s0"
+# Keep the S26U One UI 8.5 audioserver/CoreFx bridge that applies
+# g_voice_booster_preset_all to the stage-only VoiceBooster effect.
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/bin/audioserver" 0 2000 755 "u:object_r:audioserver_exec:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudioflinger.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudioflinger_datapath.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudioflinger_fastpath.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudioflinger_timing.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudioflinger_utils.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiopolicymanagerdefault.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libcorefx.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libsecaudioinfo.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libsecaudioinfo.so" 0 0 644 "u:object_r:vendor_file:s0"
+# S26U allows mono incall music uplink. S23U's stereo-only policy can drop
+# the mono CALL_SCREENING/VOICE_TX AudioTrack before it reaches PAL.
+_PARADIGM_PATCH_CALL_SCREENING_AUDIO_POLICY \
+    "$WORK_DIR/vendor/etc/audio_policy_configuration_base.xml" \
+    "AUDIO_CHANNEL_OUT_MONO,AUDIO_CHANNEL_OUT_STEREO"
+_PARADIGM_PATCH_CALL_SCREENING_AUDIO_POLICY \
+    "$WORK_DIR/vendor/etc/audio/sku_kalama_qssi/audio_policy_configuration.xml" \
+    "AUDIO_CHANNEL_OUT_MONO AUDIO_CHANNEL_OUT_STEREO"
 # Keep APlayer on the One UI 8.5 media stack.
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaplayer.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.common.types-V1-ndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.common.types-V4-cpp.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.common.types-V4-ndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.eraser.types-V1-ndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.eraser.types-V2-ndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmediasndk.mediacore.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmediasndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmultisourceseparator.audio.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
@@ -181,6 +226,7 @@ _PARADIGM_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_AUDIO_CONFIG_
 _PARADIGM_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_AUDIO_CONFIG_MULTISOURCE_SEPARATOR" "{FastScanning_6, SourceSeparator_4, Version_1.3.0}"
 unset _AUDIO_ERASER_SOUNDALIVE_VERSION
 LOG_STEP_OUT
+unset -f _PARADIGM_PATCH_CALL_SCREENING_AUDIO_POLICY
 unset -f _PARADIGM_SET_VENDOR_FLOATING_FEATURE_CONFIG
 
 # Now brief
