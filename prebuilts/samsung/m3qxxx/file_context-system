@@ -5,7 +5,6 @@
 /system/app/VideoEditorLite_Dream_N u:object_r:system_file:s0
 /system/app/VideoEditorLite_Dream_N/VideoEditorLite_Dream_N\.apk u:object_r:system_file:s0
 /system/bin u:object_r:system_file:s0
-/system/bin/audioserver u:object_r:audioserver_exec:s0
 /system/bin/audiomirroring u:object_r:audiomirroring_exec:s0
 /system/cameradata u:object_r:system_file:s0
 /system/cameradata/logCubefiles u:object_r:system_file:s0
@@ -73,18 +72,10 @@
 /system/hidden/INTERNAL_SDCARD/Music/Samsung/Over_the_Horizon\.m4a u:object_r:system_file:s0
 /system/lib64 u:object_r:system_lib_file:s0
 /system/lib64/android\.media\.audio\.eraser\.types-V1-ndk\.so u:object_r:system_lib_file:s0
-/system/lib64/libaudioflinger\.so u:object_r:system_lib_file:s0
-/system/lib64/libaudioflinger_datapath\.so u:object_r:system_lib_file:s0
-/system/lib64/libaudioflinger_fastpath\.so u:object_r:system_lib_file:s0
-/system/lib64/libaudioflinger_timing\.so u:object_r:system_lib_file:s0
-/system/lib64/libaudioflinger_utils\.so u:object_r:system_lib_file:s0
-/system/lib64/libaudiopolicymanagerdefault\.so u:object_r:system_lib_file:s0
 /system/lib64/libaudiomirroring\.so u:object_r:system_lib_file:s0
 /system/lib64/libaudiomirroring_jni\.audiomirroring\.samsung\.so u:object_r:system_lib_file:s0
 /system/lib64/libaudiomirroringservice\.so u:object_r:system_lib_file:s0
 /system/lib64/libaplayer\.so u:object_r:system_lib_file:s0
-/system/lib64/libcorefx\.so u:object_r:system_lib_file:s0
-/system/lib64/libsecaudioinfo\.so u:object_r:system_lib_file:s0
 /system/lib64/libmediasndk\.mediacore\.samsung\.so u:object_r:system_lib_file:s0
 /system/lib64/libmediasndk\.so u:object_r:system_lib_file:s0
 /system/lib64/libmultisourceseparator\.audio\.samsung\.so u:object_r:system_lib_file:s0
