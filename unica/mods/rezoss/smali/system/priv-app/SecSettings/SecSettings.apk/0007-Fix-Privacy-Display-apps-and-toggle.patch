@@ -6,16 +6,13 @@ Subject: [PATCH] Fix Privacy Display apps and toggle state
 diff --git a/smali_classes5/com/samsung/android/settings/bpd/PdCustomAppsSettings.smali b/smali_classes5/com/samsung/android/settings/bpd/PdCustomAppsSettings.smali
 --- a/smali_classes5/com/samsung/android/settings/bpd/PdCustomAppsSettings.smali
 +++ b/smali_classes5/com/samsung/android/settings/bpd/PdCustomAppsSettings.smali
-@@ -2,6 +2,9 @@
- .super Lcom/android/settings/dashboard/DashboardFragment;
- .source "PdCustomAppsSettings.java"
- 
+@@ -6,3 +6,6 @@
 +# interfaces
 +.implements Landroidx/preference/Preference$OnPreferenceChangeListener;
 +
- 
  # direct methods
  .method public constructor <init>()V
+     .locals 0
 @@ -90,6 +93,26 @@
  
      invoke-virtual {v15, v1}, Landroidx/preference/PreferenceFragmentCompat;->setPreferenceScreen(Landroidx/preference/PreferenceScreen;)V
@@ -196,14 +193,10 @@ diff --git a/smali_classes5/com/samsung/android/settings/bpd/PdCustomAppsSetting
 diff --git a/smali_classes5/com/samsung/android/settings/bpd/PdMainSettings.smali b/smali_classes5/com/samsung/android/settings/bpd/PdMainSettings.smali
 --- a/smali_classes5/com/samsung/android/settings/bpd/PdMainSettings.smali
 +++ b/smali_classes5/com/samsung/android/settings/bpd/PdMainSettings.smali
-@@ -2,6 +2,9 @@
- .super Lcom/android/settings/dashboard/DashboardFragment;
- .source "qb/111793335 d69b0c2efebb8ad2ef643f5b06452b75e176b0b1df24eb66f5b55691dd00bcee"
- 
+@@ -6,2 +6,5 @@
 +# interfaces
 +.implements Landroidx/preference/Preference$OnPreferenceChangeListener;
 +
- 
  # static fields
  .field public static final STATUS_LOGGING_PROVIDER:Lcom/samsung/android/settings/logging/status/StatusLogger$StatusLoggingProvider;
 @@ -116,79 +119,92 @@

@@ -30,14 +30,6 @@ diff --git a/smali_classes5/com/samsung/android/settings/bpd/PdCustomAppsSetting
 index 1802321..a407f08 100644
 --- a/smali_classes5/com/samsung/android/settings/bpd/PdCustomAppsSettings.smali
 +++ b/smali_classes5/com/samsung/android/settings/bpd/PdCustomAppsSettings.smali
-@@ -1,6 +1,6 @@
- .class public Lcom/samsung/android/settings/bpd/PdCustomAppsSettings;
- .super Lcom/android/settings/dashboard/DashboardFragment;
--.source "qb/111793335 d69b0c2efebb8ad2ef643f5b06452b75e176b0b1df24eb66f5b55691dd00bcee"
-+.source "PdCustomAppsSettings.java"
- 
- 
- # direct methods
 @@ -14,10 +14,39 @@
  
  
