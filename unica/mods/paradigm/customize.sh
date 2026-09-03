@@ -269,8 +269,19 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/bin/audiomirroring" 0 2000 755 "u:obje
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiomirroring.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiomirroring_jni.audiomirroring.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiomirroringservice.so" 0 0 644 "u:object_r:system_lib_file:s0"
-# Keep dm3q's stock audioserver/AudioFlinger/AudioPolicy stack. The S26U
-# framework-audio bridge leaves AudioPolicyManager uninitialized on dm3q.
+# The working v6 module shows third-party Audio Eraser still needs the
+# S26U One UI 8.5 CoreFx command bridge set. Keep the risky global framework
+# AIDL/libaudiobase/libaaudio_internal/sounddose closure out, and keep the
+# vendor HAL-facing libsecaudioinfo.so stock to preserve primary audio output.
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/bin/audioserver" 0 2000 755 "u:object_r:audioserver_exec:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudioflinger.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudioflinger_datapath.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudioflinger_fastpath.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudioflinger_timing.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudioflinger_utils.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiopolicymanagerdefault.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libcorefx.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libsecaudioinfo.so" 0 0 644 "u:object_r:system_lib_file:s0"
 # S26U allows mono incall music uplink. S23U's stereo-only policy can drop
 # the mono CALL_SCREENING/VOICE_TX AudioTrack before it reaches PAL.
 _PARADIGM_PATCH_CALL_SCREENING_AUDIO_POLICY \
@@ -321,6 +332,9 @@ unset _CALL_SCREENING_ROUTE_SINK
 unset _CALL_SCREENING_ROUTE_SOURCE
 _PARADIGM_PATCH_CALL_SCREENING_USECASE_KV \
     "$WORK_DIR/vendor/etc/usecaseKvManager.xml"
+LOG "- Forcing call-screening TX control mode in SamsungInCallUI.apk"
+APPLY_PATCH "system" "system/priv-app/SamsungInCallUI/SamsungInCallUI.apk" \
+    "$MODPATH/callscreen/SamsungInCallUI.apk/0001-Force-call-screening-TX-control-mode.patch"
 # Restore the One UI 9 Audio Eraser media interface used by SoundAlive_C.
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.common.types-V5-cpp.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.common.types-V5-ndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
