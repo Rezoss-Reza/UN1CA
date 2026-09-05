@@ -861,6 +861,10 @@ LOG "- Patch DressRoom UN1CA lockscreen font picker integration"
 APPLY_PATCH "system" "system/priv-app/DressRoom/DressRoom.apk" \
     "$MODPATH/dressroom/DressRoom.apk/0002-Expose-UN1CA-selected-fonts-to-lockscreen-picker.patch"
 
+LOG "- Downloading latest Samsung Always On Display app"
+DOWNLOAD_FILE "$(GET_GALAXY_STORE_DOWNLOAD_URL "com.samsung.android.app.aodservice")" \
+    "$WORK_DIR/system/system/priv-app/AODService_v80/AODService_v80.apk"
+
 LOG "- Patch AODService UN1CA clock font list integration"
 APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
     "$MODPATH/aodservice/AODService_v80.apk/0001-Expose-UN1CA-Font-Selector-fonts-to-clock-picker.patch"
