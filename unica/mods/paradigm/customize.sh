@@ -240,22 +240,24 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/audio_ae_intervals.conf" 0 0 644 "
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/fastScanner.tflite" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/mss_v0.23.0_VMWO_2_fp32.sorione" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/public.libraries-audio.samsung.txt" 0 0 644 "u:object_r:system_file:s0"
-# Keep SoundAlive_C and its native wrappers aligned on the S26U One UI 9 ver900 path.
+# Keep SoundAlive_B2 and its native wrappers aligned on the S26U One UI 8.5 path.
 DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.sec.android.app.soundalive_B2.xml"
-DELETE_FROM_WORK_DIR "system" "system/priv-app/SoundAlive_B2"
 DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.sec.android.app.soundalive_C.xml"
 DELETE_FROM_WORK_DIR "system" "system/etc/sysconfig/preinstalled-packages-com.sec.android.app.soundalive_C.xml"
 DELETE_FROM_WORK_DIR "system" "system/priv-app/SoundAlive_C"
+DELETE_FROM_WORK_DIR "system" "system/priv-app/SoundAlive_B2"
+DELETE_FROM_WORK_DIR "system" "system/lib64/android.media.audio.common.types-V5-cpp.so"
+DELETE_FROM_WORK_DIR "system" "system/lib64/android.media.audio.common.types-V5-ndk.so"
+DELETE_FROM_WORK_DIR "system" "system/lib64/android.media.audio.eraser.types-V2-ndk.so"
 DELETE_FROM_WORK_DIR "system" "system/lib/libaudiosaplus_sec_legacy.so"
 DELETE_FROM_WORK_DIR "system" "system/lib/lib_SoundAlive_play_plus_ver800.so"
 DELETE_FROM_WORK_DIR "system" "system/lib64/lib_SoundAlive_play_plus_ver800.so"
 DELETE_FROM_WORK_DIR "vendor" "lib/soundfx/libaudiosaplus_sec.so"
 DELETE_FROM_WORK_DIR "vendor" "lib/lib_SoundAlive_play_plus_ver800.so"
 DELETE_FROM_WORK_DIR "vendor" "lib64/lib_SoundAlive_play_plus_ver800.so"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/permissions/privapp-permissions-com.sec.android.app.soundalive_C.xml" 0 0 644 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/sysconfig/preinstalled-packages-com.sec.android.app.soundalive_C.xml" 0 0 644 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/SoundAlive_C" 0 0 755 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/SoundAlive_C/SoundAlive_C.apk" 0 0 644 "u:object_r:system_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/permissions/privapp-permissions-com.sec.android.app.soundalive_B2.xml" 0 0 644 "u:object_r:system_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/SoundAlive_B2" 0 0 755 "u:object_r:system_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/SoundAlive_B2/SoundAlive_B2.apk" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiosaplus_sec_legacy.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libSoundAlive_VSP_ver316c_ARMCpp.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/lib_SoundAlive_AlbumArt_ver105.so" 0 0 644 "u:object_r:system_lib_file:s0"
@@ -269,17 +271,15 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/bin/audiomirroring" 0 2000 755 "u:obje
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiomirroring.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiomirroring_jni.audiomirroring.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiomirroringservice.so" 0 0 644 "u:object_r:system_lib_file:s0"
-# The working v6 module shows third-party Audio Eraser still needs the
-# S26U One UI 8.5 CoreFx command bridge set. Keep the risky global framework
-# AIDL/libaudiobase/libaaudio_internal/sounddose closure out, and keep the
-# vendor HAL-facing libsecaudioinfo.so stock to preserve primary audio output.
+# Keep the runtime-tested S26U One UI 8.5 Audio Eraser engine, but retain the
+# stock S23U libaudiopolicymanagerdefault.so for working SSC/A2DP routing. Keep
+# vendor libsecaudioinfo.so stock as its S26U counterpart breaks eSIM on dm3q.
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/bin/audioserver" 0 2000 755 "u:object_r:audioserver_exec:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudioflinger.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudioflinger_datapath.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudioflinger_fastpath.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudioflinger_timing.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudioflinger_utils.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiopolicymanagerdefault.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libcorefx.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libsecaudioinfo.so" 0 0 644 "u:object_r:system_lib_file:s0"
 # S26U allows mono incall music uplink. S23U's stereo-only policy can drop
@@ -332,14 +332,11 @@ unset _CALL_SCREENING_ROUTE_SINK
 unset _CALL_SCREENING_ROUTE_SOURCE
 _PARADIGM_PATCH_CALL_SCREENING_USECASE_KV \
     "$WORK_DIR/vendor/etc/usecaseKvManager.xml"
-LOG "- Forcing call-screening TX control mode in SamsungInCallUI.apk"
-APPLY_PATCH "system" "system/priv-app/SamsungInCallUI/SamsungInCallUI.apk" \
-    "$MODPATH/callscreen/SamsungInCallUI.apk/0001-Force-call-screening-TX-control-mode.patch"
-# Restore the One UI 9 Audio Eraser media interface used by SoundAlive_C.
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.common.types-V5-cpp.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.common.types-V5-ndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.eraser.types-V2-ndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
-# Keep APlayer on the One UI 8.5 media stack.
+LOG "- SamsungInCallUI.apk call-screening patch disabled; using framework/vendor route only"
+# S26U One UI 8.5 libcallaudio keeps the same public ABI as S23U while carrying
+# newer call-audio routing internals; use it instead of patching SamsungInCallUI.
+ADD_TO_WORK_DIR "$MODPATH" "system" "system/lib64/libcallaudio.so" 0 0 644 "u:object_r:system_lib_file:s0"
+# Keep APlayer, VoiceBooster, and the separator stack on the One UI 8.5 media path.
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaplayer.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.common.types-V1-ndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.common.types-V4-cpp.so" 0 0 644 "u:object_r:system_lib_file:s0"
@@ -364,12 +361,13 @@ ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/soundfx/libaudiosaplus_sec.so" 0 0 644 
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/lib_SoundAlive_3DPosition_ver202.so" 0 0 644 "u:object_r:vendor_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/lib_SoundAlive_AlbumArt_ver105.so" 0 0 644 "u:object_r:vendor_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/lib_SoundAlive_play_plus_ver900.so" 0 0 644 "u:object_r:vendor_file:s0"
-_AUDIO_ERASER_SOUNDALIVE_VERSION="eq_custom,uhq_onoff,karaoke,adapt,spk_stereo,dvfs_20_percent,dvfs_max_45_percent,voice_boost,dolby_game_spk_off"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_AUDIO_CONFIG_SOUNDALIVE_VERSION" "$_AUDIO_ERASER_SOUNDALIVE_VERSION"
+_AUDIO_ERASER_SYSTEM_SOUNDALIVE_VERSION="eq_custom,uhq_onoff,karaoke,adapt,spk_stereo,dvfs_20_percent,dvfs_max_45_percent,voice_boost"
+_AUDIO_ERASER_VENDOR_SOUNDALIVE_VERSION="eq_custom,uhq_onoff,karaoke,adapt,spk_stereo,dvfs_20_percent,dvfs_max_45_percent,volume_normalize"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_AUDIO_CONFIG_SOUNDALIVE_VERSION" "$_AUDIO_ERASER_SYSTEM_SOUNDALIVE_VERSION"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_AUDIO_CONFIG_MULTISOURCE_SEPARATOR" "{FastScanning_6, SourceSeparator_4, Version_1.3.0}"
-_PARADIGM_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_AUDIO_CONFIG_SOUNDALIVE_VERSION" "$_AUDIO_ERASER_SOUNDALIVE_VERSION"
-_PARADIGM_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_AUDIO_CONFIG_MULTISOURCE_SEPARATOR" "{FastScanning_6, SourceSeparator_4, Version_1.3.0}"
-unset _AUDIO_ERASER_SOUNDALIVE_VERSION
+_PARADIGM_SET_VENDOR_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_AUDIO_CONFIG_SOUNDALIVE_VERSION" "$_AUDIO_ERASER_VENDOR_SOUNDALIVE_VERSION"
+unset _AUDIO_ERASER_SYSTEM_SOUNDALIVE_VERSION
+unset _AUDIO_ERASER_VENDOR_SOUNDALIVE_VERSION
 LOG_STEP_OUT
 unset -f _PARADIGM_PATCH_CALL_SCREENING_AUDIO_POLICY
 unset -f _PARADIGM_PATCH_CALL_SCREENING_VOICE_TX_RATE

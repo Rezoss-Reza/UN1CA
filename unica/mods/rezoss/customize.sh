@@ -7,7 +7,7 @@ LOG_STEP_IN "- Rezoss experimental mods"
 # =============================================================================
 ADD_TO_WORK_DIR "$MODPATH" "system" "." 0 0 755 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "$MODPATH" "system_ext" "." 0 0 755 "u:object_r:system_file:s0"
-LOG "- Adding optional AOSP zip boot animation support"
+LOG "- Adding mountless AOSP zip boot animation support"
 ADD_TO_WORK_DIR "$MODPATH/bootanimation_zip" "system" \
     "system/bin/bootanimation_zip" 0 2000 755 "u:object_r:bootanim_exec:s0"
 ADD_TO_WORK_DIR "$MODPATH/bootanimation_zip" "system" \
@@ -528,14 +528,24 @@ _REZOSS_ENSURE_BOOTANIMATION_SELINUX()
     CIL_FILE="$SYSTEM_EXT_SELINUX/system_ext_sepolicy.cil"
 
     if [ -f "$CIL_FILE" ]; then
-        LOG "- Ensuring optional AOSP bootanimation SELinux access"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "; Added by unica/mods/rezoss/customize.sh for optional AOSP zip boot animation"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell self (capability (dac_override dac_read_search sys_admin)))"
+        LOG "- Ensuring mountless AOSP bootanimation SELinux access"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "; Added by unica/mods/rezoss/customize.sh for mountless AOSP zip boot animation"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell self (capability (dac_override dac_read_search)))"
         _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell bootanim_exec (file (ioctl read getattr lock map open watch watch_reads)))"
         _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell bootanim_oem_file (file (ioctl read getattr lock map open watch watch_reads)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell system_data_root_file (dir (ioctl read getattr lock open watch watch_reads search)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell adb_data_file (dir (ioctl read getattr lock open watch watch_reads search)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell adb_data_file (file (ioctl read getattr lock map open watch watch_reads)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell bootanim_data_file (dir (ioctl read write create getattr setattr lock rename open watch watch_reads add_name remove_name search rmdir)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell bootanim_data_file (file (ioctl read write create getattr setattr lock map open watch watch_reads rename unlink)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell system_data_file (dir (ioctl read getattr lock open watch watch_reads search)))"
         _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell system_data_file (file (ioctl read getattr lock map open watch watch_reads)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell bootanim_exec (file (mounton)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow bootanim system_data_file (file (ioctl read getattr lock map open watch watch_reads)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow bootanim bootanim_data_file (dir (ioctl read getattr lock open watch watch_reads search)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow bootanim bootanim_data_file (file (ioctl read getattr lock map open watch watch_reads)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell ctl_start_prop (property_service (set)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell ctl_start_prop (file (read getattr map open)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell ctl_stop_prop (property_service (set)))"
+        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell ctl_stop_prop (file (read getattr map open)))"
         _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell ctl_restart_prop (property_service (set)))"
         _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow sec_system_init_shell ctl_restart_prop (file (read getattr map open)))"
     else
