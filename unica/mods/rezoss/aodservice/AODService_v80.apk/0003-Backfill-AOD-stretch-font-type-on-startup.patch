@@ -4,11 +4,17 @@ diff --git a/smali/com/samsung/android/app/facewidget/utils/KeyguardClockProvide
 index b5488080..9480a70c 100644
 --- a/smali/com/samsung/android/app/facewidget/utils/KeyguardClockProvider.smali
 +++ b/smali/com/samsung/android/app/facewidget/utils/KeyguardClockProvider.smali
-@@ -6975,0 +6976,4 @@
-+
+@@ -7004,6 +7004,10 @@
+ .method public initialize()V
+     .locals 7
+ 
 +    iget-object v1, p0, Lcom/samsung/android/app/facewidget/utils/KeyguardClockProvider;->context:Landroid/content/Context;
 +
 +    invoke-static {v1}, Lio/mesalabs/unica/aod/ClockFontSettingsSync;->syncAodStretchFontType(Landroid/content/Context;)V
++
+     const/4 v0, 0x0
+ 
+     const-string v1, "initialize"
 diff --git a/smali_classes2/com/samsung/android/app/aodservice/provider/AODContentProvider.smali b/smali_classes2/com/samsung/android/app/aodservice/provider/AODContentProvider.smali
 index 7c94375c..cd0ac3cc 100644
 --- a/smali_classes2/com/samsung/android/app/aodservice/provider/AODContentProvider.smali

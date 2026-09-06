@@ -1,14 +1,14 @@
 AUTHOR Rezoss
 
-diff --git a/smali_classes3/aod/mX.smali b/smali_classes3/aod/mX.smali
-index dd80a118..3aa114dd 100644
---- a/smali_classes3/aod/mX.smali
-+++ b/smali_classes3/aod/mX.smali
+diff --git a/smali_classes3/aod/jX.smali b/smali_classes3/aod/jX.smali
+index 61686dca..2b451ca5 100644
+--- a/smali_classes3/aod/jX.smali
++++ b/smali_classes3/aod/jX.smali
 @@ -2496,6 +2496,12 @@
      goto/16 :goto_4
  
      :cond_9
-+    sget-object v3, Laod/mX;->sSystemFontMap:Ljava/util/HashMap;
++    sget-object v3, Laod/jX;->sSystemFontMap:Ljava/util/HashMap;
 +
 +    move-object/from16 v0, p0
 +
@@ -16,7 +16,7 @@ index dd80a118..3aa114dd 100644
 +
      const/4 v0, 0x1
  
-     sput-boolean v0, Laod/mX;->sIsSystemFontMapInitialized:Z
+     sput-boolean v0, Laod/jX;->sIsSystemFontMapInitialized:Z
 diff --git a/smali_classes3/io/mesalabs/unica/aod/ClockFontBank$1.smali b/smali_classes3/io/mesalabs/unica/aod/ClockFontBank$1.smali
 new file mode 100644
 index 00000000..f48d196b
