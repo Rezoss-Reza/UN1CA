@@ -30,14 +30,12 @@ __pycache__/
 
 # Full APKs stored as 50 MiB split chunks for GitHub.
 prebuilts/samsung/dm3qxxx/system/app/SamsungSans/SamsungSans.apk
-prebuilts/samsung/m3qxxx/system/app/VideoEditorLite_Dream_N/VideoEditorLite_Dream_N.apk
 prebuilts/samsung/m3qxxx/system/app/SketchBook/SketchBook.apk
 prebuilts/samsung/m3qxxx/system/priv-app/AODService_v80/AODService_v80.apk
 prebuilts/samsung/m3qxxx/system/priv-app/MediaSearch/MediaSearch.apk
 prebuilts/samsung/m3qxxx/system/priv-app/DressRoom/DressRoom.apk
 prebuilts/samsung/m3qxxx/system/priv-app/SamsungCamera/SamsungCamera.apk
 prebuilts/samsung/m3qxxx/system/priv-app/SamsungGallery2018/SamsungGallery2018.apk
-prebuilts/samsung/m3qxxx/system/priv-app/SamsungMessages/SamsungMessages.apk
 prebuilts/samsung/m3qxxx/system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk
 prebuilts/samsung/m3qxxx/system/priv-app/SamsungIntelliVoiceServices/SamsungIntelliVoiceServices.apk
 prebuilts/samsung/m3qxxx/system/priv-app/SemanticSearchCore/SemanticSearchCore.apk
@@ -45,10 +43,8 @@ prebuilts/samsung/pa2qxxx/system/app/SketchBook/SketchBook.apk
 prebuilts/samsung/pa2qxxx/system/priv-app/MediaSearch/MediaSearch.apk
 prebuilts/samsung/pa2qxxx/system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk
 prebuilts/samsung/pa2qxxx/system/priv-app/SemanticSearchCore/SemanticSearchCore.apk
-prebuilts/samsung/pa2qxxx/system/priv-app/wallpaper-res/wallpaper-res.apk
 unica/mods/rezoss/system/priv-app/SamsungIntelliVoiceServices/SamsungIntelliVoiceServices.apk
 unica/mods/rezoss/system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk
-unica/mods/rezoss/system/app/HoneyBoard/HoneyBoard.apk
 
 # Cert
 security/unica_ota.x509.pem
@@ -62,3 +58,4 @@ security/unica_platform.pk8
 !.gitattributes
 !.gitignore
 !.gitmodules
+/prebuilts/samsung/m3qxxx/system/priv-app/SamsungIntelliVoiceServices/SamsungIntelliVoiceServices.apk

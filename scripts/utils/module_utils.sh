@@ -68,6 +68,7 @@ DECODE_APK()
 
 # GET_GALAXY_STORE_DOWNLOAD_URL "<package name/id>"
 # Returns a URL to download the desired app from Samsung servers.
+# On SDK 37 / One UI 9, a missing URL returns a marker handled by DOWNLOAD_FILE.
 GET_GALAXY_STORE_DOWNLOAD_URL()
 {
     _CHECK_NON_EMPTY_PARAM "PACKAGE" "$1" || return 1
@@ -91,12 +92,12 @@ GET_GALAXY_STORE_DOWNLOAD_URL()
     SYSTEMID="$(date "+%s")"
 
     if [ ! "$OS" ]; then
-        # Fallback to Android 16
-        OS="36"
+        # Fallback to Android 17
+        OS="37"
     fi
     if [ ! "$ONEUI" ]; then
-        # Fallback to One UI 8.0
-        ONEUI="80500"
+        # Fallback to One UI 9.0
+        ONEUI="90000"
     fi
 
     PROTOCOL+="<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>"
@@ -133,6 +134,12 @@ GET_GALAXY_STORE_DOWNLOAD_URL()
             return 0
         fi
     done
+
+    if [[ "$OS" == "37" || "$ONEUI" == 9???? ]]; then
+        # Command substitution must contain only the marker, never log output.
+        echo "galaxy-store-source:$PACKAGE"
+        return 0
+    fi
 
     LOGE "No download URI found for app \"$PACKAGE\""
     return 1

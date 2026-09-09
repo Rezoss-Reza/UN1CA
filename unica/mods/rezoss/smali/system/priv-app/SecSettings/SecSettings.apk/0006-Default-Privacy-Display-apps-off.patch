@@ -3,16 +3,16 @@ From: Rezoss <rezoss@local>
 Date: Thu, 2 Jul 2026 00:00:00 +0200
 Subject: [PATCH] Default Privacy Display apps off
 
-diff --git a/smali_classes5/com/samsung/android/settings/bpd/PdCustomAppsSettings.smali b/smali_classes5/com/samsung/android/settings/bpd/PdCustomAppsSettings.smali
---- a/smali_classes5/com/samsung/android/settings/bpd/PdCustomAppsSettings.smali
-+++ b/smali_classes5/com/samsung/android/settings/bpd/PdCustomAppsSettings.smali
+diff --git a/smali_classes3/com/samsung/android/settings/bpd/RezossPdCustomAppsSettings.smali b/smali_classes3/com/samsung/android/settings/bpd/RezossPdCustomAppsSettings.smali
+--- a/smali_classes3/com/samsung/android/settings/bpd/RezossPdCustomAppsSettings.smali
++++ b/smali_classes3/com/samsung/android/settings/bpd/RezossPdCustomAppsSettings.smali
 @@ -222,9 +222,7 @@
  
      if-nez v6, :cond_2
  
 -    const/4 v14, 0x1
 -
--    invoke-static {v0, v11, v14}, Lcom/samsung/android/settings/bpd/utils/PdUtils;->setPdPackageSelected(Landroid/content/Context;Ljava/lang/String;Z)V
+-    invoke-static {v0, v11, v14}, Lcom/samsung/android/settings/bpd/utils/RezossPdUtils;->setPdPackageSelected(Landroid/content/Context;Ljava/lang/String;Z)V
 +    const/4 v14, 0x0
  
      goto :goto_2
