@@ -240,30 +240,10 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/audio_ae_intervals.conf" 0 0 644 "
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/fastScanner.tflite" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/mss_v0.23.0_VMWO_2_fp32.sorione" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/public.libraries-audio.samsung.txt" 0 0 644 "u:object_r:system_file:s0"
-# Keep SoundAlive_B2 and its native wrappers aligned on the S26U One UI 8.5 path.
-DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.sec.android.app.soundalive_B2.xml"
-DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.sec.android.app.soundalive_C.xml"
-DELETE_FROM_WORK_DIR "system" "system/etc/sysconfig/preinstalled-packages-com.sec.android.app.soundalive_C.xml"
-DELETE_FROM_WORK_DIR "system" "system/priv-app/SoundAlive_C"
-DELETE_FROM_WORK_DIR "system" "system/priv-app/SoundAlive_B2"
-DELETE_FROM_WORK_DIR "system" "system/lib64/android.media.audio.common.types-V5-cpp.so"
-DELETE_FROM_WORK_DIR "system" "system/lib64/android.media.audio.common.types-V5-ndk.so"
-DELETE_FROM_WORK_DIR "system" "system/lib64/android.media.audio.eraser.types-V2-ndk.so"
-DELETE_FROM_WORK_DIR "system" "system/lib/libaudiosaplus_sec_legacy.so"
-DELETE_FROM_WORK_DIR "system" "system/lib/lib_SoundAlive_play_plus_ver800.so"
-DELETE_FROM_WORK_DIR "system" "system/lib64/lib_SoundAlive_play_plus_ver800.so"
-DELETE_FROM_WORK_DIR "vendor" "lib/soundfx/libaudiosaplus_sec.so"
-DELETE_FROM_WORK_DIR "vendor" "lib/lib_SoundAlive_play_plus_ver800.so"
-DELETE_FROM_WORK_DIR "vendor" "lib64/lib_SoundAlive_play_plus_ver800.so"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/permissions/privapp-permissions-com.sec.android.app.soundalive_B2.xml" 0 0 644 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/SoundAlive_B2" 0 0 755 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/SoundAlive_B2/SoundAlive_B2.apk" 0 0 644 "u:object_r:system_file:s0"
+# Use the S23U One UI 9 SoundAlive_C package and retain its permissions,
+# native interfaces and stock 32-bit compatibility libraries.
+ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "system" "system/priv-app/SoundAlive_C" 0 0 755 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiosaplus_sec_legacy.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libSoundAlive_VSP_ver316c_ARMCpp.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/lib_SoundAlive_AlbumArt_ver105.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/lib_SoundAlive_SRC192_ver205a.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/lib_SoundAlive_SRC384_ver320.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/lib_SoundAlive_SRC384_ver330.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/lib_SoundAlive_play_plus_ver900.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/lib_soundaliveresampler.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/AudioMirroring/AudioMirroring.apk" 0 0 644 "u:object_r:system_file:s0"
@@ -271,7 +251,7 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/bin/audiomirroring" 0 2000 755 "u:obje
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiomirroring.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiomirroring_jni.audiomirroring.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaudiomirroringservice.so" 0 0 644 "u:object_r:system_lib_file:s0"
-# Keep the runtime-tested S26U One UI 8.5 Audio Eraser engine, but retain the
+# Use the S26U One UI 9 Audio Eraser engine, while retaining the
 # stock S23U libaudiopolicymanagerdefault.so for working SSC/A2DP routing. Keep
 # vendor libsecaudioinfo.so stock as its S26U counterpart breaks eSIM on dm3q.
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/bin/audioserver" 0 2000 755 "u:object_r:audioserver_exec:s0"
@@ -333,15 +313,13 @@ unset _CALL_SCREENING_ROUTE_SOURCE
 _PARADIGM_PATCH_CALL_SCREENING_USECASE_KV \
     "$WORK_DIR/vendor/etc/usecaseKvManager.xml"
 LOG "- SamsungInCallUI.apk call-screening patch disabled; using framework/vendor route only"
-# S26U One UI 8.5 libcallaudio keeps the same public ABI as S23U while carrying
-# newer call-audio routing internals; use it instead of patching SamsungInCallUI.
-ADD_TO_WORK_DIR "$MODPATH" "system" "system/lib64/libcallaudio.so" 0 0 644 "u:object_r:system_lib_file:s0"
-# Keep APlayer, VoiceBooster, and the separator stack on the One UI 8.5 media path.
+# Use the S26U One UI 9 call-audio library.
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libcallaudio.so" 0 0 644 "u:object_r:system_lib_file:s0"
+# Align the system audio interfaces with the One UI 9 media stack.
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libaplayer.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.common.types-V1-ndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.common.types-V4-cpp.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.common.types-V4-ndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.eraser.types-V1-ndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.common.types-V5-cpp.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.common.types-V5-ndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/android.media.audio.eraser.types-V2-ndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmediasndk.mediacore.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmediasndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmultisourceseparator.audio.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
@@ -358,8 +336,6 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libveframework.videoeditor.samsu
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/android.media.audio.eraser.types-V1-ndk.so" 0 0 644 "u:object_r:vendor_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/libtensorflowlite.adv_audio.samsung.so" 0 0 644 "u:object_r:vendor_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/soundfx/libaudiosaplus_sec.so" 0 0 644 "u:object_r:vendor_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/lib_SoundAlive_3DPosition_ver202.so" 0 0 644 "u:object_r:vendor_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/lib_SoundAlive_AlbumArt_ver105.so" 0 0 644 "u:object_r:vendor_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/lib_SoundAlive_play_plus_ver900.so" 0 0 644 "u:object_r:vendor_file:s0"
 _AUDIO_ERASER_SYSTEM_SOUNDALIVE_VERSION="eq_custom,uhq_onoff,karaoke,adapt,spk_stereo,dvfs_20_percent,dvfs_max_45_percent,voice_boost"
 _AUDIO_ERASER_VENDOR_SOUNDALIVE_VERSION="eq_custom,uhq_onoff,karaoke,adapt,spk_stereo,dvfs_20_percent,dvfs_max_45_percent,volume_normalize"

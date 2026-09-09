@@ -16,15 +16,12 @@ ADD_TO_WORK_DIR "m3qxxx" "system" \
     "system/etc/default-permissions/default-permissions-com.samsung.android.smartsuggestions.xml" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" \
     "system/etc/permissions/privapp-permissions-com.samsung.android.smartsuggestions.xml" 0 0 644 "u:object_r:system_file:s0"
-LOG "- Adding Samsung Messages for Now Nudge in-app support"
-ADD_TO_WORK_DIR "m3qxxx" "system" \
-    "system/priv-app/SamsungMessages/SamsungMessages.apk" 0 0 644 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" \
-    "system/etc/permissions/privapp-permissions-com.samsung.android.messaging.xml" 0 0 644 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" \
-    "system/etc/default-permissions/default-permissions-com.samsung.android.messaging.xml" 0 0 644 "u:object_r:system_file:s0"
-APPLY_PATCH "system" "system/priv-app/SamsungMessages/SamsungMessages.apk" \
-    "$MODPATH/samsungmessages/SamsungMessages.apk/0001-Advertise-Now-Nudge-in-app-revision.patch"
+# Restore the stock S23U One UI 9 packages after debloat and local overlays.
+# Samsung Messages already advertises nownudge.inappnudge.revision=1.
+LOG "- Using S23U One UI 9 sharing, keyboard and messaging apps"
+for f in "app/AllShareAware" "app/HoneyBoard" "priv-app/ShareLive" "priv-app/SamsungMessages"; do
+    ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "system" "system/$f" 0 0 755 "u:object_r:system_file:s0"
+done
 LOG "- Patching SmartSuggestions Developer Mode access"
 REZOSS_SMARTSUGGESTIONS_APK="$WORK_DIR/system/system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk"
 REZOSS_SMARTSUGGESTIONS_TMP="$TMP_DIR/rezoss_smartsuggestions_dev_mode"
@@ -366,125 +363,6 @@ _REZOSS_CIL_HAS_SYMBOL()
     return 1
 }
 
-_REZOSS_GET_MOSEY_APP_DOMAIN()
-{
-    local API_SUFFIX="$1"
-    local SYSTEM_EXT_SELINUX
-    local VERSIONED_DOMAIN="mosey_app_${API_SUFFIX}"
-    local VERSIONED_MAPPING="${API_SUFFIX/_/.}.cil"
-
-    if $TARGET_OS_BUILD_SYSTEM_EXT_PARTITION; then
-        SYSTEM_EXT_SELINUX="$WORK_DIR/system_ext/etc/selinux"
-    else
-        SYSTEM_EXT_SELINUX="$WORK_DIR/system/system/system_ext/etc/selinux"
-    fi
-
-    if _REZOSS_CIL_HAS_SYMBOL "$VERSIONED_DOMAIN" \
-        "$SYSTEM_EXT_SELINUX/mapping/$VERSIONED_MAPPING" \
-        "$WORK_DIR/vendor/etc/selinux/plat_pub_versioned.cil"; then
-        echo "$VERSIONED_DOMAIN"
-        return
-    fi
-
-    if _REZOSS_CIL_HAS_SYMBOL "mosey_app" \
-        "$SYSTEM_EXT_SELINUX/system_ext_sepolicy.cil" \
-        "$WORK_DIR/product/etc/selinux/product_sepolicy.cil"; then
-        echo "mosey_app"
-        return
-    fi
-
-    echo "priv_app_${API_SUFFIX}"
-}
-
-_REZOSS_DROP_MOSEY_APP_VENDOR_RULES()
-{
-    local CIL_FILE="$1"
-
-    sed -i -E \
-        -e '/^\(allow (mosey_app(_[0-9]+_[0-9]+)?|priv_app_[0-9]+_[0-9]+) mosey_(server|service) /d' \
-        -e '/^\(allow mosey_server (mosey_app(_[0-9]+_[0-9]+)?|priv_app_[0-9]+_[0-9]+) /d' \
-        "$CIL_FILE"
-}
-
-_REZOSS_ENSURE_MOSEY_VENDOR_SELINUX()
-{
-    local FC_FILE="$WORK_DIR/vendor/etc/selinux/vendor_file_contexts"
-    local SERVICE_FILE="$WORK_DIR/vendor/etc/selinux/vendor_service_contexts"
-    local CIL_FILE="$WORK_DIR/vendor/etc/selinux/vendor_sepolicy.cil"
-    local API_SUFFIX
-    local APP_DOMAIN
-
-    if [ -f "$FC_FILE" ]; then
-        LOG "- Ensuring S24U Mosey vendor file context"
-        _REZOSS_APPEND_UNIQUE_LINE "$FC_FILE" "/vendor/bin/mosey_server u:object_r:mosey_server_exec:s0"
-    else
-        LOGW "File not found: ${FC_FILE//$WORK_DIR/}"
-    fi
-
-    if [ -f "$SERVICE_FILE" ]; then
-        LOG "- Ensuring S24U Mosey service contexts"
-        _REZOSS_APPEND_UNIQUE_LINE "$SERVICE_FILE" "com.google.pixel.moseyservice.IMoseyService/default u:object_r:mosey_service:s0"
-        _REZOSS_APPEND_UNIQUE_LINE "$SERVICE_FILE" "com.google.android.moseyservice.IMoseyService/default u:object_r:mosey_service:s0"
-    else
-        LOGW "File not found: ${SERVICE_FILE//$WORK_DIR/}"
-    fi
-
-    if [ -f "$CIL_FILE" ]; then
-        API_SUFFIX="$(_REZOSS_GET_SEPOLICY_API_SUFFIX "$CIL_FILE")"
-        APP_DOMAIN="$(_REZOSS_GET_MOSEY_APP_DOMAIN "$API_SUFFIX")"
-        LOG "- Ensuring S24U Mosey vendor SELinux policy (${API_SUFFIX}, ${APP_DOMAIN})"
-        _REZOSS_DROP_MOSEY_APP_VENDOR_RULES "$CIL_FILE"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(type mosey_server)"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(roletype object_r mosey_server)"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(type mosey_server_exec)"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(roletype object_r mosey_server_exec)"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(type mosey_service)"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(roletype object_r mosey_service)"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset domain (mosey_server))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset file_type (mosey_server_exec))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset exec_type (mosey_server_exec))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset vendor_file_type (mosey_server_exec))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset service_manager_type (mosey_service))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset vendor_service (mosey_service))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typeattributeset hal_service_type (mosey_service))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow ${APP_DOMAIN} mosey_server (binder (call transfer)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server ${APP_DOMAIN} (binder (transfer)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow ${APP_DOMAIN} mosey_server (fd (use)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow ${APP_DOMAIN} mosey_service (service_manager (find)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server servicemanager_${API_SUFFIX} (binder (call transfer)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow servicemanager_${API_SUFFIX} mosey_server (binder (call transfer)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow servicemanager_${API_SUFFIX} mosey_server (dir (search)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow servicemanager_${API_SUFFIX} mosey_server (file (read open)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow servicemanager_${API_SUFFIX} mosey_server (process (getattr)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow init_${API_SUFFIX} mosey_server_exec (file (read getattr map execute open)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow init_${API_SUFFIX} mosey_server (process (transition)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server mosey_server_exec (file (read getattr map execute open entrypoint)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(dontaudit init_${API_SUFFIX} mosey_server (process (noatsecure)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow init_${API_SUFFIX} mosey_server (process (siginh rlimitinh)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(typetransition init_${API_SUFFIX} mosey_server_exec process mosey_server)"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server mosey_service (service_manager (add find)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (capability (net_admin net_raw)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server sysfs_net_${API_SUFFIX} (dir (ioctl read getattr lock open watch watch_reads search)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server sysfs_net_${API_SUFFIX} (file (ioctl read getattr lock map open watch watch_reads)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server sysfs_net_${API_SUFFIX} (lnk_file (ioctl read getattr lock map open watch watch_reads)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (udp_socket (ioctl create)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allowx mosey_server self (ioctl udp_socket ((range 0x8913 0x8914) 0x8916 0x8922 0x8924 0x8936 0x8946 0x8994 0x89f1)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (unix_dgram_socket (ioctl)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allowx mosey_server self (ioctl unix_dgram_socket ((range 0x8913 0x8914) 0x8946 0x8994)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (packet_socket (ioctl read write create getattr setattr lock append map bind connect listen accept getopt setopt shutdown)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allowx mosey_server self (ioctl packet_socket (0x8913 0x8927 0x8933)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (netlink_route_socket (read write create nlmsg_read nlmsg_write nlmsg_readpriv nlmsg_getneigh)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server mosey_server (netlink_netfilter_socket (create)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server tun_device_${API_SUFFIX} (chr_file (ioctl read write getattr lock append map open watch watch_reads)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allowx mosey_server tun_device_${API_SUFFIX} (ioctl chr_file (0x54ca 0x54d2)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (tun_socket (create)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allow mosey_server self (netlink_generic_socket (ioctl read write create getattr setattr lock append map bind connect getopt setopt shutdown)))"
-        _REZOSS_APPEND_UNIQUE_LINE "$CIL_FILE" "(allowx mosey_server self (ioctl netlink_generic_socket (0x8946)))"
-    else
-        LOGW "File not found: ${CIL_FILE//$WORK_DIR/}"
-    fi
-}
-
 _REZOSS_ENSURE_LOG_VIDEO_FILTER_SELINUX()
 {
     local FC_FILE="$WORK_DIR/vendor/etc/selinux/vendor_file_contexts"
@@ -556,26 +434,28 @@ _REZOSS_ENSURE_BOOTANIMATION_SELINUX()
 _REZOSS_ENSURE_BOOTANIMATION_SELINUX
 
 # =============================================================================
-# S24U OneUI 8.5 Quick Share Apple Devices Extension
+# S26U One UI 9 Quick Share Apple Devices Extension
 # =============================================================================
 REZOSS_ENABLE_MOSEY_APPLE_SHARING="${REZOSS_ENABLE_MOSEY_APPLE_SHARING:-true}"
 if [[ "$REZOSS_ENABLE_MOSEY_APPLE_SHARING" == "true" ]]; then
-    LOG "- Adding S24U OneUI 8.5 Mosey Quick Share extension"
-    ADD_TO_WORK_DIR "$MODPATH" "vendor" "bin/mosey_server" 0 2000 755 "u:object_r:mosey_server_exec:s0"
-    ADD_TO_WORK_DIR "$MODPATH" "vendor" "lib64/libmosey_daemon_ffi.so" 0 0 644 "u:object_r:vendor_file:s0"
-    ADD_TO_WORK_DIR "$MODPATH" "vendor" "etc/init/mosey.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
-    ADD_TO_WORK_DIR "$MODPATH" "vendor" "etc/vintf/manifest/manifest_mosey.xml" 0 0 644 "u:object_r:vendor_configs_file:s0"
-    _REZOSS_ENSURE_MOSEY_VENDOR_SELINUX
+    LOG "- Adding S26U One UI 9 Mosey system_ext service"
+    # S23U One UI 9 already provides mosey_app/server policy and file contexts.
+    ADD_TO_WORK_DIR "m3qxxx" "system_ext" "priv-app/MoseyApp" 0 0 755 "u:object_r:system_file:s0"
+    ADD_TO_WORK_DIR "m3qxxx" "system_ext" "bin/mosey_server" 0 1000 755 "u:object_r:mosey_server_exec:s0"
+    ADD_TO_WORK_DIR "m3qxxx" "system_ext" "lib64/libmosey_daemon_ffi.so" 0 0 644 "u:object_r:system_lib_file:s0"
+    for f in "init/mosey.rc" "vintf/manifest/manifest_mosey.xml" \
+        "default-permissions/default-permissions-com.google.android.mosey.xml" \
+        "permissions/privapp-permissions-com.google.android.mosey.xml" \
+        "sysconfig/preinstalled-packages-com.google.android.mosey.xml"; do
+        ADD_TO_WORK_DIR "m3qxxx" "system_ext" "etc/$f" 0 0 644 "u:object_r:system_file:s0"
+    done
 else
-    LOG "- Skipping S24U OneUI 8.5 Mosey Quick Share extension; REZOSS_ENABLE_MOSEY_APPLE_SHARING=false"
+    LOG "- Skipping Mosey Quick Share extension; REZOSS_ENABLE_MOSEY_APPLE_SHARING=false"
     DELETE_FROM_WORK_DIR "system" "system/etc/default-permissions/default-permissions-com.google.android.mosey.xml"
     DELETE_FROM_WORK_DIR "system" "system/etc/init/rezoss_mosey_permissions.rc"
     DELETE_FROM_WORK_DIR "system" "system/etc/unica/rezoss_mosey_permissions.sh"
     DELETE_FROM_WORK_DIR "system_ext" "priv-app/MoseyApp"
-    DELETE_FROM_WORK_DIR "system_ext" "etc/default-permissions/default-permissions-com.google.android.mosey.xml"
-    DELETE_FROM_WORK_DIR "system_ext" "etc/permissions/privapp-permissions-com.google.android.mosey.xml"
 fi
-unset REZOSS_ENABLE_MOSEY_APPLE_SHARING
 
 # =============================================================================
 # S26U Prebuilts - Gallery LOG / Camera LOG-LUT / Privacy Display
@@ -583,12 +463,10 @@ unset REZOSS_ENABLE_MOSEY_APPLE_SHARING
 LOG "- Adding S26U Privacy Display, Gallery LOG, Camera LOG/LUT, and Horizon Lock support files"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/cameradata/logCubefiles" 0 0 755 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libcontextanalyzer_jni.media.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/liblogProcessingEngine.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmediacontextanalyzer.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmpp.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmpp_common.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmppclient.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmppcolorgrade.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmppfilter.so" 0 0 644 "u:object_r:system_lib_file:s0"
 
 # =============================================================================
@@ -651,8 +529,7 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libphotohdr.so" 0 0 644 "u:objec
 # =============================================================================
 # S26U Prebuilts - PhotoHDR Simba / HEIF Stack
 # =============================================================================
-# System-side test stack only. Keep the existing libphotohdr.so and imagecodec
-# APEX contents unchanged for this pass.
+# Use the One UI 9 system stack with the stock One UI 9 imagecodec APEX.
 LOG "- Adding S26U PhotoHDR Simba/HEIF system stack"
 for f in \
     "libsimba.media.samsung.so" \
@@ -660,15 +537,13 @@ for f in \
     "libsimba.cfa.media.samsung.so" \
     "libheifcapture.so" \
     "libheifcapture_jni.media.samsung.so" \
-    "libheif.so" \
     "libheifcodec_jni.so" \
     "libheifregiondec_jni.so" \
     "libsheif.so" \
-    "libsheifdecadapter.so" \
     "libsecultrahdr.so" \
     "libultrahdr.so" \
     "libjpegsq.media.samsung.so"; do
-    ADD_TO_WORK_DIR "$MODPATH" "system" "lib64/$f" 0 0 644 "u:object_r:system_lib_file:s0"
+    ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/$f" 0 0 644 "u:object_r:system_lib_file:s0"
     _REZOSS_SET_SYSTEM_LIB64_METADATA "$f"
 done
 
@@ -689,12 +564,10 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libDocShadowRemoval.camera.samsu
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libMoireFilterV2.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 for f in \
     "libcontextanalyzer_jni.media.samsung.so" \
-    "liblogProcessingEngine.so" \
     "libmediacontextanalyzer.so" \
     "libmpp.so" \
     "libmpp_common.so" \
     "libmppclient.so" \
-    "libmppcolorgrade.so" \
     "libmppfilter.so" \
     "libppvdis_core.so" \
     "libppvdis_interface.so" \
@@ -794,7 +667,7 @@ done
 LOG "- Adding S26U PhotoHDR vendor encoder plugin"
 for f in \
     "libSecPhotoHdrEncoder.uniplugin@1.0.so"; do
-    ADD_TO_WORK_DIR "$MODPATH" "vendor" "lib64/$f" 0 0 644 "u:object_r:vendor_file:s0"
+    ADD_TO_WORK_DIR "m3qxxx" "vendor" "lib64/$f" 0 0 644 "u:object_r:vendor_file:s0"
 done
 
 # =============================================================================
@@ -907,9 +780,8 @@ SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GENAI_CONFIG_LLM_VERSION" "0.7
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GENAI_SUPPORT_OFFLINE_LANGUAGEMODEL" "TRUE"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/app/SketchBook/SketchBook.apk" 0 0 644 "u:object_r:system_file:s0"
 LOG "- Overlay S26U Notification highlights AI APKs"
-LOG "- Downloading latest Samsung Intelligence Voice Service app"
-DOWNLOAD_FILE "$(GET_GALAXY_STORE_DOWNLOAD_URL "com.samsung.android.intellivoiceservice")" \
-    "$WORK_DIR/system/system/priv-app/SamsungIntelliVoiceServices/SamsungIntelliVoiceServices.apk"
+LOG "- Adding S26U One UI 9 Samsung Intelligence Voice Service"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/SamsungIntelliVoiceServices/SamsungIntelliVoiceServices.apk" 0 0 644 "u:object_r:system_file:s0"
 SET_METADATA "system" "system/priv-app/SamsungIntelliVoiceServices" 0 0 755 "u:object_r:system_file:s0"
 SET_METADATA "system" "system/priv-app/SamsungIntelliVoiceServices/SamsungIntelliVoiceServices.apk" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/SamsungAiCore/SamsungAiCore.apk" 0 0 644 "u:object_r:system_file:s0"

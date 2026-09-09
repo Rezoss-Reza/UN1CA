@@ -537,6 +537,29 @@ DOWNLOAD_FILE()
     local URL="$1"
     local OUTPUT="$2"
 
+    # GET_GALAXY_STORE_DOWNLOAD_URL could not find an SDK 37 / One UI 9 app.
+    # Keep the ROM copy (including any prior patches) instead of downloading.
+    if [[ "$URL" == galaxy-store-source:* ]]; then
+        if [ -f "$OUTPUT" ]; then
+            LOG "- Using current ROM app: ${OUTPUT#"$WORK_DIR/"}"
+            return 0
+        fi
+
+        local SOURCE_MODEL="${SOURCE_FIRMWARE%%/*}"
+        local SOURCE_CSC="${SOURCE_FIRMWARE#*/}"
+        SOURCE_CSC="${SOURCE_CSC%%/*}"
+        local SOURCE_APP="$FW_DIR/${SOURCE_MODEL}_${SOURCE_CSC}/${OUTPUT#"$WORK_DIR/"}"
+        if [[ "$OUTPUT" == "$WORK_DIR/"* ]] && [ -f "$SOURCE_APP" ]; then
+            LOG "- Using source firmware app: ${OUTPUT#"$WORK_DIR/"}"
+            mkdir -p "$(dirname "$OUTPUT")" || return 1
+            cp -p "$SOURCE_APP" "$OUTPUT" || return 1
+            return 0
+        fi
+
+        echo "App not available"
+        return 0
+    fi
+
     mkdir -p "$(dirname "$OUTPUT")"
     curl -L -# -o "$OUTPUT" "$URL"
     return $?

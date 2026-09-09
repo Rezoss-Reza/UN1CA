@@ -20,24 +20,18 @@ SMALI_PATCH "system" "system/framework/framework.jar" \
 
 DECODE_APK "system" "system/priv-app/SecSettings/SecSettings.apk"
 
-# Disable stock OTA references
-if [ ! -f "$WORK_DIR/system/system/priv-app/ChoiDujour/ChoiDujour.apk" ]; then
-    SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-        "smali_classes5/com/samsung/android/settings/softwareupdate/SoftwareUpdateUtils.smali" "return" \
-        'isOTAUpgradeAllowed(Landroid/content/Context;)Z' \
-        'false'
-fi
+# SoftwareUpdateUtils no longer exposes isOTAUpgradeAllowed(Context) on One UI 9.
 
 # Always show One UI minor version
 SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-    "smali_classes5/com/samsung/android/settings/deviceinfo/softwareinfo/OneUIVersionPreferenceController.smali" "replace" \
+    "smali_classes3/com/samsung/android/settings/deviceinfo/softwareinfo/OneUIVersionPreferenceController.smali" "replace" \
     'isDeviceWithMicroVersion()Z' \
     'move-result p0' \
     'const/4 p0, 0x1'
 
 # Show real device model number
 SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-    "smali_classes5/com/samsung/android/settings/deviceinfo/aboutphone/ModelNameGetter.smali" "replace" \
+    "smali_classes3/com/samsung/android/settings/deviceinfo/aboutphone/ModelNameGetter.smali" "replace" \
     'getModelName()Ljava/lang/String;' \
     'ro.product.model' \
     'ro.boot.em.model'
@@ -79,22 +73,22 @@ done < <(find "$MODPATH/SecSettings.apk" -type f \
 # Display > Font list and apply path.
 LOG "- Patching Samsung font list integration in /system/system/priv-app/SecSettings.apk"
 SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-    "smali_classes5/com/samsung/android/settings/flipfont/FontListAdapter.smali" "replace" \
+    "smali_classes3/com/samsung/android/settings/flipfont/FontListAdapter.smali" "replace" \
     'getInstanceFontListAdapter(Landroid/content/Context;)Lcom/samsung/android/settings/flipfont/FontListAdapter;' \
     'invoke-virtual/range {v3 .. v8}, Lcom/samsung/android/fontutil/TypefaceFinder;->getSansEntries(Landroid/content/Context;Landroid/content/pm/PackageManager;Ljava/util/ArrayList;Ljava/util/ArrayList;Ljava/util/ArrayList;)V' \
     '    invoke-virtual/range {v3 .. v8}, Lcom/samsung/android/fontutil/TypefaceFinder;->getSansEntries(Landroid/content/Context;Landroid/content/pm/PackageManager;Ljava/util/ArrayList;Ljava/util/ArrayList;Ljava/util/ArrayList;)V\n\n    invoke-static {v2}, Lio/mesalabs/unica/settings/font/FontListHook;->appendSelectedFonts(Lcom/samsung/android/settings/flipfont/FontListAdapter;)V' \
     > /dev/null
 SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-    "smali_classes5/com/samsung/android/settings/flipfont/FontListAdapter.smali" "replace" \
+    "smali_classes3/com/samsung/android/settings/flipfont/FontListAdapter.smali" "replace" \
     'getFont(Ljava/lang/String;Ljava/lang/String;)Landroid/graphics/Typeface;' \
     'const-string v0, "fonts/"' \
     '    invoke-static {p0, p1, p2}, Lio/mesalabs/unica/settings/font/FontListHook;->getFont(Lcom/samsung/android/settings/flipfont/FontListAdapter;Ljava/lang/String;Ljava/lang/String;)Landroid/graphics/Typeface;\n\n    move-result-object v0\n\n    if-eqz v0, :cond_unica_font_original_getFont\n\n    return-object v0\n\n    :cond_unica_font_original_getFont\n    const-string v0, "fonts/"' \
     > /dev/null
 SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-    "smali_classes5/com/samsung/android/settings/display/SecFontStylePreferenceFragment.smali" "replace" \
-    'onItemClick(I)V' \
-    'iget-object v0, p0, Lcom/samsung/android/settings/display/SecFontStylePreferenceFragment;->mContext:Landroid/content/Context;' \
-    '    invoke-static {p1}, Lio/mesalabs/unica/settings/font/FontListHook;->isUnicaFontPackage(Ljava/lang/String;)Z\n\n    move-result v0\n\n    if-eqz v0, :cond_unica_font_original_apply\n\n    iget-object v0, p0, Lcom/samsung/android/settings/display/SecFontStylePreferenceFragment;->mFontListAdapter:Lcom/samsung/android/settings/flipfont/FontListAdapter;\n\n    iget-object v0, v0, Lcom/samsung/android/settings/flipfont/FontListAdapter;->mTypefaceFiles:Ljava/util/ArrayList;\n\n    iget v2, p0, Lcom/samsung/android/settings/display/SecFontStylePreferenceFragment;->mCurrentFontIndex:I\n\n    invoke-virtual {v0, v2}, Ljava/util/ArrayList;->get(I)Ljava/lang/Object;\n\n    move-result-object v0\n\n    check-cast v0, Ljava/lang/String;\n\n    invoke-virtual {v0}, Ljava/lang/String;->toString()Ljava/lang/String;\n\n    move-result-object v0\n\n    iget-object v2, p0, Lcom/samsung/android/settings/display/SecFontStylePreferenceFragment;->mFontListAdapter:Lcom/samsung/android/settings/flipfont/FontListAdapter;\n\n    iget-object v2, v2, Lcom/samsung/android/settings/flipfont/FontListAdapter;->mFontNames:Ljava/util/ArrayList;\n\n    iget v3, p0, Lcom/samsung/android/settings/display/SecFontStylePreferenceFragment;->mCurrentFontIndex:I\n\n    invoke-virtual {v2, v3}, Ljava/util/ArrayList;->get(I)Ljava/lang/Object;\n\n    move-result-object v2\n\n    check-cast v2, Ljava/lang/String;\n\n    invoke-virtual {v2}, Ljava/lang/String;->toString()Ljava/lang/String;\n\n    move-result-object v2\n\n    iget-object v3, p0, Lcom/samsung/android/settings/display/SecFontStylePreferenceFragment;->mContext:Landroid/content/Context;\n\n    invoke-static {v3, v0, v2}, Lio/mesalabs/unica/settings/font/FontListHook;->applyUnicaFont(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;)Z\n\n    move-result v2\n\n    if-nez v2, :goto_5\n\n    invoke-virtual {p0, p1}, Lcom/samsung/android/settings/display/SecFontStylePreferenceFragment;->showWarningDialog(Ljava/lang/String;)V\n\n    return-void\n\n    :cond_unica_font_original_apply\n    iget-object v0, p0, Lcom/samsung/android/settings/display/SecFontStylePreferenceFragment;->mContext:Landroid/content/Context;' \
+    "smali_classes3/com/samsung/android/settings/display/SecFontStylePreferenceFragment.smali" "replace" \
+    'onItemClick(ILandroid/view/View;)V' \
+    'iget-object p2, p0, Lcom/samsung/android/settings/display/SecFontStylePreferenceFragment;->mContext:Landroid/content/Context;' \
+    '    invoke-static {p1}, Lio/mesalabs/unica/settings/font/FontListHook;->isUnicaFontPackage(Ljava/lang/String;)Z\n\n    move-result v0\n\n    if-eqz v0, :cond_unica_font_original_apply\n\n    iget-object v0, p0, Lcom/samsung/android/settings/display/SecFontStylePreferenceFragment;->mFontListAdapter:Lcom/samsung/android/settings/flipfont/FontListAdapter;\n\n    iget-object v0, v0, Lcom/samsung/android/settings/flipfont/FontListAdapter;->mTypefaceFiles:Ljava/util/ArrayList;\n\n    iget v2, p0, Lcom/samsung/android/settings/display/SecFontStylePreferenceFragment;->mCurrentFontIndex:I\n\n    invoke-virtual {v0, v2}, Ljava/util/ArrayList;->get(I)Ljava/lang/Object;\n\n    move-result-object v0\n\n    check-cast v0, Ljava/lang/String;\n\n    invoke-virtual {v0}, Ljava/lang/String;->toString()Ljava/lang/String;\n\n    move-result-object v0\n\n    iget-object v2, p0, Lcom/samsung/android/settings/display/SecFontStylePreferenceFragment;->mFontListAdapter:Lcom/samsung/android/settings/flipfont/FontListAdapter;\n\n    iget-object v2, v2, Lcom/samsung/android/settings/flipfont/FontListAdapter;->mFontNames:Ljava/util/ArrayList;\n\n    iget v3, p0, Lcom/samsung/android/settings/display/SecFontStylePreferenceFragment;->mCurrentFontIndex:I\n\n    invoke-virtual {v2, v3}, Ljava/util/ArrayList;->get(I)Ljava/lang/Object;\n\n    move-result-object v2\n\n    check-cast v2, Ljava/lang/String;\n\n    invoke-virtual {v2}, Ljava/lang/String;->toString()Ljava/lang/String;\n\n    move-result-object v2\n\n    iget-object v3, p0, Lcom/samsung/android/settings/display/SecFontStylePreferenceFragment;->mContext:Landroid/content/Context;\n\n    invoke-static {v3, v0, v2}, Lio/mesalabs/unica/settings/font/FontListHook;->applyUnicaFont(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;)Z\n\n    move-result v2\n\n    if-eqz v2, :cond_unica_font_apply_failed\n\n    goto/16 :goto_6\n\n    :cond_unica_font_apply_failed\n\n    invoke-virtual {p0, p1}, Lcom/samsung/android/settings/display/SecFontStylePreferenceFragment;->showWarningDialog(Ljava/lang/String;)V\n\n    return-void\n\n    :cond_unica_font_original_apply\n    iget-object p2, p0, Lcom/samsung/android/settings/display/SecFontStylePreferenceFragment;->mContext:Landroid/content/Context;' \
     > /dev/null
 
 # Mark UN1CA Settings fragments as "valid"
@@ -102,77 +96,77 @@ LOG "- Patching \"smali/com/android/settings/core/gateway/SettingsGateway.smali\
 SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
     "smali/com/android/settings/core/gateway/SettingsGateway.smali" "replace" \
     '<clinit>()V' \
-    'filled-new-array/range {v1 .. v171}, [Ljava/lang/String;' \
-    '    const-string v172, "io.mesalabs.unica.settings.UnicaSettingsFragment"\n\n    filled-new-array/range {v1 .. v160}, [Ljava/lang/String;' \
+    'filled-new-array/range {v1 .. v186}, [Ljava/lang/String;' \
+    '    const-string v187, "io.mesalabs.unica.settings.UnicaSettingsFragment"\n\n    filled-new-array/range {v1 .. v187}, [Ljava/lang/String;' \
     > /dev/null
 SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
     "smali/com/android/settings/core/gateway/SettingsGateway.smali" "replace" \
     '<clinit>()V' \
-    'filled-new-array/range {v1 .. v160}, [Ljava/lang/String;' \
-    '    const-string v173, "io.mesalabs.unica.settings.extra.ExtraSettingsFragment"\n\n    filled-new-array/range {v1 .. v161}, [Ljava/lang/String;' \
+    'filled-new-array/range {v1 .. v187}, [Ljava/lang/String;' \
+    '    const-string v188, "io.mesalabs.unica.settings.extra.ExtraSettingsFragment"\n\n    filled-new-array/range {v1 .. v188}, [Ljava/lang/String;' \
     > /dev/null
 SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
     "smali/com/android/settings/core/gateway/SettingsGateway.smali" "replace" \
     '<clinit>()V' \
-    'filled-new-array/range {v1 .. v161}, [Ljava/lang/String;' \
-    '    const-string v174, "io.mesalabs.unica.settings.hma.HideMyApplistFragment"\n\n    filled-new-array/range {v1 .. v162}, [Ljava/lang/String;' \
+    'filled-new-array/range {v1 .. v188}, [Ljava/lang/String;' \
+    '    const-string v189, "io.mesalabs.unica.settings.hma.HideMyApplistFragment"\n\n    filled-new-array/range {v1 .. v189}, [Ljava/lang/String;' \
     > /dev/null
 SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
     "smali/com/android/settings/core/gateway/SettingsGateway.smali" "replace" \
     '<clinit>()V' \
-    'filled-new-array/range {v1 .. v162}, [Ljava/lang/String;' \
-    '    const-string v175, "io.mesalabs.unica.settings.spoof.HideDeveloperStatusFragment"\n\n    filled-new-array/range {v1 .. v163}, [Ljava/lang/String;' \
+    'filled-new-array/range {v1 .. v189}, [Ljava/lang/String;' \
+    '    const-string v190, "io.mesalabs.unica.settings.spoof.HideDeveloperStatusFragment"\n\n    filled-new-array/range {v1 .. v190}, [Ljava/lang/String;' \
     > /dev/null
 SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
     "smali/com/android/settings/core/gateway/SettingsGateway.smali" "replace" \
     '<clinit>()V' \
-    'filled-new-array/range {v1 .. v163}, [Ljava/lang/String;' \
-    '    const-string v176, "io.mesalabs.unica.settings.spoof.SpoofSettingsFragment"\n\n    filled-new-array/range {v1 .. v164}, [Ljava/lang/String;' \
+    'filled-new-array/range {v1 .. v190}, [Ljava/lang/String;' \
+    '    const-string v191, "io.mesalabs.unica.settings.spoof.SpoofSettingsFragment"\n\n    filled-new-array/range {v1 .. v191}, [Ljava/lang/String;' \
     > /dev/null
 SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
     "smali/com/android/settings/core/gateway/SettingsGateway.smali" "replace" \
     '<clinit>()V' \
-    'filled-new-array/range {v1 .. v164}, [Ljava/lang/String;' \
-    '    const-string v177, "io.mesalabs.unica.settings.ui.UISettingsFragment"\n\n    filled-new-array/range {v1 .. v177}, [Ljava/lang/String;' \
+    'filled-new-array/range {v1 .. v191}, [Ljava/lang/String;' \
+    '    const-string v192, "io.mesalabs.unica.settings.ui.UISettingsFragment"\n\n    filled-new-array/range {v1 .. v192}, [Ljava/lang/String;' \
     > /dev/null
 SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
     "smali/com/android/settings/core/gateway/SettingsGateway.smali" "replace" \
     '<clinit>()V' \
-    'filled-new-array/range {v1 .. v177}, [Ljava/lang/String;' \
-    '    const-string v178, "io.mesalabs.unica.settings.spoof.CameraFeatureFragment"\n\n    filled-new-array/range {v1 .. v178}, [Ljava/lang/String;' \
+    'filled-new-array/range {v1 .. v192}, [Ljava/lang/String;' \
+    '    const-string v193, "io.mesalabs.unica.settings.spoof.CameraFeatureFragment"\n\n    filled-new-array/range {v1 .. v193}, [Ljava/lang/String;' \
     > /dev/null
 SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
     "smali/com/android/settings/core/gateway/SettingsGateway.smali" "replace" \
     '<clinit>()V' \
-    'filled-new-array/range {v1 .. v178}, [Ljava/lang/String;' \
-    '    const-string v179, "io.mesalabs.unica.settings.font.FontSelectorFragment"\n\n    filled-new-array/range {v1 .. v179}, [Ljava/lang/String;' \
+    'filled-new-array/range {v1 .. v193}, [Ljava/lang/String;' \
+    '    const-string v194, "io.mesalabs.unica.settings.font.FontSelectorFragment"\n\n    filled-new-array/range {v1 .. v194}, [Ljava/lang/String;' \
     > /dev/null
 SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
     "smali/com/android/settings/core/gateway/SettingsGateway.smali" "replace" \
     '<clinit>()V' \
-    'filled-new-array/range {v1 .. v179}, [Ljava/lang/String;' \
-    '    const-string v180, "io.mesalabs.unica.settings.extra.ScpmAllowlistFragment"\n\n    filled-new-array/range {v1 .. v180}, [Ljava/lang/String;' \
+    'filled-new-array/range {v1 .. v194}, [Ljava/lang/String;' \
+    '    const-string v195, "io.mesalabs.unica.settings.extra.ScpmAllowlistFragment"\n\n    filled-new-array/range {v1 .. v195}, [Ljava/lang/String;' \
     > /dev/null
 SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
     "smali/com/android/settings/core/gateway/SettingsGateway.smali" "replace" \
     '<clinit>()V' \
-    'filled-new-array/range {v1 .. v180}, [Ljava/lang/String;' \
-    '    const-string v181, "io.mesalabs.unica.settings.extra.NowNudgeReplyFallbacksFragment"\n\n    filled-new-array/range {v1 .. v181}, [Ljava/lang/String;' \
+    'filled-new-array/range {v1 .. v195}, [Ljava/lang/String;' \
+    '    const-string v196, "io.mesalabs.unica.settings.extra.NowNudgeReplyFallbacksFragment"\n\n    filled-new-array/range {v1 .. v196}, [Ljava/lang/String;' \
     > /dev/null
 
 # Mark Privacy Display custom app fragment as "valid"
 SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
     "smali/com/android/settings/core/gateway/SettingsGateway.smali" "replace" \
     '<clinit>()V' \
-    'filled-new-array/range {v1 .. v181}, [Ljava/lang/String;' \
-    '    const-string v182, "com.samsung.android.settings.bpd.PdCustomAppsSettings"\n\n    filled-new-array/range {v1 .. v182}, [Ljava/lang/String;' \
+    'filled-new-array/range {v1 .. v196}, [Ljava/lang/String;' \
+    '    const-string v197, "com.samsung.android.settings.bpd.PdCustomAppsSettings"\n\n    filled-new-array/range {v1 .. v197}, [Ljava/lang/String;' \
     > /dev/null
 LOG "- Patching \"smali/com/android/settings/SettingsActivity.smali\" in /system/system/priv-app/SecSettings.apk"
 SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
     "smali/com/android/settings/SettingsActivity.smali" "replace" \
     'isValidFragment(Ljava/lang/String;)Z' \
-    'const/16 v2, 0xab' \
-    'const/16 v2, 0xb6' \
+    'const/16 v2, 0xba' \
+    'const/16 v2, 0xc5' \
     > /dev/null
 
 # Add UN1CA Settings SearchIndexDataProvider(s)
@@ -235,14 +229,14 @@ if ! grep -q '"top_level_unica"' "$TOP_LEVEL_KEYS_COLLECTOR"; then
     SMALI_PATCH "system" "system/priv-app/SecSettingsIntelligence/SecSettingsIntelligence.apk" \
         "$TOP_LEVEL_KEYS_COLLECTOR_SMALI" "replace" \
         '<init>(Landroid/content/Context;)V' \
-        '.locals 36' \
         '.locals 37' \
+        '.locals 38' \
         > /dev/null
     SMALI_PATCH "system" "system/priv-app/SecSettingsIntelligence/SecSettingsIntelligence.apk" \
         "$TOP_LEVEL_KEYS_COLLECTOR_SMALI" "replace" \
         '<init>(Landroid/content/Context;)V' \
-        'filled-new-array/range {v1 .. v35}, [Ljava/lang/String;' \
-        '    const-string v36, "top_level_unica"\n\n    filled-new-array/range {v1 .. v36}, [Ljava/lang/String;' \
+        'filled-new-array/range {v1 .. v36}, [Ljava/lang/String;' \
+        '    const-string v37, "top_level_unica"\n\n    filled-new-array/range {v1 .. v37}, [Ljava/lang/String;' \
         > /dev/null
 fi
 

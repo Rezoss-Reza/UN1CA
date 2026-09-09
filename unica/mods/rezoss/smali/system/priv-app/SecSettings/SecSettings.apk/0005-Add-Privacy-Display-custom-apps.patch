@@ -16,24 +16,37 @@ index ed87e1b..ac23910 100644
      <string name="rezoss_pd_extra_dim_summary">Make the screen even more difficult to view when Privacy display is on. This may affect normal viewing in addition to viewing from side angles.</string>
      <string name="rezoss_pd_extra_dim_title">Maximum privacy protection</string>
      <string name="rezoss_pd_fixed_description">Protect your privacy by making the screen less visible when viewed from a side angle.</string>
-diff --git a/res/xml/sec_pd_main_settings.xml b/res/xml/sec_pd_main_settings.xml
+diff --git a/res/xml/sec_rezoss_pd_main_settings.xml b/res/xml/sec_rezoss_pd_main_settings.xml
 index a4f9e6c..ad86c30 100644
---- a/res/xml/sec_pd_main_settings.xml
-+++ b/res/xml/sec_pd_main_settings.xml
+--- a/res/xml/sec_rezoss_pd_main_settings.xml
++++ b/res/xml/sec_rezoss_pd_main_settings.xml
 @@ -3,4 +3,5 @@
    xmlns:android="http://schemas.android.com/apk/res/android">
      <SecSwitchPreference android:title="@string/rezoss_pd_turn_on_title" android:key="pd_activation" android:summary="@string/rezoss_pd_fixed_description" android:persistent="false" />
      <SecSwitchPreference android:title="@string/rezoss_pd_extra_dim_title" android:key="pd_extra_dim" android:summary="@string/rezoss_pd_extra_dim_summary" android:persistent="false" />
-+    <SecPreferenceScreen android:title="@string/rezoss_pd_custom_apps_title" android:key="pd_custom_apps" android:summary="@string/rezoss_pd_custom_apps_summary" android:fragment="com.samsung.android.settings.bpd.PdCustomAppsSettings" />
++    <SecPreferenceScreen android:title="@string/rezoss_pd_custom_apps_title" android:key="pd_custom_apps" android:summary="@string/rezoss_pd_custom_apps_summary" android:fragment="com.samsung.android.settings.bpd.RezossPdCustomAppsSettings" />
  </PreferenceScreen>
-diff --git a/smali_classes5/com/samsung/android/settings/bpd/PdCustomAppsSettings.smali b/smali_classes5/com/samsung/android/settings/bpd/PdCustomAppsSettings.smali
-index 1802321..a407f08 100644
---- a/smali_classes5/com/samsung/android/settings/bpd/PdCustomAppsSettings.smali
-+++ b/smali_classes5/com/samsung/android/settings/bpd/PdCustomAppsSettings.smali
-@@ -14,10 +14,39 @@
- 
- 
- # virtual methods
+diff --git a/smali_classes3/com/samsung/android/settings/bpd/RezossPdCustomAppsSettings.smali b/smali_classes3/com/samsung/android/settings/bpd/RezossPdCustomAppsSettings.smali
+new file mode 100644
+--- /dev/null
++++ b/smali_classes3/com/samsung/android/settings/bpd/RezossPdCustomAppsSettings.smali
+@@ -0,0 +1,307 @@
++.class public Lcom/samsung/android/settings/bpd/RezossPdCustomAppsSettings;
++.super Lcom/android/settings/dashboard/DashboardFragment;
++.source "RezossPdCustomAppsSettings.java"
++
++
++# direct methods
++.method public constructor <init>()V
++    .locals 0
++
++    invoke-direct {p0}, Lcom/android/settings/dashboard/DashboardFragment;-><init>()V
++
++    return-void
++.end method
++
++
++# virtual methods
 +.method public final getFragmentTitleResId(Landroid/content/Context;)I
 +    .locals 3
 +
@@ -63,28 +76,31 @@ index 1802321..a407f08 100644
 +    return p0
 +.end method
 +
- .method public final getLogTag()Ljava/lang/String;
-     .locals 0
- 
--    const-string p0, ""
-+    const-string p0, "PdCustomAppsSettings"
- 
-     return-object p0
- .end method
-@@ -25,7 +54,7 @@
- .method public final getMetricsCategory()I
-     .locals 0
- 
--    const/4 p0, 0x0
++.method public final getLogTag()Ljava/lang/String;
++    .locals 0
++
++    const-string p0, "RezossPdCustomAppsSettings"
++
++    return-object p0
++.end method
++
++.method public final getMetricsCategory()I
++    .locals 0
++
 +    const/16 p0, 0x1a5
- 
-     return p0
- .end method
-@@ -39,11 +68,240 @@
- .end method
- 
- .method public final onCreate(Landroid/os/Bundle;)V
--    .locals 0
++
++    return p0
++.end method
++
++.method public final getPreferenceScreenResId()I
++    .locals 0
++
++    const/4 p0, 0x0
++
++    return p0
++.end method
++
++.method public final onCreate(Landroid/os/Bundle;)V
 +    .locals 16
 +
 +    invoke-super/range {p0 .. p1}, Lcom/android/settings/dashboard/DashboardFragment;->onCreate(Landroid/os/Bundle;)V
@@ -141,7 +157,7 @@ index 1802321..a407f08 100644
 +
 +    invoke-direct {v5}, Ljava/util/HashSet;-><init>()V
 +
-+    invoke-static {v0}, Lcom/samsung/android/settings/bpd/utils/PdUtils;->isPdPackageSelectionInitialized(Landroid/content/Context;)Z
++    invoke-static {v0}, Lcom/samsung/android/settings/bpd/utils/RezossPdUtils;->isPdPackageSelectionInitialized(Landroid/content/Context;)Z
 +
 +    move-result v6
 +
@@ -179,13 +195,11 @@ index 1802321..a407f08 100644
 +    move-result v12
 +
 +    if-eqz v12, :cond_6
- 
--    invoke-super {p0, p1}, Lcom/android/settings/dashboard/DashboardFragment;->onCreate(Landroid/os/Bundle;)V
++
 +    new-instance v12, Landroidx/preference/SecSwitchPreference;
- 
--    invoke-virtual {p0}, Lcom/android/settings/SettingsPreferenceFragment;->finish()V
++
 +    invoke-direct {v12, v0}, Landroidx/preference/SecSwitchPreference;-><init>(Landroid/content/Context;)V
- 
++
 +    new-instance v13, Ljava/lang/StringBuilder;
 +
 +    const-string/jumbo v14, "pd_app_"
@@ -243,12 +257,12 @@ index 1802321..a407f08 100644
 +
 +    const/4 v14, 0x1
 +
-+    invoke-static {v0, v11, v14}, Lcom/samsung/android/settings/bpd/utils/PdUtils;->setPdPackageSelected(Landroid/content/Context;Ljava/lang/String;Z)V
++    invoke-static {v0, v11, v14}, Lcom/samsung/android/settings/bpd/utils/RezossPdUtils;->setPdPackageSelected(Landroid/content/Context;Ljava/lang/String;Z)V
 +
 +    goto :goto_2
 +
 +    :cond_2
-+    invoke-static {v0, v11}, Lcom/samsung/android/settings/bpd/utils/PdUtils;->isPdPackageSelected(Landroid/content/Context;Ljava/lang/String;)Z
++    invoke-static {v0, v11}, Lcom/samsung/android/settings/bpd/utils/RezossPdUtils;->isPdPackageSelected(Landroid/content/Context;Ljava/lang/String;)Z
 +
 +    move-result v14
 +
@@ -265,11 +279,11 @@ index 1802321..a407f08 100644
 +
 +    const/4 v1, 0x1
 +
-+    invoke-static {v0, v1}, Lcom/samsung/android/settings/bpd/utils/PdUtils;->setPdPackageSelectionInitialized(Landroid/content/Context;Z)V
++    invoke-static {v0, v1}, Lcom/samsung/android/settings/bpd/utils/RezossPdUtils;->setPdPackageSelectionInitialized(Landroid/content/Context;Z)V
 +
 +    :cond_8
-     return-void
- .end method
++    return-void
++.end method
 +
 +.method public final onPreferenceTreeClick(Landroidx/preference/Preference;)Z
 +    .locals 5
@@ -310,7 +324,7 @@ index 1802321..a407f08 100644
 +
 +    move-result p1
 +
-+    invoke-static {v2, v0, p1}, Lcom/samsung/android/settings/bpd/utils/PdUtils;->setPdPackageSelected(Landroid/content/Context;Ljava/lang/String;Z)V
++    invoke-static {v2, v0, p1}, Lcom/samsung/android/settings/bpd/utils/RezossPdUtils;->setPdPackageSelected(Landroid/content/Context;Ljava/lang/String;Z)V
 +
 +    :cond_1
 +    const/4 p0, 0x1
@@ -324,10 +338,10 @@ index 1802321..a407f08 100644
 +
 +    return p0
 +.end method
-diff --git a/smali_classes5/com/samsung/android/settings/bpd/utils/PdUtils.smali b/smali_classes5/com/samsung/android/settings/bpd/utils/PdUtils.smali
+diff --git a/smali_classes3/com/samsung/android/settings/bpd/utils/RezossPdUtils.smali b/smali_classes3/com/samsung/android/settings/bpd/utils/RezossPdUtils.smali
 index f99a3ad..bdf2c4e 100644
---- a/smali_classes5/com/samsung/android/settings/bpd/utils/PdUtils.smali
-+++ b/smali_classes5/com/samsung/android/settings/bpd/utils/PdUtils.smali
+--- a/smali_classes3/com/samsung/android/settings/bpd/utils/RezossPdUtils.smali
++++ b/smali_classes3/com/samsung/android/settings/bpd/utils/RezossPdUtils.smali
 @@ -65,6 +65,185 @@
      return v1
  .end method

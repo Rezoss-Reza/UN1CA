@@ -7,12 +7,12 @@ diff --git a/smali_classes5/noticolorpicker/NotificationColorPicker.smali b/smal
 index 0b6f4bf..470d93f 100644
 --- a/smali_classes5/noticolorpicker/NotificationColorPicker.smali
 +++ b/smali_classes5/noticolorpicker/NotificationColorPicker.smali
-@@ -2099,10 +2099,12 @@
+@@ -1579,10 +1579,12 @@
 
      :cond_0
      invoke-virtual/range {p0 .. p1}, Lnoticolorpicker/NotificationColorPicker;->isGrayScaleIcon(Lcom/android/systemui/statusbar/notification/row/ExpandableNotificationRow;)Z
 
-     move-result v3
+     move-result v10
 +
 +    invoke-static {v6}, Lnoticolorpicker/PrivacyDisplayMicroLouverUtils;->applyToRow(Lcom/android/systemui/statusbar/notification/row/ExpandableNotificationRow;)V
 
