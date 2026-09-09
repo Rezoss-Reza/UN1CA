@@ -393,20 +393,8 @@ LOG_STEP_OUT
 LOG_STEP_IN "- Adding Semantic search feature"
 ADD_TO_WORK_DIR "m3qxxx" "system" \
     "system/etc/default-permissions/default-permissions-com.samsung.mediasearch.xml" 0 0 644 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "pa2qxxx" "system" \
-    "system/etc/mediasearch/data/dec_adaptor.tflite" 0 0 644 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "pa2qxxx" "system" \
-    "system/etc/mediasearch/data/dec_event.tflite" 0 0 644 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "pa2qxxx" "system" \
-    "system/etc/mediasearch/data/enc_image.tflite" 0 0 644 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "pa2qxxx" "system" \
-    "system/etc/mediasearch/data/enc_text.tflite" 0 0 644 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "pa2qxxx" "system" \
-    "system/etc/mediasearch/data/versioninfo.json" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" \
     "system/etc/permissions/privapp-permissions-com.samsung.mediasearch.xml" 0 0 644 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" \
-    "system/priv-app/MediaSearch/MediaSearch.apk" 0 0 644 "u:object_r:system_file:s0"
 # The S26U v5 package initializes an SM8850 V81/NPU model on dm3q. Keep the
 # S26U provider surface and alias its bundled HTP payloads to the SM8550/V73
 # pair so the native QNN path can be tested on dm3q.
