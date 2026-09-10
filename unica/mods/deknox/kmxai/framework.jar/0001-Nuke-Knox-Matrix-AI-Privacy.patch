@@ -2,38 +2,6 @@ From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: UN1CA <noreply@unica>
 Subject: [PATCH] Nuke Knox Matrix AI Privacy
 ---
-diff --git a/mod/build/apk/classes.dex b/build/apk/classes.dex
-new file mode 100644
-index 0000000..2fe2345
-Binary files /dev/null and b/build/apk/classes.dex differ
-diff --git a/mod/build/apk/classes2.dex b/build/apk/classes2.dex
-new file mode 100644
-index 0000000..602832a
-Binary files /dev/null and b/build/apk/classes2.dex differ
-diff --git a/mod/build/apk/classes3.dex b/build/apk/classes3.dex
-new file mode 100644
-index 0000000..057ebfc
-Binary files /dev/null and b/build/apk/classes3.dex differ
-diff --git a/mod/build/apk/classes4.dex b/build/apk/classes4.dex
-new file mode 100644
-index 0000000..e33fb09
-Binary files /dev/null and b/build/apk/classes4.dex differ
-diff --git a/mod/build/apk/classes5.dex b/build/apk/classes5.dex
-new file mode 100644
-index 0000000..ac8e36d
-Binary files /dev/null and b/build/apk/classes5.dex differ
-diff --git a/mod/build/apk/classes6.dex b/build/apk/classes6.dex
-new file mode 100644
-index 0000000..d957b14
-Binary files /dev/null and b/build/apk/classes6.dex differ
-diff --git a/mod/build/apk/classes7.dex b/build/apk/classes7.dex
-new file mode 100644
-index 0000000..59bb8f8
-Binary files /dev/null and b/build/apk/classes7.dex differ
-diff --git a/mod/dist/framework.jar b/dist/framework.jar
-new file mode 100644
-index 0000000..ab8697e
-Binary files /dev/null and b/dist/framework.jar differ
 diff --git a/smali_classes6/com/samsung/android/kmxservice/ai/privacy/PermissionData$1.smali b/orig/smali_classes6/com/samsung/android/kmxservice/ai/privacy/PermissionData$1.smali
 deleted file mode 100644
 index 2a8047f..0000000

@@ -3,6 +3,11 @@ From: Salvo Giangreco <giangrecosalvo9@gmail.com>
 Date: Tue, 9 Sep 2025 00:11:17 +0200
 Subject: [PATCH] Add Adaptive color tone feature
 
+Keep the S23U SecDisplayUtils.SIGNATURES class-initialization reads.
+The donor mProductName field is absent from the One UI 9 S23U class.
+Use the stock Utils.isTablet() predicate for adaptive display layouts;
+isScrenModeTabletLayout is also absent from the current SecDisplayUtils.
+
 ---
 
 diff --git a/smali/com/android/settings/DisplaySettings$4.smali b/smali/com/android/settings/DisplaySettings$4.smali
@@ -36,15 +41,6 @@ index 209b29e..7a352ea 100644
      new-instance v7, Lcom/samsung/android/settings/display/ScreenModeSettingManager;
  
      invoke-direct {v7, v0}, Lcom/samsung/android/settings/display/ScreenModeSettingManager;-><init>(Landroid/content/Context;)V
-@@ -88,7 +100,7 @@
- 
-     if-eqz v7, :cond_4
- 
--    sget-object v7, Lcom/samsung/android/settings/display/SecDisplayUtils;->SIGNATURES:[Landroid/content/pm/Signature;
-+    sget-object v7, Lcom/samsung/android/settings/display/SecDisplayUtils;->mProductName:Ljava/lang/String;
- 
-     invoke-static {}, Lcom/samsung/android/settings/Rune;->isChinaModel()Z
- 
 @@ -606,35 +618,13 @@
  
      move-result v1
@@ -1144,24 +1140,6 @@ index d9f1d47..5f21b90 100644
  
  
  # virtual methods
-@@ -25,7 +25,7 @@
- 
-     move-result v2
- 
--    sget-object v3, Lcom/samsung/android/settings/display/SecDisplayUtils;->SIGNATURES:[Landroid/content/pm/Signature;
-+    sget-object v3, Lcom/samsung/android/settings/display/SecDisplayUtils;->mProductName:Ljava/lang/String;
- 
-     const/4 v3, 0x1
- 
-@@ -122,7 +122,7 @@
- 
-     iget-object p0, p0, Lcom/samsung/android/settings/bixby/target/actions/Action;->mContext:Landroid/content/Context;
- 
--    sget-object v0, Lcom/samsung/android/settings/display/SecDisplayUtils;->SIGNATURES:[Landroid/content/pm/Signature;
-+    sget-object v0, Lcom/samsung/android/settings/display/SecDisplayUtils;->mProductName:Ljava/lang/String;
- 
-     invoke-virtual {p0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
- 
 @@ -225,7 +225,7 @@
  .end method
  
@@ -1767,15 +1745,6 @@ index 0c043f4..d49fb58 100644
  
      iget-object v0, v0, Lcom/android/settingslib/widget/LayoutPreference;->mRootView:Landroid/view/View;
  
-@@ -338,7 +338,7 @@
-     iput-object v0, p0, Lcom/samsung/android/settings/display/NewModePreview;->mContext:Landroid/content/Context;
- 
-     :cond_0
--    sget-object p0, Lcom/samsung/android/settings/display/SecDisplayUtils;->SIGNATURES:[Landroid/content/pm/Signature;
-+    sget-object p0, Lcom/samsung/android/settings/display/SecDisplayUtils;->mProductName:Ljava/lang/String;
- 
-     sget-object p0, Lcom/samsung/android/settings/Rune;->COMMON_CONFIG_PACKAGE_NAME_SMART_MANAGER:Ljava/lang/String;
- 
 @@ -350,7 +350,7 @@
  .method public final getPreferenceScreenResId()I
      .locals 0
@@ -1928,24 +1897,6 @@ index 0c043f4..d49fb58 100644
  
      invoke-virtual {p1, v4}, Landroid/view/View;->findViewById(I)Landroid/view/View;
  
-@@ -861,7 +849,7 @@
- 
-     invoke-virtual {p1, v3}, Landroid/widget/LinearLayout;->setVisibility(I)V
- 
--    sget-object p1, Lcom/samsung/android/settings/display/SecDisplayUtils;->SIGNATURES:[Landroid/content/pm/Signature;
-+    sget-object p1, Lcom/samsung/android/settings/display/SecDisplayUtils;->mProductName:Ljava/lang/String;
- 
-     goto :goto_3
- 
-@@ -870,7 +858,7 @@
- 
-     invoke-virtual {p1, p2}, Landroid/widget/LinearLayout;->setVisibility(I)V
- 
--    sget-object p1, Lcom/samsung/android/settings/display/SecDisplayUtils;->SIGNATURES:[Landroid/content/pm/Signature;
-+    sget-object p1, Lcom/samsung/android/settings/display/SecDisplayUtils;->mProductName:Ljava/lang/String;
- 
-     :goto_3
-     invoke-static {}, Lcom/android/settings/Utils;->isTablet()Z
 @@ -897,7 +885,7 @@
  
      iget-object p1, p0, Lcom/samsung/android/settings/display/NewModePreview;->mScreenModeView:Landroid/view/View;
@@ -3853,7 +3804,7 @@ index 11c0fdc..02a1ee2 100644
 +
 +    move-result-object v3
 +
-+    invoke-static {v3}, Lcom/samsung/android/settings/display/SecDisplayUtils;->isScrenModeTabletLayout(Landroidx/fragment/app/FragmentActivity;)Z
++    invoke-static {}, Lcom/android/settings/Utils;->isTablet()Z
 +
 +    move-result v3
 +
@@ -3977,7 +3928,7 @@ index 11c0fdc..02a1ee2 100644
 +
 +    move-result-object v2
 +
-+    invoke-static {v2}, Lcom/samsung/android/settings/display/SecDisplayUtils;->isScrenModeTabletLayout(Landroidx/fragment/app/FragmentActivity;)Z
++    invoke-static {}, Lcom/android/settings/Utils;->isTablet()Z
  
 -    iget-object v3, p0, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mAdaptiveDisplayView:Landroid/view/View;
 +    move-result v2
@@ -4351,7 +4302,7 @@ index 11c0fdc..02a1ee2 100644
 +    move-result-object v9
  
 -    invoke-virtual {p2, v0}, Landroid/widget/RelativeLayout;->semSetRoundedCorners(I)V
-+    invoke-static {v9}, Lcom/samsung/android/settings/display/SecDisplayUtils;->isScrenModeTabletLayout(Landroidx/fragment/app/FragmentActivity;)Z
++    invoke-static {}, Lcom/android/settings/Utils;->isTablet()Z
  
 -    iget-object p2, p0, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mPreviewLayout:Landroid/widget/RelativeLayout;
 +    move-result v9
@@ -6040,15 +5991,6 @@ index fec1976..d5014b2 100644
  
  # interfaces
  .implements Lcom/samsung/android/settings/eternal/provider/items/Recoverable;
-@@ -1157,7 +1157,7 @@
- 
-     if-eqz v0, :cond_33
- 
--    sget-object v0, Lcom/samsung/android/settings/display/SecDisplayUtils;->SIGNATURES:[Landroid/content/pm/Signature;
-+    sget-object v0, Lcom/samsung/android/settings/display/SecDisplayUtils;->mProductName:Ljava/lang/String;
- 
-     invoke-static {}, Lcom/samsung/android/settings/Rune;->isChinaModel()Z
- 
 @@ -2103,6 +2103,32 @@
      :pswitch_11
      sget-object v0, Lcom/samsung/android/settings/Rune;->COMMON_CONFIG_PACKAGE_NAME_SMART_MANAGER:Ljava/lang/String;
@@ -6555,23 +6497,7 @@ index fec1976..d5014b2 100644
  
      goto/16 :goto_2e
  
-@@ -7331,7 +7343,7 @@
- 
-     move-result v1
- 
--    sget-object v2, Lcom/samsung/android/settings/display/SecDisplayUtils;->SIGNATURES:[Landroid/content/pm/Signature;
-+    sget-object v2, Lcom/samsung/android/settings/display/SecDisplayUtils;->mProductName:Ljava/lang/String;
- 
-     new-instance v2, Ljava/lang/StringBuilder;
- 
-@@ -8355,13 +8367,13 @@
- 
-     if-eqz v1, :cond_ae
- 
--    sget-object v1, Lcom/samsung/android/settings/display/SecDisplayUtils;->SIGNATURES:[Landroid/content/pm/Signature;
-+    sget-object v1, Lcom/samsung/android/settings/display/SecDisplayUtils;->mProductName:Ljava/lang/String;
- 
-     invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+@@ -8361,7 +8373,7 @@
  
      move-result-object v0
  

@@ -22,6 +22,13 @@ LOG "- Using S23U One UI 9 sharing, keyboard and messaging apps"
 for f in "app/AllShareAware" "app/HoneyBoard" "priv-app/ShareLive" "priv-app/SamsungMessages"; do
     ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "system" "system/$f" 0 0 755 "u:object_r:system_file:s0"
 done
+# Debloat also removes Messages' permission XMLs; restore them with the APK.
+# The privileged allowlist grants MANAGE_USERS for its startup user query.
+for f in \
+    "default-permissions/default-permissions-com.samsung.android.messaging.xml" \
+    "permissions/privapp-permissions-com.samsung.android.messaging.xml"; do
+    ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "system" "system/etc/$f" 0 0 644 "u:object_r:system_file:s0"
+done
 LOG "- Patching SmartSuggestions Developer Mode access"
 REZOSS_SMARTSUGGESTIONS_APK="$WORK_DIR/system/system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk"
 REZOSS_SMARTSUGGESTIONS_TMP="$TMP_DIR/rezoss_smartsuggestions_dev_mode"
