@@ -333,3 +333,6 @@ system/etc/sysconfig/feature-a11y-preload-voacc.xml
 # PRODUCT_DEBLOAT+="
 # app/YouTube
 # "
+
+# Samsung Beta Service
+SYSTEM_DEBLOAT+="system/priv-app/GalaxyBetaService"

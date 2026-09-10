@@ -14,6 +14,25 @@ DEKNOX_HEX_PATCH()
     HEX_PATCH "$FILE" "$FROM" "$TO"
 }
 
+# One UI 9 audioserver calls this audit logger while holding the audio-policy
+# lock. With edmnativehelper absent, getService() waits and createRecord times
+# out. Stub nativeLoggerEventAsUser (void).
+# Verified arm64 entry: PACIASP; STP x29,x30; STR x21; STP x20,x19.
+# Match through the getService call to distinguish other shared prologues.
+# Replacement: BTI c; RET; NOP padding (no stack or PAC state established).
+DEKNOX_HEX_PATCH "$WORK_DIR/system/system/lib64/libedmnativehelper.so" \
+    "3f2303d5fd7bbda9f50b00f9f44f02a9fd030091a8630091f30302aaf403012af503002abf0f00f99f060094" \
+    "5f2403d5c0035fd61f2003d51f2003d51f2003d51f2003d51f2003d51f2003d51f2003d51f2003d51f2003d5"
+
+# Recording permission checks also call isPackageInAvrWhitelist while holding
+# the audio-policy lock. Return false, matching its missing-service fallback,
+# without waiting for the removed edmnativehelper service. Other permission
+# helpers remain unchanged. Match the arm64 entry through its getService call.
+# Replacement: BTI c; MOV w0, wzr; RET; NOP padding.
+DEKNOX_HEX_PATCH "$WORK_DIR/system/system/lib64/libedmnativehelper.so" \
+    "3f2303d5fd7bbea9f30b00f9fd030091a8630091f303002abf0f00f98c070094" \
+    "5f2403d5e0031f2ac0035fd61f2003d51f2003d51f2003d51f2003d51f2003d5"
+
 DELETE_FROM_WORK_DIR "system" "system/app/BlockchainBasicKit"
 # Support legacy sdFAT kernel drivers (pre-API 35)
 # Check unica/patches/legacy/customize.sh for more info.

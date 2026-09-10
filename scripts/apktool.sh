@@ -86,6 +86,22 @@ BUILD()
     local FILE_NAME
     FILE_NAME="$(basename "$INPUT_FILE")"
 
+    # ZIP integrity alone permits empty DEX entries. Reject broken bytecode
+    # before signing or replacing the working APK/JAR.
+    python3 - "$OUTPUT_PATH/dist/$FILE_NAME" <<'PY' || exit 1
+import sys
+import zipfile
+
+with zipfile.ZipFile(sys.argv[1]) as archive:
+    for entry in archive.infolist():
+        if entry.is_dir() or not entry.filename.endswith(".dex"):
+            continue
+        with archive.open(entry) as dex:
+            header = dex.read(8)
+        if entry.file_size < 112 or not header.startswith(b"dex\n") or header[7:8] != b"\0":
+            sys.exit(f"Invalid or empty DEX: {sys.argv[1]}!{entry.filename} ({entry.file_size} bytes)")
+PY
+
     if [[ "$INPUT_FILE" == *".apk" ]]; then
         local CERT_PREFIX="aosp"
         $ROM_IS_OFFICIAL && CERT_PREFIX="unica"
