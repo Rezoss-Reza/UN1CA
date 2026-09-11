@@ -21,7 +21,7 @@ with p.open('rb') as f:
 with zipfile.ZipFile(p) as z, zipfile.ZipFile(t/'code.apk','w') as out:
     for n in ['classes.dex','classes2.dex']:
         out.writestr(n,z.read(n))
-    for n in ['assets/config/supported_config.json','lib/arm64-v8a/libjniAIOSKernelNative.so']:
+    for n in ['assets/config/supported_config.json','lib/arm64-v8a/libjniAIOSKernelNative.so','lib/arm64-v8a/libssneural_vndk.so']:
         f=t/'decoded'/n; f.parent.mkdir(parents=True,exist_ok=True);f.write_bytes(z.read(n))
 PY
 apktool d -r --no-assets -j 2 "$TMP/code.apk" -o "$TMP/smali"
@@ -31,6 +31,7 @@ for PATCH in "$MODPATH/OfflineLanguageModel.apk/"*.patch; do
     patch --batch --fuzz=0 -p1 -d "$TMP/smali" < "$PATCH"
 done
 python3 "$MODPATH/patch_native.py" "$TMP/smali/lib/arm64-v8a/libjniAIOSKernelNative.so" "$TMP/native-fixed.so"
+python3 "$MODPATH/../aioskernel/patch_sm8550_chipset.py" "$TMP/smali/lib/arm64-v8a/libssneural_vndk.so" "$TMP/ssneural-fixed.so"
 apktool b -j 2 "$TMP/smali" -o "$TMP/code-fixed.apk"
 python3 - "$INPUT" "$TMP" <<'PY'
 import sys,zipfile,shutil
@@ -40,6 +41,7 @@ with zipfile.ZipFile(t/'code-fixed.apk') as z:
     replacements={n:z.read(n) for n in ['classes.dex','classes2.dex']}
 replacements['assets/config/supported_config.json']=(t/'smali/assets/config/supported_config.json').read_bytes()
 replacements['lib/arm64-v8a/libjniAIOSKernelNative.so']=(t/'native-fixed.so').read_bytes()
+replacements['lib/arm64-v8a/libssneural_vndk.so']=(t/'ssneural-fixed.so').read_bytes()
 with zipfile.ZipFile(p) as src, zipfile.ZipFile(t/'unsigned.apk','w',allowZip64=True) as out:
     for info in src.infolist():
         if info.filename.startswith('META-INF/') and info.filename.upper().endswith(('.SF','.RSA','.DSA','.EC','MANIFEST.MF')):
