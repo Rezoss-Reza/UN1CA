@@ -33,6 +33,15 @@ DEKNOX_HEX_PATCH "$WORK_DIR/system/system/lib64/libedmnativehelper.so" \
     "3f2303d5fd7bbea9f30b00f9fd030091a8630091f303002abf0f00f98c070094" \
     "5f2403d5e0031f2ac0035fd61f2003d51f2003d51f2003d51f2003d51f2003d5"
 
+# Camera, microphone and recording checks still use the shared service lookup.
+# In this deknox build edmnativehelper is absent: return an empty sp immediately
+# so every caller takes its existing missing-service fallback without 5s waits.
+# arm64 sp return storage is passed in x8, not x0. Do not establish PAC/stack.
+# Replacement: BTI c; STR xzr, [x8]; RET; NOP padding.
+DEKNOX_HEX_PATCH "$WORK_DIR/system/system/lib64/libedmnativehelper.so" \
+    "3f2303d5ff0301d1fd7b02a9f44f03a9fd830091f30308aaa82300d1bf831ff8" \
+    "5f2403d51f0100f9c0035fd61f2003d51f2003d51f2003d51f2003d51f2003d5"
+
 DELETE_FROM_WORK_DIR "system" "system/app/BlockchainBasicKit"
 # Support legacy sdFAT kernel drivers (pre-API 35)
 # Check unica/patches/legacy/customize.sh for more info.
