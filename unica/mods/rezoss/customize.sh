@@ -71,24 +71,6 @@ APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSugges
 APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
     "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0025-Remove-Custom-Card-category-limit.patch"
 APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
-    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0016-Use-data-backed-Now-Nudge-reply-fallbacks.patch"
-APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
-    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0018-Reuse-OfflineLanguageCore-Suggestion-metadata.patch"
-APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
-    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0019-Use-JSON-category-rules-for-Now-Nudge-fallbacks.patch"
-APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
-    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0017-Add-Telegram-ContentCapture-allowlist.patch"
-APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
-    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0020-Restore-CHN-Now-Nudge-conversation-bridge.patch"
-APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
-    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0021-Add-Telegram-class-text-parser-fallback.patch"
-APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
-    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0022-Prefer-JSON-fallback-before-AIOS-chat-replies.patch"
-APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
-    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0023-Ignore-stale-Now-Nudge-fallback-data.patch"
-APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
-    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0024-Detect-Now-Nudge-fallback-language-from-message.patch"
-APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
     "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0014-Allow-Now-Brief-recall-calendar-reminder-fallback.patch"
 APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
     "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0015-Force-Now-Brief-non-empty-fallback.patch"
@@ -135,11 +117,8 @@ SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSugges
     'isNudgeAllowed(Landroid/content/ComponentName;)Z' \
     'true' \
     > /dev/null
-SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
-    "smali_classes15/com/samsung/android/smartsuggestions/service/smartreply/SmartReplyResolver.smali" "return" \
-    'getInAppNudgeRevisionFromMessageApp(Landroid/content/Context;)I' \
-    '1' \
-    > /dev/null
+# S23U One UI 9 Messages declares nownudge.inappnudge.revision=1.
+# Keep the stock metadata lookup and its missing-package fallback.
 unset REZOSS_SMARTSUGGESTIONS_APK REZOSS_SMARTSUGGESTIONS_TMP REZOSS_SMARTSUGGESTIONS_CERT_PREFIX
 
 # =============================================================================

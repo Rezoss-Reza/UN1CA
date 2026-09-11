@@ -1,0 +1,23 @@
+--- a/smali_classes2/com/samsung/android/aioskernelservice/AIOSKernelEngine.smali
++++ b/smali_classes2/com/samsung/android/aioskernelservice/AIOSKernelEngine.smali
+@@ -577,8 +577,6 @@
+     goto/16 :goto_5
+
+     :cond_1
+-    invoke-virtual {v1, v2}, Lcom/samsung/android/aioskernelservice/AIOSKernelEngine$ContextInfo;->setInitialized(Z)V
+-
+     sget-object v3, Lcom/samsung/android/aioskernelservice/AIOSKernelEngine;->inferenceEngine:Lcom/samsung/android/aioskernelservice/NativeSSNeuralCore;
+
+     if-eqz v3, :cond_7
+@@ -664,6 +662,11 @@
+     invoke-static {p0, v0, v5, v4, v5}, Lcom/samsung/android/aioskernelservice/AIOSKernelEngine;->LogE$default(Lcom/samsung/android/aioskernelservice/AIOSKernelEngine;Ljava/lang/String;Ljava/lang/Exception;ILjava/lang/Object;)V
+
+     :cond_4
++    if-nez p1, :cond_init_result
++
++    invoke-virtual {v1, v2}, Lcom/samsung/android/aioskernelservice/AIOSKernelEngine$ContextInfo;->setInitialized(Z)V
++
++    :cond_init_result
+     move v2, p1
+
+     goto :goto_5

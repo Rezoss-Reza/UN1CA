@@ -8,6 +8,9 @@ The donor mProductName field is absent from the One UI 9 S23U class.
 Use the stock Utils.isTablet() predicate for adaptive display layouts;
 isScrenModeTabletLayout is also absent from the current SecDisplayUtils.
 
+Keep ZZHL animation drawable IDs in the preview and RGB controls; donor
+IDs resolve to static shapes in the S23U resource table.
+
 ---
 
 diff --git a/smali/com/android/settings/DisplaySettings$4.smali b/smali/com/android/settings/DisplaySettings$4.smali
@@ -2058,60 +2061,6 @@ index 0c043f4..d49fb58 100644
  
      invoke-virtual {p1, v0, v11}, Lcom/samsung/android/settings/display/NewModePreview$ScreenModeItems;->addItem(II)V
  
-@@ -1540,7 +1528,7 @@
- 
-     iget-object p1, p0, Lcom/samsung/android/settings/display/NewModePreview;->mContext:Landroid/content/Context;
- 
--    const v0, 0x7f080cdf
-+    const v0, 0x7f080cd6
- 
-     invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
- 
-@@ -1552,7 +1540,7 @@
- 
-     iget-object p1, p0, Lcom/samsung/android/settings/display/NewModePreview;->mContext:Landroid/content/Context;
- 
--    const v0, 0x7f080ce0
-+    const v0, 0x7f080cd7
- 
-     invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
- 
-@@ -1564,7 +1552,7 @@
- 
-     iget-object p1, p0, Lcom/samsung/android/settings/display/NewModePreview;->mContext:Landroid/content/Context;
- 
--    const v0, 0x7f080cc7
-+    const v0, 0x7f080cbe
- 
-     invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
- 
-@@ -1576,7 +1564,7 @@
- 
-     iget-object p1, p0, Lcom/samsung/android/settings/display/NewModePreview;->mContext:Landroid/content/Context;
- 
--    const v0, 0x7f080cc8
-+    const v0, 0x7f080cbf
- 
-     invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
- 
-@@ -1588,7 +1576,7 @@
- 
-     iget-object p1, p0, Lcom/samsung/android/settings/display/NewModePreview;->mContext:Landroid/content/Context;
- 
--    const v0, 0x7f080ce6
-+    const v0, 0x7f080cdd
- 
-     invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
- 
-@@ -1600,7 +1588,7 @@
- 
-     iget-object p1, p0, Lcom/samsung/android/settings/display/NewModePreview;->mContext:Landroid/content/Context;
- 
--    const v0, 0x7f080ce7
-+    const v0, 0x7f080cde
- 
-     invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
- 
 @@ -1644,7 +1632,7 @@
  
      move-result-object v0
@@ -2680,7 +2629,7 @@ index 0000000..418495d
 +
 +    iget-object v0, p1, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
 +
-+    const v1, 0x7f080ca1
++    const v1, 0x7f080caa
 +
 +    invoke-virtual {v0, v1}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
 +
@@ -2694,7 +2643,7 @@ index 0000000..418495d
 +
 +    iget-object v0, p1, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
 +
-+    const v1, 0x7f080ca2
++    const v1, 0x7f080cab
 +
 +    invoke-virtual {v0, v1}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
 +
@@ -2708,7 +2657,7 @@ index 0000000..418495d
 +
 +    iget-object v0, p1, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
 +
-+    const v1, 0x7f080cbb
++    const v1, 0x7f080cc4
 +
 +    invoke-virtual {v0, v1}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
 +
@@ -2722,7 +2671,7 @@ index 0000000..418495d
 +
 +    iget-object v0, p1, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
 +
-+    const v1, 0x7f080cbc
++    const v1, 0x7f080cc5
 +
 +    invoke-virtual {v0, v1}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
 +
@@ -2736,7 +2685,7 @@ index 0000000..418495d
 +
 +    iget-object v0, p1, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
 +
-+    const v1, 0x7f080cc4
++    const v1, 0x7f080ccd
 +
 +    invoke-virtual {v0, v1}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
 +
@@ -2750,7 +2699,7 @@ index 0000000..418495d
 +
 +    iget-object p1, p0, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
 +
-+    const v0, 0x7f080cc5
++    const v0, 0x7f080cce
 +
 +    invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
 +
@@ -2865,7 +2814,7 @@ index 0000000..418495d
 +
 +    iget-object v0, p1, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
 +
-+    const v1, 0x7f080ca8
++    const v1, 0x7f080cb1
 +
 +    invoke-virtual {v0, v1}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
 +
@@ -2879,7 +2828,7 @@ index 0000000..418495d
 +
 +    iget-object v0, p1, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
 +
-+    const v1, 0x7f080ca9
++    const v1, 0x7f080cb2
 +
 +    invoke-virtual {v0, v1}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
 +
@@ -2893,7 +2842,7 @@ index 0000000..418495d
 +
 +    iget-object v0, p1, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
 +
-+    const v1, 0x7f080cc0
++    const v1, 0x7f080cc9
 +
 +    invoke-virtual {v0, v1}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
 +
@@ -2907,7 +2856,7 @@ index 0000000..418495d
 +
 +    iget-object v0, p1, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
 +
-+    const v1, 0x7f080cc1
++    const v1, 0x7f080cca
 +
 +    invoke-virtual {v0, v1}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
 +
@@ -2921,7 +2870,7 @@ index 0000000..418495d
 +
 +    iget-object v0, p1, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
 +
-+    const v1, 0x7f080cc6
++    const v1, 0x7f080ccf
 +
 +    invoke-virtual {v0, v1}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
 +
@@ -2935,7 +2884,7 @@ index 0000000..418495d
 +
 +    iget-object p1, p0, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
 +
-+    const v0, 0x7f080cc7
++    const v0, 0x7f080cd0
 +
 +    invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
 +
@@ -3050,7 +2999,7 @@ index 0000000..418495d
 +
 +    iget-object v0, p1, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
 +
-+    const v1, 0x7f080caf
++    const v1, 0x7f080cb8
 +
 +    invoke-virtual {v0, v1}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
 +
@@ -3064,7 +3013,7 @@ index 0000000..418495d
 +
 +    iget-object v0, p1, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
 +
-+    const v1, 0x7f080cb0
++    const v1, 0x7f080cb9
 +
 +    invoke-virtual {v0, v1}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
 +
@@ -3078,7 +3027,7 @@ index 0000000..418495d
 +
 +    iget-object v0, p1, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
 +
-+    const v1, 0x7f080cc2
++    const v1, 0x7f080ccb
 +
 +    invoke-virtual {v0, v1}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
 +
@@ -3092,7 +3041,7 @@ index 0000000..418495d
 +
 +    iget-object v0, p1, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
 +
-+    const v1, 0x7f080cc3
++    const v1, 0x7f080ccc
 +
 +    invoke-virtual {v0, v1}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
 +
@@ -3106,7 +3055,7 @@ index 0000000..418495d
 +
 +    iget-object v0, p1, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
 +
-+    const v1, 0x7f080ccf
++    const v1, 0x7f080cd8
 +
 +    invoke-virtual {v0, v1}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
 +
@@ -3120,7 +3069,7 @@ index 0000000..418495d
 +
 +    iget-object p1, p0, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
 +
-+    const v0, 0x7f080cd0
++    const v0, 0x7f080cd9
 +
 +    invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
 +
@@ -5474,168 +5423,6 @@ index 11c0fdc..02a1ee2 100644
 +    invoke-virtual {p0, p1, v0}, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->createAdaptiveDisplayView(Landroid/view/LayoutInflater;Landroid/view/ViewGroup;)Landroid/view/View;
  
      invoke-virtual {p0}, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->updateAdvancedColorBalanceComponents()V
- 
-@@ -1465,7 +1671,7 @@
- 
-     iget-object p1, p0, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
- 
--    const v0, 0x7f080cb8
-+    const v0, 0x7f080caf
- 
-     invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
- 
-@@ -1477,7 +1683,7 @@
- 
-     iget-object p1, p0, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
- 
--    const v0, 0x7f080cb9
-+    const v0, 0x7f080cb0
- 
-     invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
- 
-@@ -1489,7 +1695,7 @@
- 
-     iget-object p1, p0, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
- 
--    const v0, 0x7f080ccb
-+    const v0, 0x7f080cc2
- 
-     invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
- 
-@@ -1501,7 +1707,7 @@
- 
-     iget-object p1, p0, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
- 
--    const v0, 0x7f080ccc
-+    const v0, 0x7f080cc3
- 
-     invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
- 
-@@ -1513,7 +1719,7 @@
- 
-     iget-object p1, p0, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
- 
--    const v0, 0x7f080cd8
-+    const v0, 0x7f080ccf
- 
-     invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
- 
-@@ -1525,7 +1731,7 @@
- 
-     iget-object p1, p0, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
- 
--    const v0, 0x7f080cd9
-+    const v0, 0x7f080cd0
- 
-     invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
- 
-@@ -1537,7 +1743,7 @@
- 
-     iget-object p1, p0, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
- 
--    const v0, 0x7f080cb1
-+    const v0, 0x7f080ca8
- 
-     invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
- 
-@@ -1549,7 +1755,7 @@
- 
-     iget-object p1, p0, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
- 
--    const v0, 0x7f080cb2
-+    const v0, 0x7f080ca9
- 
-     invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
- 
-@@ -1561,7 +1767,7 @@
- 
-     iget-object p1, p0, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
- 
--    const v0, 0x7f080cc9
-+    const v0, 0x7f080cc0
- 
-     invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
- 
-@@ -1573,7 +1779,7 @@
- 
-     iget-object p1, p0, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
- 
--    const v0, 0x7f080cca
-+    const v0, 0x7f080cc1
- 
-     invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
- 
-@@ -1585,7 +1791,7 @@
- 
-     iget-object p1, p0, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
- 
--    const v0, 0x7f080ccf
-+    const v0, 0x7f080cc6
- 
-     invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
- 
-@@ -1597,7 +1803,7 @@
- 
-     iget-object p1, p0, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
- 
--    const v0, 0x7f080cd0
-+    const v0, 0x7f080cc7
- 
-     invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
- 
-@@ -1609,7 +1815,7 @@
- 
-     iget-object p1, p0, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
- 
--    const v0, 0x7f080caa
-+    const v0, 0x7f080ca1
- 
-     invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
- 
-@@ -1621,7 +1827,7 @@
- 
-     iget-object p1, p0, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
- 
--    const v0, 0x7f080cab
-+    const v0, 0x7f080ca2
- 
-     invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
- 
-@@ -1633,7 +1839,7 @@
- 
-     iget-object p1, p0, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
- 
--    const v0, 0x7f080cc4
-+    const v0, 0x7f080cbb
- 
-     invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
- 
-@@ -1645,7 +1851,7 @@
- 
-     iget-object p1, p0, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
- 
--    const v0, 0x7f080cc5
-+    const v0, 0x7f080cbc
- 
-     invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
- 
-@@ -1657,7 +1863,7 @@
- 
-     iget-object p1, p0, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
- 
--    const v0, 0x7f080ccd
-+    const v0, 0x7f080cc4
- 
-     invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
- 
-@@ -1669,7 +1875,7 @@
- 
-     iget-object p1, p0, Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;->mContext:Landroid/content/Context;
- 
--    const v0, 0x7f080cce
-+    const v0, 0x7f080cc5
- 
-     invoke-virtual {p1, v0}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
  
 @@ -1679,8 +1885,6 @@
  

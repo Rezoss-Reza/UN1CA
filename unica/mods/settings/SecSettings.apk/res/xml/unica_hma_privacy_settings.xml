@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" xmlns:settings="http://schemas.android.com/apk/res-auto" android:title="@string/unica_hma_privacy_title" settings:hierarchicalParentFragment="io.mesalabs.unica.settings.spoof.SpoofSettingsFragment" settings:topLevelPreferenceKey="unica_hma_privacy">
+    <Preference android:selectable="false" android:title="Protect selected apps" android:summary="Choose apps and presets, then enable protection. Restart protected apps after changes so cached results and process permissions refresh. Configuration applies to this Android user." />
+    <SecPreference android:key="hma_enabled" android:title="Enable HMA protection" />
+    <SecPreference android:key="hma_targets" android:title="Apps to protect" android:summary="Choose which apps receive filtered results. Applies to this Android user." />
+    <SecPreference android:key="hma_hidden" android:title="Additional apps to hide" />
+    <PreferenceCategory android:title="Activity launch protection">
+        <SecPreference android:key="hma_activity" android:title="Block launches of hidden apps" />
+        <SecPreference android:key="hma_invertActivity" android:title="Invert protection for selected apps" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Presets">
+        <SecPreference android:key="hma_apps" android:title="Application presets" />
+        <SecPreference android:key="hma_settings" android:title="Settings presets" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Compatibility and permissions">
+        <SecPreference android:key="hma_risky" android:title="Risky package protection" android:summary="Keep apps with Google Play services dependencies visible to Play services." />
+        <SecPreference android:key="hma_gids" android:title="Restrict Zygote permissions" android:summary="Experimental. Applies when protected apps restart." />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="HMA logs">
+        <SecPreference android:key="hma_logging" android:title="Record interception events" />
+        <SecPreference android:key="hma_logs" android:title="Filter log categories" />
+        <SecPreference android:key="hma_viewLogs" android:title="View recent interception logs" />
+    </PreferenceCategory>
+</PreferenceScreen>
