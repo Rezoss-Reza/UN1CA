@@ -82,6 +82,37 @@ newbody='''.method public final shouldFilterApplicationCustom(Lcom/android/serve
     return v0
 .end method'''
 new=change_method(old,' shouldFilterApplicationCustom(',lambda m:newbody)
+for name,args,ret,body in [
+('getInstallSourceInfo','Ljava/lang/String;I','Landroid/content/pm/InstallSourceInfo;','''    invoke-virtual {p0, p1, p2}, Lcom/android/server/pm/ComputerEngine;->getInstallSourceInfoHmaOriginal(Ljava/lang/String;I)Landroid/content/pm/InstallSourceInfo;
+
+    move-result-object v0
+
+    invoke-static {}, Landroid/os/Binder;->getCallingUid()I
+
+    move-result v1
+
+    invoke-static {p1, v1, v0}, Lio/mesalabs/unica/HmaPolicy;->filterInstallSourceInfo(Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/Object;
+
+    move-result-object v0
+
+    check-cast v0, Landroid/content/pm/InstallSourceInfo;
+'''),
+('getInstallerPackageName','ILjava/lang/String;','Ljava/lang/String;','''    invoke-virtual {p0, p1, p2}, Lcom/android/server/pm/ComputerEngine;->getInstallerPackageNameHmaOriginal(ILjava/lang/String;)Ljava/lang/String;
+
+    move-result-object v0
+
+    invoke-static {}, Landroid/os/Binder;->getCallingUid()I
+
+    move-result v1
+
+    invoke-static {p2, v1, v0}, Lio/mesalabs/unica/HmaPolicy;->filterInstallerPackageName(Ljava/lang/String;ILjava/lang/String;)Ljava/lang/String;
+
+    move-result-object v0
+''')]:
+    header='.method public final '+name+'('+args+')'+ret
+    assert new.count(header)==1
+    new=new.replace(header,header.replace(name+'(',name+'HmaOriginal('),1)
+    new+='\n\n'+header+'\n    .locals 2\n\n'+body+'\n    return-object v0\n.end method\n'
 services.append((p,old,new))
 p='smali_classes2/com/android/server/wm/ActivityStarter.smali';old=(baseline/p).read_text()
 hook='''    :goto_2

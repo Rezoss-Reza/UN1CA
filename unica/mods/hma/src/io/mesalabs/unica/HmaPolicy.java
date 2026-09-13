@@ -12,7 +12,7 @@ import android.os.*;
 import android.provider.Settings;
 import android.util.Log;
 import java.io.*;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.zip.*;
@@ -28,6 +28,7 @@ public final class HmaPolicy {
     private static final Set<String> pending = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
     private static final ExecutorService scanner = Executors.newSingleThreadExecutor();
     private static final int[] GIDS = {1015, 1023, 1032, 1077, 1078, 1079, 3003, 9997};
+    private static final String PLAY_STORE = "com.android.vending";
     private static volatile boolean registered;
     private static final class Config {
         final JSONObject json;
@@ -101,6 +102,19 @@ public final class HmaPolicy {
         if (array != null) for (int i=0; i<array.length(); i++) if (value.equals(array.optString(i))) return true;
         return false;
     }
+    private static String sourceName(int uid, Config cfg) {
+        if (cfg == null || !cfg.json.optBoolean("enabled", false) || !appUid(uid)) return null;
+        long token = Binder.clearCallingIdentity();
+        try {
+            String[] names = getContext().getPackageManager().getPackagesForUid(uid);
+            if (names != null) for (String name : names) {
+                if ("com.android.settings".equals(name) || "com.android.systemui".equals(name)) return null;
+            }
+            if (names != null && names.length > 0) return names[0];
+        } catch (RuntimeException ignored) {}
+        finally { Binder.restoreCallingIdentity(token); }
+        return null;
+    }
     private static String caller(int uid, Config cfg) {
         if (cfg == null || !cfg.json.optBoolean("enabled", false) || !appUid(uid)) return null;
         long token = Binder.clearCallingIdentity();
@@ -138,13 +152,35 @@ public final class HmaPolicy {
         if (f != null) for (String preset : f.presets) if (contains(c.json, "apps", preset)) return true;
         return false;
     }
+    private static String mapped(JSONObject json, String key, String name) {
+        JSONObject map = json.optJSONObject(key);
+        String value = map == null || name == null ? null : map.optString(name, null);
+        return value == null || value.length() == 0 ? null : value;
+    }
+    private static String reflectString(Object object, String method) {
+        try {
+            Object value = object == null ? null : object.getClass().getMethod(method).invoke(object);
+            return value instanceof String ? (String)value : null;
+        } catch (Exception e) { return null; }
+    }
+    private static boolean unknownInstallSource(Object info) {
+        return info != null && reflectString(info, "getInstallingPackageName") == null && reflectString(info, "getInitiatingPackageName") == null;
+    }
+    private static Object installSourceInfo(String store) {
+        try {
+            Class<?> info = Class.forName("android.content.pm.InstallSourceInfo");
+            Class<?> signing = Class.forName("android.content.pm.SigningInfo");
+            Constructor<?> ctor = info.getConstructor(String.class, signing, String.class, String.class, String.class, int.class);
+            return ctor.newInstance(store, null, null, store, store, Integer.valueOf(2));
+        } catch (Exception e) { return null; }
+    }
     public static boolean shouldHide(Context c, String target, int uid) {
         if (c != null) context = c;
         if (!enter(uid)) return false;
         try {
             Config cfg = config(uid);
-            String source = caller(uid, cfg);
-            boolean hide = source != null && hidden(cfg, uid, source, target);
+            String source = sourceName(uid, cfg);
+            boolean hide = source != null && ((contains(cfg.json, "targets", source) && hidden(cfg, uid, source, target)) || (PLAY_STORE.equals(source) && contains(cfg.json, "playUpdate", target)));
             if (hide) event(cfg, "package", uid, source + " -> " + target);
             return hide;
         } catch (RuntimeException e) { return false; }
@@ -180,6 +216,31 @@ public final class HmaPolicy {
             event(cfg, "other", uid, "Restricted supplementary GIDs");
             return Arrays.copyOf(result, size);
         } catch (RuntimeException e) { return gids; }
+        finally { busy.remove(); }
+    }
+    public static Object filterInstallSourceInfo(String target, int uid, Object result) {
+        if (result == null || !enter(uid)) return result;
+        try {
+            Config cfg = config(uid);
+            if (sourceName(uid, cfg) == null || !unknownInstallSource(result)) return result;
+            String store = mapped(cfg.json, "installerSpoof", target);
+            Object spoofed = store == null ? null : installSourceInfo(store);
+            if (spoofed == null) return result;
+            event(cfg, "package", uid, "installer " + target + " -> " + store);
+            return spoofed;
+        } catch (RuntimeException e) { return result; }
+        finally { busy.remove(); }
+    }
+    public static String filterInstallerPackageName(String target, int uid, String result) {
+        if (result != null || !enter(uid)) return result;
+        try {
+            Config cfg = config(uid);
+            if (sourceName(uid, cfg) == null) return result;
+            String store = mapped(cfg.json, "installerSpoof", target);
+            if (store == null) return result;
+            event(cfg, "package", uid, "installer " + target + " -> " + store);
+            return store;
+        } catch (RuntimeException e) { return result; }
         finally { busy.remove(); }
     }
     // A one-element array distinguishes a spoofed null from an unchanged setting.
