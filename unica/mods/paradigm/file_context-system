@@ -267,8 +267,6 @@
 /system/priv-app/AIOSKernelService/AIOSKernelService\.apk u:object_r:system_file:s0
 /system/priv-app/EnvironmentAdaptiveDisplay u:object_r:system_file:s0
 /system/priv-app/EnvironmentAdaptiveDisplay/EnvironmentAdaptiveDisplay\.apk u:object_r:system_file:s0
-/system/priv-app/MediaSearch u:object_r:system_file:s0
-/system/priv-app/MediaSearch/MediaSearch\.apk u:object_r:system_file:s0
 /system/priv-app/Moments u:object_r:system_file:s0
 /system/priv-app/Moments/Moments\.apk u:object_r:system_file:s0
 /system/priv-app/SemanticSearchCore u:object_r:system_file:s0
@@ -276,5 +274,3 @@
 /system/priv-app/wallpaper-res u:object_r:system_file:s0
 /system/priv-app/wallpaper-res/wallpaper-res\.apk u:object_r:system_file:s0
 /system/priv-app/SamsungAiCore/SamsungAiCore\.apk u:object_r:system_file:s0
-/system/priv-app/SamsungSmartSuggestions u:object_r:system_file:s0
-/system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions\.apk u:object_r:system_file:s0
