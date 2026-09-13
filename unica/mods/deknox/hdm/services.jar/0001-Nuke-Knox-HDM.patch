@@ -404,19 +404,6 @@ index 03a84ee..01b375c 100644
      return-void
  .end method
 
-@@ -3468,6 +3437,12 @@
-
-     const-string/jumbo v3, "hdm_service"
-
-+
-+    invoke-static {v0, v3}, Landroid/os/ServiceManager;->addService(Ljava/lang/String;Landroid/os/IBinder;)V
-+
-+    iget-object v0, v1, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl;->mContext:Landroid/content/Context;
-+
-+    sget v2, Lcom/android/server/enterprise/appconfig/ApplicationRestrictionsService;->$r8$clinit:I
-     new-instance v4, Lcom/android/server/enterprise/hdm/HdmService;
-
-     iget-object v0, v2, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl$Injector;->mContext:Landroid/content/Context;
 diff --git a/smali/com/android/server/enterprise/hdm/HdmSakManager.smali b/orig/smali/com/android/server/enterprise/hdm/HdmSakManager.smali
 deleted file mode 100644
 index d337cfc..0000000

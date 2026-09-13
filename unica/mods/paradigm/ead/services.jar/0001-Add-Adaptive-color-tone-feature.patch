@@ -3,6 +3,9 @@ From: Salvo Giangreco <giangrecosalvo9@gmail.com>
 Date: Sun, 7 Sep 2025 13:32:10 +0200
 Subject: [PATCH] Add Adaptive color tone feature
 
+Keep the ZZHL receiver register roles: v0=true, v1=0, v2=log tag.
+Use v4 for USER_CURRENT only inside the added EAD boot block.
+
 ---
 diff --git a/smali_classes2/com/samsung/android/displaysolution/EyeComfortSolutionService.smali b/smali_classes2/com/samsung/android/displaysolution/EyeComfortSolutionService.smali
 index 2765f5a..0407282 100644
@@ -372,16 +375,7 @@ diff --git a/smali_classes2/com/samsung/android/hardware/display/SemMdnieManager
 index 4b1c149..12754f2 100644
 --- a/smali_classes2/com/samsung/android/hardware/display/SemMdnieManagerService$ScreenWatchingReceiver.smali
 +++ b/smali_classes2/com/samsung/android/hardware/display/SemMdnieManagerService$ScreenWatchingReceiver.smali
-@@ -57,6 +57,8 @@
- 
-     iget-boolean p2, p1, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->mSupportAPmDNIe:Z
- 
-+    const/4 v2, -0x2
-+
-     if-eqz p2, :cond_1
- 
-     iget-object p1, p1, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->mDisplayAiqeManager:Lcom/samsung/android/displayaiqe/DisplayAiqeManager;
-@@ -111,6 +113,57 @@
+@@ -111,6 +111,59 @@
      :cond_2
      iget-object p1, p0, Lcom/samsung/android/hardware/display/SemMdnieManagerService$ScreenWatchingReceiver;->this$0:Lcom/samsung/android/hardware/display/SemMdnieManagerService;
  
@@ -405,7 +399,9 @@ index 4b1c149..12754f2 100644
 +
 +    const-string/jumbo v3, "ead_enabled"
 +
-+    invoke-static {p2, v3, v0, v2}, Landroid/provider/Settings$System;->getIntForUser(Landroid/content/ContentResolver;Ljava/lang/String;II)I
++    const/4 v4, -0x2
++
++    invoke-static {p2, v3, v1, v4}, Landroid/provider/Settings$System;->getIntForUser(Landroid/content/ContentResolver;Ljava/lang/String;II)I
 +
 +    move-result p2
 +
@@ -415,7 +411,7 @@ index 4b1c149..12754f2 100644
 +
 +    move-result-object p1
 +
-+    invoke-static {v1, p1}, Landroid/util/Slog;->i(Ljava/lang/String;Ljava/lang/String;)I
++    invoke-static {v2, p1}, Landroid/util/Slog;->i(Ljava/lang/String;Ljava/lang/String;)I
 +
 +    iget-object p1, p0, Lcom/samsung/android/hardware/display/SemMdnieManagerService$ScreenWatchingReceiver;->this$0:Lcom/samsung/android/hardware/display/SemMdnieManagerService;
 +
@@ -427,7 +423,7 @@ index 4b1c149..12754f2 100644
 +
 +    move-result-object p1
 +
-+    invoke-static {p1, v3, v0, v2}, Landroid/provider/Settings$System;->getIntForUser(Landroid/content/ContentResolver;Ljava/lang/String;II)I
++    invoke-static {p1, v3, v1, v4}, Landroid/provider/Settings$System;->getIntForUser(Landroid/content/ContentResolver;Ljava/lang/String;II)I
 +
 +    move-result p1
 +
