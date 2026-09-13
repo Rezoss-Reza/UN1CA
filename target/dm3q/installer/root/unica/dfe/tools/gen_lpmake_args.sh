@@ -5,6 +5,8 @@ SUPER_DEV="${2:-/dev/block/by-name/super}"
 TOOLS="/data/local/tmp/dfework/tools"
 BUSYBOX="$TOOLS/busybox"
 DETECT_SLOT="$TOOLS/detect_slot.sh"
+LPDUMP_BIN="${LPDUMP_BIN:-/system/bin/lpdump}"
+[ -x "$LPDUMP_BIN" ] || LPDUMP_BIN="$TOOLS/lpdump"
 
 # Detect slot (_a or _b)
 SLOT=$($DETECT_SLOT)
@@ -13,7 +15,7 @@ SUFFIX="$SLOT"
 
 # Prepare temp
 TMPFILE="/tmp/lpdump.txt"
-"$TOOLS/lpdump" "$SUPER_DEV" > "$TMPFILE" 2>/dev/null || {
+"$LPDUMP_BIN" "$SUPER_DEV" > "$TMPFILE" 2>/dev/null || {
   echo "[-] Failed to run lpdump" >&2
   exit 1
 }

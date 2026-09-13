@@ -1642,7 +1642,7 @@ index ea4e976..c787fe0 100644
 -    move-result v0
 -
 -    if-nez v0, :cond_0
-+    .locals 0
++    .locals 2
 
      const/4 p0, -0x1
 

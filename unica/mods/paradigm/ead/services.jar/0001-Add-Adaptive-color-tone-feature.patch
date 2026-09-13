@@ -1829,7 +1829,7 @@ index 94524f2..7062321 100644
  .method public static sysfsWrite_CB(ILjava/lang/String;[I)Z
      .locals 4
  
-@@ -3107,14 +3246,150 @@
+@@ -3107,14 +3246,166 @@
  .end method
  
  .method public final setEadMode(II[I)V
@@ -1909,7 +1909,15 @@ index 94524f2..7062321 100644
 +
 +    aget p1, p3, p1
 +
-+    invoke-static {p0, p1, v0, v1}, Lcom/android/server/CustomizedBinderCallsStatsInternal$$ExternalSyntheticOutline0;->m(Ljava/lang/StringBuilder;ILjava/lang/String;Ljava/lang/String;)V
++    invoke-virtual {p0, p1}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
++
++    invoke-virtual {p0, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {v1, p0}, Landroid/util/Slog;->i(Ljava/lang/String;Ljava/lang/String;)I
 +
 +    :cond_1
 +    return-void
@@ -1976,13 +1984,21 @@ index 94524f2..7062321 100644
 +
 +    aget p2, p3, p2
 +
-+    invoke-static {p0, p2, p1, v0}, Lcom/android/server/CustomizedBinderCallsStatsInternal$$ExternalSyntheticOutline0;->m(Ljava/lang/StringBuilder;ILjava/lang/String;Ljava/lang/String;)V
++    invoke-virtual {p0, p2}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
++
++    invoke-virtual {p0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {v0, p0}, Landroid/util/Slog;->i(Ljava/lang/String;Ljava/lang/String;)I
  
 +    :cond_1
      return-void
  .end method
  
-@@ -4186,31 +4461,181 @@
+@@ -4186,31 +4477,181 @@
  .end method
  
  .method public final setWhiteRGB(IIIIII)Z

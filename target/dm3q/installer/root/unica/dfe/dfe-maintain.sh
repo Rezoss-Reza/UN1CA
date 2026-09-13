@@ -10,6 +10,7 @@ WORKDIR="/data/local/tmp"
 TMPDIR="$WORKDIR/dfework"
 TOOLS="$TMPDIR/tools"
 BUSYBOX="$TOOLS/busybox"
+LPDUMP_BIN="/system/bin/lpdump"
 LPUNPACK_DIR="$WORKDIR/lpunpack"
 UNPACK_DIR="$WORKDIR/unpack"
 SUPER_BLK="/dev/block/by-name/super"
@@ -140,12 +141,21 @@ prepare_tools() {
     unzip -oqj "$ZIPFILE" "unica/dfe/tools/*" -d "$TOOLS" || return 1
     chmod -R 0755 "$TOOLS"
 
-    for tool in busybox lpunpack extract.erofs64 mkfs.erofs lpdump lpmake detect_slot.sh gen_lpmake_args.sh; do
+    for tool in busybox extract.erofs64 mkfs.erofs lpmake detect_slot.sh gen_lpmake_args.sh; do
         [ -x "$TOOLS/$tool" ] || {
             ui_print "[DFE] Missing tool: $tool"
             return 1
         }
     done
+
+    if [ ! -x "$LPDUMP_BIN" ]; then
+        LPDUMP_BIN="$TOOLS/lpdump"
+    fi
+    [ -x "$LPDUMP_BIN" ] || {
+        ui_print "[DFE] Missing tool: lpdump"
+        return 1
+    }
+    export LPDUMP_BIN
 
     return 0
 }
@@ -172,6 +182,46 @@ patch_vendor_fstab() {
     done
 
     return "$changed"
+}
+
+copy_dynamic_images_from_mapper() {
+    local partitions
+    local partition
+    local mapper
+    local image
+
+    partitions="$("$LPDUMP_BIN" "$SUPER_BLK" | awk '
+        $1 == "Name:" {
+            name = $2
+            next
+        }
+        $1 == "Group:" && name != "" {
+            print name
+            name = ""
+        }
+    ')"
+
+    [ -n "$partitions" ] || {
+        ui_print "[DFE] Failed to read dynamic partition list."
+        return 1
+    }
+
+    for partition in $partitions; do
+        mapper="/dev/block/mapper/$partition"
+        image="$LPUNPACK_DIR/$partition.img"
+
+        [ -b "$mapper" ] || {
+            ui_print "[DFE] Missing mapped partition: $partition"
+            return 1
+        }
+
+        dd if="$mapper" of="$image" bs=1M >/dev/null 2>&1 || {
+            ui_print "[DFE] Failed to copy mapped partition: $partition"
+            return 1
+        }
+    done
+
+    return 0
 }
 
 run_dfe() {
@@ -201,11 +251,8 @@ run_dfe() {
     vendor_part="vendor${slot}"
     vendor_img="$LPUNPACK_DIR/${vendor_part}.img"
 
-    ui_print "[DFE] Unpacking super metadata..."
-    "$TOOLS/lpunpack" "$SUPER_BLK" "$LPUNPACK_DIR" >/dev/null 2>&1 || {
-        ui_print "[DFE] lpunpack failed."
-        return 1
-    }
+    ui_print "[DFE] Copying mapped dynamic partitions..."
+    copy_dynamic_images_from_mapper || return 1
 
     [ -f "$vendor_img" ] || {
         ui_print "[DFE] Missing $vendor_part image."
@@ -261,7 +308,7 @@ run_dfe() {
 
     cp -f "$WORKDIR/vendor_mod.img" "$vendor_img" || return 1
 
-    metadata_slots="$("$TOOLS/lpdump" "$SUPER_BLK" | awk '/Metadata slot count/ { print $NF; exit }')"
+    metadata_slots="$("$LPDUMP_BIN" "$SUPER_BLK" | awk '/Metadata slot count/ { print $NF; exit }')"
     [ -n "$metadata_slots" ] || metadata_slots=2
 
     "$TOOLS/gen_lpmake_args.sh" "$LPUNPACK_DIR" "$SUPER_BLK" > /tmp/lpmargs.txt || {
