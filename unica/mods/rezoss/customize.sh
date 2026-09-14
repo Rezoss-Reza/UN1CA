@@ -859,6 +859,54 @@ LOG "- Patch SamsungAiCore Vision Model device mapping"
 APPLY_PATCH "system" "system/priv-app/SamsungAiCore/SamsungAiCore.apk" \
     "$MODPATH/aicore/SamsungAiCore.apk/0001-Map-dm-series-to-m3q-for-vision-model.patch"
 
+LOG "- Experimentally patch SamsungAiCore SM8550/V73 QNN profile"
+APPLY_PATCH "system" "system/priv-app/SamsungAiCore/SamsungAiCore.apk" \
+    "$MODPATH/aicore/SamsungAiCore.apk/0002-Experiment-enable-SM8550-V73-QNN-profile.patch"
+# Experimental: replace the S26U V81 HTP binaries inside SamsungAiCore.apk with
+# S23U Hexagon V73 binaries and patch AiCore's own QNN wrapper crash paths.
+local AICORE_DECODED_APK="$APKTOOL_DIR/system/priv-app/SamsungAiCore/SamsungAiCore.apk"
+local AICORE_DECODED_LIB="$AICORE_DECODED_APK/lib/arm64-v8a"
+local AICORE_DECODED_SSGEN_LIB="$AICORE_DECODED_APK/assets/ssgen/libs"
+local AICORE_SNAP_QNN_LIB="$AICORE_DECODED_LIB/libsnap_qnn.so"
+local AICORE_SNAP_QNN_PATCHED_LIB="$TMP_DIR/aicore_libsnap_qnn.so"
+local AICORE_S23U_FW_DIR="$FW_DIR/SM-S918B_EUX"
+local AICORE_QNN_MISSING=0
+if [ ! -d "$AICORE_DECODED_LIB" ] || [ ! -d "$AICORE_DECODED_SSGEN_LIB" ]; then
+    LOGE "SamsungAiCore.apk decoded QNN directories are missing"
+    return 1
+fi
+if [ ! -f "$AICORE_SNAP_QNN_LIB" ]; then
+    LOGE "SamsungAiCore.apk libsnap_qnn.so is missing"
+    return 1
+fi
+for f in \
+    "$AICORE_S23U_FW_DIR/vendor/lib64/snap/libQnnHtp.so" \
+    "$AICORE_S23U_FW_DIR/vendor/lib64/snap/libQnnSystem.so" \
+    "$AICORE_S23U_FW_DIR/vendor/lib64/snap/libQnnHtpV73Stub.so" \
+    "$AICORE_S23U_FW_DIR/vendor/lib/rfsa/adsp/snap/libQnnHtpV73Skel.so"; do
+    if [ ! -f "$f" ]; then
+        LOGE "File not found: ${f//$SRC_DIR\//}"
+        AICORE_QNN_MISSING=1
+    fi
+done
+if [ "$AICORE_QNN_MISSING" != "0" ]; then
+    return 1
+fi
+LOG "- Replacing SamsungAiCore.apk QNN HTP V81 binaries with S23U Hexagon V73 binaries"
+cp -f "$AICORE_S23U_FW_DIR/vendor/lib64/snap/libQnnHtp.so" "$AICORE_DECODED_LIB/libQnnHtp.so"
+cp -f "$AICORE_S23U_FW_DIR/vendor/lib64/snap/libQnnSystem.so" "$AICORE_DECODED_LIB/libQnnSystem.so"
+cp -f "$AICORE_S23U_FW_DIR/vendor/lib64/snap/libQnnHtpV73Stub.so" "$AICORE_DECODED_LIB/libQnnHtpV73Stub.so"
+cp -f "$AICORE_S23U_FW_DIR/vendor/lib64/snap/libQnnHtpV73Stub.so" "$AICORE_DECODED_LIB/libQnnHtpV81Stub.so"
+cp -f "$AICORE_S23U_FW_DIR/vendor/lib/rfsa/adsp/snap/libQnnHtpV73Skel.so" "$AICORE_DECODED_SSGEN_LIB/libQnnHtpV73Skel.so"
+cp -f "$AICORE_S23U_FW_DIR/vendor/lib/rfsa/adsp/snap/libQnnHtpV73Skel.so" "$AICORE_DECODED_SSGEN_LIB/libQnnHtpV81Skel.so"
+if [ -f "$AICORE_S23U_FW_DIR/vendor/lib64/libqnnengine.so" ]; then
+    cp -f "$AICORE_S23U_FW_DIR/vendor/lib64/libqnnengine.so" "$AICORE_DECODED_LIB/libqnnengine.so"
+fi
+LOG "- Patching SamsungAiCore QNN wrapper for SM8550/V73 experiment"
+EVAL "python3 \"$MODPATH/aicore/patch_samsung_aicore_qnn_v73_experiment.py\" \"$AICORE_SNAP_QNN_LIB\" \"$AICORE_SNAP_QNN_PATCHED_LIB\""
+EVAL "mv -f \"$AICORE_SNAP_QNN_PATCHED_LIB\" \"$AICORE_SNAP_QNN_LIB\""
+unset AICORE_DECODED_APK AICORE_DECODED_LIB AICORE_DECODED_SSGEN_LIB AICORE_SNAP_QNN_LIB AICORE_SNAP_QNN_PATCHED_LIB AICORE_S23U_FW_DIR AICORE_QNN_MISSING
+
 LOG "- Patching AIOSKernelService service config for SM8550"
 APPLY_PATCH "system" "system/priv-app/AIOSKernelService/AIOSKernelService.apk" \
     "$MODPATH/aioskernel/AIOSKernelService.apk/0001-Allow-SM8550-service-config.patch"
