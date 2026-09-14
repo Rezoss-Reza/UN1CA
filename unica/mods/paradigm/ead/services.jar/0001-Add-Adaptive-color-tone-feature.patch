@@ -1639,10 +1639,16 @@ diff --git a/smali_classes2/com/samsung/android/hardware/display/SemMdnieManager
 index 94524f2..7062321 100644
 --- a/smali_classes2/com/samsung/android/hardware/display/SemMdnieManagerService.smali
 +++ b/smali_classes2/com/samsung/android/hardware/display/SemMdnieManagerService.smali
-@@ -66,6 +66,10 @@
+@@ -66,6 +66,16 @@
  
  .field public mEnhancedComfortAnimation:Z
  
++.field public mBlueLightFilterAdaptiveModeEnabled:Z
++
++.field public mBlueLightFilterCustomAlwaysOn:Z
++
++.field public mBlueLightFilterCustomAvailableTime:Z
++
 +.field public mEnvironmentAdaptiveDisplayEnabled:Z
 +
 +.field public final mEnvironmentAdaptiveDisplaySupported:Z
@@ -1659,10 +1665,16 @@ index 94524f2..7062321 100644
  .field public mNightMode:Z
  
  .field public mNightModeBlock:Z
-@@ -249,6 +255,10 @@
+@@ -249,6 +261,20 @@
  
      iput-boolean v2, v0, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->mMdnieWhiteRGBSupported:Z
  
++    iput-boolean v2, v0, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->mBlueLightFilterAdaptiveModeEnabled:Z
++
++    iput-boolean v2, v0, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->mBlueLightFilterCustomAlwaysOn:Z
++
++    iput-boolean v2, v0, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->mBlueLightFilterCustomAvailableTime:Z
++
 +    iput-boolean v2, v0, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->mEnvironmentAdaptiveDisplayEnabled:Z
 +
 +    iput-boolean v2, v0, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->mEnvironmentAdaptiveDisplaySupported:Z
