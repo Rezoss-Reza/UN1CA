@@ -3,6 +3,13 @@ From: @rezoss_reza <rezoss@local>
 Date: Mon, 14 Sep 2026 00:00:00 +0200
 Subject: [PATCH] Add recovery and flight mode power menu actions
 
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index 2f8d6821f..95a1f8040 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -9,0 +10,2 @@
++    <uses-permission android:name="android.permission.REBOOT"/>
++    <uses-permission android:name="android.permission.RECOVERY"/>
 diff --git a/smali_classes2/com/android/systemui/globalactions/features/RezossPowerMenuStrategy.smali b/smali_classes2/com/android/systemui/globalactions/features/RezossPowerMenuStrategy.smali
 new file mode 100644
 index 000000000..782bb1ce3
@@ -125,7 +132,7 @@ new file mode 100644
 index 000000000..64e3683b7
 --- /dev/null
 +++ b/smali_classes2/com/android/systemui/globalactions/presentation/viewmodel/AirplaneModeActionViewModel.smali
-@@ -0,0 +1,140 @@
+@@ -0,0 +1,154 @@
 +.class public Lcom/android/systemui/globalactions/presentation/viewmodel/AirplaneModeActionViewModel;
 +.super Ljava/lang/Object;
 +.source "AirplaneModeActionViewModel.java"
@@ -252,9 +259,23 @@ index 000000000..64e3683b7
 +
 +    invoke-virtual {v5, v0, v6}, Landroid/content/Context;->sendBroadcastAsUser(Landroid/content/Intent;Landroid/os/UserHandle;)V
 +
-+    iget-object p0, p0, Lcom/android/systemui/globalactions/presentation/viewmodel/AirplaneModeActionViewModel;->mGlobalActions:Lcom/samsung/android/globalactions/presentation/SamsungGlobalActions;
++    iget-object p0, p0, Lcom/android/systemui/globalactions/presentation/viewmodel/AirplaneModeActionViewModel;->mContext:Landroid/content/Context;
 +
-+    invoke-interface {p0, v4}, Lcom/samsung/android/globalactions/presentation/SamsungGlobalActions;->dismissDialog(Z)V
++    const-string/jumbo v0, "power"
++
++    invoke-virtual {p0, v0}, Landroid/content/Context;->getSystemService(Ljava/lang/String;)Ljava/lang/Object;
++
++    move-result-object p0
++
++    check-cast p0, Landroid/os/PowerManager;
++
++    invoke-static {}, Landroid/os/SystemClock;->uptimeMillis()J
++
++    move-result-wide v0
++
++    const/4 v2, 0x0
++
++    invoke-virtual {p0, v0, v1, v2}, Landroid/os/PowerManager;->userActivity(JZ)V
 +
 +    return-void
 +.end method

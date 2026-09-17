@@ -761,8 +761,8 @@ APPLY_PATCH "product" "overlay/framework-res__dm3qxxx__auto_generated_rro_produc
 # =============================================================================
 # S26U Notification highlights requirements: expose the Galaxy AI common-AI gate, keep LLM/offline model metadata enabled for the backend, ensure the offline language model stub is present, remove the extra SecSettings LLM-version UI gate, allow dmxq devices in NmRune, and enable priority/summary defaults.
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_CONFIG_AI_VERSION" "20263"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_CONFIG_NOW_NUDGE_VERSION" "1"
-SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GENAI_CONFIG_LLM_VERSION" "0.70"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_CONFIG_NOW_NUDGE_VERSION" "2"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GENAI_CONFIG_LLM_VERSION" "0.81"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GENAI_SUPPORT_OFFLINE_LANGUAGEMODEL" "TRUE"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/app/SketchBook/SketchBook.apk" 0 0 644 "u:object_r:system_file:s0"
 LOG "- Overlay S26U Notification highlights AI APKs"
@@ -778,19 +778,6 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/permissions/privapp-permissions-co
 ADD_TO_WORK_DIR "pa2qxxx" "system" "system/etc/sysconfig/aioskernelservice.xml" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/permissions/signature-permissions-com.samsung.android.offline.languagemodel.xml" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/OfflineLanguageModel_stub/OfflineLanguageModel_stub.apk" 0 0 644 "u:object_r:system_file:s0"
-
-LOG "- Re-signing OfflineLanguageModel_stub.apk for custom Offline Language Core updates"
-OFFLINELM_STUB_APK="$WORK_DIR/system/system/priv-app/OfflineLanguageModel_stub/OfflineLanguageModel_stub.apk"
-OFFLINELM_STUB_TMP="$TMP_DIR/offline_language_model_stub"
-OFFLINELM_STUB_CERT_PREFIX="aosp"
-$ROM_IS_OFFICIAL && OFFLINELM_STUB_CERT_PREFIX="unica"
-EVAL "rm -rf \"$OFFLINELM_STUB_TMP\" && mkdir -p \"$OFFLINELM_STUB_TMP\""
-EVAL "signapk \"$SRC_DIR/security/${OFFLINELM_STUB_CERT_PREFIX}_platform.x509.pem\" \"$SRC_DIR/security/${OFFLINELM_STUB_CERT_PREFIX}_platform.pk8\" \"$OFFLINELM_STUB_APK\" \"$OFFLINELM_STUB_TMP/OfflineLanguageModel_stub.signed.apk\""
-EVAL "zipalign -c -p 4 \"$OFFLINELM_STUB_TMP/OfflineLanguageModel_stub.signed.apk\""
-EVAL "mv -f \"$OFFLINELM_STUB_TMP/OfflineLanguageModel_stub.signed.apk\" \"$OFFLINELM_STUB_APK\""
-SET_METADATA "system" "system/priv-app/OfflineLanguageModel_stub/OfflineLanguageModel_stub.apk" 0 0 644 "u:object_r:system_file:s0"
-EVAL "rm -rf \"$OFFLINELM_STUB_TMP\""
-unset OFFLINELM_STUB_APK OFFLINELM_STUB_TMP OFFLINELM_STUB_CERT_PREFIX
 
 LOG "- Adding S26U NMT languagepack preload metadata"
 S26U_NMT_TARGET_PRELOAD="$WORK_DIR/system/system/etc/removable_preload.txt"
@@ -1171,8 +1158,10 @@ _REZOSS_PATCH_KSU_NEXT_INIT_BOOT_IMPL()
   local TMP_DIR="$MODPATH/tmp"
   local KSU_KMI="android13-5.15"
   local KSU_INIT_BOOT="$WORK_DIR/kernel/init_boot.img"
-  local KSU_RELEASE_JSON KSU_RELEASE_TAG KSU_HOST_ARCH KSU_KSUD_REGEX
-  local KSU_KSUD_URL KSU_MODULE_NAME KSU_MODULE_URL KSU_KSUD KSU_MODULE
+  local KSU_KSUD_ARTIFACT_NAME KSU_KSUD_NAME KSU_KSUD_URL
+  local KSU_KSUD_ZIP KSU_KSUD_DIR KSU_MODULE_ARCH KSU_MODULE_ARTIFACT_NAME
+  local KSU_MODULE_NAME KSU_MODULE_URL KSU_MODULE_ZIP KSU_MODULE_DIR
+  local KSU_KSUD KSU_MODULE
   local KSU_PATCHED_INIT_BOOT
 
   if [ ! -f "$KSU_INIT_BOOT" ]; then
@@ -1180,57 +1169,41 @@ _REZOSS_PATCH_KSU_NEXT_INIT_BOOT_IMPL()
     return 1
   fi
 
-  LOG "- Get latest KernelSU-Next release"
-  KSU_RELEASE_JSON="$(curl -fsSL "https://api.github.com/repos/KernelSU-Next/KernelSU-Next/releases/latest")" \
-    || return 1
-  KSU_RELEASE_TAG="$(echo "$KSU_RELEASE_JSON" | jq -r '.tag_name // empty')" || return 1
-  LOG "- Using KernelSU-Next ${KSU_RELEASE_TAG:-latest}"
+  mkdir -p "$TMP_DIR" || return 1
 
-  KSU_HOST_ARCH="$(uname -m)" || return 1
-  case "$KSU_HOST_ARCH" in
-    x86_64|amd64)
-      KSU_KSUD_REGEX="^ksud-(x86_64|amd64).*linux"
-      ;;
-    aarch64|arm64)
-      KSU_KSUD_REGEX="^ksud-aarch64.*linux"
-      ;;
-    *)
-      LOGE "Unsupported host architecture for KernelSU-Next ksud: $KSU_HOST_ARCH"
-      return 1
-      ;;
-  esac
-
-  KSU_KSUD_URL="$(echo "$KSU_RELEASE_JSON" | jq -r --arg regex "$KSU_KSUD_REGEX" '
-    .assets[]
-    | select(.name | test($regex))
-    | select(.name | test("android") | not)
-    | .browser_download_url
-  ' | head -n1)" || return 1
-  if [ ! "$KSU_KSUD_URL" ] || [ "$KSU_KSUD_URL" = "null" ]; then
-    LOGE "KernelSU-Next ksud asset not found for host architecture: $KSU_HOST_ARCH"
-    return 1
-  fi
-
+  KSU_KSUD_ARTIFACT_NAME="ksud-aarch64-linux-android"
+  KSU_KSUD_NAME="aarch64-linux-android/release/ksud"
+  KSU_KSUD_URL="https://nightly.link/KernelSU-Next/KernelSU-Next/workflows/build-manager-ci/dev/${KSU_KSUD_ARTIFACT_NAME}.zip"
+  KSU_MODULE_ARCH="aarch64"
+  KSU_MODULE_ARTIFACT_NAME="${KSU_MODULE_ARCH}-${KSU_KMI}-lkm"
   KSU_MODULE_NAME="${KSU_KMI}_kernelsu.ko"
-  KSU_MODULE_URL="$(echo "$KSU_RELEASE_JSON" | jq -r --arg name "$KSU_MODULE_NAME" '
-    .assets[]
-    | select(.name == $name)
-    | .browser_download_url
-  ' | head -n1)" || return 1
-  if [ ! "$KSU_MODULE_URL" ] || [ "$KSU_MODULE_URL" = "null" ]; then
-    LOGE "KernelSU-Next module asset not found: $KSU_MODULE_NAME"
+  KSU_MODULE_URL="https://nightly.link/KernelSU-Next/KernelSU-Next/workflows/build-manager-ci/dev/${KSU_MODULE_ARTIFACT_NAME}.zip"
+
+  KSU_KSUD_ZIP="$TMP_DIR/$KSU_KSUD_ARTIFACT_NAME.zip"
+  KSU_KSUD_DIR="$TMP_DIR/$KSU_KSUD_ARTIFACT_NAME"
+  KSU_KSUD="$KSU_KSUD_DIR/$KSU_KSUD_NAME"
+  KSU_MODULE_ZIP="$TMP_DIR/$KSU_MODULE_ARTIFACT_NAME.zip"
+  KSU_MODULE_DIR="$TMP_DIR/$KSU_MODULE_ARTIFACT_NAME"
+  KSU_MODULE="$KSU_MODULE_DIR/$KSU_MODULE_NAME"
+
+  LOG "- Download $KSU_KSUD_ARTIFACT_NAME from KernelSU-Next dev Build Manager CI"
+  curl -fL --retry 3 -o "$KSU_KSUD_ZIP" "$KSU_KSUD_URL" || return 1
+  mkdir -p "$KSU_KSUD_DIR" || return 1
+  unzip -o "$KSU_KSUD_ZIP" "$KSU_KSUD_NAME" -d "$KSU_KSUD_DIR" >/dev/null || return 1
+  if [ ! -f "$KSU_KSUD" ]; then
+    LOGE "KernelSU-Next ksud not found in artifact: $KSU_KSUD_NAME"
     return 1
   fi
-
-  KSU_KSUD="$TMP_DIR/ksud"
-  KSU_MODULE="$TMP_DIR/$KSU_MODULE_NAME"
-
-  LOG "- Download ksud"
-  curl -fL --retry 3 -o "$KSU_KSUD" "$KSU_KSUD_URL" || return 1
   chmod +x "$KSU_KSUD" || return 1
 
-  LOG "- Download $KSU_MODULE_NAME"
-  curl -fL --retry 3 -o "$KSU_MODULE" "$KSU_MODULE_URL" || return 1
+  LOG "- Download $KSU_MODULE_ARTIFACT_NAME from KernelSU-Next dev Build Manager CI"
+  curl -fL --retry 3 -o "$KSU_MODULE_ZIP" "$KSU_MODULE_URL" || return 1
+  mkdir -p "$KSU_MODULE_DIR" || return 1
+  unzip -o "$KSU_MODULE_ZIP" "$KSU_MODULE_NAME" -d "$KSU_MODULE_DIR" >/dev/null || return 1
+  if [ ! -f "$KSU_MODULE" ]; then
+    LOGE "KernelSU-Next module not found in artifact: $KSU_MODULE_NAME"
+    return 1
+  fi
 
   LOG "- Patching init_boot.img for KMI $KSU_KMI"
   cp -f "$KSU_INIT_BOOT" "$TMP_DIR/init_boot.img" || return 1

@@ -18,9 +18,8 @@
         <SecSwitchPreference android:key="hma_risky" android:title="Risky package protection" android:summary="Keep apps with Google Play services dependencies visible to Play services." android:persistent="false" />
         <SecPreference android:key="hma_gids" android:title="Restrict Zygote permissions" android:summary="Experimental. Applies when protected apps restart." />
     </PreferenceCategory>
-    <PreferenceCategory android:title="HMA logs">
-        <SecSwitchPreference android:key="hma_logging" android:title="Record interception events" android:persistent="false" />
-        <SecPreference android:key="hma_logs" android:title="Filter log categories" />
-        <SecPreference android:key="hma_viewLogs" android:title="View recent interception logs" />
+    <PreferenceCategory android:title="Backup and restore">
+        <SecPreference android:key="hma_backup" android:title="Back up HMA config" android:summary="Export the current HMA configuration as an HMA-OSS style JSON file." />
+        <SecPreference android:key="hma_restore" android:title="Restore HMA config" android:summary="Import a UN1CA HMA backup or compatible HMA-OSS JSON file." />
     </PreferenceCategory>
 </PreferenceScreen>
