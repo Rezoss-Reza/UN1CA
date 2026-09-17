@@ -346,7 +346,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy$2.smali b/smali_classes6
 +        }
 +    .end annotation
 +
-+    .line 358
++    .line 357
 +    iput p1, p0, Lio/mesalabs/unica/HmaPolicy$2;->val$user:I
 +
 +    iput-object p2, p0, Lio/mesalabs/unica/HmaPolicy$2;->val$name:Ljava/lang/String;
@@ -363,7 +363,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy$2.smali b/smali_classes6
 +.method public run()V
 +    .registers 10
 +
-+    .line 359
++    .line 358
 +    # getter for: Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +    invoke-static {}, Lio/mesalabs/unica/HmaPolicy;->access$300()Ljava/lang/ThreadLocal;
 +
@@ -377,21 +377,21 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy$2.smali b/smali_classes6
 +
 +    invoke-virtual {v0, v2}, Ljava/lang/ThreadLocal;->set(Ljava/lang/Object;)V
 +
-+    .line 361
++    .line 360
 +    :try_start_c
 +    # invokes: Lio/mesalabs/unica/HmaPolicy;->getContext()Landroid/content/Context;
 +    invoke-static {}, Lio/mesalabs/unica/HmaPolicy;->access$400()Landroid/content/Context;
 +
 +    move-result-object v0
 +
-+    .line 362
++    .line 361
 +    iget v2, p0, Lio/mesalabs/unica/HmaPolicy$2;->val$user:I
 +
 +    const/4 v3, 0x0
 +
 +    if-eqz v2, :cond_58
 +
-+    .line 363
++    .line 362
 +    const-string/jumbo v2, "android.os.UserHandle"
 +
 +    invoke-static {v2}, Ljava/lang/Class;->forName(Ljava/lang/String;)Ljava/lang/Class;
@@ -422,7 +422,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy$2.smali b/smali_classes6
 +
 +    move-result-object v2
 +
-+    .line 364
++    .line 363
 +    const-class v4, Landroid/content/Context;
 +
 +    const-string/jumbo v5, "createContextAsUser"
@@ -461,7 +461,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy$2.smali b/smali_classes6
 +
 +    check-cast v0, Landroid/content/Context;
 +
-+    .line 366
++    .line 365
 +    :cond_58
 +    invoke-virtual {v0}, Landroid/content/Context;->getPackageManager()Landroid/content/pm/PackageManager;
 +
@@ -473,7 +473,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy$2.smali b/smali_classes6
 +
 +    move-result-object v0
 +
-+    .line 367
++    .line 366
 +    # getter for: Lio/mesalabs/unica/HmaPolicy;->facts:Ljava/util/concurrent/ConcurrentHashMap;
 +    invoke-static {}, Lio/mesalabs/unica/HmaPolicy;->access$000()Ljava/util/concurrent/ConcurrentHashMap;
 +
@@ -492,13 +492,13 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy$2.smali b/smali_classes6
 +
 +    goto :goto_7c
 +
-+    .line 369
++    .line 368
 +    :catchall_70
 +    move-exception v0
 +
 +    goto :goto_8d
 +
-+    .line 368
++    .line 367
 +    :catch_72
 +    move-exception v0
 +
@@ -514,7 +514,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy$2.smali b/smali_classes6
 +    :try_end_7c
 +    .catchall {:try_start_73 .. :try_end_7c} :catchall_70
 +
-+    .line 369
++    .line 368
 +    :goto_7c
 +    # getter for: Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +    invoke-static {}, Lio/mesalabs/unica/HmaPolicy;->access$300()Ljava/lang/ThreadLocal;
@@ -532,10 +532,10 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy$2.smali b/smali_classes6
 +
 +    invoke-interface {v0, v1}, Ljava/util/Set;->remove(Ljava/lang/Object;)Z
 +
-+    .line 370
++    .line 369
 +    return-void
 +
-+    .line 369
++    .line 368
 +    :goto_8d
 +    # getter for: Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +    invoke-static {}, Lio/mesalabs/unica/HmaPolicy;->access$300()Ljava/lang/ThreadLocal;
@@ -667,7 +667,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy$Facts.smali b/smali_clas
 diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/io/mesalabs/unica/HmaPolicy.smali
 --- /dev/null
 +++ b/smali_classes6/io/mesalabs/unica/HmaPolicy.smali
-@@ -0,0 +1,3487 @@
+@@ -0,0 +1,3431 @@
 +.class public final Lio/mesalabs/unica/HmaPolicy;
 +.super Ljava/lang/Object;
 +.source "HmaPolicy.java"
@@ -902,7 +902,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +.method public static blockActivity(ILandroid/content/Intent;Landroid/content/pm/ActivityInfo;)Z
 +    .registers 11
 +
-+    .line 190
++    .line 189
 +    const-string/jumbo v0, "activity"
 +
 +    invoke-static {p0}, Lio/mesalabs/unica/HmaPolicy;->enter(I)Z
@@ -915,14 +915,14 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    return v2
 +
-+    .line 192
++    .line 191
 +    :cond_a
 +    :try_start_a
 +    invoke-static {p0}, Lio/mesalabs/unica/HmaPolicy;->config(I)Lio/mesalabs/unica/HmaPolicy$Config;
 +
 +    move-result-object v1
 +
-+    .line 193
++    .line 192
 +    invoke-static {p0, v1}, Lio/mesalabs/unica/HmaPolicy;->caller(ILio/mesalabs/unica/HmaPolicy$Config;)Ljava/lang/String;
 +
 +    move-result-object v3
@@ -930,18 +930,18 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +    .catch Ljava/lang/RuntimeException; {:try_start_a .. :try_end_12} :catch_76
 +    .catchall {:try_start_a .. :try_end_12} :catchall_6f
 +
-+    .line 194
++    .line 193
 +    if-nez v3, :cond_1a
 +
-+    .line 201
++    .line 200
 +    sget-object p0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {p0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 194
++    .line 193
 +    return v2
 +
-+    .line 195
++    .line 194
 +    :cond_1a
 +    :try_start_1a
 +    iget-object v4, v1, Lio/mesalabs/unica/HmaPolicy$Config;->json:Lorg/json/JSONObject;
@@ -962,7 +962,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    xor-int/2addr v4, v6
 +
-+    .line 196
++    .line 195
 +    if-nez p2, :cond_40
 +
 +    if-eqz p1, :cond_3e
@@ -995,7 +995,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +    :cond_40
 +    iget-object p1, p2, Landroid/content/pm/ActivityInfo;->packageName:Ljava/lang/String;
 +
-+    .line 197
++    .line 196
 +    :goto_42
 +    if-eqz v4, :cond_4b
 +
@@ -1010,7 +1010,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +    :cond_4b
 +    move v5, v2
 +
-+    .line 198
++    .line 197
 +    :goto_4c
 +    if-eqz v5, :cond_68
 +
@@ -1041,19 +1041,19 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +    .catch Ljava/lang/RuntimeException; {:try_start_1a .. :try_end_68} :catch_76
 +    .catchall {:try_start_1a .. :try_end_68} :catchall_6f
 +
-+    .line 199
++    .line 198
 +    :cond_68
 +    nop
 +
-+    .line 201
++    .line 200
 +    sget-object p0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {p0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 199
++    .line 198
 +    return v5
 +
-+    .line 201
++    .line 200
 +    :catchall_6f
 +    move-exception p0
 +
@@ -1063,16 +1063,16 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    throw p0
 +
-+    .line 200
++    .line 199
 +    :catch_76
 +    move-exception p0
 +
-+    .line 201
++    .line 200
 +    sget-object p0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {p0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 200
++    .line 199
 +    return v2
 +.end method
 +
@@ -1551,72 +1551,16 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +.end method
 +
 +.method private static event(Lio/mesalabs/unica/HmaPolicy$Config;Ljava/lang/String;ILjava/lang/String;)V
-+    .registers 6
++    .registers 4
 +
 +    .line 137
-+    iget-object p0, p0, Lio/mesalabs/unica/HmaPolicy$Config;->json:Lorg/json/JSONObject;
-+
-+    const-string/jumbo v0, "logging"
-+
-+    const/4 v1, 0x0
-+
-+    invoke-virtual {p0, v0, v1}, Lorg/json/JSONObject;->optBoolean(Ljava/lang/String;Z)Z
-+
-+    move-result p0
-+
-+    if-eqz p0, :cond_37
-+
-+    new-instance p0, Ljava/lang/StringBuilder;
-+
-+    invoke-direct {p0}, Ljava/lang/StringBuilder;-><init>()V
-+
-+    const-string/jumbo v0, "["
-+
-+    invoke-virtual {p0, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
-+
-+    move-result-object p0
-+
-+    invoke-virtual {p0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
-+
-+    move-result-object p0
-+
-+    const-string/jumbo p1, "] uid="
-+
-+    invoke-virtual {p0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
-+
-+    move-result-object p0
-+
-+    invoke-virtual {p0, p2}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
-+
-+    move-result-object p0
-+
-+    const-string/jumbo p1, " "
-+
-+    invoke-virtual {p0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
-+
-+    move-result-object p0
-+
-+    invoke-virtual {p0, p3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
-+
-+    move-result-object p0
-+
-+    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
-+
-+    move-result-object p0
-+
-+    const-string/jumbo p1, "UnicaHMA"
-+
-+    invoke-static {p1, p0}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
-+
-+    .line 138
-+    :cond_37
 +    return-void
 +.end method
 +
 +.method private static fakeInputMethod()Landroid/view/inputmethod/InputMethodInfo;
 +    .registers 5
 +
-+    .line 342
++    .line 341
 +    new-instance v0, Landroid/view/inputmethod/InputMethodInfo;
 +
 +    const-string/jumbo v1, "Gboard"
@@ -1644,7 +1588,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +        }
 +    .end annotation
 +
-+    .line 330
++    .line 329
 +    const-string/jumbo v0, "accessibility"
 +
 +    invoke-static {p0, v0}, Lio/mesalabs/unica/HmaPolicy;->hideServiceList(ILjava/lang/String;)Z
@@ -1664,7 +1608,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +.method public static filterAccessibilitySlice(ILjava/lang/Object;)Ljava/lang/Object;
 +    .registers 6
 +
-+    .line 333
++    .line 332
 +    const-string/jumbo v0, "accessibility"
 +
 +    invoke-static {p0, v0}, Lio/mesalabs/unica/HmaPolicy;->hideServiceList(ILjava/lang/String;)Z
@@ -1677,7 +1621,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    goto :goto_2a
 +
-+    .line 334
++    .line 333
 +    :cond_b
 +    :try_start_b
 +    invoke-virtual {p1}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
@@ -1714,13 +1658,13 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    return-object p0
 +
-+    .line 335
++    .line 334
 +    :catch_28
 +    move-exception p0
 +
 +    return-object p1
 +
-+    .line 333
++    .line 332
 +    :cond_2a
 +    :goto_2a
 +    return-object p1
@@ -1729,7 +1673,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +.method public static filterCall(Landroid/content/ContentProvider;Ljava/lang/String;Ljava/lang/String;Landroid/os/Bundle;)Landroid/os/Bundle;
 +    .registers 8
 +
-+    .line 269
++    .line 268
 +    if-eqz p0, :cond_81
 +
 +    if-eqz p3, :cond_81
@@ -1754,7 +1698,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    goto :goto_81
 +
-+    .line 270
++    .line 269
 +    :cond_17
 +    invoke-virtual {p0}, Landroid/content/ContentProvider;->getContext()Landroid/content/Context;
 +
@@ -1774,7 +1718,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    return-object p3
 +
-+    .line 271
++    .line 270
 +    :cond_28
 +    invoke-virtual {p0}, Landroid/content/ContentProvider;->getContext()Landroid/content/Context;
 +
@@ -1782,12 +1726,12 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    sput-object p0, Lio/mesalabs/unica/HmaPolicy;->context:Landroid/content/Context;
 +
-+    .line 272
++    .line 271
 +    invoke-static {}, Landroid/os/Binder;->getCallingUid()I
 +
 +    move-result p0
 +
-+    .line 273
++    .line 272
 +    invoke-static {p0}, Lio/mesalabs/unica/HmaPolicy;->enter(I)Z
 +
 +    move-result v0
@@ -1796,14 +1740,14 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    return-object p3
 +
-+    .line 275
++    .line 274
 +    :cond_39
 +    :try_start_39
 +    invoke-static {p0}, Lio/mesalabs/unica/HmaPolicy;->config(I)Lio/mesalabs/unica/HmaPolicy$Config;
 +
 +    move-result-object v0
 +
-+    .line 276
++    .line 275
 +    invoke-static {p0, v0}, Lio/mesalabs/unica/HmaPolicy;->caller(ILio/mesalabs/unica/HmaPolicy$Config;)Ljava/lang/String;
 +
 +    move-result-object v1
@@ -1813,15 +1757,15 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    if-nez v1, :cond_49
 +
-+    .line 285
++    .line 284
 +    sget-object p0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {p0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 276
++    .line 275
 +    return-object p3
 +
-+    .line 277
++    .line 276
 +    :cond_49
 +    const/4 v1, 0x4
 +
@@ -1837,25 +1781,25 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +    .catch Ljava/lang/RuntimeException; {:try_start_4a .. :try_end_52} :catch_7a
 +    .catchall {:try_start_4a .. :try_end_52} :catchall_73
 +
-+    .line 278
++    .line 277
 +    if-nez p1, :cond_5a
 +
-+    .line 285
++    .line 284
 +    sget-object p0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {p0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 278
++    .line 277
 +    return-object p3
 +
-+    .line 280
++    .line 279
 +    :cond_5a
 +    :try_start_5a
 +    new-instance v1, Landroid/os/Bundle;
 +
 +    invoke-direct {v1}, Landroid/os/Bundle;-><init>()V
 +
-+    .line 281
++    .line 280
 +    const-string/jumbo v2, "value"
 +
 +    const/4 v3, 0x0
@@ -1864,7 +1808,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    invoke-virtual {v1, v2, p1}, Landroid/os/Bundle;->putString(Ljava/lang/String;Ljava/lang/String;)V
 +
-+    .line 282
++    .line 281
 +    const-string/jumbo p1, "settings"
 +
 +    invoke-static {v0, p1, p0, p2}, Lio/mesalabs/unica/HmaPolicy;->event(Lio/mesalabs/unica/HmaPolicy$Config;Ljava/lang/String;ILjava/lang/String;)V
@@ -1872,18 +1816,18 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +    .catch Ljava/lang/RuntimeException; {:try_start_5a .. :try_end_6c} :catch_7a
 +    .catchall {:try_start_5a .. :try_end_6c} :catchall_73
 +
-+    .line 283
++    .line 282
 +    nop
 +
-+    .line 285
++    .line 284
 +    sget-object p0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {p0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 283
++    .line 282
 +    return-object v1
 +
-+    .line 285
++    .line 284
 +    :catchall_73
 +    move-exception p0
 +
@@ -1893,19 +1837,19 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    throw p0
 +
-+    .line 284
++    .line 283
 +    :catch_7a
 +    move-exception p0
 +
-+    .line 285
++    .line 284
 +    sget-object p0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {p0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 284
++    .line 283
 +    return-object p3
 +
-+    .line 269
++    .line 268
 +    :cond_81
 +    :goto_81
 +    return-object p3
@@ -1914,7 +1858,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +.method public static filterCurrentInputMethod(ILandroid/view/inputmethod/InputMethodInfo;)Landroid/view/inputmethod/InputMethodInfo;
 +    .registers 3
 +
-+    .line 345
++    .line 344
 +    const-string/jumbo v0, "input_method"
 +
 +    invoke-static {p0, v0}, Lio/mesalabs/unica/HmaPolicy;->hideServiceList(ILjava/lang/String;)Z
@@ -1943,7 +1887,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +        }
 +    .end annotation
 +
-+    .line 338
++    .line 337
 +    if-eqz p1, :cond_14
 +
 +    const-string/jumbo v0, "input_method"
@@ -1956,7 +1900,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    goto :goto_14
 +
-+    .line 339
++    .line 338
 +    :cond_b
 +    invoke-static {}, Lio/mesalabs/unica/HmaPolicy;->fakeInputMethod()Landroid/view/inputmethod/InputMethodInfo;
 +
@@ -1968,7 +1912,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    return-object p0
 +
-+    .line 338
++    .line 337
 +    :cond_14
 +    :goto_14
 +    return-object p1
@@ -1977,7 +1921,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +.method public static filterInputSubtype(ILandroid/view/inputmethod/InputMethodSubtype;)Landroid/view/inputmethod/InputMethodSubtype;
 +    .registers 3
 +
-+    .line 348
++    .line 347
 +    const-string/jumbo v0, "input_method"
 +
 +    invoke-static {p0, v0}, Lio/mesalabs/unica/HmaPolicy;->hideServiceList(ILjava/lang/String;)Z
@@ -1995,7 +1939,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +.method public static filterInputSubtypeList(ILjava/lang/Object;)Ljava/lang/Object;
 +    .registers 7
 +
-+    .line 351
++    .line 350
 +    if-eqz p1, :cond_2d
 +
 +    const-string/jumbo v0, "input_method"
@@ -2008,7 +1952,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    goto :goto_2d
 +
-+    .line 352
++    .line 351
 +    :cond_b
 +    :try_start_b
 +    invoke-virtual {p1}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
@@ -2049,13 +1993,13 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    return-object p0
 +
-+    .line 353
++    .line 352
 +    :catch_2b
 +    move-exception p0
 +
 +    return-object p1
 +
-+    .line 351
++    .line 350
 +    :cond_2d
 +    :goto_2d
 +    return-object p1
@@ -2064,7 +2008,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +.method public static filterInstallSourceInfo(Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/Object;
 +    .registers 9
 +
-+    .line 222
++    .line 221
 +    if-eqz p2, :cond_6f
 +
 +    invoke-static {p1}, Lio/mesalabs/unica/HmaPolicy;->enter(I)Z
@@ -2075,14 +2019,14 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    goto :goto_6f
 +
-+    .line 224
++    .line 223
 +    :cond_9
 +    :try_start_9
 +    invoke-static {p1}, Lio/mesalabs/unica/HmaPolicy;->config(I)Lio/mesalabs/unica/HmaPolicy$Config;
 +
 +    move-result-object v0
 +
-+    .line 225
++    .line 224
 +    invoke-static {p1, v0}, Lio/mesalabs/unica/HmaPolicy;->sourceName(ILio/mesalabs/unica/HmaPolicy$Config;)Ljava/lang/String;
 +
 +    move-result-object v1
@@ -2097,7 +2041,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    goto :goto_5b
 +
-+    .line 226
++    .line 225
 +    :cond_1a
 +    iget-object v1, v0, Lio/mesalabs/unica/HmaPolicy$Config;->json:Lorg/json/JSONObject;
 +
@@ -2107,7 +2051,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    move-result-object v1
 +
-+    .line 227
++    .line 226
 +    if-nez v1, :cond_26
 +
 +    const/4 v2, 0x0
@@ -2122,19 +2066,19 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +    .catch Ljava/lang/RuntimeException; {:try_start_9 .. :try_end_2a} :catch_68
 +    .catchall {:try_start_9 .. :try_end_2a} :catchall_61
 +
-+    .line 228
++    .line 227
 +    :goto_2a
 +    if-nez v2, :cond_32
 +
-+    .line 232
++    .line 231
 +    sget-object p0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {p0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 228
++    .line 227
 +    return-object p2
 +
-+    .line 229
++    .line 228
 +    :cond_32
 +    :try_start_32
 +    const-string/jumbo v3, "package"
@@ -2172,28 +2116,28 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +    .catch Ljava/lang/RuntimeException; {:try_start_32 .. :try_end_54} :catch_68
 +    .catchall {:try_start_32 .. :try_end_54} :catchall_61
 +
-+    .line 230
++    .line 229
 +    nop
 +
-+    .line 232
++    .line 231
 +    sget-object p0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {p0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 230
++    .line 229
 +    return-object v2
 +
-+    .line 232
++    .line 231
 +    :cond_5b
 +    :goto_5b
 +    sget-object p0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {p0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 225
++    .line 224
 +    return-object p2
 +
-+    .line 232
++    .line 231
 +    :catchall_61
 +    move-exception p0
 +
@@ -2203,19 +2147,19 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    throw p0
 +
-+    .line 231
++    .line 230
 +    :catch_68
 +    move-exception p0
 +
-+    .line 232
++    .line 231
 +    sget-object p0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {p0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 231
++    .line 230
 +    return-object p2
 +
-+    .line 222
++    .line 221
 +    :cond_6f
 +    :goto_6f
 +    return-object p2
@@ -2224,7 +2168,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +.method public static filterInstallerPackageName(Ljava/lang/String;ILjava/lang/String;)Ljava/lang/String;
 +    .registers 8
 +
-+    .line 235
++    .line 234
 +    if-nez p2, :cond_60
 +
 +    invoke-static {p1}, Lio/mesalabs/unica/HmaPolicy;->enter(I)Z
@@ -2235,14 +2179,14 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    goto :goto_60
 +
-+    .line 237
++    .line 236
 +    :cond_9
 +    :try_start_9
 +    invoke-static {p1}, Lio/mesalabs/unica/HmaPolicy;->config(I)Lio/mesalabs/unica/HmaPolicy$Config;
 +
 +    move-result-object v0
 +
-+    .line 238
++    .line 237
 +    invoke-static {p1, v0}, Lio/mesalabs/unica/HmaPolicy;->sourceName(ILio/mesalabs/unica/HmaPolicy$Config;)Ljava/lang/String;
 +
 +    move-result-object v1
@@ -2252,15 +2196,15 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    if-nez v1, :cond_19
 +
-+    .line 244
++    .line 243
 +    sget-object p0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {p0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 238
++    .line 237
 +    return-object p2
 +
-+    .line 239
++    .line 238
 +    :cond_19
 +    :try_start_19
 +    iget-object v1, v0, Lio/mesalabs/unica/HmaPolicy$Config;->json:Lorg/json/JSONObject;
@@ -2274,18 +2218,18 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +    .catch Ljava/lang/RuntimeException; {:try_start_19 .. :try_end_21} :catch_59
 +    .catchall {:try_start_19 .. :try_end_21} :catchall_52
 +
-+    .line 240
++    .line 239
 +    if-nez v1, :cond_29
 +
-+    .line 244
++    .line 243
 +    sget-object p0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {p0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 240
++    .line 239
 +    return-object p2
 +
-+    .line 241
++    .line 240
 +    :cond_29
 +    :try_start_29
 +    const-string/jumbo v2, "package"
@@ -2323,18 +2267,18 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +    .catch Ljava/lang/RuntimeException; {:try_start_29 .. :try_end_4b} :catch_59
 +    .catchall {:try_start_29 .. :try_end_4b} :catchall_52
 +
-+    .line 242
++    .line 241
 +    nop
 +
-+    .line 244
++    .line 243
 +    sget-object p0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {p0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 242
++    .line 241
 +    return-object v1
 +
-+    .line 244
++    .line 243
 +    :catchall_52
 +    move-exception p0
 +
@@ -2344,19 +2288,19 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    throw p0
 +
-+    .line 243
++    .line 242
 +    :catch_59
 +    move-exception p0
 +
-+    .line 244
++    .line 243
 +    sget-object p0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {p0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 243
++    .line 242
 +    return-object p2
 +
-+    .line 235
++    .line 234
 +    :cond_60
 +    :goto_60
 +    return-object p2
@@ -2365,7 +2309,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +.method public static filterQuery(Landroid/content/ContentProvider;Landroid/net/Uri;Landroid/database/Cursor;)Landroid/database/Cursor;
 +    .registers 20
 +
-+    .line 288
++    .line 287
 +    move-object/from16 v1, p2
 +
 +    if-eqz v1, :cond_100
@@ -2396,7 +2340,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    goto/16 :goto_100
 +
-+    .line 289
++    .line 288
 +    :cond_1e
 +    invoke-virtual/range {p0 .. p0}, Landroid/content/ContentProvider;->getContext()Landroid/content/Context;
 +
@@ -2404,12 +2348,12 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    sput-object v0, Lio/mesalabs/unica/HmaPolicy;->context:Landroid/content/Context;
 +
-+    .line 290
++    .line 289
 +    invoke-static {}, Landroid/os/Binder;->getCallingUid()I
 +
 +    move-result v0
 +
-+    .line 291
++    .line 290
 +    invoke-static {v0}, Lio/mesalabs/unica/HmaPolicy;->enter(I)Z
 +
 +    move-result v3
@@ -2418,19 +2362,19 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    return-object v1
 +
-+    .line 292
++    .line 291
 +    :cond_2f
 +    invoke-interface/range {p2 .. p2}, Landroid/database/Cursor;->getPosition()I
 +
 +    move-result v3
 +
-+    .line 294
++    .line 293
 +    :try_start_33
 +    invoke-static {v0}, Lio/mesalabs/unica/HmaPolicy;->config(I)Lio/mesalabs/unica/HmaPolicy$Config;
 +
 +    move-result-object v4
 +
-+    .line 295
++    .line 294
 +    invoke-static {v0, v4}, Lio/mesalabs/unica/HmaPolicy;->caller(ILio/mesalabs/unica/HmaPolicy$Config;)Ljava/lang/String;
 +
 +    move-result-object v5
@@ -2440,15 +2384,15 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    if-nez v5, :cond_43
 +
-+    .line 317
++    .line 316
 +    sget-object v0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {v0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 295
++    .line 294
 +    return-object v1
 +
-+    .line 296
++    .line 295
 +    :cond_43
 +    :try_start_43
 +    invoke-virtual/range {p1 .. p1}, Landroid/net/Uri;->getPathSegments()Ljava/util/List;
@@ -2463,7 +2407,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    check-cast v5, Ljava/lang/String;
 +
-+    .line 297
++    .line 296
 +    const-string/jumbo v7, "name"
 +
 +    invoke-interface {v1, v7}, Landroid/database/Cursor;->getColumnIndex(Ljava/lang/String;)I
@@ -2479,18 +2423,18 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +    .catch Ljava/lang/RuntimeException; {:try_start_43 .. :try_end_5a} :catch_f0
 +    .catchall {:try_start_43 .. :try_end_5a} :catchall_ee
 +
-+    .line 298
++    .line 297
 +    if-gez v8, :cond_62
 +
-+    .line 317
++    .line 316
 +    sget-object v0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {v0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 298
++    .line 297
 +    return-object v1
 +
-+    .line 299
++    .line 298
 +    :cond_62
 +    :try_start_62
 +    invoke-virtual/range {p1 .. p1}, Landroid/net/Uri;->getPathSegments()Ljava/util/List;
@@ -2523,21 +2467,21 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +    :cond_78
 +    const/4 v9, 0x0
 +
-+    .line 300
++    .line 299
 +    :goto_79
 +    if-gez v7, :cond_83
 +
 +    if-nez v9, :cond_83
 +
-+    .line 317
++    .line 316
 +    sget-object v0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {v0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 300
++    .line 299
 +    return-object v1
 +
-+    .line 301
++    .line 300
 +    :cond_83
 +    :try_start_83
 +    new-instance v11, Landroid/database/MatrixCursor;
@@ -2548,15 +2492,15 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    invoke-direct {v11, v12}, Landroid/database/MatrixCursor;-><init>([Ljava/lang/String;)V
 +
-+    .line 302
++    .line 301
 +    const/4 v12, -0x1
 +
 +    invoke-interface {v1, v12}, Landroid/database/Cursor;->moveToPosition(I)Z
 +
-+    .line 303
++    .line 302
 +    move v12, v6
 +
-+    .line 304
++    .line 303
 +    :goto_91
 +    invoke-interface/range {p2 .. p2}, Landroid/database/Cursor;->moveToNext()Z
 +
@@ -2564,14 +2508,14 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    if-eqz v13, :cond_c0
 +
-+    .line 305
++    .line 304
 +    invoke-interface/range {p2 .. p2}, Landroid/database/Cursor;->getColumnCount()I
 +
 +    move-result v13
 +
 +    new-array v14, v13, [Ljava/lang/Object;
 +
-+    .line 306
++    .line 305
 +    move v15, v6
 +
 +    :goto_9e
@@ -2587,7 +2531,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    goto :goto_9e
 +
-+    .line 307
++    .line 306
 +    :cond_a9
 +    if-gez v7, :cond_ad
 +
@@ -2600,13 +2544,13 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    move-result-object v13
 +
-+    .line 308
++    .line 307
 +    :goto_b1
 +    invoke-static {v4, v5, v13}, Lio/mesalabs/unica/HmaPolicy;->replacement(Lio/mesalabs/unica/HmaPolicy$Config;Ljava/lang/String;Ljava/lang/String;)[Ljava/lang/String;
 +
 +    move-result-object v13
 +
-+    .line 309
++    .line 308
 +    if-eqz v13, :cond_bc
 +
 +    aget-object v12, v13, v6
@@ -2615,14 +2559,14 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    move v12, v10
 +
-+    .line 310
++    .line 309
 +    :cond_bc
 +    invoke-virtual {v11, v14}, Landroid/database/MatrixCursor;->addRow([Ljava/lang/Object;)V
 +
-+    .line 311
++    .line 310
 +    goto :goto_91
 +
-+    .line 312
++    .line 311
 +    :cond_c0
 +    if-nez v12, :cond_ce
 +
@@ -2633,20 +2577,20 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +    .catch Ljava/lang/RuntimeException; {:try_start_83 .. :try_end_c8} :catch_f0
 +    .catchall {:try_start_83 .. :try_end_c8} :catchall_ee
 +
-+    .line 317
++    .line 316
 +    sget-object v0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {v0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 312
++    .line 311
 +    return-object v1
 +
-+    .line 313
++    .line 312
 +    :cond_ce
 +    :try_start_ce
 +    invoke-interface/range {p2 .. p2}, Landroid/database/Cursor;->close()V
 +
-+    .line 314
++    .line 313
 +    new-instance v6, Ljava/lang/StringBuilder;
 +
 +    invoke-direct {v6}, Ljava/lang/StringBuilder;-><init>()V
@@ -2670,24 +2614,24 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +    .catch Ljava/lang/RuntimeException; {:try_start_ce .. :try_end_e7} :catch_f0
 +    .catchall {:try_start_ce .. :try_end_e7} :catchall_ee
 +
-+    .line 315
++    .line 314
 +    nop
 +
-+    .line 317
++    .line 316
 +    sget-object v0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {v0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 315
++    .line 314
 +    return-object v11
 +
-+    .line 317
++    .line 316
 +    :catchall_ee
 +    move-exception v0
 +
 +    goto :goto_fa
 +
-+    .line 316
++    .line 315
 +    :catch_f0
 +    move-exception v0
 +
@@ -2696,15 +2640,15 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +    :try_end_f4
 +    .catchall {:try_start_f1 .. :try_end_f4} :catchall_ee
 +
-+    .line 317
++    .line 316
 +    sget-object v0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {v0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 316
++    .line 315
 +    return-object v1
 +
-+    .line 317
++    .line 316
 +    :goto_fa
 +    sget-object v1, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
@@ -2712,7 +2656,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    throw v0
 +
-+    .line 288
++    .line 287
 +    :cond_100
 +    :goto_100
 +    return-object v1
@@ -2797,7 +2741,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +.method private static hidden(Lio/mesalabs/unica/HmaPolicy$Config;ILjava/lang/String;Ljava/lang/String;)Z
 +    .registers 8
 +
-+    .line 140
++    .line 139
 +    const/4 v0, 0x0
 +
 +    if-eqz p3, :cond_b8
@@ -2834,13 +2778,13 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    goto/16 :goto_b8
 +
-+    .line 141
++    .line 140
 +    :cond_23
 +    invoke-static {}, Landroid/os/Binder;->clearCallingIdentity()J
 +
 +    move-result-wide v1
 +
-+    .line 143
++    .line 142
 +    :try_start_27
 +    invoke-static {}, Lio/mesalabs/unica/HmaPolicy;->getContext()Landroid/content/Context;
 +
@@ -2854,7 +2798,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    move-result-object v3
 +
-+    .line 144
++    .line 143
 +    if-eqz v3, :cond_43
 +
 +    invoke-static {v3}, Ljava/util/Arrays;->asList([Ljava/lang/Object;)Ljava/util/List;
@@ -2869,17 +2813,17 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    if-eqz v3, :cond_43
 +
-+    .line 145
++    .line 144
 +    invoke-static {v1, v2}, Landroid/os/Binder;->restoreCallingIdentity(J)V
 +
-+    .line 144
++    .line 143
 +    return v0
 +
-+    .line 145
++    .line 144
 +    :cond_43
 +    invoke-static {v1, v2}, Landroid/os/Binder;->restoreCallingIdentity(J)V
 +
-+    .line 146
++    .line 145
 +    new-instance v1, Ljava/lang/StringBuilder;
 +
 +    invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
@@ -2906,7 +2850,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    move-result-object v1
 +
-+    .line 147
++    .line 146
 +    sget-object v2, Lio/mesalabs/unica/HmaPolicy;->facts:Ljava/util/concurrent/ConcurrentHashMap;
 +
 +    invoke-virtual {v2, v1}, Ljava/util/concurrent/ConcurrentHashMap;->get(Ljava/lang/Object;)Ljava/lang/Object;
@@ -2915,12 +2859,12 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    check-cast v1, Lio/mesalabs/unica/HmaPolicy$Facts;
 +
-+    .line 148
++    .line 147
 +    if-nez v1, :cond_6e
 +
 +    invoke-static {p3, p1}, Lio/mesalabs/unica/HmaPolicy;->requestScan(Ljava/lang/String;I)V
 +
-+    .line 150
++    .line 149
 +    :cond_6e
 +    iget-object p1, p0, Lio/mesalabs/unica/HmaPolicy$Config;->json:Lorg/json/JSONObject;
 +
@@ -2951,7 +2895,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +    :cond_87
 +    return v0
 +
-+    .line 151
++    .line 150
 +    :cond_88
 +    iget-object p1, p0, Lio/mesalabs/unica/HmaPolicy$Config;->json:Lorg/json/JSONObject;
 +
@@ -2965,7 +2909,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    return v3
 +
-+    .line 152
++    .line 151
 +    :cond_93
 +    if-eqz v1, :cond_b2
 +
@@ -3000,11 +2944,11 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    return v3
 +
-+    .line 153
++    .line 152
 +    :cond_b2
 +    return v0
 +
-+    .line 145
++    .line 144
 +    :catchall_b3
 +    move-exception p0
 +
@@ -3012,7 +2956,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    throw p0
 +
-+    .line 140
++    .line 139
 +    :cond_b8
 +    :goto_b8
 +    return v0
@@ -3021,7 +2965,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +.method public static hideServiceList(ILjava/lang/String;)Z
 +    .registers 7
 +
-+    .line 320
++    .line 319
 +    invoke-static {p0}, Lio/mesalabs/unica/HmaPolicy;->enter(I)Z
 +
 +    move-result v0
@@ -3032,14 +2976,14 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    return v1
 +
-+    .line 322
++    .line 321
 +    :cond_8
 +    :try_start_8
 +    invoke-static {p0}, Lio/mesalabs/unica/HmaPolicy;->config(I)Lio/mesalabs/unica/HmaPolicy$Config;
 +
 +    move-result-object v0
 +
-+    .line 323
++    .line 322
 +    invoke-static {p0, v0}, Lio/mesalabs/unica/HmaPolicy;->caller(ILio/mesalabs/unica/HmaPolicy$Config;)Ljava/lang/String;
 +
 +    move-result-object v2
@@ -3067,7 +3011,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +    :cond_1e
 +    move v2, v1
 +
-+    .line 324
++    .line 323
 +    :goto_1f
 +    if-eqz v2, :cond_37
 +
@@ -3094,19 +3038,19 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +    .catch Ljava/lang/RuntimeException; {:try_start_14 .. :try_end_37} :catch_45
 +    .catchall {:try_start_14 .. :try_end_37} :catchall_3e
 +
-+    .line 325
++    .line 324
 +    :cond_37
 +    nop
 +
-+    .line 327
++    .line 326
 +    sget-object p0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {p0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 325
++    .line 324
 +    return v2
 +
-+    .line 327
++    .line 326
 +    :catchall_3e
 +    move-exception p0
 +
@@ -3116,16 +3060,16 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    throw p0
 +
-+    .line 326
++    .line 325
 +    :catch_45
 +    move-exception p0
 +
-+    .line 327
++    .line 326
 +    sget-object p0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {p0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 326
++    .line 325
 +    return v1
 +.end method
 +
@@ -3194,7 +3138,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +.method private static installSourceInfo(Ljava/lang/String;)Ljava/lang/Object;
 +    .registers 12
 +
-+    .line 171
++    .line 170
 +    const/4 v0, 0x0
 +
 +    :try_start_1
@@ -3204,14 +3148,14 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    move-result-object v1
 +
-+    .line 172
++    .line 171
 +    const-string/jumbo v2, "android.content.pm.SigningInfo"
 +
 +    invoke-static {v2}, Ljava/lang/Class;->forName(Ljava/lang/String;)Ljava/lang/Class;
 +
 +    move-result-object v2
 +
-+    .line 173
++    .line 172
 +    const/4 v3, 0x6
 +
 +    new-array v4, v3, [Ljava/lang/Class;
@@ -3254,7 +3198,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    move-result-object v1
 +
-+    .line 174
++    .line 173
 +    new-array v2, v3, [Ljava/lang/Object;
 +
 +    aput-object p0, v2, v6
@@ -3281,7 +3225,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    return-object p0
 +
-+    .line 175
++    .line 174
 +    :catch_47
 +    move-exception p0
 +
@@ -3291,12 +3235,12 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +.method private static mapped(Lorg/json/JSONObject;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 +    .registers 3
 +
-+    .line 156
++    .line 155
 +    invoke-virtual {p0, p1}, Lorg/json/JSONObject;->optJSONObject(Ljava/lang/String;)Lorg/json/JSONObject;
 +
 +    move-result-object p0
 +
-+    .line 157
++    .line 156
 +    const/4 p1, 0x0
 +
 +    if-eqz p0, :cond_f
@@ -3316,7 +3260,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +    :goto_f
 +    move-object p0, p1
 +
-+    .line 158
++    .line 157
 +    :goto_10
 +    if-eqz p0, :cond_1a
 +
@@ -3339,7 +3283,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +.method private static reflectString(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/String;
 +    .registers 6
 +
-+    .line 162
++    .line 161
 +    const/4 v0, 0x0
 +
 +    if-nez p0, :cond_5
@@ -3368,7 +3312,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    move-result-object p0
 +
-+    .line 163
++    .line 162
 +    :goto_16
 +    instance-of p1, p0, Ljava/lang/String;
 +
@@ -3383,7 +3327,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +    :cond_1d
 +    return-object v0
 +
-+    .line 164
++    .line 163
 +    :catch_1e
 +    move-exception p0
 +
@@ -3393,14 +3337,14 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +.method private static replacement(Lio/mesalabs/unica/HmaPolicy$Config;Ljava/lang/String;Ljava/lang/String;)[Ljava/lang/String;
 +    .registers 10
 +
-+    .line 248
++    .line 247
 +    const/4 v0, 0x0
 +
 +    if-nez p2, :cond_4
 +
 +    return-object v0
 +
-+    .line 249
++    .line 248
 +    :cond_4
 +    iget-object v1, p0, Lio/mesalabs/unica/HmaPolicy$Config;->json:Lorg/json/JSONObject;
 +
@@ -3418,7 +3362,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    if-eqz v1, :cond_55
 +
-+    .line 250
++    .line 249
 +    const-string/jumbo v1, "global"
 +
 +    invoke-virtual {v1, p1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -3427,7 +3371,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    if-eqz v1, :cond_42
 +
-+    .line 251
++    .line 250
 +    const-string/jumbo v1, "adb_wifi_enabled"
 +
 +    const-string/jumbo v5, "development_settings_enabled"
@@ -3454,7 +3398,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    return-object p0
 +
-+    .line 252
++    .line 251
 +    :cond_35
 +    const-string/jumbo v1, "hidden_api_policy"
 +
@@ -3470,7 +3414,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    return-object p0
 +
-+    .line 254
++    .line 253
 +    :cond_42
 +    invoke-virtual {v2, p1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
@@ -3492,7 +3436,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    return-object p0
 +
-+    .line 256
++    .line 255
 +    :cond_55
 +    invoke-virtual {v2, p1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
@@ -3500,7 +3444,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    if-eqz p1, :cond_a9
 +
-+    .line 257
++    .line 256
 +    iget-object p1, p0, Lio/mesalabs/unica/HmaPolicy$Config;->json:Lorg/json/JSONObject;
 +
 +    const-string/jumbo v1, "accessibility"
@@ -3511,7 +3455,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    if-eqz p1, :cond_81
 +
-+    .line 258
++    .line 257
 +    const-string/jumbo p1, "accessibility_enabled"
 +
 +    invoke-virtual {p1, p2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -3526,7 +3470,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    return-object p0
 +
-+    .line 259
++    .line 258
 +    :cond_72
 +    const-string/jumbo p1, "enabled_accessibility_services"
 +
@@ -3544,7 +3488,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    return-object p0
 +
-+    .line 261
++    .line 260
 +    :cond_81
 +    iget-object p0, p0, Lio/mesalabs/unica/HmaPolicy$Config;->json:Lorg/json/JSONObject;
 +
@@ -3556,7 +3500,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    if-eqz p0, :cond_a9
 +
-+    .line 262
++    .line 261
 +    const-string/jumbo p0, "default_input_method"
 +
 +    invoke-virtual {p0, p2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -3573,7 +3517,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    return-object p0
 +
-+    .line 263
++    .line 262
 +    :cond_9a
 +    const-string/jumbo p0, "tts_default_synth"
 +
@@ -3591,7 +3535,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    return-object p0
 +
-+    .line 266
++    .line 265
 +    :cond_a9
 +    return-object v0
 +.end method
@@ -3599,7 +3543,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +.method private static requestScan(Ljava/lang/String;I)V
 +    .registers 5
 +
-+    .line 356
++    .line 355
 +    new-instance v0, Ljava/lang/StringBuilder;
 +
 +    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
@@ -3622,7 +3566,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    move-result-object v0
 +
-+    .line 357
++    .line 356
 +    sget-object v1, Lio/mesalabs/unica/HmaPolicy;->pending:Ljava/util/Set;
 +
 +    invoke-interface {v1, v0}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
@@ -3633,7 +3577,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    return-void
 +
-+    .line 358
++    .line 357
 +    :cond_20
 +    sget-object v1, Lio/mesalabs/unica/HmaPolicy;->scanner:Ljava/util/concurrent/ExecutorService;
 +
@@ -3643,14 +3587,14 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    invoke-interface {v1, v2}, Ljava/util/concurrent/ExecutorService;->execute(Ljava/lang/Runnable;)V
 +
-+    .line 371
++    .line 370
 +    return-void
 +.end method
 +
 +.method public static restrictGids(I[I)[I
 +    .registers 16
 +
-+    .line 204
++    .line 203
 +    if-eqz p1, :cond_76
 +
 +    invoke-static {p0}, Lio/mesalabs/unica/HmaPolicy;->enter(I)Z
@@ -3661,14 +3605,14 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    goto/16 :goto_76
 +
-+    .line 206
++    .line 205
 +    :cond_a
 +    :try_start_a
 +    invoke-static {p0}, Lio/mesalabs/unica/HmaPolicy;->config(I)Lio/mesalabs/unica/HmaPolicy$Config;
 +
 +    move-result-object v0
 +
-+    .line 207
++    .line 206
 +    invoke-static {p0, v0}, Lio/mesalabs/unica/HmaPolicy;->caller(ILio/mesalabs/unica/HmaPolicy$Config;)Ljava/lang/String;
 +
 +    move-result-object v1
@@ -3678,25 +3622,25 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    if-nez v1, :cond_1a
 +
-+    .line 219
++    .line 218
 +    sget-object p0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {p0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 207
++    .line 206
 +    return-object p1
 +
-+    .line 208
++    .line 207
 +    :cond_1a
 +    :try_start_1a
 +    array-length v1, p1
 +
 +    new-array v1, v1, [I
 +
-+    .line 209
++    .line 208
 +    nop
 +
-+    .line 210
++    .line 209
 +    array-length v2, p1
 +
 +    const/4 v3, 0x0
@@ -3710,10 +3654,10 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    aget v6, p1, v4
 +
-+    .line 211
++    .line 210
 +    nop
 +
-+    .line 212
++    .line 211
 +    sget-object v7, Lio/mesalabs/unica/HmaPolicy;->GIDS:[I
 +
 +    array-length v8, v7
@@ -3750,7 +3694,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    goto :goto_2c
 +
-+    .line 213
++    .line 212
 +    :cond_44
 +    if-nez v10, :cond_4b
 +
@@ -3760,13 +3704,13 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    move v5, v7
 +
-+    .line 210
++    .line 209
 +    :cond_4b
 +    add-int/lit8 v4, v4, 0x1
 +
 +    goto :goto_22
 +
-+    .line 215
++    .line 214
 +    :cond_4e
 +    array-length v2, p1
 +    :try_end_4f
@@ -3775,15 +3719,15 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    if-ne v5, v2, :cond_57
 +
-+    .line 219
++    .line 218
 +    sget-object p0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {p0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 215
++    .line 214
 +    return-object p1
 +
-+    .line 216
++    .line 215
 +    :cond_57
 +    :try_start_57
 +    const-string/jumbo v2, "other"
@@ -3792,7 +3736,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    invoke-static {v0, v2, p0, v3}, Lio/mesalabs/unica/HmaPolicy;->event(Lio/mesalabs/unica/HmaPolicy$Config;Ljava/lang/String;ILjava/lang/String;)V
 +
-+    .line 217
++    .line 216
 +    invoke-static {v1, v5}, Ljava/util/Arrays;->copyOf([II)[I
 +
 +    move-result-object p0
@@ -3800,15 +3744,15 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +    .catch Ljava/lang/RuntimeException; {:try_start_57 .. :try_end_62} :catch_6f
 +    .catchall {:try_start_57 .. :try_end_62} :catchall_68
 +
-+    .line 219
++    .line 218
 +    sget-object p1, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {p1}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 217
++    .line 216
 +    return-object p0
 +
-+    .line 219
++    .line 218
 +    :catchall_68
 +    move-exception p0
 +
@@ -3818,19 +3762,19 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    throw p0
 +
-+    .line 218
++    .line 217
 +    :catch_6f
 +    move-exception p0
 +
-+    .line 219
++    .line 218
 +    sget-object p0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {p0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 218
++    .line 217
 +    return-object p1
 +
-+    .line 204
++    .line 203
 +    :cond_76
 +    :goto_76
 +    return-object p1
@@ -3839,12 +3783,12 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +.method public static shouldHide(Landroid/content/Context;Ljava/lang/String;I)Z
 +    .registers 8
 +
-+    .line 178
++    .line 177
 +    if-eqz p0, :cond_4
 +
 +    sput-object p0, Lio/mesalabs/unica/HmaPolicy;->context:Landroid/content/Context;
 +
-+    .line 179
++    .line 178
 +    :cond_4
 +    invoke-static {p2}, Lio/mesalabs/unica/HmaPolicy;->enter(I)Z
 +
@@ -3856,19 +3800,19 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    return v0
 +
-+    .line 181
++    .line 180
 +    :cond_c
 +    :try_start_c
 +    invoke-static {p2}, Lio/mesalabs/unica/HmaPolicy;->config(I)Lio/mesalabs/unica/HmaPolicy$Config;
 +
 +    move-result-object p0
 +
-+    .line 182
++    .line 181
 +    invoke-static {p2, p0}, Lio/mesalabs/unica/HmaPolicy;->sourceName(ILio/mesalabs/unica/HmaPolicy$Config;)Ljava/lang/String;
 +
 +    move-result-object v1
 +
-+    .line 183
++    .line 182
 +    if-eqz v1, :cond_3a
 +
 +    iget-object v2, p0, Lio/mesalabs/unica/HmaPolicy$Config;->json:Lorg/json/JSONObject;
@@ -3914,7 +3858,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +    :cond_3a
 +    move v2, v0
 +
-+    .line 184
++    .line 183
 +    :goto_3b
 +    if-eqz v2, :cond_59
 +
@@ -3947,19 +3891,19 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +    .catch Ljava/lang/RuntimeException; {:try_start_c .. :try_end_59} :catch_67
 +    .catchall {:try_start_c .. :try_end_59} :catchall_60
 +
-+    .line 185
++    .line 184
 +    :cond_59
 +    nop
 +
-+    .line 187
++    .line 186
 +    sget-object p0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {p0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 185
++    .line 184
 +    return v2
 +
-+    .line 187
++    .line 186
 +    :catchall_60
 +    move-exception p0
 +
@@ -3969,16 +3913,16 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +
 +    throw p0
 +
-+    .line 186
++    .line 185
 +    :catch_67
 +    move-exception p0
 +
-+    .line 187
++    .line 186
 +    sget-object p0, Lio/mesalabs/unica/HmaPolicy;->busy:Ljava/lang/ThreadLocal;
 +
 +    invoke-virtual {p0}, Ljava/lang/ThreadLocal;->remove()V
 +
-+    .line 186
++    .line 185
 +    return v0
 +.end method
 +
@@ -4126,7 +4070,7 @@ diff --git a/smali_classes6/io/mesalabs/unica/HmaPolicy.smali b/smali_classes6/i
 +.method private static unknownInstallSource(Ljava/lang/Object;)Z
 +    .registers 2
 +
-+    .line 167
++    .line 166
 +    if-eqz p0, :cond_14
 +
 +    const-string/jumbo v0, "getInstallingPackageName"

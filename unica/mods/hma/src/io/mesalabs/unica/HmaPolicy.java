@@ -134,7 +134,6 @@ public final class HmaPolicy {
         return true;
     }
     private static void event(Config c, String category, int uid, String detail) {
-        if (c.json.optBoolean("logging", false)) Log.i("UnicaHMA", "[" + category + "] uid=" + uid + " " + detail);
     }
     private static boolean hidden(Config c, int uid, String source, String target) {
         if (target == null || target.equals(source) || "android".equals(target) || "com.android.settings".equals(target) || "com.android.systemui".equals(target)) return false;
