@@ -160,7 +160,7 @@ SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
     "smali/com/android/settings/SettingsActivity.smali" "replace" \
     'isValidFragment(Ljava/lang/String;)Z' \
     'const/16 v2, 0xba' \
-    'const/16 v2, 0xc5' \
+    'const/16 v2, 0xc4' \
     > /dev/null
 
 # Add UN1CA Settings SearchIndexDataProvider(s)

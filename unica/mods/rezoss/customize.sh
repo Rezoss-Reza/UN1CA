@@ -717,8 +717,25 @@ APPLY_PATCH "system" "system/priv-app/DressRoom/DressRoom.apk" \
     "$MODPATH/dressroom/DressRoom.apk/0001-Bypass-AICore-weather-feature-check.patch"
 
 LOG "- Patch DressRoom UN1CA lockscreen font picker integration"
-APPLY_PATCH "system" "system/priv-app/DressRoom/DressRoom.apk" \
-    "$MODPATH/dressroom/DressRoom.apk/0002-Expose-UN1CA-selected-fonts-to-lockscreen-picker.patch"
+# Firmware updates can rename the obfuscated callers. Resolve exact instruction
+# sequences and dry-run the whole patch before modifying the decoded APK.
+REZOSS_DRESSROOM_PATCH=$(mktemp /tmp/rezoss-dressroom-fonts.XXXXXX.patch) || return 1
+if ! EVAL "python3 \"$MODPATH/dressroom/resolve_font_patch.py\" \
+    \"$APKTOOL_DIR/system/priv-app/DressRoom/DressRoom.apk\" \
+    \"$MODPATH/dressroom/DressRoom.apk/0002-Expose-UN1CA-selected-fonts-to-lockscreen-picker.patch\" \
+    > \"$REZOSS_DRESSROOM_PATCH\""; then
+    rm -- "$REZOSS_DRESSROOM_PATCH"
+    unset REZOSS_DRESSROOM_PATCH
+    return 1
+fi
+if ! APPLY_PATCH "system" "system/priv-app/DressRoom/DressRoom.apk" \
+    "$REZOSS_DRESSROOM_PATCH"; then
+    rm -- "$REZOSS_DRESSROOM_PATCH"
+    unset REZOSS_DRESSROOM_PATCH
+    return 1
+fi
+rm -- "$REZOSS_DRESSROOM_PATCH"
+unset REZOSS_DRESSROOM_PATCH
 
 LOG "- Downloading latest Samsung Always On Display app"
 DOWNLOAD_FILE "$(GET_GALAXY_STORE_DOWNLOAD_URL "com.samsung.android.app.aodservice")" \
@@ -1026,6 +1043,28 @@ LOG_STEP_OUT
 # =============================================================================
 REZOSS_ARCHIVED_KERNEL_DIR="$SRC_DIR/out/archived/kernel"
 
+_REZOSS_ARCHIVE_KERNEL_IMAGE()
+{
+  local IMAGE_NAME="$1"
+  local SOURCE_IMAGE="$WORK_DIR/kernel/$IMAGE_NAME"
+  local ARCHIVED_IMAGE="$REZOSS_ARCHIVED_KERNEL_DIR/$IMAGE_NAME"
+
+  if [ ! -f "$SOURCE_IMAGE" ]; then
+    LOGE "Kernel image not found: ${SOURCE_IMAGE//$SRC_DIR\//}"
+    return 1
+  fi
+
+  mkdir -p "$REZOSS_ARCHIVED_KERNEL_DIR" || return 1
+  LOG "- Archiving $IMAGE_NAME to ${ARCHIVED_IMAGE//$SRC_DIR\//}"
+  cp -f "$SOURCE_IMAGE" "$ARCHIVED_IMAGE" || return 1
+}
+
+_REZOSS_ARCHIVE_KERNEL()
+{
+  _REZOSS_ARCHIVE_KERNEL_IMAGE "boot.img" || return 1
+  _REZOSS_ARCHIVE_KERNEL_IMAGE "init_boot.img" || return 1
+}
+
 _REZOSS_RESTORE_ARCHIVED_KERNEL_IMAGE()
 {
   local IMAGE_NAME="$1"
@@ -1153,14 +1192,58 @@ _REZOSS_CHANGE_EDGARS_KERNEL()
   return "$STATUS"
 }
 
+_REZOSS_DOWNLOAD_KSU_NEXT_DEV_ARTIFACT()
+{
+  local ARTIFACT_NAME="$1"
+  local ARTIFACT_MEMBER="$2"
+  local ARTIFACT_ZIP="$3"
+  local ARTIFACT_DIR="$4"
+  local OUTPUT="$5"
+  local ARTIFACT_URL
+
+  ARTIFACT_URL="https://nightly.link/KernelSU-Next/KernelSU-Next/workflows/build-manager-ci/dev/${ARTIFACT_NAME}.zip"
+
+  LOG "- Download $ARTIFACT_NAME from KernelSU-Next dev Build Manager CI"
+  rm -f "$ARTIFACT_ZIP" "$OUTPUT" || return 1
+  rm -rf "$ARTIFACT_DIR" || return 1
+  curl -fL --retry 3 -o "$ARTIFACT_ZIP" "$ARTIFACT_URL" || return 1
+  mkdir -p "$ARTIFACT_DIR" || return 1
+  unzip -o "$ARTIFACT_ZIP" "$ARTIFACT_MEMBER" -d "$ARTIFACT_DIR" >/dev/null || return 1
+  [ -f "$ARTIFACT_DIR/$ARTIFACT_MEMBER" ] || return 1
+  cp -f "$ARTIFACT_DIR/$ARTIFACT_MEMBER" "$OUTPUT" || return 1
+}
+
+_REZOSS_DOWNLOAD_KSU_NEXT_RELEASE_ASSET()
+{
+  local ASSET_NAME="$1"
+  local OUTPUT="$2"
+  local RELEASE_JSON ASSET_URL
+
+  LOG "- Download $ASSET_NAME from latest KernelSU-Next release"
+  rm -f "$OUTPUT" || return 1
+  RELEASE_JSON="$(curl -fsSL --retry 3 "https://api.github.com/repos/KernelSU-Next/KernelSU-Next/releases/latest")" \
+    || return 1
+  ASSET_URL="$(echo "$RELEASE_JSON" | jq -r --arg ASSET_NAME "$ASSET_NAME" '
+    .assets[]
+    | select(.name == $ASSET_NAME)
+    | .browser_download_url
+  ' | head -n1)" || return 1
+  if [ ! "$ASSET_URL" ] || [ "$ASSET_URL" = "null" ]; then
+    LOGE "KernelSU-Next release asset not found: $ASSET_NAME"
+    return 1
+  fi
+
+  curl -fL --retry 3 -o "$OUTPUT" "$ASSET_URL" || return 1
+}
+
 _REZOSS_PATCH_KSU_NEXT_INIT_BOOT_IMPL()
 {
   local TMP_DIR="$MODPATH/tmp"
   local KSU_KMI="android13-5.15"
   local KSU_INIT_BOOT="$WORK_DIR/kernel/init_boot.img"
-  local KSU_KSUD_ARTIFACT_NAME KSU_KSUD_NAME KSU_KSUD_URL
+  local KSU_HOST_ARCH KSU_KSUD_ARTIFACT_NAME KSU_KSUD_NAME
   local KSU_KSUD_ZIP KSU_KSUD_DIR KSU_MODULE_ARCH KSU_MODULE_ARTIFACT_NAME
-  local KSU_MODULE_NAME KSU_MODULE_URL KSU_MODULE_ZIP KSU_MODULE_DIR
+  local KSU_MODULE_NAME KSU_MODULE_ZIP KSU_MODULE_DIR
   local KSU_KSUD KSU_MODULE
   local KSU_PATCHED_INIT_BOOT
 
@@ -1171,35 +1254,51 @@ _REZOSS_PATCH_KSU_NEXT_INIT_BOOT_IMPL()
 
   mkdir -p "$TMP_DIR" || return 1
 
-  KSU_KSUD_ARTIFACT_NAME="ksud-aarch64-linux-android"
-  KSU_KSUD_NAME="aarch64-linux-android/release/ksud"
-  KSU_KSUD_URL="https://nightly.link/KernelSU-Next/KernelSU-Next/workflows/build-manager-ci/dev/${KSU_KSUD_ARTIFACT_NAME}.zip"
+  KSU_HOST_ARCH="$(uname -m)" || return 1
+  case "$KSU_HOST_ARCH" in
+    x86_64|amd64)
+      KSU_KSUD_ARTIFACT_NAME="ksud-x86_64-unknown-linux-musl"
+      KSU_KSUD_NAME="x86_64-unknown-linux-musl/release/ksud"
+      ;;
+    aarch64|arm64)
+      KSU_KSUD_ARTIFACT_NAME="ksud-aarch64-unknown-linux-musl"
+      KSU_KSUD_NAME="aarch64-unknown-linux-musl/release/ksud"
+      ;;
+    *)
+      LOGE "Unsupported host architecture for KernelSU-Next dev ksud: $KSU_HOST_ARCH"
+      return 1
+      ;;
+  esac
+
   KSU_MODULE_ARCH="aarch64"
   KSU_MODULE_ARTIFACT_NAME="${KSU_MODULE_ARCH}-${KSU_KMI}-lkm"
   KSU_MODULE_NAME="${KSU_KMI}_kernelsu.ko"
-  KSU_MODULE_URL="https://nightly.link/KernelSU-Next/KernelSU-Next/workflows/build-manager-ci/dev/${KSU_MODULE_ARTIFACT_NAME}.zip"
 
   KSU_KSUD_ZIP="$TMP_DIR/$KSU_KSUD_ARTIFACT_NAME.zip"
   KSU_KSUD_DIR="$TMP_DIR/$KSU_KSUD_ARTIFACT_NAME"
-  KSU_KSUD="$KSU_KSUD_DIR/$KSU_KSUD_NAME"
+  KSU_KSUD="$TMP_DIR/ksud"
   KSU_MODULE_ZIP="$TMP_DIR/$KSU_MODULE_ARTIFACT_NAME.zip"
   KSU_MODULE_DIR="$TMP_DIR/$KSU_MODULE_ARTIFACT_NAME"
-  KSU_MODULE="$KSU_MODULE_DIR/$KSU_MODULE_NAME"
+  KSU_MODULE="$TMP_DIR/$KSU_MODULE_NAME"
 
-  LOG "- Download $KSU_KSUD_ARTIFACT_NAME from KernelSU-Next dev Build Manager CI"
-  curl -fL --retry 3 -o "$KSU_KSUD_ZIP" "$KSU_KSUD_URL" || return 1
-  mkdir -p "$KSU_KSUD_DIR" || return 1
-  unzip -o "$KSU_KSUD_ZIP" "$KSU_KSUD_NAME" -d "$KSU_KSUD_DIR" >/dev/null || return 1
+  _REZOSS_DOWNLOAD_KSU_NEXT_DEV_ARTIFACT \
+    "$KSU_KSUD_ARTIFACT_NAME" "$KSU_KSUD_NAME" "$KSU_KSUD_ZIP" "$KSU_KSUD_DIR" "$KSU_KSUD" \
+    || {
+      LOGW "KernelSU-Next dev CI ksud unavailable; falling back to latest release"
+      _REZOSS_DOWNLOAD_KSU_NEXT_RELEASE_ASSET "$KSU_KSUD_ARTIFACT_NAME" "$KSU_KSUD" || return 1
+    }
   if [ ! -f "$KSU_KSUD" ]; then
-    LOGE "KernelSU-Next ksud not found in artifact: $KSU_KSUD_NAME"
+    LOGE "KernelSU-Next ksud not found: $KSU_KSUD_ARTIFACT_NAME"
     return 1
   fi
   chmod +x "$KSU_KSUD" || return 1
 
-  LOG "- Download $KSU_MODULE_ARTIFACT_NAME from KernelSU-Next dev Build Manager CI"
-  curl -fL --retry 3 -o "$KSU_MODULE_ZIP" "$KSU_MODULE_URL" || return 1
-  mkdir -p "$KSU_MODULE_DIR" || return 1
-  unzip -o "$KSU_MODULE_ZIP" "$KSU_MODULE_NAME" -d "$KSU_MODULE_DIR" >/dev/null || return 1
+  _REZOSS_DOWNLOAD_KSU_NEXT_DEV_ARTIFACT \
+    "$KSU_MODULE_ARTIFACT_NAME" "$KSU_MODULE_NAME" "$KSU_MODULE_ZIP" "$KSU_MODULE_DIR" "$KSU_MODULE" \
+    || {
+      LOGW "KernelSU-Next dev CI module unavailable; falling back to latest release"
+      _REZOSS_DOWNLOAD_KSU_NEXT_RELEASE_ASSET "$KSU_MODULE_NAME" "$KSU_MODULE" || return 1
+    }
   if [ ! -f "$KSU_MODULE" ]; then
     LOGE "KernelSU-Next module not found in artifact: $KSU_MODULE_NAME"
     return 1
@@ -1239,7 +1338,9 @@ _REZOSS_PATCH_KSU_NEXT_INIT_BOOT()
 # =============================================================================
 # Kernel - Edgar Kernel Replacement and KernelSU-Next LKM
 # =============================================================================
-if ! _REZOSS_CHANGE_EDGARS_KERNEL; then
+if ! _REZOSS_ARCHIVE_KERNEL; then
+  ABORT "Failed to archive original boot.img and init_boot.img"
+elif ! _REZOSS_CHANGE_EDGARS_KERNEL; then
   LOGW "Edgars Kernel replacement failed; restoring archived boot.img and init_boot.img"
   _REZOSS_RESTORE_ARCHIVED_KERNEL "true" "true"
 elif ! _REZOSS_PATCH_KSU_NEXT_INIT_BOOT; then

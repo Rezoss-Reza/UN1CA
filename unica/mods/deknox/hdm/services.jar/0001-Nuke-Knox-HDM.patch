@@ -10,7 +10,7 @@ index 7753d27..0000000
 @@ -1,20 +0,0 @@
 -.class public final Landroid/security/securekeygeneration/ISecureKeyGeneration$Stub$Proxy;
 -.super Ljava/lang/Object;
--.source "qb/114052748 2bfff91dc5f93d7a57a9e09d4876166be8535eed3fb330be163b912024ebb264"
+-.source "qb/114805780 ff5c14adb871103219eb3acf19570a5e1a66f296be170edb236eafe9d0eb6f83"
 -
 -# interfaces
 -.implements Landroid/security/securekeygeneration/ISecureKeyGeneration;
@@ -36,7 +36,7 @@ index 71e9276..0000000
 @@ -1,10 +0,0 @@
 -.class public abstract Landroid/security/securekeygeneration/ISecureKeyGeneration$Stub;
 -.super Landroid/os/Binder;
--.source "qb/114052748 2bfff91dc5f93d7a57a9e09d4876166be8535eed3fb330be163b912024ebb264"
+-.source "qb/114805780 ff5c14adb871103219eb3acf19570a5e1a66f296be170edb236eafe9d0eb6f83"
 -
 -# interfaces
 -.implements Landroid/security/securekeygeneration/ISecureKeyGeneration;
@@ -52,7 +52,7 @@ index 301b939..0000000
 @@ -1,6 +0,0 @@
 -.class public interface abstract Landroid/security/securekeygeneration/ISecureKeyGeneration;
 -.super Ljava/lang/Object;
--.source "qb/114052748 2bfff91dc5f93d7a57a9e09d4876166be8535eed3fb330be163b912024ebb264"
+-.source "qb/114805780 ff5c14adb871103219eb3acf19570a5e1a66f296be170edb236eafe9d0eb6f83"
 -
 -# interfaces
 -.implements Landroid/os/IInterface;
@@ -64,7 +64,7 @@ index 1040955..0000000
 @@ -1,156 +0,0 @@
 -.class public final Landroid/security/securekeygeneration/SecureKeyInfo$1;
 -.super Ljava/lang/Object;
--.source "qb/114052748 2bfff91dc5f93d7a57a9e09d4876166be8535eed3fb330be163b912024ebb264"
+-.source "qb/114805780 ff5c14adb871103219eb3acf19570a5e1a66f296be170edb236eafe9d0eb6f83"
 -
 -# interfaces
 -.implements Landroid/os/Parcelable$Creator;
@@ -226,7 +226,7 @@ index 7d93816..0000000
 @@ -1,136 +0,0 @@
 -.class public final Landroid/security/securekeygeneration/SecureKeyInfo;
 -.super Ljava/lang/Object;
--.source "qb/114052748 2bfff91dc5f93d7a57a9e09d4876166be8535eed3fb330be163b912024ebb264"
+-.source "qb/114805780 ff5c14adb871103219eb3acf19570a5e1a66f296be170edb236eafe9d0eb6f83"
 -
 -# interfaces
 -.implements Landroid/os/Parcelable;
@@ -412,7 +412,7 @@ index d337cfc..0000000
 @@ -1,1007 +0,0 @@
 -.class public abstract Lcom/android/server/enterprise/hdm/HdmSakManager;
 -.super Ljava/lang/Object;
--.source "qb/114052748 2bfff91dc5f93d7a57a9e09d4876166be8535eed3fb330be163b912024ebb264"
+-.source "qb/114805780 ff5c14adb871103219eb3acf19570a5e1a66f296be170edb236eafe9d0eb6f83"
 -
 -
 -# static fields
@@ -1425,7 +1425,7 @@ index cc915f7..0000000
 @@ -1,22 +0,0 @@
 -.class public final synthetic Lcom/android/server/enterprise/hdm/HdmService$$ExternalSyntheticLambda0;
 -.super Ljava/lang/Object;
--.source "qb/114052748 2bfff91dc5f93d7a57a9e09d4876166be8535eed3fb330be163b912024ebb264"
+-.source "qb/114805780 ff5c14adb871103219eb3acf19570a5e1a66f296be170edb236eafe9d0eb6f83"
 -
 -# interfaces
 -.implements Ljava/lang/Runnable;
@@ -1453,7 +1453,7 @@ index b3bfd84..0000000
 @@ -1,11 +0,0 @@
 -.class public final Lcom/android/server/enterprise/hdm/HdmService$SetPolicyContext;
 -.super Ljava/lang/Object;
--.source "qb/114052748 2bfff91dc5f93d7a57a9e09d4876166be8535eed3fb330be163b912024ebb264"
+-.source "qb/114805780 ff5c14adb871103219eb3acf19570a5e1a66f296be170edb236eafe9d0eb6f83"
 -
 -
 -# instance fields
@@ -1470,7 +1470,7 @@ index d80c785..0000000
 @@ -1,4495 +0,0 @@
 -.class public final Lcom/android/server/enterprise/hdm/HdmService;
 -.super Lcom/samsung/android/knox/hdm/IHdmManager$Stub;
--.source "qb/114052748 2bfff91dc5f93d7a57a9e09d4876166be8535eed3fb330be163b912024ebb264"
+-.source "qb/114805780 ff5c14adb871103219eb3acf19570a5e1a66f296be170edb236eafe9d0eb6f83"
 -
 -# interfaces
 -.implements Lcom/android/server/enterprise/EnterpriseServiceCallback;
@@ -5971,7 +5971,7 @@ index 4b83a6b..0000000
 @@ -1,452 +0,0 @@
 -.class public final synthetic Lcom/android/server/enterprise/hdm/HdmSoftwareBlock$$ExternalSyntheticLambda0;
 -.super Ljava/lang/Object;
--.source "qb/114052748 2bfff91dc5f93d7a57a9e09d4876166be8535eed3fb330be163b912024ebb264"
+-.source "qb/114805780 ff5c14adb871103219eb3acf19570a5e1a66f296be170edb236eafe9d0eb6f83"
 -
 -# interfaces
 -.implements Ljava/util/function/Function;
@@ -6429,7 +6429,7 @@ index 757bca9..0000000
 @@ -1,1498 +0,0 @@
 -.class public final Lcom/android/server/enterprise/hdm/HdmSoftwareBlock;
 -.super Ljava/lang/Object;
--.source "qb/114052748 2bfff91dc5f93d7a57a9e09d4876166be8535eed3fb330be163b912024ebb264"
+-.source "qb/114805780 ff5c14adb871103219eb3acf19570a5e1a66f296be170edb236eafe9d0eb6f83"
 -
 -
 -# instance fields
@@ -7929,10 +7929,7 @@ diff --git a/smali/com/android/server/enterprise/hdm/HdmVendorController.smali b
 index b456cda..15713c8 100644
 --- a/smali/com/android/server/enterprise/hdm/HdmVendorController.smali
 +++ b/smali/com/android/server/enterprise/hdm/HdmVendorController.smali
-@@ -3,11 +3,6 @@
- .source "qb/114052748 2bfff91dc5f93d7a57a9e09d4876166be8535eed3fb330be163b912024ebb264"
-
-
+@@ -6,8 +6,3 @@
 -# instance fields
 -.field public hidlSupport:Z
 -
@@ -9032,7 +9029,7 @@ index 935d838..0000000
 @@ -1,13 +0,0 @@
 -.class public Lcom/samsung/security/securekeyblob/DeviceAttestationException;
 -.super Ljava/lang/Exception;
--.source "qb/114052748 2bfff91dc5f93d7a57a9e09d4876166be8535eed3fb330be163b912024ebb264"
+-.source "qb/114805780 ff5c14adb871103219eb3acf19570a5e1a66f296be170edb236eafe9d0eb6f83"
 -
 -
 -# direct methods
@@ -9051,7 +9048,7 @@ index 3408ae5..0000000
 @@ -1,23 +0,0 @@
 -.class public final Lcom/samsung/security/securekeyblob/SecureKeyGenParameterSpec;
 -.super Ljava/lang/Object;
--.source "qb/114052748 2bfff91dc5f93d7a57a9e09d4876166be8535eed3fb330be163b912024ebb264"
+-.source "qb/114805780 ff5c14adb871103219eb3acf19570a5e1a66f296be170edb236eafe9d0eb6f83"
 -
 -
 -# instance fields
@@ -9080,7 +9077,7 @@ index bfe4a92..0000000
 @@ -1,449 +0,0 @@
 -.class public final synthetic Lcom/samsung/security/securekeyblob/SecureKeyGenerator$$ExternalSyntheticLambda0;
 -.super Ljava/lang/Object;
--.source "qb/114052748 2bfff91dc5f93d7a57a9e09d4876166be8535eed3fb330be163b912024ebb264"
+-.source "qb/114805780 ff5c14adb871103219eb3acf19570a5e1a66f296be170edb236eafe9d0eb6f83"
 -
 -
 -# instance fields
@@ -9535,7 +9532,7 @@ index edba4d4..0000000
 @@ -1,114 +0,0 @@
 -.class public final synthetic Lcom/samsung/security/securekeyblob/SecureKeyGenerator$$ExternalSyntheticLambda1;
 -.super Ljava/lang/Object;
--.source "qb/114052748 2bfff91dc5f93d7a57a9e09d4876166be8535eed3fb330be163b912024ebb264"
+-.source "qb/114805780 ff5c14adb871103219eb3acf19570a5e1a66f296be170edb236eafe9d0eb6f83"
 -
 -# interfaces
 -.implements Ljava/util/function/Consumer;
@@ -9655,7 +9652,7 @@ index 8e82822..0000000
 @@ -1,157 +0,0 @@
 -.class public final synthetic Lcom/samsung/security/securekeyblob/SecureKeyGenerator$$ExternalSyntheticLambda3;
 -.super Ljava/lang/Object;
--.source "qb/114052748 2bfff91dc5f93d7a57a9e09d4876166be8535eed3fb330be163b912024ebb264"
+-.source "qb/114805780 ff5c14adb871103219eb3acf19570a5e1a66f296be170edb236eafe9d0eb6f83"
 -
 -# interfaces
 -.implements Ljava/util/function/Consumer;
@@ -9818,7 +9815,7 @@ index 7d50729..0000000
 @@ -1,740 +0,0 @@
 -.class public final Lcom/samsung/security/securekeyblob/SecureKeyGenerator;
 -.super Ljava/lang/Object;
--.source "qb/114052748 2bfff91dc5f93d7a57a9e09d4876166be8535eed3fb330be163b912024ebb264"
+-.source "qb/114805780 ff5c14adb871103219eb3acf19570a5e1a66f296be170edb236eafe9d0eb6f83"
 -
 -
 -# instance fields
@@ -10564,7 +10561,7 @@ index 1dfa160..0000000
 @@ -1,11 +0,0 @@
 -.class public final Lcom/samsung/security/securekeyblob/SecureKeyResult;
 -.super Ljava/lang/Object;
--.source "qb/114052748 2bfff91dc5f93d7a57a9e09d4876166be8535eed3fb330be163b912024ebb264"
+-.source "qb/114805780 ff5c14adb871103219eb3acf19570a5e1a66f296be170edb236eafe9d0eb6f83"
 -
 -
 -# instance fields
@@ -10581,7 +10578,7 @@ index ca386e0..0000000
 @@ -1,1003 +0,0 @@
 -.class public final Lvendor/samsung/hardware/khdm/ISehKhdm$Stub$Proxy;
 -.super Ljava/lang/Object;
--.source "qb/114052748 2bfff91dc5f93d7a57a9e09d4876166be8535eed3fb330be163b912024ebb264"
+-.source "qb/114805780 ff5c14adb871103219eb3acf19570a5e1a66f296be170edb236eafe9d0eb6f83"
 -
 -# interfaces
 -.implements Lvendor/samsung/hardware/khdm/ISehKhdm;
@@ -11590,7 +11587,7 @@ index e12cea8..0000000
 @@ -1,10 +0,0 @@
 -.class public abstract Lvendor/samsung/hardware/khdm/ISehKhdm$Stub;
 -.super Landroid/os/Binder;
--.source "qb/114052748 2bfff91dc5f93d7a57a9e09d4876166be8535eed3fb330be163b912024ebb264"
+-.source "qb/114805780 ff5c14adb871103219eb3acf19570a5e1a66f296be170edb236eafe9d0eb6f83"
 -
 -# interfaces
 -.implements Lvendor/samsung/hardware/khdm/ISehKhdm;
@@ -11606,7 +11603,7 @@ index 6cfdcb6..0000000
 @@ -1,30 +0,0 @@
 -.class public interface abstract Lvendor/samsung/hardware/khdm/ISehKhdm;
 -.super Ljava/lang/Object;
--.source "qb/114052748 2bfff91dc5f93d7a57a9e09d4876166be8535eed3fb330be163b912024ebb264"
+-.source "qb/114805780 ff5c14adb871103219eb3acf19570a5e1a66f296be170edb236eafe9d0eb6f83"
 -
 -# interfaces
 -.implements Landroid/os/IInterface;
@@ -11642,7 +11639,7 @@ index 5e91b8c..0000000
 @@ -1,28 +0,0 @@
 -.class public final Lvendor/samsung/hardware/khdm/SehDeviceInfo$1;
 -.super Ljava/lang/Object;
--.source "qb/114052748 2bfff91dc5f93d7a57a9e09d4876166be8535eed3fb330be163b912024ebb264"
+-.source "qb/114805780 ff5c14adb871103219eb3acf19570a5e1a66f296be170edb236eafe9d0eb6f83"
 -
 -# interfaces
 -.implements Landroid/os/Parcelable$Creator;
@@ -11676,7 +11673,7 @@ index 2bb3210..0000000
 @@ -1,333 +0,0 @@
 -.class public final Lvendor/samsung/hardware/khdm/SehDeviceInfo;
 -.super Ljava/lang/Object;
--.source "qb/114052748 2bfff91dc5f93d7a57a9e09d4876166be8535eed3fb330be163b912024ebb264"
+-.source "qb/114805780 ff5c14adb871103219eb3acf19570a5e1a66f296be170edb236eafe9d0eb6f83"
 -
 -# interfaces
 -.implements Landroid/os/Parcelable;
