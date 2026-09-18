@@ -1,4 +1,5 @@
 AUTHOR Rezoss
+Subject: [PATCH] Expose UN1CA selected fonts to lockscreen picker
 
 diff -ruN base/smali_classes2/yc/x.smali mod/smali_classes2/yc/x.smali
 --- base/smali_classes2/yc/x.smali
@@ -24,7 +25,9 @@ diff -ruN base/smali_classes2/yc/x.smali mod/smali_classes2/yc/x.smali
 diff -ruN base/smali_classes2/ig/b.smali mod/smali_classes2/ig/b.smali
 --- base/smali_classes2/ig/b.smali
 +++ mod/smali_classes2/ig/b.smali
-@@ -320,6 +320,12 @@
+@@ -318,10 +318,16 @@
+
+     invoke-virtual {v0}, Lcom/samsung/android/clockpack/plugins/clock/ClockManager;->getSystemFontList()Ljava/util/ArrayList;
 
      move-result-object v0
 
@@ -37,6 +40,8 @@ diff -ruN base/smali_classes2/ig/b.smali mod/smali_classes2/ig/b.smali
      goto :goto_1
 
      :cond_3
+     move-object v0, v1
+
 diff -ruN base/smali_classes2/yc/a0.smali mod/smali_classes2/yc/a0.smali
 --- base/smali_classes2/yc/a0.smali
 +++ mod/smali_classes2/yc/a0.smali

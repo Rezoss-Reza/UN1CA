@@ -13,20 +13,14 @@ IDs resolve to static shapes in the S23U resource table.
 Retain ZZHL resource IDs for layouts, views, strings and framework values.
 Resolve added adaptive-display references against the same resource table.
 
+Preserve existing compiler .source metadata; anchor changes on code.
+
 ---
 
 diff --git a/smali/com/android/settings/DisplaySettings$4.smali b/smali/com/android/settings/DisplaySettings$4.smali
 index 209b29e..7a352ea 100644
 --- a/smali/com/android/settings/DisplaySettings$4.smali
 +++ b/smali/com/android/settings/DisplaySettings$4.smali
-@@ -1,6 +1,6 @@
- .class public final Lcom/android/settings/DisplaySettings$4;
- .super Lcom/samsung/android/settings/general/BaseResetSettingsData;
--.source "qb/114052748 d7a1e264535553013b406c21dd690ba03f83e2eec67bb4596978b06f02d4b20e"
-+.source "qb/110749591 6d91226274371366c7426de900fd285f0f3aa23160b867facadde76f6b701e37"
- 
- 
- # virtual methods
 @@ -44,6 +44,18 @@
      invoke-static {v6, v7, v8}, Landroid/provider/Settings$System;->putInt(Landroid/content/ContentResolver;Ljava/lang/String;I)Z
  
@@ -518,14 +512,7 @@ diff --git a/smali_classes3/com/samsung/android/settings/bixby/target/DisplayCol
 index b8733d6..2ffeebb 100644
 --- a/smali_classes3/com/samsung/android/settings/bixby/target/DisplayColorResetAction.smali
 +++ b/smali_classes3/com/samsung/android/settings/bixby/target/DisplayColorResetAction.smali
-@@ -1,336 +1,380 @@
- .class public final Lcom/samsung/android/settings/bixby/target/DisplayColorResetAction;
- .super Lcom/samsung/android/settings/bixby/target/actions/Action;
--.source "qb/114052748 d7a1e264535553013b406c21dd690ba03f83e2eec67bb4596978b06f02d4b20e"
-+.source "qb/110749591 6d91226274371366c7426de900fd285f0f3aa23160b867facadde76f6b701e37"
- 
- 
- # virtual methods
+@@ -7,330 +7,374 @@
  .method public final doSetAction()Landroid/os/Bundle;
 -    .locals 15
 +    .locals 16
@@ -1119,14 +1106,6 @@ diff --git a/smali_classes3/com/samsung/android/settings/bixby/target/WhiteBalan
 index d9f1d47..5f21b90 100644
 --- a/smali_classes3/com/samsung/android/settings/bixby/target/WhiteBalanceAction.smali
 +++ b/smali_classes3/com/samsung/android/settings/bixby/target/WhiteBalanceAction.smali
-@@ -1,6 +1,6 @@
- .class public final Lcom/samsung/android/settings/bixby/target/WhiteBalanceAction;
- .super Lcom/samsung/android/settings/bixby/target/actions/Action;
--.source "qb/114052748 d7a1e264535553013b406c21dd690ba03f83e2eec67bb4596978b06f02d4b20e"
-+.source "qb/110749591 6d91226274371366c7426de900fd285f0f3aa23160b867facadde76f6b701e37"
- 
- 
- # virtual methods
 @@ -225,7 +225,7 @@
  .end method
  
@@ -1220,30 +1199,10 @@ index d9f1d47..5f21b90 100644
      new-instance v0, Landroid/os/Bundle;
  
      invoke-direct {v0}, Landroid/os/Bundle;-><init>()V
-diff --git a/smali_classes3/com/samsung/android/settings/bixbyroutinehandler/BixbyRoutineActionHandler.smali b/smali_classes3/com/samsung/android/settings/bixbyroutinehandler/BixbyRoutineActionHandler.smali
-index 218639a..734d76d 100644
---- a/smali_classes3/com/samsung/android/settings/bixbyroutinehandler/BixbyRoutineActionHandler.smali
-+++ b/smali_classes3/com/samsung/android/settings/bixbyroutinehandler/BixbyRoutineActionHandler.smali
-@@ -1,6 +1,6 @@
- .class public final Lcom/samsung/android/settings/bixbyroutinehandler/BixbyRoutineActionHandler;
- .super Ljava/lang/Object;
--.source "qb/114052748 d7a1e264535553013b406c21dd690ba03f83e2eec67bb4596978b06f02d4b20e"
-+.source "qb/110749591 6d91226274371366c7426de900fd285f0f3aa23160b867facadde76f6b701e37"
- 
- # interfaces
- .implements Lcom/samsung/android/sdk/routines/v3/interfaces/RoutineActionHandler;
 diff --git a/smali_classes3/com/samsung/android/settings/display/NewModePreview$3.smali b/smali_classes3/com/samsung/android/settings/display/NewModePreview$3.smali
 index cc862e3..b51b8a2 100644
 --- a/smali_classes3/com/samsung/android/settings/display/NewModePreview$3.smali
 +++ b/smali_classes3/com/samsung/android/settings/display/NewModePreview$3.smali
-@@ -1,6 +1,6 @@
- .class public final Lcom/samsung/android/settings/display/NewModePreview$3;
- .super Ljava/lang/Object;
--.source "qb/114052748 d7a1e264535553013b406c21dd690ba03f83e2eec67bb4596978b06f02d4b20e"
-+.source "qb/110749591 6d91226274371366c7426de900fd285f0f3aa23160b867facadde76f6b701e37"
- 
- # interfaces
- .implements Landroid/view/View$OnClickListener;
 @@ -12,7 +12,7 @@
  
  # virtual methods
@@ -1355,14 +1314,6 @@ diff --git a/smali_classes3/com/samsung/android/settings/display/NewModePreview$
 index e176e7d..e79d725 100644
 --- a/smali_classes3/com/samsung/android/settings/display/NewModePreview$6.smali
 +++ b/smali_classes3/com/samsung/android/settings/display/NewModePreview$6.smali
-@@ -1,6 +1,6 @@
- .class public final Lcom/samsung/android/settings/display/NewModePreview$6;
- .super Ljava/lang/Object;
--.source "qb/114052748 d7a1e264535553013b406c21dd690ba03f83e2eec67bb4596978b06f02d4b20e"
-+.source "qb/110749591 6d91226274371366c7426de900fd285f0f3aa23160b867facadde76f6b701e37"
- 
- # interfaces
- .implements Landroid/content/DialogInterface$OnClickListener;
 @@ -12,7 +12,7 @@
  
  # virtual methods
@@ -1459,14 +1410,6 @@ diff --git a/smali_classes3/com/samsung/android/settings/display/NewModePreview.
 index 0c043f4..d49fb58 100644
 --- a/smali_classes3/com/samsung/android/settings/display/NewModePreview.smali
 +++ b/smali_classes3/com/samsung/android/settings/display/NewModePreview.smali
-@@ -1,6 +1,6 @@
- .class public Lcom/samsung/android/settings/display/NewModePreview;
- .super Lcom/android/settings/SettingsPreferenceFragment;
--.source "qb/114052748 d7a1e264535553013b406c21dd690ba03f83e2eec67bb4596978b06f02d4b20e"
-+.source "qb/110749591 6d91226274371366c7426de900fd285f0f3aa23160b867facadde76f6b701e37"
- 
- # interfaces
- .implements Landroid/view/View$OnClickListener;
 @@ -480,12 +480,12 @@
  
      move-result v4
@@ -2893,14 +2836,6 @@ diff --git a/smali_classes3/com/samsung/android/settings/display/SecAdaptiveDisp
 index 11c0fdc..02a1ee2 100644
 --- a/smali_classes3/com/samsung/android/settings/display/SecAdaptiveDisplaySettings.smali
 +++ b/smali_classes3/com/samsung/android/settings/display/SecAdaptiveDisplaySettings.smali
-@@ -1,6 +1,6 @@
- .class public Lcom/samsung/android/settings/display/SecAdaptiveDisplaySettings;
- .super Lcom/android/settings/SettingsPreferenceFragment;
--.source "qb/114052748 d7a1e264535553013b406c21dd690ba03f83e2eec67bb4596978b06f02d4b20e"
-+.source "qb/110749591 6d91226274371366c7426de900fd285f0f3aa23160b867facadde76f6b701e37"
- 
- 
- # static fields
 @@ -10,7 +10,9 @@
  # instance fields
  .field public mAdaptiveDisplayView:Landroid/view/View;
@@ -5144,14 +5079,6 @@ diff --git a/smali_classes3/com/samsung/android/settings/display/controller/SecE
 index 7d009de..607528e 100644
 --- a/smali_classes3/com/samsung/android/settings/display/controller/SecEADPreferenceController.smali
 +++ b/smali_classes3/com/samsung/android/settings/display/controller/SecEADPreferenceController.smali
-@@ -1,6 +1,6 @@
- .class public Lcom/samsung/android/settings/display/controller/SecEADPreferenceController;
- .super Lcom/android/settings/core/TogglePreferenceController;
--.source "qb/114052748 d7a1e264535553013b406c21dd690ba03f83e2eec67bb4596978b06f02d4b20e"
-+.source "qb/110749591 6d91226274371366c7426de900fd285f0f3aa23160b867facadde76f6b701e37"
- 
- # interfaces
- .implements Lcom/android/settingslib/core/lifecycle/LifecycleObserver;
 @@ -190,11 +190,24 @@
  .end method
  
@@ -5184,14 +5111,6 @@ diff --git a/smali_classes3/com/samsung/android/settings/eternal/provider/items/
 index fec1976..d5014b2 100644
 --- a/smali_classes3/com/samsung/android/settings/eternal/provider/items/DisplayItem.smali
 +++ b/smali_classes3/com/samsung/android/settings/eternal/provider/items/DisplayItem.smali
-@@ -1,6 +1,6 @@
- .class public final Lcom/samsung/android/settings/eternal/provider/items/DisplayItem;
- .super Ljava/lang/Object;
--.source "qb/114052748 d7a1e264535553013b406c21dd690ba03f83e2eec67bb4596978b06f02d4b20e"
-+.source "qb/110749591 6d91226274371366c7426de900fd285f0f3aa23160b867facadde76f6b701e37"
- 
- # interfaces
- .implements Lcom/samsung/android/settings/eternal/provider/items/Recoverable;
 @@ -2103,6 +2103,32 @@
      :pswitch_11
      sget-object v0, Lcom/samsung/android/settings/Rune;->COMMON_CONFIG_PACKAGE_NAME_SMART_MANAGER:Ljava/lang/String;
