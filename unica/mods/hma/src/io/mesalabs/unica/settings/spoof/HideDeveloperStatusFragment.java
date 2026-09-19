@@ -21,6 +21,9 @@ import org.json.*;
 public final class HideDeveloperStatusFragment extends SettingsPreferenceFragment implements Preference.OnPreferenceClickListener {
     public static final BaseSearchIndexProvider SEARCH_INDEX_DATA_PROVIDER = new BaseSearchIndexProvider(Utils.getResourceId("xml", "unica_hma_privacy_settings"));
     private static final String KEY="unica_hma_policy";
+    private static final String CHUNK_PREFIX=KEY+"_chunk_";
+    private static final String CHUNK_MARKER="_hma_chunked";
+    private static final int CHUNK_SIZE=30000;
     private JSONObject config;
     private final Handler handler=new Handler(Looper.getMainLooper());
     private static final String[] APP_KEYS={"accessibility_apps","custom_rom","detector_apps","root_apps","shizuku_dhizuku","sus_apps","xposed"};
@@ -39,7 +42,7 @@ public final class HideDeveloperStatusFragment extends SettingsPreferenceFragmen
         super.onCreate(state);
         addPreferencesFromResource(Utils.getResourceId("xml","unica_hma_privacy_settings"));
         try {
-            String raw=Settings.Secure.getString(getActivity().getContentResolver(),KEY);
+            String raw=getPolicyString();
             config=new JSONObject(raw==null ? "{}" : raw);
             if(raw==null) {
                 // Preserve lists without silently enabling new restrictions for every installed app.
@@ -82,10 +85,53 @@ public final class HideDeveloperStatusFragment extends SettingsPreferenceFragmen
         return appId>=10000 && appId<20000 && (a.flags&(ApplicationInfo.FLAG_SYSTEM|ApplicationInfo.FLAG_UPDATED_SYSTEM_APP))==0 && !a.packageName.equals("com.android.settings") && !a.packageName.equals("com.android.systemui");
     }
     private boolean save() {
-        boolean ok=Settings.Secure.putString(getActivity().getContentResolver(),KEY,config.toString());
+        boolean ok=putPolicyString(config.toString());
         if(!ok) new AlertDialog.Builder(getActivity()).setTitle("Could not save HMA settings").setMessage("The settings provider rejected this change.").setPositiveButton(android.R.string.ok,null).show();
         refresh();
         return ok;
+    }
+    private String getPolicyString() {
+        ContentResolver r=getActivity().getContentResolver();
+        return expandPolicyString(r,Settings.Secure.getString(r,KEY));
+    }
+    private boolean putPolicyString(String value) {
+        ContentResolver r=getActivity().getContentResolver();
+        int old=chunkCount(Settings.Secure.getString(r,KEY));
+        if(value==null || value.length()<=CHUNK_SIZE) {
+            boolean ok=Settings.Secure.putString(r,KEY,value);
+            if(ok) clearChunks(r,old);
+            return ok;
+        }
+        int count=(value.length()+CHUNK_SIZE-1)/CHUNK_SIZE;
+        for(int i=0;i<count;i++) if(!Settings.Secure.putString(r,CHUNK_PREFIX+i,value.substring(i*CHUNK_SIZE,Math.min(value.length(),(i+1)*CHUNK_SIZE)))) return false;
+        try {
+            JSONObject marker=new JSONObject();
+            marker.put(CHUNK_MARKER,true);
+            marker.put("chunks",count);
+            marker.put("length",value.length());
+            boolean ok=Settings.Secure.putString(r,KEY,marker.toString());
+            if(ok) clearChunks(r,Math.max(old,count)-count,count);
+            return ok;
+        } catch(JSONException e) { return false; }
+    }
+    private String expandPolicyString(ContentResolver r,String raw) {
+        int count=chunkCount(raw);
+        if(count<=0) return raw;
+        StringBuilder b=new StringBuilder();
+        for(int i=0;i<count;i++) {
+            String part=Settings.Secure.getString(r,CHUNK_PREFIX+i);
+            if(part==null) return raw;
+            b.append(part);
+        }
+        return b.toString();
+    }
+    private int chunkCount(String raw) {
+        try { JSONObject marker=new JSONObject(raw==null?"{}":raw); return marker.optBoolean(CHUNK_MARKER,false) ? marker.optInt("chunks",0) : 0; }
+        catch(JSONException e) { return 0; }
+    }
+    private void clearChunks(ContentResolver r,int count) { clearChunks(r,count,0); }
+    private void clearChunks(ContentResolver r,int count,int start) {
+        for(int i=start;i<start+count+4;i++) Settings.Secure.putString(r,CHUNK_PREFIX+i,null);
     }
     private void refresh() {
         for(String key:new String[]{"enabled","activity","risky"}) {

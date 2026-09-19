@@ -21,6 +21,8 @@ import org.json.*;
 /** Shared policy; no writes to package state, real settings, or primary process GIDs. */
 public final class HmaPolicy {
     public static final String KEY = "unica_hma_policy";
+    private static final String CHUNK_PREFIX = KEY + "_chunk_";
+    private static final String CHUNK_MARKER = "_hma_chunked";
     private static volatile Context context;
     private static final ThreadLocal<Boolean> busy = new ThreadLocal<Boolean>();
     private static final ConcurrentHashMap<Integer, Config> configs = new ConcurrentHashMap<Integer, Config>();
@@ -77,6 +79,25 @@ public final class HmaPolicy {
         } catch (Exception ignored) {}
         return context;
     }
+    private static String secureString(ContentResolver resolver, Method getter, String key, int user) throws Exception {
+        return (String)getter.invoke(null, resolver, key, user);
+    }
+    private static String policyString(ContentResolver resolver, Method getter, int user) throws Exception {
+        String raw = secureString(resolver, getter, KEY, user);
+        JSONObject marker;
+        try { marker = new JSONObject(raw == null ? "{}" : raw); }
+        catch (JSONException e) { return raw; }
+        if (!marker.optBoolean(CHUNK_MARKER, false)) return raw;
+        int chunks = marker.optInt("chunks", 0);
+        if (chunks <= 0 || chunks > 32) return raw;
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < chunks; i++) {
+            String part = secureString(resolver, getter, CHUNK_PREFIX + i, user);
+            if (part == null) return raw;
+            result.append(part);
+        }
+        return result.toString();
+    }
     private static boolean appUid(int uid) { return uid >= 0 && uid % 100000 >= 10000 && uid % 100000 <= 19999; }
     private static boolean booted() {
         try { return "1".equals(Class.forName("android.os.SystemProperties").getMethod("get", String.class).invoke(null, "sys.boot_completed")); }
@@ -91,7 +112,8 @@ public final class HmaPolicy {
         long token = Binder.clearCallingIdentity();
         try {
             Method getter = Settings.Secure.class.getMethod("getStringForUser", ContentResolver.class, String.class, int.class);
-            result = new Config((String)getter.invoke(null, c.getContentResolver(), KEY, user));
+            ContentResolver resolver = c.getContentResolver();
+            result = new Config(policyString(resolver, getter, user));
             configs.put(user, result);
             return result;
         } catch (Exception e) { return null; }
