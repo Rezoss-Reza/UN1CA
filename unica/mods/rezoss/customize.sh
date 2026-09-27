@@ -78,6 +78,14 @@ APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSugges
     "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0016-Allow-more-Now-Nudge-messenger-packages.patch"
 APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
     "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0017-Preserve-Now-Nudge-pass-package-message.patch"
+APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0018-Route-notification-assistant-requests-to-Now-Nudge.patch"
+APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0019-Log-Now-Nudge-assistant-request-extra-keys.patch"
+APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0020-Route-Now-Nudge-replies-through-UN1CA-Qwen-provider.patch"
+APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0026-Connect-in-app-and-notification-replies-to-RezossAI.patch"
 # Temporarily disabled for CHN SmartSuggestions testing.
 # LOG "- Patching SmartSuggestions China custom-card feature gates"
 # SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
@@ -769,6 +777,10 @@ LOG "- Patch AODService AOD stretch renderer gate"
 APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
     "$MODPATH/aodservice/AODService_v80.apk/0006-Allow-AOD-stretch-render-when-font-heights-exist.patch"
 
+LOG "- Patch AODService to use lockscreen clock style for AOD rendering"
+APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
+    "$MODPATH/aodservice/AODService_v80.apk/0007-Use-lockscreen-clock-style-for-AOD-render.patch"
+
 LOG "- Patch VisualCloudCore Galaxy Store model check"
 APPLY_PATCH "system" "system/app/VisualCloudCore/VisualCloudCore.apk" \
     "$MODPATH/visualcloudcore/VisualCloudCore.apk/0001-Use-S25-Ultra-model-for-stub-update-check.patch"
@@ -776,6 +788,10 @@ APPLY_PATCH "system" "system/app/VisualCloudCore/VisualCloudCore.apk" \
 LOG "- Patch product framework overlay doze auto-brightness"
 APPLY_PATCH "product" "overlay/framework-res__dm3qxxx__auto_generated_rro_product.apk" \
     "$MODPATH/rro/framework-res__dm3qxxx__auto_generated_rro_product.apk/0001-Add-doze-auto-brightness-arrays.patch"
+
+LOG "- Patch product framework overlay Now Nudge notification allowlist"
+APPLY_PATCH "product" "overlay/framework-res__dm3qxxx__auto_generated_rro_product.apk" \
+    "$MODPATH/rro/framework-res__dm3qxxx__auto_generated_rro_product.apk/0002-Add-Now-Nudge-notification-allow-packages.patch"
 
 # =============================================================================
 # Notification Highlights / Galaxy AI Stack
@@ -785,18 +801,65 @@ SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_CONFIG_AI_VERSION" "202
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_CONFIG_NOW_NUDGE_VERSION" "2"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GENAI_CONFIG_LLM_VERSION" "0.81"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GENAI_SUPPORT_OFFLINE_LANGUAGEMODEL" "TRUE"
+LOG "- Adding S26U SmartSuggestions and SCS policy XMLs"
+for REZOSS_SCS_POLICY_XML in \
+    "default-permissions/default-permissions-com.samsung.android.scs.xml" \
+    "permissions/privapp-permissions-com.samsung.android.scs.xml" \
+    "permissions/signature-permissions-com.samsung.android.scs.xml" \
+    "sysconfig/preinstalled-packages-com.samsung.android.scs.xml" \
+    "sysconfig/samsungintellivoiceservice.xml" \
+    "sysconfig/samsungsmartsuggestions.xml"; do
+    ADD_TO_WORK_DIR "$MODPATH" "system" "system/etc/$REZOSS_SCS_POLICY_XML" 0 0 644 "u:object_r:system_file:s0"
+done
+unset REZOSS_SCS_POLICY_XML
+LOG "- Build opt-in UN1CA local notification-summary provider"
+LOCAL_SUMMARY_SERVICE_DIR="$MODPATH/local-summary-service"
+LOCAL_SUMMARY_SERVICE_APK="$LOCAL_SUMMARY_SERVICE_DIR/system/priv-app/RezossAI/RezossAI.apk"
+EVAL "bash \"$LOCAL_SUMMARY_SERVICE_DIR/build.sh\" \"$LOCAL_SUMMARY_SERVICE_APK\""
+ADD_TO_WORK_DIR "$LOCAL_SUMMARY_SERVICE_DIR" "system" "system/priv-app/RezossAI/RezossAI.apk" 0 0 644 "u:object_r:system_file:s0"
+SET_METADATA "system" "system/priv-app/RezossAI" 0 0 755 "u:object_r:system_file:s0"
+SET_METADATA "system" "system/priv-app/RezossAI/RezossAI.apk" 0 0 644 "u:object_r:system_file:s0"
+ADD_TO_WORK_DIR "$LOCAL_SUMMARY_SERVICE_DIR" "system" "system/etc/default-permissions/default-permissions-unica-local-summary.xml" 0 0 644 "u:object_r:system_file:s0"
+ADD_TO_WORK_DIR "$LOCAL_SUMMARY_SERVICE_DIR" "system" "system/bin/unica-summary-llama" 0 0 755 "u:object_r:system_file:s0"
+ADD_TO_WORK_DIR "$LOCAL_SUMMARY_SERVICE_DIR" "system" "system/bin/unica-summary-llama-server" 0 0 755 "u:object_r:system_file:s0"
+ADD_TO_WORK_DIR "$LOCAL_SUMMARY_SERVICE_DIR" "system" "system/etc/unica/local-summary/qwen2.5-0.5b-instruct-q4_k_m.gguf" 0 0 644 "u:object_r:system_file:s0"
+SET_METADATA "system" "system/etc/unica" 0 0 755 "u:object_r:system_file:s0"
+SET_METADATA "system" "system/etc/unica/local-summary" 0 0 755 "u:object_r:system_file:s0"
+SET_METADATA "system" "system/etc/unica/local-summary/qwen2.5-0.5b-instruct-q4_k_m.gguf" 0 0 644 "u:object_r:system_file:s0"
+LOCAL_SUMMARY_ALLOWLIST="$WORK_DIR/system/system/etc/sysconfig/allowed-system-preload-apps.xml"
+if ! grep -q -F 'package="io.mesalabs.unica.localsummary"' "$LOCAL_SUMMARY_ALLOWLIST"; then
+    EVAL "LC_ALL=C patch --batch --fuzz=0 -p1 -d \"$WORK_DIR/system/system/etc/sysconfig\" < \"$LOCAL_SUMMARY_SERVICE_DIR/allowed-system-preload-apps.xml/0001-Allow-UN1CA-local-summary-provider.patch\"" \
+        || ABORT "Failed to allow the UN1CA local summary provider"
+fi
+EVAL "rm -f \"$LOCAL_SUMMARY_ALLOWLIST.orig\" \"$LOCAL_SUMMARY_ALLOWLIST.rej\"" \
+    || ABORT "Failed to remove stale local summary allowlist patch artifacts"
+unset LOCAL_SUMMARY_ALLOWLIST
+unset LOCAL_SUMMARY_SERVICE_APK LOCAL_SUMMARY_SERVICE_DIR
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/app/SketchBook/SketchBook.apk" 0 0 644 "u:object_r:system_file:s0"
 LOG "- Overlay S26U Notification highlights AI APKs"
 LOG "- Adding S26U One UI 9 Samsung Intelligence Voice Service"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/SamsungIntelliVoiceServices/SamsungIntelliVoiceServices.apk" 0 0 644 "u:object_r:system_file:s0"
 SET_METADATA "system" "system/priv-app/SamsungIntelliVoiceServices" 0 0 755 "u:object_r:system_file:s0"
 SET_METADATA "system" "system/priv-app/SamsungIntelliVoiceServices/SamsungIntelliVoiceServices.apk" 0 0 644 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/SamsungAiCore/SamsungAiCore.apk" 0 0 644 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/permissions/privapp-permissions-com.samsung.android.aicore.xml" 0 0 644 "u:object_r:system_file:s0"
+DELETE_FROM_WORK_DIR "system" "system/priv-app/SamsungAiCore"
+if [[ "${UNICA_ENABLE_SAMSUNG_AICORE:-true}" == "true" ]]; then
+    ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/SamsungAiCore/SamsungAiCore.apk" 0 0 644 "u:object_r:system_file:s0"
+    ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/permissions/privapp-permissions-com.samsung.android.aicore.xml" 0 0 644 "u:object_r:system_file:s0"
+    LOG "- Disabling SamsungAiCore neural-wallpaper pipeline"
+    APPLY_PATCH "system" "system/priv-app/SamsungAiCore/SamsungAiCore.apk" \
+        "$MODPATH/aicore/SamsungAiCore.apk/0003-Disable-crashing-wallpaper-pipeline.patch"
+else
+    LOG "- Removing SamsungAiCore; UN1CA Qwen provider handles notification AI paths"
+fi
 DELETE_FROM_WORK_DIR "system" "system/app/AIOSKernelService"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/AIOSKernelService/AIOSKernelService.apk" 0 0 644 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/permissions/privapp-permissions-com.samsung.android.aioskernelservice.xml" 0 0 644 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "pa2qxxx" "system" "system/etc/sysconfig/aioskernelservice.xml" 0 0 644 "u:object_r:system_file:s0"
+DELETE_FROM_WORK_DIR "system" "system/priv-app/AIOSKernelService"
+if [[ "${UNICA_ENABLE_AIOSKERNELSERVICE:-false}" == "true" ]]; then
+    ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/AIOSKernelService/AIOSKernelService.apk" 0 0 644 "u:object_r:system_file:s0"
+    ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/permissions/privapp-permissions-com.samsung.android.aioskernelservice.xml" 0 0 644 "u:object_r:system_file:s0"
+    ADD_TO_WORK_DIR "pa2qxxx" "system" "system/etc/sysconfig/aioskernelservice.xml" 0 0 644 "u:object_r:system_file:s0"
+else
+    LOG "- Disabling AIOSKernelService; UN1CA Qwen provider handles notification AI replies"
+fi
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/permissions/signature-permissions-com.samsung.android.offline.languagemodel.xml" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/OfflineLanguageModel_stub/OfflineLanguageModel_stub.apk" 0 0 644 "u:object_r:system_file:s0"
 
@@ -850,6 +913,8 @@ unset NMT_LANG S26U_NMT_TARGET_PRELOAD
 # DOWNLOAD_FILE "$(GET_GALAXY_STORE_DOWNLOAD_URL "com.samsung.android.aicore")" \
     # "$WORK_DIR/system/system/priv-app/SamsungAiCore/SamsungAiCore.apk"
 
+UNICA_ENABLE_UNSAFE_S26U_QNN_EXPERIMENT="${UNICA_ENABLE_UNSAFE_S26U_QNN_EXPERIMENT:-false}"
+if [[ "$UNICA_ENABLE_UNSAFE_S26U_QNN_EXPERIMENT" == "true" && "${UNICA_ENABLE_SAMSUNG_AICORE:-true}" == "true" && "${UNICA_ENABLE_AIOSKERNELSERVICE:-false}" == "true" ]]; then
 REZOSS_SIVS_MODEL_PATCHED_FILE="$APKTOOL_DIR/system/priv-app/SamsungIntelliVoiceServices/SamsungIntelliVoiceServices.apk/smali/com/samsung/android/intellivoiceservice/common/connection/server/LlmClientInterceptor.smali"
 REZOSS_SIVS_MODEL_PATCH_MARKER="$APKTOOL_DIR/system/priv-app/SamsungIntelliVoiceServices/SamsungIntelliVoiceServices.apk/.rezoss_s26u_device_model_patch_applied"
 if [ -f "$REZOSS_SIVS_MODEL_PATCHED_FILE" ] && grep -qF 'const-string v4, "SM-S948B"' "$REZOSS_SIVS_MODEL_PATCHED_FILE"; then
@@ -997,20 +1062,25 @@ EVAL "mv -f \"$AIOS_KERNEL_TMP/AIOSKernelService.signed.apk\" \"$AIOS_KERNEL_APK
 SET_METADATA "system" "system/priv-app/AIOSKernelService/AIOSKernelService.apk" 0 0 644 "u:object_r:system_file:s0"
 EVAL "rm -rf \"$AIOS_KERNEL_TMP\""
 unset AIOS_KERNEL_APK AIOS_KERNEL_TMP AIOS_KERNEL_CERT_PREFIX
+else
+    LOG "- Skip unsupported S26U QNN V81-to-V73 experiment on SM8550"
+fi
+unset UNICA_ENABLE_UNSAFE_S26U_QNN_EXPERIMENT
 
 for REZOSS_NOTI_AI_REQ in \
     "system/priv-app/SecSettings/SecSettings.apk" \
     "system/priv-app/SecSettingsIntelligence/SecSettingsIntelligence.apk" \
     "system/priv-app/SettingsProvider/SettingsProvider.apk" \
     "system/priv-app/SamsungIntelliVoiceServices/SamsungIntelliVoiceServices.apk" \
-    "system/priv-app/SamsungAiCore/SamsungAiCore.apk" \
-    "system/priv-app/AIOSKernelService/AIOSKernelService.apk" \
     "system/etc/permissions/privapp-permissions-com.samsung.android.intellivoiceservice.xml" \
-    "system/etc/permissions/privapp-permissions-com.samsung.android.aicore.xml" \
-    "system/etc/permissions/privapp-permissions-com.samsung.android.aioskernelservice.xml" \
     "system/etc/permissions/signature-permissions-com.samsung.android.offline.languagemodel.xml" \
+    "system/etc/default-permissions/default-permissions-com.samsung.android.scs.xml" \
+    "system/etc/permissions/privapp-permissions-com.samsung.android.scs.xml" \
+    "system/etc/permissions/signature-permissions-com.samsung.android.scs.xml" \
     "system/etc/permissions/signature-permissions-downloadable.xml" \
+    "system/etc/sysconfig/preinstalled-packages-com.samsung.android.scs.xml" \
     "system/etc/sysconfig/samsungintellivoiceservice.xml" \
+    "system/etc/sysconfig/samsungsmartsuggestions.xml" \
     "system/etc/sysconfig/allowed-system-preload-apps.xml"; do
     if [ ! -f "$WORK_DIR/system/$REZOSS_NOTI_AI_REQ" ]; then
         LOGW "Notification highlights requirement missing: /system/$REZOSS_NOTI_AI_REQ"
@@ -1025,6 +1095,15 @@ APPLY_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
 LOG "- Patch services.jar AI notification priority/summary model gate"
 APPLY_PATCH "system" "system/framework/services.jar" \
     "$MODPATH/notification-priority/services.jar/0001-Allow-dm1q-dm2q-dm3q-AI-notification-priority.patch"
+LOG "- Add property-gated local notification-summary test bridge"
+APPLY_PATCH "system" "system/framework/services.jar" \
+    "$MODPATH/notification-priority/services.jar/0002-Add-property-gated-local-summary-test-bridge.patch"
+LOG "- Route opt-in local notification summaries through the provider"
+APPLY_PATCH "system" "system/framework/services.jar" \
+    "$MODPATH/notification-priority/services.jar/0003-Call-opt-in-local-summary-provider.patch"
+LOG "- Log Now Nudge notification request gates"
+APPLY_PATCH "system" "system/framework/services.jar" \
+    "$MODPATH/notification-priority/services.jar/0004-Log-Now-Nudge-notification-request-gates.patch"
 
 LOG "- Patch SettingsProvider notification priority/summary defaults"
 APPLY_PATCH "system" "system/priv-app/SettingsProvider/SettingsProvider.apk" \
@@ -1196,48 +1275,105 @@ _REZOSS_CHANGE_EDGARS_KERNEL()
   return "$STATUS"
 }
 
-_REZOSS_DOWNLOAD_KSU_NEXT_DEV_ARTIFACT()
+_REZOSS_RESOLVE_KSU_NEXT_RELEASE()
 {
-  local ARTIFACT_NAME="$1"
-  local ARTIFACT_MEMBER="$2"
-  local ARTIFACT_ZIP="$3"
-  local ARTIFACT_DIR="$4"
-  local OUTPUT="$5"
-  local ARTIFACT_URL
+  local ASSET_NAME
+  local ASSET_URL
+  local ASSET_URL_PATH
+  local RELEASE_PAGE_URL
+  local RELEASE_PAGE_HTML
+  local RELEASE_ASSETS_URL
 
-  ARTIFACT_URL="https://nightly.link/KernelSU-Next/KernelSU-Next/workflows/build-manager-ci/dev/${ARTIFACT_NAME}.zip"
+  if [ -z "${REZOSS_KSU_RELEASE_ASSETS_HTML:-}" ]; then
+    RELEASE_PAGE_URL="$(curl -fsSIL --retry 3 -o /dev/null -w '%{url_effective}' "https://github.com/KernelSU-Next/KernelSU-Next/releases/latest")" \
+      || return 1
+    REZOSS_KSU_RELEASE_TAG="${RELEASE_PAGE_URL##*/}"
+    if [ -z "$REZOSS_KSU_RELEASE_TAG" ] || [ "$REZOSS_KSU_RELEASE_TAG" = "null" ]; then
+      LOGE "KernelSU-Next latest release tag not found"
+      return 1
+    fi
 
-  LOG "- Download $ARTIFACT_NAME from KernelSU-Next dev Build Manager CI"
-  rm -f "$ARTIFACT_ZIP" "$OUTPUT" || return 1
-  rm -rf "$ARTIFACT_DIR" || return 1
-  curl -fL --retry 3 -o "$ARTIFACT_ZIP" "$ARTIFACT_URL" || return 1
-  mkdir -p "$ARTIFACT_DIR" || return 1
-  unzip -o "$ARTIFACT_ZIP" "$ARTIFACT_MEMBER" -d "$ARTIFACT_DIR" >/dev/null || return 1
-  [ -f "$ARTIFACT_DIR/$ARTIFACT_MEMBER" ] || return 1
-  cp -f "$ARTIFACT_DIR/$ARTIFACT_MEMBER" "$OUTPUT" || return 1
+    RELEASE_PAGE_HTML="$(curl -fsSL --retry 3 "$RELEASE_PAGE_URL")" || return 1
+    RELEASE_ASSETS_URL="$(printf '%s' "$RELEASE_PAGE_HTML" | sed -n 's#.*src="\(https://github.com/KernelSU-Next/KernelSU-Next/releases/expanded_assets/[^"]*\)".*#\1#p' | head -n1)"
+    if [ -z "$RELEASE_ASSETS_URL" ]; then
+      LOGE "KernelSU-Next latest release assets page not found"
+      return 1
+    fi
+
+    REZOSS_KSU_RELEASE_ASSETS_HTML="$(curl -fsSL --retry 3 "$RELEASE_ASSETS_URL")" || return 1
+  fi
+
+  for ASSET_NAME in "$@"; do
+    ASSET_URL_PATH="$(printf '%s' "$REZOSS_KSU_RELEASE_ASSETS_HTML" | sed -n "s#.*href=\"\\([^\"]*/releases/download/[^\"]*/${ASSET_NAME}\\)\".*#\\1#p" | head -n1)"
+    if [ -z "$ASSET_URL_PATH" ]; then
+      LOGE "KernelSU-Next release asset not found: $ASSET_NAME"
+      return 1
+    fi
+    case "$ASSET_URL_PATH" in
+      https://github.com/*)
+        ASSET_URL="$ASSET_URL_PATH"
+        ;;
+      /*)
+        ASSET_URL="https://github.com$ASSET_URL_PATH"
+        ;;
+      *)
+        LOGE "KernelSU-Next release asset URL is invalid: $ASSET_NAME"
+        return 1
+        ;;
+    esac
+    LOG "- Resolved KernelSU-Next release $REZOSS_KSU_RELEASE_TAG asset: $ASSET_NAME"
+    LOG "  URL: $ASSET_URL"
+  done
 }
 
 _REZOSS_DOWNLOAD_KSU_NEXT_RELEASE_ASSET()
 {
   local ASSET_NAME="$1"
   local OUTPUT="$2"
-  local RELEASE_JSON ASSET_URL
+  local ASSET_URL
 
-  LOG "- Download $ASSET_NAME from latest KernelSU-Next release"
+  _REZOSS_RESOLVE_KSU_NEXT_RELEASE "$ASSET_NAME" || return 1
+  ASSET_URL="$(printf '%s' "$REZOSS_KSU_RELEASE_ASSETS_HTML" | sed -n "s#.*href=\"\\([^\"]*/releases/download/[^\"]*/${ASSET_NAME}\\)\".*#\\1#p" | head -n1)" || return 1
+  case "$ASSET_URL" in
+    https://github.com/*)
+      ;;
+    /*)
+      ASSET_URL="https://github.com$ASSET_URL"
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+
+  LOG "- Download $ASSET_NAME from KernelSU-Next release $REZOSS_KSU_RELEASE_TAG"
   rm -f "$OUTPUT" || return 1
-  RELEASE_JSON="$(curl -fsSL --retry 3 "https://api.github.com/repos/KernelSU-Next/KernelSU-Next/releases/latest")" \
-    || return 1
-  ASSET_URL="$(echo "$RELEASE_JSON" | jq -r --arg ASSET_NAME "$ASSET_NAME" '
-    .assets[]
-    | select(.name == $ASSET_NAME)
-    | .browser_download_url
-  ' | head -n1)" || return 1
-  if [ ! "$ASSET_URL" ] || [ "$ASSET_URL" = "null" ]; then
-    LOGE "KernelSU-Next release asset not found: $ASSET_NAME"
-    return 1
-  fi
-
   curl -fL --retry 3 -o "$OUTPUT" "$ASSET_URL" || return 1
+
+  REZOSS_KSU_DOWNLOAD_SOURCE="release $REZOSS_KSU_RELEASE_TAG"
+  REZOSS_KSU_DOWNLOAD_URL="$ASSET_URL"
+}
+
+_REZOSS_LOG_KSU_ARTIFACT_PROVENANCE()
+{
+  local ARTIFACT_ROLE="$1"
+  local ARTIFACT_NAME="$2"
+  local ARTIFACT_FILE="$3"
+  local ARTIFACT_VERSION
+  local ARTIFACT_SHA256
+
+  ARTIFACT_SHA256="$(sha256sum "$ARTIFACT_FILE" | cut -d ' ' -f 1)" || return 1
+  LOG "- KernelSU-Next $ARTIFACT_ROLE artifact: $ARTIFACT_NAME ($REZOSS_KSU_DOWNLOAD_SOURCE)"
+  LOG "  URL: $REZOSS_KSU_DOWNLOAD_URL"
+  LOG "  SHA-256: $ARTIFACT_SHA256"
+
+  if [ "$ARTIFACT_ROLE" = "LKM" ]; then
+    ARTIFACT_VERSION="$(strings "$ARTIFACT_FILE" | sed -n '/^v[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/{p;q;}')" || return 1
+    if [ -n "$ARTIFACT_VERSION" ]; then
+      LOG "  KernelSU LKM version: $ARTIFACT_VERSION"
+    else
+      LOGW "KernelSU LKM version string not found: $ARTIFACT_NAME"
+    fi
+  fi
 }
 
 _REZOSS_PATCH_KSU_NEXT_INIT_BOOT_IMPL()
@@ -1245,11 +1381,11 @@ _REZOSS_PATCH_KSU_NEXT_INIT_BOOT_IMPL()
   local TMP_DIR="$MODPATH/tmp"
   local KSU_KMI="android13-5.15"
   local KSU_INIT_BOOT="$WORK_DIR/kernel/init_boot.img"
-  local KSU_HOST_ARCH KSU_KSUD_ARTIFACT_NAME KSU_KSUD_NAME
-  local KSU_KSUD_ZIP KSU_KSUD_DIR KSU_MODULE_ARCH KSU_MODULE_ARTIFACT_NAME
-  local KSU_MODULE_NAME KSU_MODULE_ZIP KSU_MODULE_DIR
+  local KSU_HOST_ARCH KSU_KSUD_ARTIFACT_NAME
+  local KSU_MODULE_NAME KSU_MODULE_ASSET_NAME
   local KSU_KSUD KSU_MODULE
   local KSU_PATCHED_INIT_BOOT
+  local KSU_PATCHED_INIT_BOOT_SHA256
 
   if [ ! -f "$KSU_INIT_BOOT" ]; then
     LOGE "File not found: ${KSU_INIT_BOOT//$SRC_DIR\//}"
@@ -1262,51 +1398,38 @@ _REZOSS_PATCH_KSU_NEXT_INIT_BOOT_IMPL()
   case "$KSU_HOST_ARCH" in
     x86_64|amd64)
       KSU_KSUD_ARTIFACT_NAME="ksud-x86_64-unknown-linux-musl"
-      KSU_KSUD_NAME="x86_64-unknown-linux-musl/release/ksud"
       ;;
     aarch64|arm64)
       KSU_KSUD_ARTIFACT_NAME="ksud-aarch64-unknown-linux-musl"
-      KSU_KSUD_NAME="aarch64-unknown-linux-musl/release/ksud"
       ;;
     *)
-      LOGE "Unsupported host architecture for KernelSU-Next dev ksud: $KSU_HOST_ARCH"
+      LOGE "Unsupported host architecture for KernelSU-Next release ksud: $KSU_HOST_ARCH"
       return 1
       ;;
   esac
 
-  KSU_MODULE_ARCH="aarch64"
-  KSU_MODULE_ARTIFACT_NAME="${KSU_MODULE_ARCH}-${KSU_KMI}-lkm"
   KSU_MODULE_NAME="${KSU_KMI}_kernelsu.ko"
+  KSU_MODULE_ASSET_NAME="aarch64-${KSU_MODULE_NAME}"
 
-  KSU_KSUD_ZIP="$TMP_DIR/$KSU_KSUD_ARTIFACT_NAME.zip"
-  KSU_KSUD_DIR="$TMP_DIR/$KSU_KSUD_ARTIFACT_NAME"
   KSU_KSUD="$TMP_DIR/ksud"
-  KSU_MODULE_ZIP="$TMP_DIR/$KSU_MODULE_ARTIFACT_NAME.zip"
-  KSU_MODULE_DIR="$TMP_DIR/$KSU_MODULE_ARTIFACT_NAME"
   KSU_MODULE="$TMP_DIR/$KSU_MODULE_NAME"
 
-  _REZOSS_DOWNLOAD_KSU_NEXT_DEV_ARTIFACT \
-    "$KSU_KSUD_ARTIFACT_NAME" "$KSU_KSUD_NAME" "$KSU_KSUD_ZIP" "$KSU_KSUD_DIR" "$KSU_KSUD" \
-    || {
-      LOGW "KernelSU-Next dev CI ksud unavailable; falling back to latest release"
-      _REZOSS_DOWNLOAD_KSU_NEXT_RELEASE_ASSET "$KSU_KSUD_ARTIFACT_NAME" "$KSU_KSUD" || return 1
-    }
+  _REZOSS_RESOLVE_KSU_NEXT_RELEASE "$KSU_KSUD_ARTIFACT_NAME" "$KSU_MODULE_ASSET_NAME" || return 1
+
+  _REZOSS_DOWNLOAD_KSU_NEXT_RELEASE_ASSET "$KSU_KSUD_ARTIFACT_NAME" "$KSU_KSUD" || return 1
   if [ ! -f "$KSU_KSUD" ]; then
     LOGE "KernelSU-Next ksud not found: $KSU_KSUD_ARTIFACT_NAME"
     return 1
   fi
+  _REZOSS_LOG_KSU_ARTIFACT_PROVENANCE "host tool" "$KSU_KSUD_ARTIFACT_NAME" "$KSU_KSUD" || return 1
   chmod +x "$KSU_KSUD" || return 1
 
-  _REZOSS_DOWNLOAD_KSU_NEXT_DEV_ARTIFACT \
-    "$KSU_MODULE_ARTIFACT_NAME" "$KSU_MODULE_NAME" "$KSU_MODULE_ZIP" "$KSU_MODULE_DIR" "$KSU_MODULE" \
-    || {
-      LOGW "KernelSU-Next dev CI module unavailable; falling back to latest release"
-      _REZOSS_DOWNLOAD_KSU_NEXT_RELEASE_ASSET "$KSU_MODULE_NAME" "$KSU_MODULE" || return 1
-    }
+  _REZOSS_DOWNLOAD_KSU_NEXT_RELEASE_ASSET "$KSU_MODULE_ASSET_NAME" "$KSU_MODULE" || return 1
   if [ ! -f "$KSU_MODULE" ]; then
     LOGE "KernelSU-Next module not found in artifact: $KSU_MODULE_NAME"
     return 1
   fi
+  _REZOSS_LOG_KSU_ARTIFACT_PROVENANCE "LKM" "$KSU_MODULE_ASSET_NAME" "$KSU_MODULE" || return 1
 
   LOG "- Patching init_boot.img for KMI $KSU_KMI"
   cp -f "$KSU_INIT_BOOT" "$TMP_DIR/init_boot.img" || return 1
@@ -1325,6 +1448,15 @@ _REZOSS_PATCH_KSU_NEXT_INIT_BOOT_IMPL()
   fi
 
   cp -f "$KSU_PATCHED_INIT_BOOT" "$KSU_INIT_BOOT" || return 1
+  cmp -s "$KSU_PATCHED_INIT_BOOT" "$KSU_INIT_BOOT" || {
+    LOGE "KernelSU-Next patched init_boot image was not copied to ${KSU_INIT_BOOT//$SRC_DIR\//}"
+    return 1
+  }
+  KSU_PATCHED_INIT_BOOT_SHA256="$(sha256sum "$KSU_INIT_BOOT" | cut -d ' ' -f 1)" || return 1
+  LOG "- Verified KernelSU-Next patched init_boot.img"
+  LOG "  Source: ${KSU_PATCHED_INIT_BOOT//$SRC_DIR\//}"
+  LOG "  Destination: ${KSU_INIT_BOOT//$SRC_DIR\//}"
+  LOG "  SHA-256: $KSU_PATCHED_INIT_BOOT_SHA256"
   rm -rf "$TMP_DIR" || LOGW "Failed to remove temporary kernel directory: ${TMP_DIR//$SRC_DIR\//}"
 }
 

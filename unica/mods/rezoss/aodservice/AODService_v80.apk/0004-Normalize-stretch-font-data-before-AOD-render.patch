@@ -3,7 +3,7 @@ AUTHOR Rezoss
 diff -ruN base/smali_classes2/io/mesalabs/unica/aod/ClockFontSettingsSync.smali mod/smali_classes2/io/mesalabs/unica/aod/ClockFontSettingsSync.smali
 --- base/smali_classes2/io/mesalabs/unica/aod/ClockFontSettingsSync.smali	2026-08-30 12:33:37.685923389 +0200
 +++ mod/smali_classes2/io/mesalabs/unica/aod/ClockFontSettingsSync.smali	2026-08-30 15:00:06.212668202 +0200
-@@ -56,6 +56,117 @@
+@@ -163,6 +163,133 @@
      return-void
  .end method
 
@@ -29,9 +29,7 @@ diff -ruN base/smali_classes2/io/mesalabs/unica/aod/ClockFontSettingsSync.smali 
 +
 +    invoke-static {v1, v2}, Lio/mesalabs/unica/aod/ClockFontSettingsSync;->getInt(Ljava/lang/Object;I)I
 +
-+    move-result v1
-+
-+    if-eqz v1, :cond_return_original
++    move-result v6
 +
 +    iget-object v1, v0, Lcom/samsung/android/app/aodservice/common/provider/settingdata/LockClockSettingData;->q:Laod/fc;
 +
@@ -44,14 +42,6 @@ diff -ruN base/smali_classes2/io/mesalabs/unica/aod/ClockFontSettingsSync.smali 
 +    invoke-static {v1, v2}, Lio/mesalabs/unica/aod/ClockFontSettingsSync;->getInt(Ljava/lang/Object;I)I
 +
 +    move-result v1
-+
-+    const/16 v2, 0x323
-+
-+    if-lt v1, v2, :cond_return_original
-+
-+    const/16 v2, 0x325
-+
-+    if-gt v1, v2, :cond_return_original
 +
 +    iget-object v2, v0, Lcom/samsung/android/app/aodservice/common/provider/settingdata/LockClockSettingData;->r:Laod/fc;
 +
@@ -69,6 +59,32 @@ diff -ruN base/smali_classes2/io/mesalabs/unica/aod/ClockFontSettingsSync.smali 
 +    const-string v2, ""
 +
 +    :goto_path_ready
++    if-eqz v6, :cond_check_custom_font
++
++    const/16 v3, 0x323
++
++    if-lt v1, v3, :cond_check_custom_font
++
++    const/16 v3, 0x325
++
++    if-gt v1, v3, :cond_check_custom_font
++
++    goto :cond_font_data_ready
++
++    :cond_check_custom_font
++    const/16 v3, 0x2bc
++
++    if-eq v1, v3, :cond_font_data_ready
++
++    const-string v3, "unica_font:"
++
++    invoke-virtual {v2, v3}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
++
++    move-result v3
++
++    if-eqz v3, :cond_return_original
++
++    :cond_font_data_ready
 +    iget-object v3, v0, Lcom/samsung/android/app/aodservice/common/provider/settingdata/LockClockSettingData;->s:Laod/fc;
 +
 +    invoke-virtual {v3}, Laod/fc;->c()Ljava/lang/Object;

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config>
+    <allow-association target="com.samsung.android.smartsuggestions" allowed="io.mesalabs.unica.localsummary" />
+    <allow-association target="io.mesalabs.unica.localsummary" allowed="com.samsung.android.smartsuggestions" />
+    <allow-association target="io.mesalabs.unica.localsummary" allowed="android" />
+</config>
