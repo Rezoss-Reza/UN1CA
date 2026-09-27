@@ -241,3 +241,7 @@ unset -f ADD_UNICA_SETTINGS_SEARCH_INDEX_DATA_PROVIDER
 unset PATCH_INST CONTENT SEARCH_INDEX_RESOURCES SEARCH_INDEX_RESOURCES_SMALI TOP_LEVEL_KEYS_COLLECTOR TOP_LEVEL_KEYS_COLLECTOR_SMALI
 
 LOG_STEP_OUT
+
+# ROM-native Battery Saving: the native worker only accepts fixed kernel controls.
+LOG "- Installing Battery Saving service policy"
+python3 "$MODPATH/battery/install-policy.py" "$WORK_DIR" || ABORT "Failed to install Battery Saving service policy"

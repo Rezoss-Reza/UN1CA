@@ -15,11 +15,9 @@ OUTPUT=$(realpath -m "$1")
 WORK=$(mktemp -d /tmp/unica-local-summary-apk.XXXXXX)
 trap 'rm -rf "$WORK"' EXIT
 
-MODEL="$MODPATH/system/etc/unica/local-summary/qwen2.5-0.5b-instruct-q4_k_m.gguf"
-RUNNER="$MODPATH/system/bin/unica-summary-llama"
 FRAMEWORK_RES="$FW_DIR/SM-S918B_EUX/system/system/framework/framework-res.apk"
 
-for file in "$MODEL" "$RUNNER" "$FRAMEWORK_RES"; do
+for file in "$FRAMEWORK_RES"; do
     [[ -f "$file" ]] || { echo "Missing required local-summary artifact: $file" >&2; exit 1; }
 done
 

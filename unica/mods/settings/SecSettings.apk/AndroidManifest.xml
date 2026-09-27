@@ -1,4 +1,9 @@
 /application>/i
+        <activity android:name="io.mesalabs.unica.battery.BatteryActivity" android:exported="false" android:label="@string/unica_battery_title"/>
+        <receiver android:name="io.mesalabs.unica.battery.BatteryBoot" android:exported="false">
+            <intent-filter><action android:name="android.intent.action.BOOT_COMPLETED"/></intent-filter>
+        </receiver>
+        <service android:name="io.mesalabs.unica.battery.BatteryBoot$ApplyJob" android:exported="true" android:permission="android.permission.BIND_JOB_SERVICE"/>
         <activity android:configChanges="keyboardHidden|orientation|screenSize" android:exported="true" android:label="@string/unica_settings_title" android:name="com.android.settings.Settings$UnicaSettingsActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

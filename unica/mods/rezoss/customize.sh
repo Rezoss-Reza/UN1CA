@@ -193,6 +193,7 @@ SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_HDR2SDR_MAX_8K" "
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_HIERARCHICAL_B_ENCODING" "TRUE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_LONGEXPOSURE_EFFECT_10BIT" "TRUE"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_PHOTOHDR" "TRUE"
+SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_MMFW_SUPPORT_TARGET_TRACKING" "TRUE"
 # WARNING: The S26U FM/unified clipper route previously crashed PhotoEditor_AIFull
 # on the S23U SNAP/vendor stack during contour/lasso execution.
 # SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_VIDEO_CONFIG_VIDEO_CLIPPING_MODE" "NPU,unifiedclipper,foundational_segmentation"
@@ -461,6 +462,7 @@ fi
 LOG "- Adding S26U Privacy Display, Gallery LOG, Camera LOG/LUT, and Horizon Lock support files"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/cameradata/logCubefiles" 0 0 755 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libcontextanalyzer_jni.media.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libauto-reframing-arm64-v8a.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmediacontextanalyzer.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmpp.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libmpp_common.so" 0 0 644 "u:object_r:system_lib_file:s0"
@@ -561,6 +563,7 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libDocScannerFilterV2.camera.sam
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libDocShadowRemoval.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libMoireFilterV2.camera.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
 for f in \
+    "libauto-reframing-arm64-v8a.so" \
     "libcontextanalyzer_jni.media.samsung.so" \
     "libmediacontextanalyzer.so" \
     "libmpp.so" \
@@ -607,6 +610,20 @@ done
 # =============================================================================
 LOG "- Adding S26U video clipping and document-scan model files"
 _REZOSS_ENSURE_VENDOR_CONFIG_FILE_CONTEXTS
+LOG "- Adding S26U MediaContextAnalyzer My FanCam model files"
+for f in \
+    "07-03_Video_HumanPetDetection_v2.0.1_SM8850_SNPE238.dlc" \
+    "07-04_Video_HumanPetPose_v3.1.1_SM8850-SNPE238.dlc" \
+    "07-05_Video_KeywordClassification_v1.1.0_SM8850_SNPE238.dlc" \
+    "07-21_Video_ReframingTargetLocator_v0.1.0_SM8850-SNPE239.dlc" \
+    "07-22_Video_ReframingReID_v0.2.3_SM8850-SNPE244.dlc" \
+    "Detection.dlc" \
+    "Keyword.dlc" \
+    "Locator.dlc" \
+    "Pose.dlc" \
+    "Reid.dlc"; do
+    ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/mediacontextanalyzer/$f" 0 0 644 "u:object_r:system_file:s0"
+done
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/saiv/image_understanding/db/fm" 0 2000 755 "u:object_r:vendor_configs_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/saiv/image_understanding/db/dvs" 0 2000 755 "u:object_r:vendor_configs_file:s0"
 # S26U enhanced document-scan configs/models.
@@ -820,12 +837,13 @@ ADD_TO_WORK_DIR "$LOCAL_SUMMARY_SERVICE_DIR" "system" "system/priv-app/RezossAI/
 SET_METADATA "system" "system/priv-app/RezossAI" 0 0 755 "u:object_r:system_file:s0"
 SET_METADATA "system" "system/priv-app/RezossAI/RezossAI.apk" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "$LOCAL_SUMMARY_SERVICE_DIR" "system" "system/etc/default-permissions/default-permissions-unica-local-summary.xml" 0 0 644 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "$LOCAL_SUMMARY_SERVICE_DIR" "system" "system/bin/unica-summary-llama" 0 0 755 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "$LOCAL_SUMMARY_SERVICE_DIR" "system" "system/bin/unica-summary-llama-server" 0 0 755 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "$LOCAL_SUMMARY_SERVICE_DIR" "system" "system/etc/unica/local-summary/qwen2.5-0.5b-instruct-q4_k_m.gguf" 0 0 644 "u:object_r:system_file:s0"
-SET_METADATA "system" "system/etc/unica" 0 0 755 "u:object_r:system_file:s0"
-SET_METADATA "system" "system/etc/unica/local-summary" 0 0 755 "u:object_r:system_file:s0"
-SET_METADATA "system" "system/etc/unica/local-summary/qwen2.5-0.5b-instruct-q4_k_m.gguf" 0 0 644 "u:object_r:system_file:s0"
+# Inference is optional and separately installed as QWEN_LLM_rezoss.apk.
+# Remove legacy payloads from incremental builds; keep only the bridge.
+DELETE_FROM_WORK_DIR "system" "system/bin/unica-summary-llama"
+DELETE_FROM_WORK_DIR "system" "system/bin/unica-summary-llama-server"
+DELETE_FROM_WORK_DIR "system" "system/etc/unica/local-summary/qwen2.5-0.5b-instruct-q4_k_m.gguf"
+ADD_TO_WORK_DIR "$MODPATH" "system" "system/etc/sysconfig/rezoss-ai-associations.xml" 0 0 644 "u:object_r:system_file:s0"
+LOG "- Install out/archived/QWEN_LLM/QWEN_LLM_rezoss.apk separately to enable inference"
 LOCAL_SUMMARY_ALLOWLIST="$WORK_DIR/system/system/etc/sysconfig/allowed-system-preload-apps.xml"
 if ! grep -q -F 'package="io.mesalabs.unica.localsummary"' "$LOCAL_SUMMARY_ALLOWLIST"; then
     EVAL "LC_ALL=C patch --batch --fuzz=0 -p1 -d \"$WORK_DIR/system/system/etc/sysconfig\" < \"$LOCAL_SUMMARY_SERVICE_DIR/allowed-system-preload-apps.xml/0001-Allow-UN1CA-local-summary-provider.patch\"" \

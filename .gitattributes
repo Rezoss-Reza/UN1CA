@@ -28,6 +28,7 @@ unica/mods/paradigm/system/** binary
 unica/mods/prophide/system/bin/rezetprop binary
 unica/mods/rezoss/system_ext/bin/mosey_server binary
 unica/mods/rezoss/local-summary-service/system/bin/unica-summary-llama-server binary
+unica/mods/settings/system/bin/unica-battery binary
 
 # Device-specific prebuilt blobs
 target/dm3q/installer/root/unica/dfe/tools/* binary

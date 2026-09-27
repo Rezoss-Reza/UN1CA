@@ -3,4 +3,6 @@
     <allow-association target="com.samsung.android.smartsuggestions" allowed="io.mesalabs.unica.localsummary" />
     <allow-association target="io.mesalabs.unica.localsummary" allowed="com.samsung.android.smartsuggestions" />
     <allow-association target="io.mesalabs.unica.localsummary" allowed="android" />
+    <allow-association target="io.mesalabs.rezoss.qwen" allowed="io.mesalabs.unica.localsummary" />
+    <allow-association target="io.mesalabs.unica.localsummary" allowed="io.mesalabs.rezoss.qwen" />
 </config>

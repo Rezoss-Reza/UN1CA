@@ -1,134 +1,96 @@
 package io.mesalabs.unica.localsummary;
 
-import android.os.SystemClock;
+import android.content.*;
+import android.content.pm.PackageManager;
+import android.os.*;
 import android.util.Log;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
-import org.json.JSONObject;
-import org.json.JSONArray;
+import java.util.concurrent.*;
 
-/** Shared bounded inference for the provider and the reply service. */
+/** System-side adapter only. Model, process, and inference live in the optional user app. */
 public final class QwenEngine {
-    private static final ReentrantLock INFERENCE = new ReentrantLock(true);
-    private static final String TAG = "RezossAI";
-
-    private static HttpURLConnection active;
-    private static boolean activeForeground;
-    private static long foregroundUntil;
-
-    public static void prioritizeReply() {
-        HttpURLConnection cancel;
-        synchronized (QwenEngine.class) {
-            foregroundUntil = SystemClock.elapsedRealtime() + 6000;
-            cancel = activeForeground ? null : active;
-        }
-        if (cancel != null) cancel.disconnect();
-    }
+    private static final String ENGINE = "io.mesalabs.rezoss.qwen";
+    private static Context app;
+    public static void initialize(Context context) { app = context.getApplicationContext(); }
+    public static void prioritizeReply() { }
+    // Kept for the old smali startup call. Never execute a server in the privileged bridge.
+    public static void startServer(ProcessBuilder ignored) { }
 
     public static String generate(String input, boolean summary, int budgetMs) {
         return generate(input, summary, budgetMs, false);
     }
 
     public static String generate(String input, boolean summary, int budgetMs, boolean foreground) {
-        long started = SystemClock.elapsedRealtime();
-        HttpURLConnection connection = null;
-        boolean locked = false;
+        if (app == null || Looper.myLooper() == Looper.getMainLooper()) return null;
+        Context context = app;
         try {
-            if (input == null || input.trim().isEmpty()) return null;
-            synchronized (QwenEngine.class) {
-                if (!foreground && SystemClock.elapsedRealtime() < foregroundUntil) {
-                    Log.i(TAG, "qwen status=foreground_reserved");
-                    return null;
-                }
-            }
-            locked = INFERENCE.tryLock(foreground ? 800 : 200, TimeUnit.MILLISECONDS);
-            if (!locked) {
-                Log.i(TAG, "qwen mode=" + (summary ? "summary" : "reply") + " status=busy");
+            if (context.getPackageManager().checkSignatures(context.getPackageName(), ENGINE)
+                    != PackageManager.SIGNATURE_MATCH) {
+                Log.i("RezossAI", "engine status=missing_or_untrusted");
                 return null;
             }
-            // Bound prefill cost while retaining the most recent conversation text.
-            input = input.substring(Math.max(0, input.length() - (summary ? 1200 : 240)));
-            input = input.replace("<|", "< | ").replace("|>", " | >");
-            String instruction = summary
-                    ? "Summarize the messages in one short sentence. Use their language. Return only the summary."
-                    : "Reply briefly to the last message, in its language. One reply, no explanation.";
-            String prompt = "<|im_start|>system\n" + instruction + "<|im_end|>\n"
-                    + "<|im_start|>user\n" + input + "<|im_end|>\n<|im_start|>assistant\n";
-            JSONObject body = new JSONObject();
-            body.put("prompt", prompt);
-            body.put("n_predict", summary ? 40 : 16);
-            body.put("temperature", 0.2);
-            body.put("cache_prompt", true);
-            body.put("stop", new JSONArray().put("<|im_end|>").put("<|im_start|>"));
-            connection = (HttpURLConnection) new URL("http://127.0.0.1:8085/completion").openConnection();
-            synchronized (QwenEngine.class) {
-                active = connection;
-                activeForeground = foreground;
+        } catch (Exception unavailable) { return null; }
+        CountDownLatch done = new CountDownLatch(1);
+        String[] result = new String[1];
+        long deadline = SystemClock.elapsedRealtime() + budgetMs;
+        HandlerThread thread = new HandlerThread("RezossEngineIPC");
+        thread.start();
+        Handler handler = new Handler(thread.getLooper());
+        Messenger callback = new Messenger(new Handler(thread.getLooper()) {
+            @Override public void handleMessage(Message response) {
+                result[0] = response.getData().getString("content");
+                Log.i("RezossAI", "engine resultChars=" + (result[0] == null ? 0 : result[0].length()));
+                done.countDown();
             }
-            connection.setRequestMethod("POST");
-            connection.setConnectTimeout(1000);
-            connection.setReadTimeout(Math.max(1000, budgetMs - (int) (SystemClock.elapsedRealtime() - started)));
-            connection.setDoOutput(true);
-            connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
-            byte[] bytes = body.toString().getBytes(StandardCharsets.UTF_8);
-            connection.setFixedLengthStreamingMode(bytes.length);
-            try (java.io.OutputStream output = connection.getOutputStream()) { output.write(bytes); }
-            int status = connection.getResponseCode();
-            if (status != 200) {
-                Log.i(TAG, "qwen status=http_" + status);
+        });
+        ServiceConnection connection = new ServiceConnection() {
+            @Override public void onServiceConnected(ComponentName name, IBinder binder) {
+                Message request = Message.obtain(null, 1);
+                Bundle data = new Bundle();
+                data.putString("input", input);
+                data.putBoolean("summary", summary);
+                data.putBoolean("foreground", foreground);
+                data.putLong("deadline", deadline - 200);
+                request.setData(data);
+                request.replyTo = callback;
+                try { new Messenger(binder).send(request); }
+                catch (RemoteException gone) { done.countDown(); }
+            }
+            @Override public void onServiceDisconnected(ComponentName name) { done.countDown(); }
+            @Override public void onNullBinding(ComponentName name) { done.countDown(); }
+            @Override public void onBindingDied(ComponentName name) { done.countDown(); }
+        };
+        boolean bound = false;
+        long identity = Binder.clearCallingIdentity();
+        try {
+            bound = context.bindService(new Intent().setClassName(ENGINE, ENGINE + ".EngineService"),
+                    connection, Context.BIND_AUTO_CREATE);
+            if (!bound) {
+                Log.i("RezossAI", "engine status=not_installed_or_disabled");
                 return null;
             }
-            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-            try (InputStream stream = connection.getInputStream()) {
-                byte[] chunk = new byte[2048];
-                int count;
-                while ((count = stream.read(chunk)) != -1) {
-                    if (buffer.size() + count > 65536) throw new java.io.IOException("response limit");
-                    buffer.write(chunk, 0, count);
-                }
-            }
-            Object content = new JSONObject(buffer.toString("UTF-8")).opt("content");
-            String result = content instanceof String ? ((String) content).trim() : "";
-            if (result.contains("<|") || result.contains("<think>")) result = "";
-            if (summary) result = result.replaceAll("\\s+", " ");
-            if (result.length() > 512) result = result.substring(0, 512);
-            Log.i(TAG, "qwen mode=" + (summary ? "summary" : "reply") + " status="
-                    + (result.isEmpty() ? "empty" : "generated") + " chars=" + result.length()
-                    + " elapsedMs=" + (SystemClock.elapsedRealtime() - started));
-            return result.isEmpty() ? null : result;
+            if (!done.await(Math.max(1, deadline - SystemClock.elapsedRealtime()), TimeUnit.MILLISECONDS))
+                Log.i("RezossAI", "engine status=deadline");
+            return result[0];
         } catch (Exception failure) {
-            Log.w(TAG, "qwen status=" + failure.getClass().getSimpleName()
-                    + " elapsedMs=" + (SystemClock.elapsedRealtime() - started));
+            if (failure instanceof InterruptedException) Thread.currentThread().interrupt();
+            Log.i("RezossAI", "engine status=" + failure.getClass().getSimpleName());
             return null;
         } finally {
-            synchronized (QwenEngine.class) {
-                if (active == connection) { active = null; activeForeground = false; }
-            }
-            if (connection != null) connection.disconnect();
-            if (locked) INFERENCE.unlock();
+            Binder.restoreCallingIdentity(identity);
+            if (bound) {
+                // Keep the model warm briefly, while still allowing idle memory reclamation.
+                handler.postDelayed(() -> {
+                    try { context.unbindService(connection); } catch (IllegalArgumentException ignored) { }
+                    thread.quitSafely();
+                }, 120000);
+            } else thread.quitSafely();
         }
-    }
-
-    public static void startServer(ProcessBuilder builder) throws java.io.IOException {
-        // The old undrained stdout pipe could eventually block inference server logging.
-        java.util.ArrayList<String> command = new java.util.ArrayList<>(builder.command());
-        command.remove("--no-warmup");
-        builder.command(command);
-        builder.redirectOutput(new java.io.File("/dev/null"));
-        builder.redirectError(new java.io.File("/dev/null"));
-        builder.start();
-        Log.i(TAG, "server status=started");
     }
 
     public static String summary(String input) {
         String result = generate(input, true, 25000);
         if (result != null) return result;
-        Log.i(TAG, "summary status=fallback");
+        Log.i("RezossAI", "summary status=fallback");
         return "New messages are waiting.";
     }
 }

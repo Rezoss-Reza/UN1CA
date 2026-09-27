@@ -1,0 +1,12 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="io.mesalabs.rezoss.qwen" android:versionCode="1" android:versionName="1.0">
+    <uses-sdk android:minSdkVersion="35" android:targetSdkVersion="35" />
+    <permission android:name="io.mesalabs.rezoss.permission.QWEN_ENGINE" android:protectionLevel="signature" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <queries><package android:name="io.mesalabs.unica.localsummary" /></queries>
+    <application android:label="QWEN LLM Rezoss" android:allowBackup="false"
+        android:extractNativeLibs="true" android:usesCleartextTraffic="true">
+        <service android:name=".EngineService" android:exported="true"
+            android:permission="io.mesalabs.rezoss.permission.QWEN_ENGINE" />
+    </application>
+</manifest>

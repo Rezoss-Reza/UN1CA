@@ -10,16 +10,17 @@ public final class NotificationReplies {
     public static ConversationActions suggest(Context context, ConversationActions.Request request) {
         ArrayList<ConversationAction> actions = new ArrayList<>();
         try {
-            StringBuilder input = new StringBuilder();
+            ArrayList<org.json.JSONObject> input = new ArrayList<>();
             List<ConversationActions.Message> messages = request.getConversation();
-            for (int i = Math.max(0, messages.size() - 4); i < messages.size(); i++) {
+            for (int i = Math.max(0, messages.size() - 12); i < messages.size(); i++) {
                 CharSequence text = messages.get(i).getText();
-                if (text != null) input.append(ConversationActions.Message.PERSON_USER_SELF.equals(messages.get(i).getAuthor())
-                        ? "Me: " : "Other: ").append(text).append('\n');
+                if (text != null) ReplyFormat.add(input,
+                        ConversationActions.Message.PERSON_USER_SELF.equals(messages.get(i).getAuthor()),
+                        text.toString());
             }
-            if (input.length() != 0) {
-                String prompt = input.substring(Math.max(0, input.length() - 700));
-                for (String reply : InAppReplies.parse(QwenClient.request(context, prompt, 28000))) {
+            String prompt = ReplyFormat.encode(input);
+            if (!prompt.isEmpty()) {
+                for (String reply : ReplyFormat.parse(QwenClient.request(context, prompt, 28000))) {
                     actions.add(new ConversationAction.Builder(ConversationAction.TYPE_TEXT_REPLY)
                             .setTextReply(reply).setConfidenceScore(1.0f).build());
                 }

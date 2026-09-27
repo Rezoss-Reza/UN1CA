@@ -35,16 +35,16 @@ public final class InAppReplies {
         try {
             // These stable Kotlin accessors are checked against the exact input APK at build time.
             List<?> messages = (List<?>) conversation.getClass().getMethod("getMessages").invoke(conversation);
-            StringBuilder input = new StringBuilder();
+            ArrayList<org.json.JSONObject> input = new ArrayList<>();
             boolean lastFromSelf = false;
-            for (int i = Math.max(0, messages.size() - 6); i < messages.size(); i++) {
+            for (int i = Math.max(0, messages.size() - 12); i < messages.size(); i++) {
                 Object message = messages.get(i);
                 if ((Boolean) message.getClass().getMethod("isNonTextMessage").invoke(message)) continue;
                 String text = (String) message.getClass().getMethod("getMessage").invoke(message);
                 Object person = message.getClass().getMethod("getPerson").invoke(message);
                 if (text != null && !text.trim().isEmpty()) {
                     lastFromSelf = "USER".equals(String.valueOf(person));
-                    input.append("USER".equals(String.valueOf(person)) ? "Me: " : "Other: ").append(text).append('\n');
+                    ReplyFormat.add(input, lastFromSelf, text);
                 }
             }
             if (lastFromSelf) {
@@ -52,7 +52,7 @@ public final class InAppReplies {
                 Log.i("RezossQwen", "inapp status=user_sent");
                 return true;
             }
-            final String prompt = input.substring(Math.max(0, input.length() - 700));
+            final String prompt = ReplyFormat.encode(input);
             if (prompt.trim().isEmpty()) { Log.i("RezossQwen", "inapp status=empty_context"); return true; }
             MAIN.post(new Runnable() {
                 @Override public void run() { enqueue(app, pkg, sessionId, prompt); }
@@ -80,7 +80,7 @@ public final class InAppReplies {
         }, 5000);
         pending = WORKER.submit(new Runnable() {
             @Override public void run() {
-                final ArrayList<String> replies = parse(QwenClient.request(app, prompt, 28000, true));
+                final ArrayList<String> replies = parse(QwenClient.request(app, prompt, 65000, true));
                 MAIN.post(new Runnable() {
                     @Override public void run() {
                         if (generation != token || !id.equals(session)) {
@@ -143,14 +143,6 @@ public final class InAppReplies {
     }
 
     public static ArrayList<String> parse(String output) {
-        ArrayList<String> replies = new ArrayList<>();
-        if (output == null) return replies;
-        for (String line : output.split("\\r?\\n")) {
-            line = line.replaceFirst("^\\s*(?:[-*]|[0-9]+[.)])\\s*", "").trim();
-            if (line.isEmpty() || line.length() > 120 || line.contains("<|") || replies.contains(line)) continue;
-            replies.add(line);
-            if (replies.size() == 3) break;
-        }
-        return replies;
+        return ReplyFormat.parse(output);
     }
 }

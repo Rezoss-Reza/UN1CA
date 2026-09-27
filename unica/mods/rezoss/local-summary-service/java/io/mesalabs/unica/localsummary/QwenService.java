@@ -31,7 +31,7 @@ public final class QwenService extends Service {
                 final String input = data.getString("input", "");
                 final boolean foreground = data.getBoolean("foreground", false);
                 final long deadline = data.getLong("deadline", 0);
-                if (input.isEmpty() || input.length() > 4096) { respond(callback, null, "invalid"); return; }
+                if (input.isEmpty() || input.length() > 12000) { respond(callback, null, "invalid"); return; }
                 final String key = request.sendingUid + ":" + foreground + ":" + input;
                 cache.entrySet().removeIf(entry -> entry.getValue().until < SystemClock.elapsedRealtime());
                 CachedReply cached = cache.get(key);
@@ -46,7 +46,7 @@ public final class QwenService extends Service {
                             if (foreground) QwenEngine.prioritizeReply();
                             long remaining = deadline - SystemClock.elapsedRealtime();
                             if (remaining < 1000) { respond(callback, null, "expired"); return; }
-                            String result = QwenEngine.generate(input, false, (int) Math.min(foreground ? 25000 : 8000, remaining), foreground);
+                            String result = QwenEngine.generate(input, false, (int) Math.min(foreground ? 60000 : 25000, remaining), foreground);
                             if (result != null) {
                                 final String value = result;
                                 new Handler(Looper.getMainLooper()).post(() -> {
