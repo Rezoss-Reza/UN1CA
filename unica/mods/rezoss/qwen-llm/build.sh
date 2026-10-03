@@ -38,4 +38,28 @@ if ${ROM_IS_OFFICIAL:-false}; then CERT=unica; fi
 mkdir -p "$(dirname -- "$OUT")"
 if [[ -e "$OUT" ]]; then cp -a "$OUT" "$OUT.bak.$(date +%Y%m%d_%H%M%S)"; fi
 mv "$WORK/signed.apk" "$OUT"
-sha256sum "$OUT"
+APK_SHA256_LINE=$(sha256sum "$OUT")
+APK_SHA256=${APK_SHA256_LINE%% *}
+APK_SIZE=$(stat -c %s "$OUT")
+VERSION_CODE=$(grep -o "android:versionCode=\"[^\"]*\"" "$ROOT/AndroidManifest.xml" | head -n1)
+VERSION_CODE=${VERSION_CODE#android:versionCode=\"}
+VERSION_CODE=${VERSION_CODE%\"}
+VERSION_NAME=$(grep -o "android:versionName=\"[^\"]*\"" "$ROOT/AndroidManifest.xml" | head -n1)
+VERSION_NAME=${VERSION_NAME#android:versionName=\"}
+VERSION_NAME=${VERSION_NAME%\"}
+GIT_COMMIT=$(git -C "$SRC_DIR" rev-parse --short=12 HEAD 2>/dev/null || true)
+VERSION_FILE="$OUT.version"
+{
+    printf "package=io.mesalabs.rezoss.qwen\n"
+    printf "versionCode=%s\n" "$VERSION_CODE"
+    printf "versionName=%s\n" "$VERSION_NAME"
+    printf "apk=%s\n" "$OUT"
+    printf "sizeBytes=%s\n" "$APK_SIZE"
+    printf "sha256=%s\n" "$APK_SHA256"
+    printf "model=%s\n" "$MODEL"
+    printf "modelSha256=%s\n" "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e"
+    printf "builtAtUtc=%s\n" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    [[ -n "$GIT_COMMIT" ]] && printf "sourceCommit=%s\n" "$GIT_COMMIT"
+} > "$VERSION_FILE"
+printf "%s  %s\n" "$APK_SHA256" "$OUT"
+printf "version metadata: %s\n" "$VERSION_FILE"

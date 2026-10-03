@@ -7,12 +7,14 @@ import android.view.textclassifier.ConversationActions;
 import java.util.*;
 
 public final class NotificationReplies {
+    private static final int RECENT_MESSAGE_LIMIT = 3;
+
     public static ConversationActions suggest(Context context, ConversationActions.Request request) {
         ArrayList<ConversationAction> actions = new ArrayList<>();
         try {
             ArrayList<org.json.JSONObject> input = new ArrayList<>();
             List<ConversationActions.Message> messages = request.getConversation();
-            for (int i = Math.max(0, messages.size() - 12); i < messages.size(); i++) {
+            for (int i = Math.max(0, messages.size() - RECENT_MESSAGE_LIMIT); i < messages.size(); i++) {
                 CharSequence text = messages.get(i).getText();
                 if (text != null) ReplyFormat.add(input,
                         ConversationActions.Message.PERSON_USER_SELF.equals(messages.get(i).getAuthor()),

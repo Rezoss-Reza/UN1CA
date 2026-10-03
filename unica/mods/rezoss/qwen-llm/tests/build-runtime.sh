@@ -10,7 +10,10 @@ trap 'rm -rf "$WORK"' EXIT
 mkdir -p "$WORK/classes" "$WORK/dex"
 javac -source 8 -target 8 -Xlint:-options -classpath "$SDK/platforms/android-37.0/android.jar" -d "$WORK/classes" \
     "$ROOT/EngineRuntimeTest.java" \
-    "$ROOT/../java/io/mesalabs/rezoss/qwen/NativeEngine.java"
+    "$ROOT/CompletionProgressSmoke.java" \
+    "$ROOT/../java/io/mesalabs/rezoss/qwen/NativeEngine.java" \
+    "$ROOT/../java/io/mesalabs/rezoss/qwen/CompletionProgress.java" \
+    "$ROOT/../java/io/mesalabs/rezoss/qwen/ThermalGuard.java"
 jar cf "$WORK/classes.jar" -C "$WORK/classes" .
 "$TOOLS/d8" --min-api 35 --lib "$SDK/platforms/android-37.0/android.jar" --output "$WORK/dex" "$WORK/classes.jar"
 "$TOOLS/aapt2" link --manifest "$ROOT/RuntimeManifest.xml" -I "$SDK/platforms/android-37.0/android.jar" -o "$WORK/base.apk"

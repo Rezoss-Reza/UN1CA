@@ -23,13 +23,14 @@ public final class QwenEngine {
         if (app == null || Looper.myLooper() == Looper.getMainLooper()) return null;
         Context context = app;
         try {
-            if (context.getPackageManager().checkSignatures(context.getPackageName(), ENGINE)
-                    != PackageManager.SIGNATURE_MATCH) {
+            if (!trustedEngine(context)) {
                 Log.i("RezossAI", "engine status=missing_or_untrusted");
                 return null;
             }
         } catch (Exception unavailable) { return null; }
         CountDownLatch done = new CountDownLatch(1);
+        final java.util.concurrent.atomic.AtomicReference<Messenger> remote = new java.util.concurrent.atomic.AtomicReference<>();
+        final java.util.concurrent.atomic.AtomicBoolean finished = new java.util.concurrent.atomic.AtomicBoolean();
         String[] result = new String[1];
         long deadline = SystemClock.elapsedRealtime() + budgetMs;
         HandlerThread thread = new HandlerThread("RezossEngineIPC");
@@ -39,11 +40,18 @@ public final class QwenEngine {
             @Override public void handleMessage(Message response) {
                 result[0] = response.getData().getString("content");
                 Log.i("RezossAI", "engine resultChars=" + (result[0] == null ? 0 : result[0].length()));
+                finished.set(true);
+                String status = response.getData().getString("status", "unknown");
+                if (status.matches("[A-Za-z_]{1,48}")) Log.i("RezossAI", "engine status=" + status);
                 done.countDown();
             }
         });
         ServiceConnection connection = new ServiceConnection() {
             @Override public void onServiceConnected(ComponentName name, IBinder binder) {
+                synchronized (remote) {
+                if (finished.get()) return;
+                Messenger server = new Messenger(binder);
+                remote.set(server);
                 Message request = Message.obtain(null, 1);
                 Bundle data = new Bundle();
                 data.putString("input", input);
@@ -52,8 +60,9 @@ public final class QwenEngine {
                 data.putLong("deadline", deadline - 200);
                 request.setData(data);
                 request.replyTo = callback;
-                try { new Messenger(binder).send(request); }
+                try { server.send(request); }
                 catch (RemoteException gone) { done.countDown(); }
+            }
             }
             @Override public void onServiceDisconnected(ComponentName name) { done.countDown(); }
             @Override public void onNullBinding(ComponentName name) { done.countDown(); }
@@ -76,15 +85,34 @@ public final class QwenEngine {
             Log.i("RezossAI", "engine status=" + failure.getClass().getSimpleName());
             return null;
         } finally {
+            boolean completed;
+            synchronized (remote) {
+            completed = finished.getAndSet(true);
+            Messenger server = remote.get();
+            if (!completed && server != null) {
+                Message cancel = Message.obtain(null, 2);
+                cancel.replyTo = callback;
+                try { server.send(cancel); } catch (RemoteException ignored) { }
+            }
+            }
             Binder.restoreCallingIdentity(identity);
             if (bound) {
-                // Keep the model warm briefly, while still allowing idle memory reclamation.
                 handler.postDelayed(() -> {
                     try { context.unbindService(connection); } catch (IllegalArgumentException ignored) { }
                     thread.quitSafely();
-                }, 120000);
+                }, completed ? 30000 : 0);
             } else thread.quitSafely();
         }
+    }
+
+    private static boolean trustedEngine(Context context) {
+        PackageManager pm = context.getPackageManager();
+        if (pm.checkSignatures(context.getPackageName(), ENGINE) == PackageManager.SIGNATURE_MATCH) return true;
+        // The ROM records Samsung's identity for preloads; pin the optional engine's real signer.
+        String hash = "c8a2e9bccf597c2fb6dc66bee293fc13f2fc47ec77bc6b2b0d52c11f51192ab8";
+        byte[] expected = new byte[32];
+        for (int i = 0; i < expected.length; i++) expected[i] = (byte) Integer.parseInt(hash.substring(i * 2, i * 2 + 2), 16);
+        return pm.hasSigningCertificate(ENGINE, expected, PackageManager.CERT_INPUT_SHA256);
     }
 
     public static String summary(String input) {

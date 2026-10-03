@@ -766,6 +766,31 @@ fi
 rm -- "$REZOSS_DRESSROOM_PATCH"
 unset REZOSS_DRESSROOM_PATCH
 
+LOG "- Add lockscreen clock height and widget size controls"
+APPLY_PATCH "system" "system/priv-app/DressRoom/DressRoom.apk" \
+    "$MODPATH/dressroom/DressRoom.apk/0003-Add-clock-height-and-widget-size-controls.patch"
+LOG "- Remove canceled lockscreen Depth Effect integration"
+DELETE_FROM_WORK_DIR "system" "system/lib64/libunica_depth_effect.so"
+DELETE_FROM_WORK_DIR "system" "system/etc/unica-depth-effect/pidnet_s.tflite"
+REZOSS_DEPTH_DRESSROOM_DIR="$APKTOOL_DIR/system/priv-app/DressRoom/DressRoom.apk"
+REZOSS_DEPTH_DRESSROOM_HOOK="smali_classes2/vo/x.smali"
+REZOSS_DEPTH_DRESSROOM_LAYOUT="res/layout/clock_panel_layout.xml"
+DECODE_APK "system" "system/priv-app/DressRoom/DressRoom.apk" || return 1
+if grep -q -F 'DepthEffectToggle;->bind' "$REZOSS_DEPTH_DRESSROOM_DIR/$REZOSS_DEPTH_DRESSROOM_HOOK" || \
+        grep -q -F 'unica_depth_effect' "$REZOSS_DEPTH_DRESSROOM_DIR/$REZOSS_DEPTH_DRESSROOM_LAYOUT"; then
+    APPLY_PATCH "system" "system/priv-app/DressRoom/DressRoom.apk" \
+        "$MODPATH/dressroom/DressRoom.apk/0004-Remove-Depth-Effect-toggle.patch"
+fi
+unset REZOSS_DEPTH_DRESSROOM_DIR REZOSS_DEPTH_DRESSROOM_HOOK REZOSS_DEPTH_DRESSROOM_LAYOUT
+REZOSS_DEPTH_SYSTEMUI_DIR="$APKTOOL_DIR/system_ext/priv-app/SystemUI/SystemUI.apk"
+REZOSS_DEPTH_SYSTEMUI_HOOK="smali_classes2/com/android/systemui/keyguard/ui/binder/KeyguardClockViewBinder.smali"
+DECODE_APK "system_ext" "priv-app/SystemUI/SystemUI.apk" || return 1
+if grep -q -F 'DepthEffectController;->attach' "$REZOSS_DEPTH_SYSTEMUI_DIR/$REZOSS_DEPTH_SYSTEMUI_HOOK"; then
+    APPLY_PATCH "system_ext" "priv-app/SystemUI/SystemUI.apk" \
+        "$MODPATH/systemui/SystemUI.apk/0008-Remove-lockscreen-Depth-Effect-compositor-hook.patch"
+fi
+unset REZOSS_DEPTH_SYSTEMUI_DIR REZOSS_DEPTH_SYSTEMUI_HOOK
+
 LOG "- Downloading latest Samsung Always On Display app"
 DOWNLOAD_FILE "$(GET_GALAXY_STORE_DOWNLOAD_URL "com.samsung.android.app.aodservice")" \
     "$WORK_DIR/system/system/priv-app/AODService_v80/AODService_v80.apk"
@@ -797,6 +822,10 @@ APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
 LOG "- Patch AODService to use lockscreen clock style for AOD rendering"
 APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
     "$MODPATH/aodservice/AODService_v80.apk/0007-Use-lockscreen-clock-style-for-AOD-render.patch"
+
+LOG "- Expand lockscreen widget grid and preserve widget proportions when resizing"
+APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
+    "$MODPATH/aodservice/AODService_v80.apk/0008-Expand-and-resize-lockscreen-widget-container.patch"
 
 LOG "- Patch VisualCloudCore Galaxy Store model check"
 APPLY_PATCH "system" "system/app/VisualCloudCore/VisualCloudCore.apk" \
@@ -837,7 +866,15 @@ ADD_TO_WORK_DIR "$LOCAL_SUMMARY_SERVICE_DIR" "system" "system/priv-app/RezossAI/
 SET_METADATA "system" "system/priv-app/RezossAI" 0 0 755 "u:object_r:system_file:s0"
 SET_METADATA "system" "system/priv-app/RezossAI/RezossAI.apk" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "$LOCAL_SUMMARY_SERVICE_DIR" "system" "system/etc/default-permissions/default-permissions-unica-local-summary.xml" 0 0 644 "u:object_r:system_file:s0"
-# Inference is optional and separately installed as QWEN_LLM_rezoss.apk.
+LOG "- Build QWEN LLM system stub for updatable inference"
+QWEN_STUB_DIR="$MODPATH/qwen-llm/system-stub"
+QWEN_STUB_APK="$MODPATH/qwen-llm/system/priv-app/QWEN_LLM_rezoss_stub/QWEN_LLM_rezoss_stub.apk"
+EVAL "bash \"$QWEN_STUB_DIR/build.sh\" \"$QWEN_STUB_APK\""
+ADD_TO_WORK_DIR "$MODPATH/qwen-llm" "system" "system/priv-app/QWEN_LLM_rezoss_stub/QWEN_LLM_rezoss_stub.apk" 0 0 644 "u:object_r:system_file:s0"
+SET_METADATA "system" "system/priv-app/QWEN_LLM_rezoss_stub" 0 0 755 "u:object_r:system_file:s0"
+SET_METADATA "system" "system/priv-app/QWEN_LLM_rezoss_stub/QWEN_LLM_rezoss_stub.apk" 0 0 644 "u:object_r:system_file:s0"
+unset QWEN_STUB_APK QWEN_STUB_DIR
+# The model/native engine is optional and separately installed as QWEN_LLM_rezoss.apk.
 # Remove legacy payloads from incremental builds; keep only the bridge.
 DELETE_FROM_WORK_DIR "system" "system/bin/unica-summary-llama"
 DELETE_FROM_WORK_DIR "system" "system/bin/unica-summary-llama-server"
@@ -848,6 +885,10 @@ LOCAL_SUMMARY_ALLOWLIST="$WORK_DIR/system/system/etc/sysconfig/allowed-system-pr
 if ! grep -q -F 'package="io.mesalabs.unica.localsummary"' "$LOCAL_SUMMARY_ALLOWLIST"; then
     EVAL "LC_ALL=C patch --batch --fuzz=0 -p1 -d \"$WORK_DIR/system/system/etc/sysconfig\" < \"$LOCAL_SUMMARY_SERVICE_DIR/allowed-system-preload-apps.xml/0001-Allow-UN1CA-local-summary-provider.patch\"" \
         || ABORT "Failed to allow the UN1CA local summary provider"
+fi
+if ! grep -q -F 'package="io.mesalabs.rezoss.qwen"' "$LOCAL_SUMMARY_ALLOWLIST"; then
+    EVAL "LC_ALL=C patch --batch --fuzz=0 -p1 -d \"$WORK_DIR/system/system/etc/sysconfig\" < \"$LOCAL_SUMMARY_SERVICE_DIR/allowed-system-preload-apps.xml/0002-Allow-Rezoss-Qwen-engine.patch\"" \
+        || ABORT "Failed to allow the Rezoss Qwen engine"
 fi
 EVAL "rm -f \"$LOCAL_SUMMARY_ALLOWLIST.orig\" \"$LOCAL_SUMMARY_ALLOWLIST.rej\"" \
     || ABORT "Failed to remove stale local summary allowlist patch artifacts"
@@ -1122,6 +1163,9 @@ APPLY_PATCH "system" "system/framework/services.jar" \
 LOG "- Log Now Nudge notification request gates"
 APPLY_PATCH "system" "system/framework/services.jar" \
     "$MODPATH/notification-priority/services.jar/0004-Log-Now-Nudge-notification-request-gates.patch"
+LOG "- Keeping bound Qwen inference on foreground CPUs"
+APPLY_PATCH "system" "system/framework/services.jar" \
+    "$MODPATH/notification-priority/services.jar/0005-Keep-bound-Qwen-on-foreground-CPUs.patch"
 
 LOG "- Patch SettingsProvider notification priority/summary defaults"
 APPLY_PATCH "system" "system/priv-app/SettingsProvider/SettingsProvider.apk" \

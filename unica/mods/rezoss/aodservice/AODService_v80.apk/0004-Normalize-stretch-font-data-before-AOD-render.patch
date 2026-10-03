@@ -3,7 +3,7 @@ AUTHOR Rezoss
 diff -ruN base/smali_classes2/io/mesalabs/unica/aod/ClockFontSettingsSync.smali mod/smali_classes2/io/mesalabs/unica/aod/ClockFontSettingsSync.smali
 --- base/smali_classes2/io/mesalabs/unica/aod/ClockFontSettingsSync.smali	2026-08-30 12:33:37.685923389 +0200
 +++ mod/smali_classes2/io/mesalabs/unica/aod/ClockFontSettingsSync.smali	2026-08-30 15:00:06.212668202 +0200
-@@ -163,6 +163,133 @@
+@@ -163,6 +163,146 @@
      return-void
  .end method
 
@@ -59,32 +59,6 @@ diff -ruN base/smali_classes2/io/mesalabs/unica/aod/ClockFontSettingsSync.smali 
 +    const-string v2, ""
 +
 +    :goto_path_ready
-+    if-eqz v6, :cond_check_custom_font
-+
-+    const/16 v3, 0x323
-+
-+    if-lt v1, v3, :cond_check_custom_font
-+
-+    const/16 v3, 0x325
-+
-+    if-gt v1, v3, :cond_check_custom_font
-+
-+    goto :cond_font_data_ready
-+
-+    :cond_check_custom_font
-+    const/16 v3, 0x2bc
-+
-+    if-eq v1, v3, :cond_font_data_ready
-+
-+    const-string v3, "unica_font:"
-+
-+    invoke-virtual {v2, v3}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
-+
-+    move-result v3
-+
-+    if-eqz v3, :cond_return_original
-+
-+    :cond_font_data_ready
 +    iget-object v3, v0, Lcom/samsung/android/app/aodservice/common/provider/settingdata/LockClockSettingData;->s:Laod/fc;
 +
 +    invoke-virtual {v3}, Laod/fc;->c()Ljava/lang/Object;
@@ -113,6 +87,45 @@ diff -ruN base/smali_classes2/io/mesalabs/unica/aod/ClockFontSettingsSync.smali 
 +
 +    move-result-object v5
 +
++    if-eqz v6, :cond_check_custom_font
++
++    const/16 v0, 0x323
++
++    if-lt v1, v0, :cond_check_custom_font
++
++    const/16 v0, 0x325
++
++    if-gt v1, v0, :cond_check_custom_font
++
++    goto :cond_font_data_ready
++
++    :cond_check_custom_font
++    const/16 v0, 0x2bc
++
++    if-eq v1, v0, :cond_font_data_ready
++
++    const-string v0, "unica_font:"
++
++    invoke-virtual {v2, v0}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
++
++    move-result v0
++
++    if-eqz v0, :cond_check_stored_heights
++
++    goto :cond_font_data_ready
++
++    :cond_check_stored_heights
++    if-eqz v5, :cond_font_data_ready
++
++    invoke-interface {v5}, Ljava/util/List;->isEmpty()Z
++
++    move-result v0
++
++    if-nez v0, :cond_font_data_ready
++
++    goto :cond_font_data_ready
++
++    :cond_font_data_ready
 +    new-instance v0, Lcom/samsung/android/clockpack/plugins/clock/ClockFontData;
 +
 +    invoke-direct/range {v0 .. v5}, Lcom/samsung/android/clockpack/plugins/clock/ClockFontData;-><init>(ILjava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/util/List;)V
@@ -137,12 +150,9 @@ diff -ruN base/smali_classes2/io/mesalabs/unica/aod/ClockFontSettingsSync.smali 
  .method public static syncAodStretchFontType(Landroid/content/Context;)V
      .locals 6
 
-diff --git a/smali_classes3/com/samsung/android/uniform/widget/clock/AbsClockView.smali b/smali_classes3/com/samsung/android/uniform/widget/clock/AbsClockView.smali
 --- a/smali_classes3/com/samsung/android/uniform/widget/clock/AbsClockView.smali
 +++ b/smali_classes3/com/samsung/android/uniform/widget/clock/AbsClockView.smali
-@@ -9020,6 +9020,18 @@
-
-     move-object/from16 v0, p0
+@@ -9071,2 +9071,14 @@
 
 +    invoke-virtual {v0}, Landroid/view/View;->getContext()Landroid/content/Context;
 +
@@ -157,5 +167,3 @@ diff --git a/smali_classes3/com/samsung/android/uniform/widget/clock/AbsClockVie
 +    move-object/16 p1, v2
 +
      const/high16 v1, 0x3f800000    # 1.0f
-
-     invoke-static {v1}, Ljava/lang/Float;->valueOf(F)Ljava/lang/Float;

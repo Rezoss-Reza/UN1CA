@@ -15,13 +15,18 @@ public final class KeyboardReplyRetention {
     private static String packageName;
     private static int fieldId;
     private static boolean pinned;
+    private static boolean waiting;
     private static boolean typed;
 
     public static void start(InputMethodService ime, EditorInfo info, boolean restarting) {
         if (info == null) { finish(); return; }
-        if (!restarting || !info.packageName.equals(packageName) || info.fieldId != fieldId) {
-            finish();
+        boolean samePackage = info.packageName != null && info.packageName.equals(packageName);
+        boolean sameEditor = samePackage && info.fieldId == fieldId;
+        if (!sameEditor && (!pinned || typed || !samePackage)) {
+            clear();
             typed = false;
+        } else if (!sameEditor) {
+            Log.i("RezossKeyboard", "retention status=editor_refresh_preserved");
         }
         service = new WeakReference<>(ime);
         packageName = info.packageName;
@@ -29,6 +34,11 @@ public final class KeyboardReplyRetention {
     }
 
     public static void finish() {
+        if (pinned && !typed) {
+            service.clear();
+            Log.i("RezossKeyboard", "retention status=finish_retained");
+            return;
+        }
         clear();
         packageName = null;
         typed = false;
@@ -63,6 +73,7 @@ public final class KeyboardReplyRetention {
     private static void clear() {
         boolean wasPinned = pinned;
         pinned = false;
+        waiting = false;
         Object target = receiver.get();
         receiver.clear();
         if (wasPinned && target != null) {
@@ -77,7 +88,7 @@ public final class KeyboardReplyRetention {
     /** True consumes only conflicting nudge events; normal keyboard behavior is untouched. */
     public static boolean consume(Object target, Intent intent) {
         InputMethodService ime = service.get();
-        if (ime == null || packageName == null) return intent.getBooleanExtra("REZOSS_QWEN", false);
+        if (ime == null || packageName == null) return false;
         String action = intent.getAction();
         if (action == null) return false;
         if (intent.getBooleanExtra("REZOSS_QWEN", false)) {
@@ -87,8 +98,14 @@ public final class KeyboardReplyRetention {
             ArrayList<String> items = intent.getStringArrayListExtra("SUGGESTIONS");
             if (action.endsWith(".NOW_NUDGE") && items != null && !items.isEmpty()) {
                 pinned = true;
+                waiting = intent.getBooleanExtra("REZOSS_WAITING", false);
                 receiver = new WeakReference<>(target);
-                Log.i("RezossKeyboard", "retention status=pinned count=" + items.size());
+                Log.i("RezossKeyboard", "retention status=pinned count=" + items.size() + " waiting=" + waiting);
+                return false;
+            }
+            if (waiting && (action.endsWith(".EXIT") || action.endsWith(".FAILED_SUGGESTED_REPLIES"))) {
+                clear();
+                Log.i("RezossKeyboard", "retention status=waiting_cleared");
                 return false;
             }
             return pinned;
