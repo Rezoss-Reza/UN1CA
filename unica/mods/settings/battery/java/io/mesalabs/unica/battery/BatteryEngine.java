@@ -77,6 +77,48 @@ public class BatteryEngine {
         try { for (String s : read(new File(file)).split("\\s+")) { long n=Long.parseLong(s); if(n>0) set.add(n); } } catch (Exception ignored) {}
         List<String> out = new ArrayList<>(); for(long n:set) out.add(""+n); return out;
     }
+    static Object binderCall(String serviceName,String apiName,String method,Class<?>[] types,Object... args)throws Exception {
+        Class<?> api=Class.forName(apiName);
+        Object manager=Class.forName(apiName+"$Stub").getMethod("asInterface",android.os.IBinder.class).invoke(null,service(serviceName));
+        return api.getMethod(method,types).invoke(manager,args);
+    }
+    Object network(String method,Class<?>[] types,Object... args)throws Exception {
+        Class<?> api=Class.forName("android.net.NetworkPolicyManager");
+        return api.getMethod(method,types).invoke(context.getSystemService("netpolicy"),args);
+    }
+    int appUid(JSONObject d)throws Exception {
+        int uid=context.getPackageManager().getApplicationInfo(d.getString("target"),0).uid;
+        if(uid<10000 || uid!=d.getInt("uid"))throw new IOException("App identity changed; refusing UID policy write");
+        return uid;
+    }
+    static boolean autoCandidate(String pkg,int uid,boolean system,boolean launchable) {
+        return uid>=10000 && (!system || launchable || pkg.equals("com.android.vending") || pkg.equals("com.sec.android.app.samsungapps"));
+    }
+    List<String> backgroundTargets()throws Exception {
+        android.content.pm.PackageManager pm=context.getPackageManager();
+        Set<String> protectedApps=new HashSet<>(Arrays.asList("com.android.settings","com.android.systemui","com.google.android.gms","com.android.phone"));
+        android.content.Intent home=new android.content.Intent(android.content.Intent.ACTION_MAIN).addCategory(android.content.Intent.CATEGORY_HOME);
+        android.content.pm.ResolveInfo launcher=pm.resolveActivity(home,android.content.pm.PackageManager.MATCH_DEFAULT_ONLY);
+        if(launcher!=null && launcher.activityInfo!=null)protectedApps.add(launcher.activityInfo.packageName);
+        android.view.inputmethod.InputMethodManager imm=context.getSystemService(android.view.inputmethod.InputMethodManager.class);
+        for(android.view.inputmethod.InputMethodInfo keyboard:imm.getEnabledInputMethodList())protectedApps.add(keyboard.getPackageName());
+        android.telecom.TelecomManager telecom=context.getSystemService(android.telecom.TelecomManager.class);
+        String dialer=telecom.getDefaultDialerPackage();if(dialer!=null)protectedApps.add(dialer);
+        Set<Integer> protectedUids=new HashSet<>();
+        List<android.content.pm.ApplicationInfo> apps=pm.getInstalledApplications(0);
+        for(android.content.pm.ApplicationInfo app:apps)
+            if(protectedApps.contains(app.packageName)||!autoCandidate(app.packageName,app.uid,(app.flags&android.content.pm.ApplicationInfo.FLAG_SYSTEM)!=0,pm.getLaunchIntentForPackage(app.packageName)!=null))protectedUids.add(app.uid);
+        List<String> result=new ArrayList<>();
+        for(android.content.pm.ApplicationInfo app:apps)if(!protectedUids.contains(app.uid))result.add(app.packageName);
+        Collections.sort(result);return result;
+    }
+    JSONObject packageDescriptor(String kind,String pkg)throws Exception {
+        if(pkg.equals("com.android.settings") || pkg.equals("com.android.systemui") || pkg.equals("com.google.android.gms"))throw new IOException("Essential service protected");
+        int uid=context.getPackageManager().getApplicationInfo(pkg,0).uid;
+        JSONObject d=new JSONObject().put("kind",kind).put("target",pkg).put("label",pkg).put("uid",uid);
+        if(kind.equals("bg_run") || kind.equals("bg_any"))d.put("op",kind.equals("bg_run")?63:70);
+        return d;
+    }
     void discover() throws Exception {
         try {
             JSONArray kernel=BatteryTransport.request("list","","").getJSONArray("controls");
@@ -110,9 +152,39 @@ public class BatteryEngine {
             for(int n:hz) if(n>=24 && n<=240) rates.add(""+n);
         } catch(Throwable e) { notes.add("Display modes unavailable; refresh-rate control disabled"); }
         add("refresh", "Display refresh-rate ceiling", "Optional. Lower refresh rates trade smoothness for lower display/rendering power. Samsung's display policy may override this request.", "system", "peak_refresh_rate", rates);
+        add("power_saver","Android Battery Saver","Requests Android's low-power policy. Charging or Samsung policy can switch it off.","power","",Arrays.asList("0","1"));
+        add("sync","Automatic account sync","Off stops Android sync adapters. Apps with their own network schedulers require background restrictions too.","sync","",Arrays.asList("0","1"));
+        add("data_saver","Data Saver","Restricts background data on metered networks; Wi-Fi is not necessarily metered.","data_saver","",Arrays.asList("0","1"));
+        add("background","Aggressive app restrictions","Restricts downloaded apps, launchable preinstalled apps and app stores, including notifications, jobs, background services and metered background data. Removes their user-added Doze exemptions. Protects system services, launcher, keyboards and dialer. Reapply after installing apps. Foreground services and OS exemptions can still run.","policy","",Arrays.asList("unrestricted","restricted"));
+        add("brightness_mode","Adaptive brightness","Manual mode prevents automatic brightness increases. Review brightness before going outdoors.","system","screen_brightness_mode",Arrays.asList("0","1"));
+        add("brightness","Manual brightness","Stingy selects 8 (captured from the device brightness setting) on Android's legacy 1–255 setting scale; this is not a measured panel luminance percentage.","system","screen_brightness",range(1,255));
+        add("timeout","Screen timeout","A shorter timeout reduces unattended screen-on time. Apps holding the screen awake can override it.","system","screen_off_timeout",Arrays.asList("15000","30000","60000","120000"));
+        add("aod","Always On Display","Off avoids ambient display activity.","system","aod_mode",Arrays.asList("0","1"));
+        add("wifi_scan","Wi-Fi scanning while off","Disables always-available Wi-Fi scans; reduces location accuracy.","global","wifi_scan_always_enabled",Arrays.asList("0","1"));
+        add("ble_scan","Bluetooth scanning while off","Disables always-available BLE scans; can impair location and nearby-device discovery.","global","ble_scan_always_enabled",Arrays.asList("0","1"));
+        add("mobile_always","Keep mobile data active on Wi-Fi","Off reduces simultaneous data connectivity; Wi-Fi-to-mobile handover can be slower.","global","mobile_data_always_on",Arrays.asList("0","1"));
+        for(String[] animation:new String[][]{{"window_animation","Window animations","window_animation_scale"},{"transition_animation","Transition animations","transition_animation_scale"},{"animator","Animator duration","animator_duration_scale"}})
+            add(animation[0],animation[1],"Zero removes optional animation work; apps may ignore this scale.","global",animation[2],Arrays.asList("0","0.5","1"));
+        add("night_mode","System dark mode","Always dark can reduce OLED display power in apps that follow the theme. App-specific themes and wallpaper are unchanged.","night","",Arrays.asList("0","1","2","3"));
     }
     String get(JSONObject d) throws Exception {
         String kind=d.getString("kind"), target=d.getString("target");
+        if(kind.equals("power"))return context.getSystemService(android.os.PowerManager.class).isPowerSaveMode()?"1":"0";
+        if(kind.equals("sync"))return android.content.ContentResolver.getMasterSyncAutomatically()?"1":"0";
+        if(kind.equals("data_saver"))return (Boolean)network("getRestrictBackground",new Class<?>[]{})?"1":"0";
+        if(kind.equals("night"))return ""+context.getSystemService(android.app.UiModeManager.class).getNightMode();
+        if(kind.equals("policy"))return ACTIVE.exists()?new JSONObject(read(ACTIVE)).optJSONObject("controls").optString("background","unrestricted"):"unrestricted";
+        if(kind.equals("net_uid"))return network("getUidPolicy",new Class<?>[]{int.class},appUid(d)).toString();
+        if(kind.equals("bg_run") || kind.equals("bg_any")) {
+            int op=d.getInt("op");
+            List<?> packages=(List<?>)binderCall("appops","com.android.internal.app.IAppOpsService","getUidOps",new Class<?>[]{int.class,int[].class},appUid(d),new int[]{op});
+            if(packages!=null)for(Object pkg:packages) {
+                List<?> entries=(List<?>)pkg.getClass().getMethod("getOps").invoke(pkg);
+                for(Object entry:entries)if((Integer)entry.getClass().getMethod("getOp").invoke(entry)==op)
+                    return entry.getClass().getMethod("getMode").invoke(entry).toString();
+            }
+            return android.app.AppOpsManager.class.getMethod("opToDefaultMode",int.class).invoke(null,op).toString();
+        }
         if(kind.equals("kernel"))return BatteryTransport.request("get",target,"").getString("value");
         if(kind.equals("device_config")) {
             String[] t=target.split("/");Object value=config("getProperty",new Class<?>[]{String.class,String.class},t[0],t[1]);return value==null?"null":value.toString();
@@ -130,7 +202,23 @@ public class BatteryEngine {
     }
     void set(JSONObject d,String value)throws Exception {
         String kind=d.getString("kind"),target=d.getString("target");
-        if(kind.equals("kernel"))BatteryTransport.request("set",target,value);
+        if(value.equals(get(d)) && !(kind.equals("night") && value.equals("3") && d.has("nightCustomType")))return; // Saver can reject no-ops while charging.
+        if(kind.equals("power")) {
+            boolean ok=(Boolean)android.os.PowerManager.class.getMethod("setPowerSaveModeEnabled",boolean.class).invoke(context.getSystemService(android.os.PowerManager.class),value.equals("1"));
+            if(!ok)throw new IOException("Battery Saver request rejected (possibly charging)");
+        } else if(kind.equals("sync"))android.content.ContentResolver.setMasterSyncAutomatically(value.equals("1"));
+        else if(kind.equals("data_saver"))network("setRestrictBackground",new Class<?>[]{boolean.class},value.equals("1"));
+        else if(kind.equals("night")) {
+            android.app.UiModeManager manager=context.getSystemService(android.app.UiModeManager.class);
+            if(value.equals("3") && d.has("nightCustomType")) {
+                android.app.UiModeManager.class.getMethod("setNightModeCustomType",int.class).invoke(manager,d.getInt("nightCustomType"));
+                if((Integer)android.app.UiModeManager.class.getMethod("getNightModeCustomType").invoke(manager)!=d.getInt("nightCustomType"))throw new IOException("Dark-mode schedule type was not restored");
+            }else manager.setNightMode(Integer.parseInt(value));
+        }
+        else if(kind.equals("net_uid"))network("setUidPolicy",new Class<?>[]{int.class,int.class},appUid(d),Integer.parseInt(value));
+        else if(kind.equals("bg_run") || kind.equals("bg_any"))
+            android.app.AppOpsManager.class.getMethod("setUidMode",int.class,int.class,int.class).invoke(context.getSystemService(android.app.AppOpsManager.class),d.getInt("op"),appUid(d),Integer.parseInt(value));
+        else if(kind.equals("kernel"))BatteryTransport.request("set",target,value);
         else if(kind.equals("device_config")) {
             String[] t=target.split("/");
             boolean ok=value.equals("null")?(Boolean)config("deleteProperty",new Class<?>[]{String.class,String.class},t[0],t[1])
@@ -149,12 +237,17 @@ public class BatteryEngine {
         if(!equal)throw new IOException("Readback differs: requested "+value+", read "+actual);
     }
     void saveJournal() throws Exception { atomic(JOURNAL,journal.toString()); }
-    void change(String key, JSONObject descriptor, String value) throws Exception {
+    void snapshot(String key, JSONObject descriptor) throws Exception {
         if(!journal.has(key)) {
             JSONObject entry=new JSONObject(descriptor.toString());
             entry.put("original",get(descriptor)).put("boot",bootId);
+            if(descriptor.getString("kind").equals("night") && entry.getString("original").equals("3"))
+                entry.put("nightCustomType",android.app.UiModeManager.class.getMethod("getNightModeCustomType").invoke(context.getSystemService(android.app.UiModeManager.class)));
             journal.put(key,entry); saveJournal(); // Durable undo before the first write.
         }
+    }
+    void change(String key, JSONObject descriptor, String value) throws Exception {
+        snapshot(key,descriptor);
         set(descriptor,value);
         notes.add(descriptor.optString("label",key)+": applied "+value);
     }
@@ -177,7 +270,25 @@ public class BatteryEngine {
             }
         }
         boolean success=true;
+        Map<String,JSONObject> appDescriptors=new LinkedHashMap<>();
+        if(enabled && "restricted".equals(controls.optString("background"))) {
+            try {
+                List<String> targets=backgroundTargets();
+                notes.add("Aggressive background policy: "+targets.size()+" apps; system services, launcher, keyboards and dialer protected");
+                for(String pkg:targets)for(String kind:new String[]{"bucket","exemption","bg_run","bg_any","net_uid"}) {
+                    String key=kind+":"+pkg;
+                    try {
+                        JSONObject d=packageDescriptor(kind,pkg);appDescriptors.put(key,d);
+                        String value=kind.equals("bucket")?"45":kind.equals("exemption")?"false":kind.equals("net_uid")?""+((Integer.parseInt(get(d))|1)&~4):"1";
+                        desired.put(key,value);
+                    }catch(Exception e){success=false;notes.add(key+": "+e.getMessage());}
+                }
+            }catch(Exception e){success=false;notes.add("Cannot enumerate background apps: "+e.getMessage());}
+        }
+        desired.remove("background"); // Expansion policy, not a system setting.
         List<String> originals=new ArrayList<>(); for(Iterator<String> it=journal.keys();it.hasNext();) originals.add(it.next());
+        // Saver can change other policies as a side effect: restore it before their snapshots.
+        originals.sort((a,b)->Integer.compare(a.equals("power_saver")?0:1,b.equals("power_saver")?0:1));
         for(String k:originals) {
             JSONObject e=journal.getJSONObject(k);
             if(e.getString("kind").equals("kernel") && !bootId.equals(e.optString("boot"))) { journal.remove(k); saveJournal(); }
@@ -187,28 +298,43 @@ public class BatteryEngine {
                 // Retain the original minimum while a lower maximum remains selected.
             } else if(!desired.has(k)) success=restore(k)&&success;
         }
+        Map<String,JSONObject> prepared=new LinkedHashMap<>();
+        // Snapshot ALL selected controls before any write: Battery Saver has cross-control effects.
         for(Iterator<String> it=desired.keys();it.hasNext();) {
-            String key=it.next(), value=desired.getString(key);
-            JSONObject d=specs.get(key);
+            String key=it.next(),value=desired.getString(key);
             try {
-                if(key.startsWith("bucket:") || key.startsWith("exemption:")) {
-                    String pkg=key.substring(key.indexOf(':')+1);
-                    if(pkg.equals("com.android.settings") || pkg.equals("com.android.systemui") || pkg.equals("com.google.android.gms")) throw new IOException("Essential service protected");
-                    context.getPackageManager().getApplicationInfo(pkg,0);
-                    d=new JSONObject().put("kind",key.startsWith("bucket:")?"bucket":"exemption").put("target",pkg).put("label",pkg);
-                } else {
-                    if(d==null || !d.optBoolean("supported")) throw new IOException("Unsupported on this device");
-                    boolean valid=false; JSONArray values=d.getJSONArray("values"); for(int i=0;i<values.length();i++) if(value.equals(values.getString(i))) valid=true;
-                    if(!valid) throw new IOException("Value is outside this device's available choices");
+                JSONObject d=appDescriptors.get(key);
+                if(d==null && (key.startsWith("bucket:") || key.startsWith("exemption:")))
+                    d=packageDescriptor(key.substring(0,key.indexOf(':')),key.substring(key.indexOf(':')+1));
+                if(d==null) {
+                    d=specs.get(key);
+                    if(d==null || !d.optBoolean("supported"))throw new IOException("Unsupported on this device");
+                    boolean valid=false;JSONArray values=d.getJSONArray("values");for(int i=0;i<values.length();i++)if(value.equals(values.getString(i)))valid=true;
+                    if(!valid)throw new IOException("Value is outside this device's available choices");
                 }
                 if(key.equals("refresh")) {
                     JSONObject min=new JSONObject().put("id","refresh_min").put("kind","system").put("target","min_refresh_rate").put("label","Minimum refresh rate");
-                    String before=get(min); if(!before.equals("null") && Double.parseDouble(before)>Double.parseDouble(value)) change("refresh_min",min,value);
+                    String before=get(min);
+                    if(!before.equals("null") && Double.parseDouble(before)>Double.parseDouble(value)) {
+                        snapshot("refresh_min",min);prepared.put("refresh_min",min);
+                    }
                 }
-                change(key,d,value);
-            } catch(Exception e) { success=false; notes.add(key+": "+e.getMessage()); }
+                snapshot(key,d);prepared.put(key,d);
+            }catch(Exception e){success=false;notes.add(key+": "+e.getMessage());}
         }
+        List<String> order=new ArrayList<>(prepared.keySet());
+        order.sort((a,b)->Integer.compare(writeOrder(a),writeOrder(b)));
+        for(String key:order)try {
+            change(key,prepared.get(key),key.equals("refresh_min")?desired.getString("refresh"):desired.getString(key));
+        }catch(Exception e){success=false;notes.add(key+": "+e.getMessage());}
         return success;
+    }
+    static int writeOrder(String key) {
+        if(key.equals("power_saver"))return 0;
+        if(key.equals("refresh_min"))return 1;
+        if(key.equals("night_mode"))return 4; // May recreate Settings; all writes are already journaled.
+        if(key.startsWith("cpu_") || key.equals("gpu"))return 3;
+        return 2;
     }
     JSONObject run(String mode, JSONObject requested) throws Exception {
         bootId=read(new File("/proc/sys/kernel/random/boot_id"));

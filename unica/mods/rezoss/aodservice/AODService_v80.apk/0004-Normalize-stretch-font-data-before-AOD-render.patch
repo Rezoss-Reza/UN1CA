@@ -115,15 +115,15 @@ diff -ruN base/smali_classes2/io/mesalabs/unica/aod/ClockFontSettingsSync.smali 
 +    goto :cond_font_data_ready
 +
 +    :cond_check_stored_heights
-+    if-eqz v5, :cond_font_data_ready
++    if-eqz v5, :cond_return_original
 +
 +    invoke-interface {v5}, Ljava/util/List;->isEmpty()Z
 +
 +    move-result v0
 +
-+    if-nez v0, :cond_font_data_ready
++    if-eqz v0, :cond_font_data_ready
 +
-+    goto :cond_font_data_ready
++    goto :cond_return_original
 +
 +    :cond_font_data_ready
 +    new-instance v0, Lcom/samsung/android/clockpack/plugins/clock/ClockFontData;

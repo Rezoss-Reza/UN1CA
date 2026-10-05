@@ -21,6 +21,101 @@ public final class BatteryTests {
         }
         @Override void saveJournal(){saves++;}
     }
+    static class PolicyFake extends BatteryEngine {
+        final Map<String,String> live=new HashMap<>();final List<String> writes=new ArrayList<>();
+        boolean failAppRestore;
+        PolicyFake()throws Exception{
+            super(null);journal=new JSONObject();bootId="one";
+            for(String id:new String[]{"power_saver","sync","data_saver"}) {
+                JSONObject d=descriptor(id,id.equals("sync")?"1":"0","0","1").put("kind","global");
+                specs.put(id,d);live.put(id,d.getString("current"));
+            }
+            live.put("bucket:com.test.app","20");live.put("exemption:com.test.app","true");
+            live.put("bg_run:com.test.app","0");live.put("bg_any:com.test.app","3");live.put("net_uid:com.test.app","12");
+        }
+        @Override List<String> backgroundTargets(){return Arrays.asList("com.test.app");}
+        @Override JSONObject packageDescriptor(String kind,String pkg)throws Exception{return new JSONObject().put("id",kind+":"+pkg).put("kind",kind).put("target",pkg);}
+        @Override String get(JSONObject d)throws Exception{return live.get(d.getString("id"));}
+        @Override void set(JSONObject d,String value)throws Exception{
+            String id=d.getString("id");
+            if(!journal.has(id))throw new AssertionError("Policy write without snapshot");
+            if(failAppRestore&&id.equals("bg_any:com.test.app")&&value.equals("3"))throw new java.io.IOException("restore denied");
+            if(id.equals("power_saver")&&value.equals("1")) {
+                if(!journal.has("data_saver"))throw new AssertionError("Saver side effect before data snapshot");
+                live.put("data_saver","1");
+            }
+            live.put(id,value);writes.add(id);
+        }
+        @Override void saveJournal(){}
+    }
+    static void stingyTests()throws Exception {
+        JSONArray caps=new JSONArray()
+            .put(descriptor("cpu_policy0","2016000","2016000","307200","556800").put("minimum","556800"))
+            .put(descriptor("cpu_policy7","2841600","595200","864000","2841600").put("minimum","864000"))
+            .put(descriptor("gpu","719000000","719000000","124800000").put("minimum","124800000"))
+            .put(descriptor("refresh","120","120","60","24"))
+            .put(descriptor("aspm","default","performance","powersave","powersupersave"))
+            .put(descriptor("wifi_pm","on","auto","on"))
+            .put(descriptor("wifi_wakeup","enabled","enabled","disabled"))
+            .put(descriptor("freezer","device_default","enabled","disabled","device_default"))
+            .put(descriptor("background","unrestricted","unrestricted","restricted"))
+            .put(descriptor("swappiness","130","0","60","130"))
+            .put(descriptor("cached","1024","32","1024"));
+        for(String id:new String[]{"power_saver","sync","data_saver","brightness_mode","aod","wifi_scan","ble_scan","mobile_always"})caps.put(descriptor(id,"1","0","1"));
+        for(String id:new String[]{"window_animation","transition_animation","animator"})caps.put(descriptor(id,"1","0","0.5","1"));
+        caps.put(descriptor("brightness","128","1","8","26","128"));caps.put(descriptor("timeout","60000","15000","60000"));caps.put(descriptor("night_mode","1","0","1","2","3"));
+        JSONObject stingy=Profile.validate(Profile.preset("Stingy",caps)), c=stingy.getJSONObject("controls");
+        check(!stingy.getBoolean("enabled"),"Stingy selection stays disabled");
+        check(c.getString("cpu_policy0").equals("556800"),"CPU respects live floor and unsorted table");
+        check(c.getString("cpu_policy7").equals("864000"),"prime cluster floor");
+        check(c.getString("gpu").equals("124800000"),"minimum GPU");
+        check(c.getString("refresh").equals("24"),"minimum advertised refresh");
+        check(c.getString("aspm").equals("powersupersave"),"strongest advertised ASPM");
+        check(c.getString("wifi_pm").equals("auto"),"runtime suspend allowed");
+        check(c.getString("wifi_wakeup").equals("disabled"),"wifi wake disabled");
+        check(c.getString("freezer").equals("enabled"),"freezer enabled");
+        check(c.getString("background").equals("restricted"),"automatic background restrictions");
+        for(String id:new String[]{"sync","brightness_mode","aod","wifi_scan","ble_scan","mobile_always","window_animation","transition_animation","animator"})check(c.getString(id).equals("0"),id+" disabled");
+        check(c.getString("power_saver").equals("1")&&c.getString("data_saver").equals("1"),"savers on");
+        check(c.getString("brightness").equals("8")&&c.getString("timeout").equals("15000")&&c.getString("night_mode").equals("2"),"display choices");
+        check(!c.has("cached")&&!c.has("swappiness"),"no speculative memory tuning");
+        check(Profile.validate(new JSONObject(stingy.toString())).getString("preset").equals("Stingy"),"Stingy backup roundtrip");
+        check(Profile.preset("Stingy",new JSONArray()).getJSONObject("controls").length()==0,"unsupported device untouched");
+        JSONArray missingFloor=new JSONArray().put(descriptor("cpu_policy0","2016000","307200","2016000"));
+        check(!Profile.preset("Stingy",missingFloor).getJSONObject("controls").has("cpu_policy0"),"no guessed CPU floor");
+        check(Profile.preset("Stingy",new JSONArray().put(descriptor("aspm","default","default","powersave"))).getJSONObject("controls").getString("aspm").equals("powersave"),"ASPM fallback");
+        rejects(()->{JSONObject x=Profile.empty();x.getJSONObject("controls").put("background","stop-everything");Profile.validate(x);},"invalid background policy");
+        rejects(()->{JSONObject x=Profile.empty();x.getJSONObject("controls").put("brightness","0");Profile.validate(x);},"black screen rejected");
+        rejects(()->{JSONObject x=Profile.empty();x.getJSONObject("controls").put("sync","false");Profile.validate(x);},"invalid boolean choice");
+        check(!BatteryEngine.autoCandidate("com.android.systemui",1000,false,true),"system UID protected");
+        check(!BatteryEngine.autoCandidate("com.vendor.service",10001,true,false),"system package protected");
+        check(BatteryEngine.autoCandidate("com.test.app",10123,false,true),"downloaded app included");
+        check(BatteryEngine.autoCandidate("com.android.vending",10124,true,false),"Play Store included");
+        check(BatteryEngine.autoCandidate("com.sec.android.app.samsungapps",10125,true,false),"Galaxy Store included");
+        check(BatteryEngine.autoCandidate("com.vendor.mail",10126,true,true),"launchable preinstalled app included");
+        PolicyFake f=new PolicyFake();JSONObject p=Profile.empty().put("enabled",true);
+        p.getJSONObject("controls").put("background","restricted").put("power_saver","1").put("sync","0").put("data_saver","1");
+        Map<String,String> original=new HashMap<>(f.live);
+        check(f.apply(p),"Stingy policy applies");check(f.live.get("bg_any:com.test.app").equals("1"),"background appop ignored");
+        check(f.live.get("net_uid:com.test.app").equals("9"),"metered reject preserves unrelated flags and removes allow");
+        check(f.live.get("bucket:com.test.app").equals("45")&&f.live.get("exemption:com.test.app").equals("false"),"restricted bucket and exemption removed");
+        check(f.journal.getJSONObject("data_saver").getString("original").equals("0"),"snapshot precedes Saver side effect");
+        check(!f.journal.has("background"),"synthetic policy has no fake setting undo");
+        check(f.apply(p),"repeat apply keeps originals");
+        f.bootId="two";f.writes.clear();check(f.apply(Profile.empty()),"policy restore after reboot");
+        check(f.writes.get(0).equals("power_saver"),"restore Saver before dependent controls");
+        check(f.live.equals(original),"all app modes and policy flags restored exactly");
+        check(f.journal.length()==0,"policy journal cleared");
+        f=new PolicyFake();f.apply(p);f.failAppRestore=true;
+        check(!f.apply(Profile.empty()),"appop restore failure reported");check(f.journal.has("bg_any:com.test.app"),"appop retry record retained");
+        f.failAppRestore=false;check(f.apply(Profile.empty()),"appop restoration retried");
+        // Resolve the exact hidden APIs on the device without changing live settings.
+        check(Class.forName("com.android.internal.app.IAppOpsService").getMethod("getUidOps",int.class,int[].class)!=null,"UID appop snapshot API");
+        check(android.app.AppOpsManager.class.getMethod("setUidMode",int.class,int.class,int.class)!=null,"UID appop setter API");
+        check(Class.forName("android.net.NetworkPolicyManager").getMethod("setUidPolicy",int.class,int.class)!=null,"network UID API");
+        check(android.app.UiModeManager.class.getMethod("getNightModeCustomType")!=null && android.app.UiModeManager.class.getMethod("setNightModeCustomType",int.class)!=null,"dark schedule restoration API");
+        check(android.os.PowerManager.class.getMethod("setPowerSaveModeEnabled",boolean.class)!=null,"Saver API");
+    }
     static JSONObject enabled(String value)throws Exception{JSONObject p=Profile.empty();p.put("enabled",true);p.getJSONObject("controls").put("swappiness",value);return p;}
     public static void main(String[] args)throws Exception{
         JSONObject p=Profile.empty();check(!Profile.validate(p).getBoolean("enabled"),"disabled by default");
@@ -57,6 +152,7 @@ public final class BatteryTests {
         f=new Fake();f.apply(enabled("60"));f.bootId="two";f.live.put("swappiness","140");check(f.apply(Profile.empty()),"reboot disable");check(f.live.get("swappiness").equals("140"),"old kernel snapshot not forced after reboot");
         f=new Fake();f.specs.get("swappiness").put("kind","global");f.live.put("swappiness","null");f.apply(enabled("60"));f.bootId="two";
         check(f.apply(Profile.empty()),"persistent restore across reboot");check(f.live.get("swappiness").equals("null"),"absent setting restored as deletion");
+        stingyTests();
         System.out.println("PASS "+count+" profile and rollback assertions");
     }
 }

@@ -7,13 +7,13 @@ Subject: [PATCH] Add native lockscreen height and widget size controls
                      <TextView android:textSize="@dimen/clock_font_weight_seekbar_title_text_size" android:textColor="?android:textColorSecondary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/clock_panel_clock_font_weight_seekbar_start_title" android:fontFamily="sec" android:layout_alignParentStart="true" android:textFontWeight="400" />
                      <TextView android:textSize="@dimen/clock_font_weight_seekbar_title_text_size" android:textColor="?android:textColorSecondary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/clock_panel_clock_font_weight_seekbar_end_title" android:fontFamily="sec" android:layout_alignParentEnd="true" android:textFontWeight="400" />
                  </RelativeLayout>
-+<io.mesalabs.unica.lockscreen.HeightSlider android:tag="unica_clock_height" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp">
-+                <androidx.appcompat.widget.SeslSeekBar android:layout_gravity="center_vertical" android:paddingLeft="0.0dp" android:layout_width="match_parent" android:layout_height="@dimen/clock_font_weight_seekbar_height" android:contentDescription="Clock height" android:layout_marginHorizontal="@dimen/clock_panel_seek_bar_horizontal_margin" app:seslSeekBarMode="expand" />
-+                <RelativeLayout android:gravity="center_vertical" android:orientation="horizontal" android:clipChildren="false" android:clipToPadding="false" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/clock_font_weight_seekbar_label_text_top_margin" android:layout_marginHorizontal="@dimen/clock_panel_horizontal_clock_list_horizontal_padding_start">
-+                    <TextView android:textSize="@dimen/clock_font_weight_seekbar_title_text_size" android:textColor="?android:textColorSecondary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Short" android:fontFamily="sec" android:layout_alignParentStart="true" android:textFontWeight="400" />
-+                    <TextView android:textSize="@dimen/clock_font_weight_seekbar_title_text_size" android:textColor="?android:textColorSecondary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tall" android:fontFamily="sec" android:layout_alignParentEnd="true" android:textFontWeight="400" />
-+                </RelativeLayout>
-+</io.mesalabs.unica.lockscreen.HeightSlider>
++                <io.mesalabs.unica.lockscreen.HeightSlider android:orientation="vertical" android:tag="unica_clock_height" android:clipChildren="false" android:clipToPadding="false" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/clock_font_weight_seekbar_label_text_top_margin" android:paddingBottom="@dimen/clock_font_weight_seekbar_label_text_top_margin">
++                    <androidx.appcompat.widget.SeslSeekBar android:layout_gravity="center_vertical" android:paddingLeft="0.0dp" android:layout_width="match_parent" android:layout_height="@dimen/clock_font_weight_seekbar_height" android:contentDescription="Clock height" android:layout_marginHorizontal="@dimen/clock_panel_seek_bar_horizontal_margin" app:seslSeekBarMode="expand" />
++                    <RelativeLayout android:gravity="center_vertical" android:orientation="horizontal" android:clipChildren="false" android:clipToPadding="false" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/clock_font_weight_seekbar_label_text_top_margin" android:layout_marginHorizontal="@dimen/clock_panel_horizontal_clock_list_horizontal_padding_start">
++                        <TextView android:textSize="@dimen/clock_font_weight_seekbar_title_text_size" android:textColor="?android:textColorSecondary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Short" android:fontFamily="sec" android:layout_alignParentStart="true" android:textFontWeight="400" />
++                        <TextView android:textSize="@dimen/clock_font_weight_seekbar_title_text_size" android:textColor="?android:textColorSecondary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tall" android:fontFamily="sec" android:layout_alignParentEnd="true" android:textFontWeight="400" />
++                    </RelativeLayout>
++                </io.mesalabs.unica.lockscreen.HeightSlider>
              </LinearLayout>
          </LinearLayout>
          <LinearLayout android:orientation="vertical" android:id="@id/clock_tab_container" android:tag="binding_7" android:layout_width="match_parent" android:layout_height="wrap_content" android:divider="@drawable/clock_panel_item_divider" android:showDividers="beginning|middle">
@@ -351,7 +351,7 @@ Subject: [PATCH] Add native lockscreen height and widget size controls
 +.end method
 --- /dev/null
 +++ b/smali_classes3/io/mesalabs/unica/lockscreen/HeightSlider.smali
-@@ -0,0 +1,648 @@
+@@ -0,0 +1,660 @@
 +.class public final Lio/mesalabs/unica/lockscreen/HeightSlider;
 +.super Landroid/widget/LinearLayout;
 +.source "HeightSlider.java"
@@ -494,7 +494,7 @@ Subject: [PATCH] Add native lockscreen height and widget size controls
 +
 +    .line 36
 +    :goto_19
-+    const/high16 v0, 0x42e00000    # 112.0f
++    const/high16 v0, 0x438c0000    # 280.0f
 +
 +    mul-float/2addr p0, v0
 +
@@ -525,6 +525,12 @@ Subject: [PATCH] Add native lockscreen height and widget size controls
 +    const/4 v2, 0x0
 +
 +    if-eqz v0, :cond_10
++
++    invoke-virtual {v0}, Lcom/samsung/android/lockscreen/editor/item/domain/entity/item/clock/ClockData;->getStretchEnabled()Z
++
++    move-result v3
++
++    if-eqz v3, :cond_10
 +
 +    move v3, v1
 +
@@ -819,7 +825,13 @@ Subject: [PATCH] Add native lockscreen height and widget size controls
 +    .line 79
 +    if-eqz p1, :cond_84
 +
-+    goto :cond_15
++    invoke-virtual {p1}, Lcom/samsung/android/lockscreen/editor/item/domain/entity/item/clock/ClockData;->getStretchEnabled()Z
++
++    move-result p3
++
++    if-nez p3, :cond_15
++
++    goto :goto_84
 +
 +    .line 80
 +    :cond_15
@@ -888,7 +900,7 @@ Subject: [PATCH] Add native lockscreen height and widget size controls
 +    :cond_48
 +    if-nez v0, :cond_4b
 +
-+    const/16 v0, 0x10
++    return-void
 +
 +    .line 87
 +    :cond_4b

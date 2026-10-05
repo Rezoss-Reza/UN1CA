@@ -63,7 +63,7 @@ static string list(){
  vector<string> ids={"wifi_pm","wifi_wakeup","aspm","swappiness","gpu"};
  DIR* dir=opendir("/sys/devices/system/cpu/cpufreq");if(dir){dirent* e;while((e=readdir(dir))){string id="cpu_"+string(e->d_name);if(cpuId(id))ids.push_back(id);}closedir(dir);}
  std::sort(ids.begin(),ids.end());string out="[";
- for(size_t i=0;i<ids.size();i++){if(i)out+=',';out+="{\"id\":"+quote(ids[i]);try{string v=get(ids[i]);auto a=choices(ids[i]);out+=",\"supported\":true,\"current\":"+quote(v)+",\"values\":"+jsonArray(a);}catch(const std::exception&){out+=",\"supported\":false,\"current\":\"Unavailable\",\"values\":[]";}out+='}';}return out+"]";
+ for(size_t i=0;i<ids.size();i++){if(i)out+=',';out+="{\"id\":"+quote(ids[i]);try{string v=get(ids[i]);auto a=choices(ids[i]);out+=",\"supported\":true,\"current\":"+quote(v)+",\"values\":"+jsonArray(a);if(cpuId(ids[i])||ids[i]=="gpu"){try{string floor=readFile(cpuId(ids[i])?"/sys/devices/system/cpu/cpufreq/"+ids[i].substr(4)+"/scaling_min_freq":"/sys/class/kgsl/kgsl-3d0/devfreq/min_freq");if(number(floor))out+=",\"minimum\":"+quote(floor);}catch(const std::exception&) {}}}catch(const std::exception&){out+=",\"supported\":false,\"current\":\"Unavailable\",\"values\":[]";}out+='}';}return out+"]";
 }
 static void respond(const string& id,const string& result){
  string path=base+"responses/response.json",temp=path+".tmp";

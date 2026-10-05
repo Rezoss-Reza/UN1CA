@@ -615,20 +615,77 @@ for f in \
     "07-03_Video_HumanPetDetection_v2.0.1_SM8850_SNPE238.dlc" \
     "07-04_Video_HumanPetPose_v3.1.1_SM8850-SNPE238.dlc" \
     "07-05_Video_KeywordClassification_v1.1.0_SM8850_SNPE238.dlc" \
-    "07-21_Video_ReframingTargetLocator_v0.1.0_SM8850-SNPE239.dlc" \
-    "07-22_Video_ReframingReID_v0.2.3_SM8850-SNPE244.dlc" \
     "Detection.dlc" \
     "Keyword.dlc" \
-    "Locator.dlc" \
-    "Pose.dlc" \
-    "Reid.dlc"; do
+    "Pose.dlc"; do
     ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/mediacontextanalyzer/$f" 0 0 644 "u:object_r:system_file:s0"
 done
+if [[ "$TARGET_CODENAME" == "dm3q" ]]; then
+    # EXPERIMENTAL Human/Pet Detection: rebuilt from saved YOLOv7-tiny ONNX
+    # with SNPE 2.10 and a fresh SM8550/V73 cache; not Samsung donor weights.
+    # Ten direct stock-SNPE samples and Samsung native decoder checks passed.
+    # WARNING: stock Detection SNAP/MCA integration and Camera use are UNTESTED.
+    # Only dog/cat/human classes exist; faces/gestures are unsupported and one
+    # white-dog sample is misclassified as cat. Installed by experimental opt-in.
+    LOG "- Adding EXPERIMENTAL SM8550 Human/Pet Detection SNPE 2.10 DLC"
+    LOG "- WARNING: Human/Pet Detection is partial; stock SNAP/Camera integration is unverified"
+    # EXPERIMENTAL My FanCam DLCs: learned UN1CA replacements, not S26U weights.
+    # Locator v3 SNPE 2.10: conditional class-score contract repaired; stock
+    # SNAP/native decoder and live Gallery person detection/selection passed.
+    # ReID v21 SNPE 2.10: unit-normalized appearance repairs Samsung's
+    # dot-product matching contract; 16 regression inputs / 1,920 SNAP runs passed.
+    # Live Gallery kept the selected middle dancer's processed track across the
+    # full 15-second public clip. User confirmed focus; export callbacks passed.
+    # EXPERIMENTAL: one non-detected frame at 13.1s was retained in the track.
+    # A held-out pose-accuracy outlier remains; other clips are not validated.
+    # Installed by explicit user request, not a claim of general compatibility.
+    # ReID facial mapping is provisional and difficult poses may fail detection.
+    LOG "- Adding EXPERIMENTAL SM8550 My FanCam Locator/ReID DLCs"
+    LOG "- WARNING: EXPERIMENTAL ReID v21 passed one Gallery clip; pose outlier and general tracking remain unverified"
+    for f in \
+        "07-03_Video_HumanPetDetection_v2.0.1_SM8850_SNPE238.dlc" \
+        "Detection.dlc" \
+        "07-21_Video_ReframingTargetLocator_v0.1.0_SM8850-SNPE239.dlc" \
+        "07-22_Video_ReframingReID_v0.2.3_SM8850-SNPE244.dlc" \
+        "07-21_Video_ReframingTargetLocator_UN1CA_Experimental_v1_SM8550-SNPE244.dlc" \
+        "07-21_Video_ReframingTargetLocator_UN1CA_Experimental_v2_SM8550-SNPE210.dlc" \
+        "07-22_Video_ReframingReID_UN1CA_Experimental_v1_SM8550-SNPE244.dlc" \
+        "07-22_Video_ReframingReID_UN1CA_Experimental_v2_SM8550-SNPE210.dlc" \
+        "Locator.dlc" \
+        "Reid.dlc"; do
+        DELETE_FROM_WORK_DIR "system" "system/etc/mediacontextanalyzer/$f"
+    done
+    # Stable loader aliases point to explicitly named SM8550 experimental files.
+    for f in \
+        "07-03_Video_HumanPetDetection_UN1CA_Experimental_v1_SM8550-SNPE210.dlc" \
+        "Detection.dlc" \
+        "07-21_Video_ReframingTargetLocator_UN1CA_Experimental_v3_SM8550-SNPE210.dlc" \
+        "07-22_Video_ReframingReID_UN1CA_Experimental_v21_SM8550-SNPE210.dlc" \
+        "Locator.dlc" \
+        "Reid.dlc"; do
+        ADD_TO_WORK_DIR "$MODPATH/fancam/experimental" "system" "system/etc/mediacontextanalyzer/$f" 0 0 644 "u:object_r:system_file:s0"
+    done
+else
+    for f in \
+        "07-21_Video_ReframingTargetLocator_v0.1.0_SM8850-SNPE239.dlc" \
+        "07-22_Video_ReframingReID_v0.2.3_SM8850-SNPE244.dlc" \
+        "Locator.dlc" \
+        "Reid.dlc"; do
+        ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/mediacontextanalyzer/$f" 0 0 644 "u:object_r:system_file:s0"
+    done
+fi
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/saiv/image_understanding/db/fm" 0 2000 755 "u:object_r:vendor_configs_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/saiv/image_understanding/db/dvs" 0 2000 755 "u:object_r:vendor_configs_file:s0"
+# Keep the target firmware's GPU/TFLite document rectifier. The S26U DLC
+# contains a V81/SM8850 cache that cannot run on the S23U's V73 DSP.
+ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "vendor" "etc/saiv/image_understanding/db/doc_rectifier" 0 2000 755 "u:object_r:vendor_configs_file:s0"
 # S26U enhanced document-scan configs/models.
 # WARNING: Might cause crash.
-ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/saiv/image_understanding/db/doc_rectifier" 0 2000 755 "u:object_r:vendor_configs_file:s0"
+# SNPE 2.10 audit: no validated Document Scan conversion is available.
+# DocSegment retains weights but needs newer-container/graph translation;
+# dewarp/deblur/inpaint/shadow/line models lack portable donor weights.
+# Keep these existing donor assets distinct from the experimental MCA DLCs.
+# No camera .so, SNAP/SNPE runtime or unvalidated 2.44 DocSegment is added here.
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/saiv/image_understanding/db/ss_magnet" 0 2000 755 "u:object_r:vendor_configs_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "vendor" "etc/midas_enhancedocumentscan" 0 2000 755 "u:object_r:vendor_configs_file:s0"
 for f in \
@@ -654,6 +711,13 @@ for f in \
     "libtensorflowlite_gpu_delegate.so"; do
     _REZOSS_SET_SYSTEM_LIB64_METADATA "$f"
 done
+
+# =============================================================================
+# Experimental S23U Horizontal Lock - Native EIS Adapter
+# =============================================================================
+# Experimental dm3q-only horizon correction, linked into the stock S23U EIS node.
+# Exact-firmware checks and stock backup are handled by the installer.
+. "$MODPATH/horizontal-lock/rom/install.sh"
 
 # =============================================================================
 # Disabled Experiments - Camera Vendor Stack
@@ -826,6 +890,10 @@ APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
 LOG "- Expand lockscreen widget grid and preserve widget proportions when resizing"
 APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
     "$MODPATH/aodservice/AODService_v80.apk/0008-Expand-and-resize-lockscreen-widget-container.patch"
+
+LOG "- Patch AODService SDK clock item stretch font data"
+APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
+    "$MODPATH/aodservice/AODService_v80.apk/0009-Normalize-AOD-SDK-clock-item-stretch-font-data.patch"
 
 LOG "- Patch VisualCloudCore Galaxy Store model check"
 APPLY_PATCH "system" "system/app/VisualCloudCore/VisualCloudCore.apk" \

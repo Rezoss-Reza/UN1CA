@@ -76,38 +76,42 @@ public final class BatteryActivity extends Activity {
         text("Turning this off restores the values saved before this feature changed them. Changes below take effect after Save and apply.",13);
         master.setOnCheckedChangeListener((b,on)->{
             try{profile.put("enabled",on);save();}catch(Exception ignored){}
-            if(on && "NOSLEN".equals(profile.optString("preset"))) confirmNoslen(()->run("apply",profile),()->{try{profile.put("enabled",false);save();}catch(Exception ignored){}draw();});
+            if(on && needsConfirmation()) confirmProfile(()->run("apply",profile),()->{try{profile.put("enabled",false);save();}catch(Exception ignored){}draw();});
             else run("apply",profile);
         });
         text(status,14);
         button("Refresh device status",true,v->run("probe",null));
         card();text("Preset: "+profile.optString("preset"),18);
-        text("Balanced preserves kernel and memory defaults and reports freezer state. Efficiency selects an advertised CPU ceiling near 85% of the original fastest-cluster limit; battery benefit needs measurement. Refresh-rate limiting stays optional. NOSLEN reproduces the module's intended settings.",13);
-        for(String name:new String[]{"Balanced","Efficiency","NOSLEN"}) button(name,ready,v->{
+        text("Balanced preserves kernel and memory defaults and reports freezer state. Efficiency selects an advertised CPU ceiling near 85% of the original fastest-cluster limit; battery benefit needs measurement. Refresh-rate limiting stays optional. NOSLEN reproduces the module's intended settings. Stingy uses the lowest usable clocks and refresh rate, restricts downloaded and launchable preinstalled apps, disables auto-sync, dims the screen, removes animations and enables dark mode. Severe performance and background-function loss are intentional.",13);
+        for(String name:new String[]{"Balanced","Efficiency","NOSLEN","Stingy"}) button(name,ready,v->{
             Runnable select=()->{try{
                 boolean enabled=profile.getBoolean("enabled");
                 JSONArray baseline=new JSONArray(caps.toString());
                 for(int i=0;i<baseline.length();i++){JSONObject d=baseline.getJSONObject(i);if(d.has("original"))d.put("current",d.getString("original"));}
                 profile=Profile.preset(name,baseline);profile.put("enabled",enabled);save();status="Preset selected. Review the controls, then Save and apply.";draw();
             }catch(Exception e){error(e);}};
-            if(name.equals("NOSLEN")) confirmNoslen(select,()->{});else select.run();
+            if(name.equals("Stingy"))confirmStingy(select,()->{});else if(name.equals("NOSLEN")) confirmNoslen(select,()->{});else select.run();
         });
         page=content;text("Controls",20);
         for(int i=0;i<caps.length();i++)try{control(caps.getJSONObject(i));}catch(Exception e){text(e.getMessage(),13);}
         card();text("Targeted app restrictions",18);
         text("Only select apps whose background work you can limit. Restricting messaging, alarms, VPN, wearables or Samsung feature providers can break expected behavior. No apps are selected by Balanced or Efficiency.",13);
+        if("restricted".equals(profile.optJSONObject("controls").optString("background")))text("Aggressive restrictions automatically cover downloaded apps, launchable preinstalled apps and app stores when applied. The manual list below adds standby restrictions; it is not an exception list.",13);
         appButton("packages","Choose apps to restrict");
         discrete("Standby bucket",new String[]{"10","20","30","40","45"},new String[]{"Active","Working set","Frequent","Rare","Restricted"},profile.optString("bucket","45"),value->{try{profile.put("bucket",value);custom();}catch(Exception ignored){}});
         card();text("Doze exemptions",18);
         text("Remove only unnecessary user-added exemptions. Essential messaging and service dependencies should retain them. System exemptions may be protected by Android.",13);
         appButton("exemptions","Choose exemptions to remove");
-        button("Save and apply",ready,v->{if(profile.optBoolean("enabled")&&"NOSLEN".equals(profile.optString("preset")))confirmNoslen(()->run("apply",profile),()->{});else run("apply",profile);});
+        button("Save and apply",ready,v->{if(profile.optBoolean("enabled")&&needsConfirmation())confirmProfile(()->run("apply",profile),()->{});else run("apply",profile);});
         card();text("Profile backup",18);
         text("Backups contain your choices, not device paths or original system values. Restore validates the file and leaves Battery Saving off until you enable it.",13);
         button("Back up profile",true,v->{save();Intent it=new Intent(Intent.ACTION_CREATE_DOCUMENT).setType("application/json").addCategory(Intent.CATEGORY_OPENABLE).putExtra(Intent.EXTRA_TITLE,"UN1CA-Battery-"+profile.optString("preset")+".json");startActivityForResult(it,EXPORT);});
         button("Restore profile",ready,v->startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("application/json").addCategory(Intent.CATEGORY_OPENABLE),IMPORT));
         applyBackground();
     }
+    private boolean needsConfirmation(){return "NOSLEN".equals(profile.optString("preset")) || "Stingy".equals(profile.optString("preset")) || "restricted".equals(profile.optJSONObject("controls").optString("background"));}
+    private void confirmProfile(Runnable yes,Runnable no){if("NOSLEN".equals(profile.optString("preset")))confirmNoslen(yes,no);else confirmStingy(yes,no);}
+    private void confirmStingy(Runnable yes,Runnable no){new AlertDialog.Builder(this).setTitle("Stingy: aggressive saving").setMessage("This profile deliberately sacrifices performance and background functions. Notifications, background sync, uploads, backups, app-store updates, widgets, VPNs and wearables can stop working. The screen becomes dim with a short timeout; CPU/GPU speed is heavily capped. Aggressive PCIe saving may expose driver instability. Core system services, launcher, keyboards and dialer remain protected. Android exemptions and foreground services mean zero background activity is not guaranteed. Disable Battery Saving to restore saved settings; missed work and notifications cannot be recovered. Select the preset, then Save and apply.").setPositiveButton("Continue",(d,w)->yes.run()).setNegativeButton("Cancel",(d,w)->no.run()).setOnCancelListener(d->no.run()).show();}
     private void confirmNoslen(Runnable yes,Runnable no){new AlertDialog.Builder(this).setTitle("NOSLEN profile").setMessage("NOSLEN disables Wi-Fi runtime suspend and PCIe link power saving, disables Wi-Fi wakeup, sets swappiness to 60 and cached processes to 32, and restricts three Samsung apps. It may increase drain or delay background communication. Unsupported controls will be reported.").setPositiveButton("Continue",(d,w)->yes.run()).setNegativeButton("Cancel",(d,w)->no.run()).setOnCancelListener(d->no.run()).show();}
     interface Choice {void set(String value);}
     private void discrete(String title,String[] values,String[] labels,String selected,Choice change){
@@ -153,6 +157,10 @@ public final class BatteryActivity extends Activity {
         }
     }
     private String label(String id,String v){
+        if(id.equals("background") && (v.equals("restricted")||v.equals("unrestricted")))return v.equals("restricted")?"Restrict downloaded and launchable preinstalled apps":"No automatic app restrictions";
+        if(id.equals("night_mode")){if(v.equals("0"))return "Automatic";if(v.equals("1"))return "Light";if(v.equals("2"))return "Dark";if(v.equals("3"))return "Custom schedule";}
+        if(id.equals("timeout") && !v.equals("null") && !v.equals("Unavailable") && !v.equals("__original"))return (Integer.parseInt(v)/1000)+" seconds";
+        if(Arrays.asList("power_saver","sync","data_saver","brightness_mode","aod","wifi_scan","ble_scan","mobile_always").contains(id) && (v.equals("0")||v.equals("1")))return v.equals("1")?"On":"Off";
         if(v.equals("null"))return "Android default";
         if(v.equals("Unavailable"))return v;
         if(v.equals("__original"))return "Keep original";

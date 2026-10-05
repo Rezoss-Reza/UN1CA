@@ -22,6 +22,59 @@ are optional. NOSLEN reproduces the supplied module's intended Wi-Fi runtime PM
 on, wakeup disabled, ASPM performance, swappiness 60, cached limit 32, and three
 restricted Samsung apps. It uses the actual Android standby API.
 
+Stingy is an explicitly aggressive preset. Selection is a draft; review its
+warning and use Save and apply. It is not enabled automatically by a ROM update.
+It selects only supported choices reported by this device:
+
+- CPU: lowest advertised ceiling at or above each policy's live minimum.
+  GPU: same rule, using devfreq minimum. Neither lowers minimum clocks or
+  offlines cores. Missing minimum metadata means no automatic clock override.
+- Refresh: lowest advertised display rate; lower min_refresh_rate too when the
+  existing minimum exceeds the new ceiling, with a separate undo record.
+- Wi-Fi runtime PM: auto; wakeup: disabled. ASPM: powersupersave, falling back to
+  powersave only if advertised. Aggressive link sleep may expose driver faults.
+- Android Battery Saver: on; cached-app freezer: enabled (may require reboot).
+- Automatic account sync: off. Android sync adapters stop; apps' independent
+  network mechanisms are handled by the restrictions below, not this switch.
+- Data Saver: on. For automatically targeted apps, UID network policy adds
+  REJECT_METERED_BACKGROUND (1), removes ALLOW_METERED_BACKGROUND (4), and
+  preserves all other flags. This is not a block on all Wi-Fi traffic.
+- Background: automatically target downloaded apps, launchable preinstalled
+  apps, Play Store and Galaxy Store. Use restricted standby bucket 45, UID
+  RUN_IN_BACKGROUND and RUN_ANY_IN_BACKGROUND app-ops MODE_IGNORED (1), and
+  remove user-added Doze exemptions. UID app-op snapshots preserve the original
+  UID mode, not an effective mode merged with per-package policy.
+- Screen: adaptive brightness off, manual brightness 8 on the legacy 1..255
+  setting scale (very dim, not a measured luminance percentage), 15-second
+  timeout, AOD off, system dark mode. All three animation scales become 0.
+- Always-available Wi-Fi/BLE scanning: off. Mobile data always active while on
+  Wi-Fi: off. This does not switch off calls, foreground internet or Bluetooth.
+- Cache limit and swappiness: unchanged; fewer cached apps or more reclaim can
+  increase CPU/storage work and cannot establish maximum battery efficiency.
+
+Automatic targeting protects Settings, SystemUI, Play services, phone services,
+the default dialer, default launcher and enabled keyboards. Non-launchable
+system services and all packages sharing a protected UID remain protected.
+The manual app list is additional standby control, not an exception list.
+Targets are rediscovered on apply and boot; reapply after installing new apps.
+
+Expect missing notifications, failed background uploads/backups, app updates,
+widgets, VPNs and wearable links, very slow apps and a barely visible screen.
+There is no universal zero-background guarantee: essential Android services,
+foreground services, system Doze exemptions and vendor policies remain. No
+package disabling, forced Doze loop, persistent process killer or blanket
+network shutdown is installed. Missed work is not recreated when switching off.
+Minimum clocks can lengthen work enough to increase energy per task; matched
+on-device consumption tests are required before claiming maximum battery life.
+
+Disable Battery Saving or select Balanced and apply to restore saved originals.
+New controls join the durable undo journal. All selected originals are captured
+before writes to protect against Battery Saver side effects. Saver is restored
+before dependent policies, failed restoration remains retryable, and UID policy
+restoration refuses a changed package UID. Custom dark-mode schedule type is
+saved and restored alongside night mode. Existing version-1 profiles still
+load; older ROM builds cannot import the new Stingy controls.
+
 Backups use Android's document picker and contain user choices only. Imports
 are size/schema/range checked and start disabled. They do not contain commands,
 file paths or rollback snapshots. Restrictions apply to the owner user. Settings,
@@ -72,7 +125,7 @@ The normal ROM mod applies its supplied artifacts without requiring SDK/NDK.
 
 Validation
 ----------
-40 Java profile/rollback assertions and 16 native allowlist assertions passed on
+The original 40 Java profile/rollback assertions and 16 native allowlist assertions passed on
 Android. The earlier direct ceiling check accepted 2841600 kHz on policy7 and
 immediately restored 3360000 kHz; no permanent profile was enabled.
 SELinux compilation passed in Android init's runtime mode for both untouched
@@ -81,3 +134,15 @@ showed the same 226 pre-existing mixed-version vendor conflicts as the untouched
 baseline, with zero new worker conflicts. The installer is idempotent.
 Full ROM rebuild/flash and live UI, init/SELinux IPC, boot reapplication, profile
 picker and battery-consumption tests remain necessary before runtime claims.
+
+Stingy validation (2026-10-04)
+------------------------------
+94 profile/rollback assertions passed using Android app_process on the connected
+device with simulated control writes; the phone's battery settings were not
+changed. Hidden app-op/network/Saver/dark-schedule API signatures resolved on
+that device. The 16 native allowlist assertions passed on the host. Java/D8,
+regenerated-smali assembly, and the full Settings classes4 DEX assembly passed.
+All four Settings patches passed dry-run and real application with --fuzz=0
+after the Settings source overlay on a fresh firmware decode in /tmp.
+These are source/compatibility checks, not live Stingy enforcement, boot/restore
+or battery-consumption measurements.
