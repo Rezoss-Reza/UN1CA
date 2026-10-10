@@ -5,7 +5,7 @@
 # [
 source "$SRC_DIR/scripts/utils/install_utils.sh" || exit 1
 
-TMP_DIR="$OUT_DIR/target/$TARGET_CODENAME/zip"
+TMP_DIR="${UNICA_OTA_TMP_DIR:-$OUT_DIR/target/$TARGET_CODENAME/zip}"
 
 PRIVATE_KEY_PATH="$SRC_DIR/security/"
 PUBLIC_KEY_PATH="$SRC_DIR/security/"
@@ -167,7 +167,7 @@ GENERATE_OTA_METADATA()
     SOURCE_INCREMENTAL="$(grep "^build_incremental" <<< "$SOURCE_BUILD_INFO" | cut -d "=" -f 2 -s)"
     TARGET_INCREMENTAL="$(grep "^build_incremental" <<< "$TARGET_BUILD_INFO" | cut -d "=" -f 2 -s)"
     TIMESTAMP="$(grep "^build_date" <<< "$TARGET_BUILD_INFO" | cut -d "=" -f 2 -s)"
-    SECURITY_PATCH_LEVEL="$(grep "^security_patch" <<< "$TARGET_BUILD_INFO" | cut -d "=" -f 2 -s)"
+    SECURITY_PATCH_LEVEL="$(grep "^security_patch=" <<< "$TARGET_BUILD_INFO" | cut -d "=" -f 2 -s)"
     SOURCE_FINGERPRINT="$(grep "^source_fingerprint" <<< "$SOURCE_BUILD_INFO" | cut -d "=" -f 2 -s)"
     TARGET_FINGERPRINT="$(grep "^source_fingerprint" <<< "$TARGET_BUILD_INFO" | cut -d "=" -f 2 -s)"
 
@@ -314,6 +314,10 @@ GENERATE_UPDATER_SCRIPT()
                     else
                         echo    'show_progress(0.100000, 0);'
                     fi
+                    # Recovery may already have a read-only mapping. map_partition
+                    # reuses it unless it is explicitly destroyed first.
+                    echo "assert(unmap_partition(\"$p\"));"
+                    echo "assert(map_partition(\"$p\"));"
                     echo -n "block_image_update("
                     GET_DEVICE_FROM_MOUNTPOINT "/$p"
                     echo -n ', package_extract_file("'
@@ -359,6 +363,10 @@ GENERATE_UPDATER_SCRIPT()
                     echo    '00000, 0);'
                 else
                     echo    'show_progress(0.100000, 0);'
+                fi
+                if $TARGET_USE_DYNAMIC_PARTITIONS; then
+                    echo "assert(unmap_partition(\"$p\"));"
+                    echo "assert(map_partition(\"$p\"));"
                 fi
                 echo -n "block_image_update("
                 GET_DEVICE_FROM_MOUNTPOINT "/$p"
@@ -416,9 +424,9 @@ VERIFY_SOURCE_COMPATIBILITY()
     local TARGET_SPL
 
     SOURCE_DEVICE="$(grep "^device" <<< "$SOURCE_BUILD_INFO" | cut -d "=" -f 2 -s)"
-    SOURCE_SPL="$(grep "^security_patch" <<< "$SOURCE_BUILD_INFO" | cut -d "=" -f 2 -s)"
+    SOURCE_SPL="$(grep "^security_patch=" <<< "$SOURCE_BUILD_INFO" | cut -d "=" -f 2 -s)"
     TARGET_DEVICE="$(grep "^device" <<< "$TARGET_BUILD_INFO" | cut -d "=" -f 2 -s)"
-    TARGET_SPL="$(grep "^security_patch" <<< "$TARGET_BUILD_INFO" | cut -d "=" -f 2 -s)"
+    TARGET_SPL="$(grep "^security_patch=" <<< "$TARGET_BUILD_INFO" | cut -d "=" -f 2 -s)"
 
     if [[ "$SOURCE_DEVICE" != "$TARGET_DEVICE" ]]; then
         LOGE "Source device ($SOURCE_DEVICE) does not match target device ($TARGET_DEVICE)"
@@ -484,6 +492,20 @@ for p in $PARTITIONS_LIST; do
         continue
     fi
 
+    # DFE can rebuild vendor on-device, invalidating the released source blocks.
+    # Keep source images through GENERATE_OP_LIST for correct resize geometry.
+    if [[ "${UNICA_OTA_FULL_VENDOR:-false}" == true && "$p" == vendor ]]; then
+        LOG "- Generating full vendor payload (DFE-compatible source independence)"
+        EVAL "img2sdat -o \"$TMP_DIR\" --tgt-block-map \"$TMP_DIR/target/$p.map\" \"$TMP_DIR/target/$p.img\"" || exit 1
+        rm -f "$TMP_DIR/source/$p.img" "$TMP_DIR/source/$p.map" \
+            "$TMP_DIR/target/$p.img" "$TMP_DIR/target/$p.map"
+        if ! $DEBUG; then
+            EVAL "brotli --quality=6 --output=\"$TMP_DIR/$p.new.dat.br\" \"$TMP_DIR/$p.new.dat\"" || exit 1
+            rm -f "$TMP_DIR/$p.new.dat"
+        fi
+        continue
+    fi
+
     if [ -f "$TMP_DIR/source/$p.img" ]; then
         if [[ "$(sha1sum "$TMP_DIR/source/$p.img" | cut -d " " -f 1)" != "$(sha1sum "$TMP_DIR/target/$p.img" | cut -d " " -f 1)" ]]; then
             _CHECK_NON_EMPTY_PARAM "TARGET_CACHE_PARTITION_SIZE" "${TARGET_CACHE_PARTITION_SIZE//none/}" || exit 1
@@ -527,6 +549,11 @@ PRINT_BUILD_INFO "$SOURCE_BUILD_INFO" "$TARGET_BUILD_INFO" > "$TMP_DIR/build_inf
 LOG "- Generating OTA metadata"
 GENERATE_OTA_METADATA
 
+if [ "${UNICA_OTA_RELEASE_INSTALLER:-}" ]; then
+    # Use the target release's installer, not the current checkout's DFE files.
+    python3 "$SRC_DIR/scripts/internal/release_zip_ota.py" installer \
+        "$UNICA_OTA_RELEASE_INSTALLER" "$TMP_DIR" || exit 1
+else
 if [ -d "$SRC_DIR/target/$TARGET_CODENAME/installer/root" ]; then
     LOG "- Copying target custom install files"
     EVAL "cp -a \"$SRC_DIR/target/$TARGET_CODENAME/installer/root/\"* \"$TMP_DIR\"" || exit 1
@@ -538,6 +565,23 @@ if [ -f "$SRC_DIR/target/$TARGET_CODENAME/installer/customize.sh" ]; then
     . "$SRC_DIR/target/$TARGET_CODENAME/installer/customize.sh"
     ) || exit 1
     LOG_STEP_OUT
+fi
+fi
+
+if [ "${UNICA_OTA_RELEASE_INSTALLER:-}" ]; then
+    LOG "- Adding signed updater identity and recovery cancellation"
+    # Keep the release's real updater/DFE, but use the current OTA wrapper hooks.
+    if [ ! -f "$TMP_DIR/META-INF/com/google/android/update-binary.unica" ]; then
+        cp -a "$TMP_DIR/META-INF/com/google/android/update-binary" \
+            "$TMP_DIR/META-INF/com/google/android/update-binary.unica" || exit 1
+    fi
+    cp -a "$SRC_DIR/target/$TARGET_CODENAME/installer/update-binary-wrapper.sh" \
+        "$TMP_DIR/META-INF/com/google/android/update-binary" || exit 1
+    chmod 0755 "$TMP_DIR/META-INF/com/google/android/update-binary"
+    mkdir -p "$TMP_DIR/unica/ota"
+    cp -a "$SRC_DIR/target/$TARGET_CODENAME/installer/root/unica/ota/"* "$TMP_DIR/unica/ota/" || exit 1
+    python3 "$SRC_DIR/scripts/internal/ota_metadata.py" package \
+        "$TMP_DIR" "$SOURCE_ZIP" "$TARGET_ZIP" || exit 1
 fi
 
 LOG "- Creating zip"

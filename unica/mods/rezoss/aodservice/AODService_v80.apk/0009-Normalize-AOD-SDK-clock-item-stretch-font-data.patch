@@ -4,7 +4,10 @@ Subject: [PATCH] Normalize AOD SDK clock item stretch font data
 diff --git a/smali_classes2/aod/ys2.smali b/smali_classes2/aod/ys2.smali
 --- a/smali_classes2/aod/ys2.smali	2026-10-05 13:56:56.035055445 +0200
 +++ b/smali_classes2/aod/ys2.smali	2026-10-05 13:56:56.067149049 +0200
-@@ -791,6 +791,54 @@
+@@ -124 +124 @@
+-    .locals 33
++    .locals 39
+@@ -791,6 +791,56 @@
 
      invoke-virtual {v9}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
 
@@ -14,21 +17,23 @@ diff --git a/smali_classes2/aod/ys2.smali b/smali_classes2/aod/ys2.smali
 +
 +    check-cast v10, Landroid/content/Context;
 +
-+    new-instance v11, Lcom/samsung/android/clockpack/plugins/clock/ClockFontData;
++    new-instance v33, Lcom/samsung/android/clockpack/plugins/clock/ClockFontData;
 +
-+    move v12, v2
++    move/from16 v34, v2
 +
-+    move-object v13, v3
++    move-object/from16 v35, v3
 +
-+    move-object v14, v4
++    move-object/from16 v36, v4
 +
-+    move-object v15, v6
++    move-object/from16 v37, v6
 +
-+    move-object/from16 v16, v8
++    move-object/from16 v38, v8
 +
-+    invoke-direct/range {v11 .. v16}, Lcom/samsung/android/clockpack/plugins/clock/ClockFontData;-><init>(ILjava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/util/List;)V
++    invoke-direct/range {v33 .. v38}, Lcom/samsung/android/clockpack/plugins/clock/ClockFontData;-><init>(ILjava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/util/List;)V
 +
-+    invoke-static {v10, v11}, Lio/mesalabs/unica/aod/ClockFontSettingsSync;->normalizeStretchFontData(Landroid/content/Context;Lcom/samsung/android/clockpack/plugins/clock/ClockFontData;)Lcom/samsung/android/clockpack/plugins/clock/ClockFontData;
++    move-object/from16 v11, v33
++
++    invoke-static/range {v10 .. v11}, Lio/mesalabs/unica/aod/ClockFontSettingsSync;->normalizeStretchFontData(Landroid/content/Context;Lcom/samsung/android/clockpack/plugins/clock/ClockFontData;)Lcom/samsung/android/clockpack/plugins/clock/ClockFontData;
 +
 +    move-result-object v11
 +

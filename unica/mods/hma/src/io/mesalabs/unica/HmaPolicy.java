@@ -155,6 +155,24 @@ public final class HmaPolicy {
         busy.set(true);
         return true;
     }
+    // Local process UID, never Binder caller identity: do not spoof system services.
+    public static String systemProperty(String key) {
+        if (!"ro.crypto.state".equals(key) && !"ro.crypto.type".equals(key)) return null;
+        int uid = android.os.Process.myUid();
+        if (!enter(uid)) return null;
+        try {
+            Config c = config(uid);
+            if (caller(uid, c) == null) return null;
+            return encryptionProperty(c, key);
+        } catch (RuntimeException ignored) { return null; }
+        finally { busy.remove(); }
+    }
+    private static String encryptionProperty(Config c, String key) {
+        if (c == null || !contains(c.json, "apps", "encryption_spoof")) return null;
+        if ("ro.crypto.state".equals(key)) return "encrypted";
+        if ("ro.crypto.type".equals(key)) return "file";
+        return null;
+    }
     private static void event(Config c, String category, int uid, String detail) {
     }
     private static boolean hidden(Config c, int uid, String source, String target) {

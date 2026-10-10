@@ -2071,7 +2071,7 @@ diff --git a/smali_classes4/io/mesalabs/unica/battery/BatteryActivity.smali b/sm
 new file mode 100644
 --- /dev/null
 +++ b/smali_classes4/io/mesalabs/unica/battery/BatteryActivity.smali
-@@ -0,0 +1,4439 @@
+@@ -0,0 +1,4481 @@
 +.class public final Lio/mesalabs/unica/battery/BatteryActivity;
 +.super Landroid/app/Activity;
 +.source "BatteryActivity.java"
@@ -3566,7 +3566,7 @@ new file mode 100644
 +    :catch_f1
 +    move-exception v0
 +
-+    invoke-virtual {v0}, Ljava/lang/Exception;->getMessage()Ljava/lang/String;
++    invoke-static {v0}, Lio/mesalabs/unica/battery/BatteryEngine;->describe(Ljava/lang/Throwable;)Ljava/lang/String;
 +
 +    move-result-object v0
 +
@@ -3755,7 +3755,7 @@ new file mode 100644
 +
 +    move-result-object v0
 +
-+    invoke-virtual {p1}, Ljava/lang/Exception;->getMessage()Ljava/lang/String;
++    invoke-static {p1}, Lio/mesalabs/unica/battery/BatteryEngine;->describe(Ljava/lang/Throwable;)Ljava/lang/String;
 +
 +    move-result-object p1
 +
@@ -4802,7 +4802,7 @@ new file mode 100644
 +
 +    invoke-interface {v0, v1}, Ljava/util/concurrent/ExecutorService;->execute(Ljava/lang/Runnable;)V
 +
-+    .line 222
++    .line 223
 +    return-void
 +.end method
 +
@@ -5715,7 +5715,7 @@ new file mode 100644
 +.method synthetic lambda$onActivityResult$34$io-mesalabs-unica-battery-BatteryActivity(Lorg/json/JSONObject;Landroid/content/DialogInterface;I)V
 +    .registers 4
 +
-+    .line 231
++    .line 232
 +    iput-object p1, p0, Lio/mesalabs/unica/battery/BatteryActivity;->profile:Lorg/json/JSONObject;
 +
 +    invoke-direct {p0}, Lio/mesalabs/unica/battery/BatteryActivity;->save()V
@@ -5730,172 +5730,214 @@ new file mode 100644
 +.end method
 +
 +.method synthetic lambda$run$31$io-mesalabs-unica-battery-BatteryActivity(Lorg/json/JSONObject;Ljava/lang/String;)V
-+    .registers 7
++    .registers 8
 +
 +    .line 207
-+    const-string v0, "enabled"
++    const-string v0, "deferredRestores"
++
++    const-string v1, "enabled"
 +
 +    invoke-virtual {p0}, Lio/mesalabs/unica/battery/BatteryActivity;->isDestroyed()Z
 +
-+    move-result v1
++    move-result v2
 +
-+    if-eqz v1, :cond_9
++    if-eqz v2, :cond_b
 +
 +    return-void
 +
-+    :cond_9
-+    const/4 v1, 0x0
++    :cond_b
++    const/4 v2, 0x0
 +
-+    iput-boolean v1, p0, Lio/mesalabs/unica/battery/BatteryActivity;->busy:Z
++    iput-boolean v2, p0, Lio/mesalabs/unica/battery/BatteryActivity;->busy:Z
 +
-+    const/4 v2, 0x1
++    const/4 v3, 0x1
 +
-+    iput-boolean v2, p0, Lio/mesalabs/unica/battery/BatteryActivity;->ready:Z
++    iput-boolean v3, p0, Lio/mesalabs/unica/battery/BatteryActivity;->ready:Z
 +
 +    iput-object p1, p0, Lio/mesalabs/unica/battery/BatteryActivity;->response:Lorg/json/JSONObject;
 +
-+    const-string v2, "capabilities"
++    const-string v3, "capabilities"
 +
-+    invoke-virtual {p1, v2}, Lorg/json/JSONObject;->optJSONArray(Ljava/lang/String;)Lorg/json/JSONArray;
++    invoke-virtual {p1, v3}, Lorg/json/JSONObject;->optJSONArray(Ljava/lang/String;)Lorg/json/JSONArray;
 +
-+    move-result-object v2
++    move-result-object v3
 +
-+    iput-object v2, p0, Lio/mesalabs/unica/battery/BatteryActivity;->caps:Lorg/json/JSONArray;
++    iput-object v3, p0, Lio/mesalabs/unica/battery/BatteryActivity;->caps:Lorg/json/JSONArray;
 +
 +    .line 209
-+    :try_start_19
-+    const-string v2, "profile"
++    :try_start_1b
++    const-string v3, "profile"
 +
-+    invoke-virtual {p1, v2}, Lorg/json/JSONObject;->getJSONObject(Ljava/lang/String;)Lorg/json/JSONObject;
++    invoke-virtual {p1, v3}, Lorg/json/JSONObject;->getJSONObject(Ljava/lang/String;)Lorg/json/JSONObject;
 +
-+    move-result-object v2
++    move-result-object v3
 +
 +    .line 210
-+    const-string v3, "apply"
++    const-string v4, "apply"
 +
-+    invoke-virtual {p2, v3}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    invoke-virtual {p2, v4}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
 +    move-result p2
 +
-+    if-nez p2, :cond_3e
++    if-nez p2, :cond_40
 +
-+    invoke-virtual {p0, v1}, Lio/mesalabs/unica/battery/BatteryActivity;->getPreferences(I)Landroid/content/SharedPreferences;
++    invoke-virtual {p0, v2}, Lio/mesalabs/unica/battery/BatteryActivity;->getPreferences(I)Landroid/content/SharedPreferences;
 +
 +    move-result-object p2
 +
-+    const-string v3, "draft"
++    const-string v4, "draft"
 +
-+    invoke-interface {p2, v3}, Landroid/content/SharedPreferences;->contains(Ljava/lang/String;)Z
++    invoke-interface {p2, v4}, Landroid/content/SharedPreferences;->contains(Ljava/lang/String;)Z
 +
 +    move-result p2
 +
-+    if-nez p2, :cond_34
-+
-+    goto :goto_3e
-+
-+    .line 211
-+    :cond_34
-+    iget-object p2, p0, Lio/mesalabs/unica/battery/BatteryActivity;->profile:Lorg/json/JSONObject;
-+
-+    invoke-virtual {v2, v0}, Lorg/json/JSONObject;->getBoolean(Ljava/lang/String;)Z
-+
-+    move-result v2
-+
-+    invoke-virtual {p2, v0, v2}, Lorg/json/JSONObject;->put(Ljava/lang/String;Z)Lorg/json/JSONObject;
++    if-nez p2, :cond_36
 +
 +    goto :goto_40
 +
++    .line 211
++    :cond_36
++    iget-object p2, p0, Lio/mesalabs/unica/battery/BatteryActivity;->profile:Lorg/json/JSONObject;
++
++    invoke-virtual {v3, v1}, Lorg/json/JSONObject;->getBoolean(Ljava/lang/String;)Z
++
++    move-result v3
++
++    invoke-virtual {p2, v1, v3}, Lorg/json/JSONObject;->put(Ljava/lang/String;Z)Lorg/json/JSONObject;
++
++    goto :goto_42
++
 +    .line 210
-+    :cond_3e
-+    :goto_3e
-+    iput-object v2, p0, Lio/mesalabs/unica/battery/BatteryActivity;->profile:Lorg/json/JSONObject;
++    :cond_40
++    :goto_40
++    iput-object v3, p0, Lio/mesalabs/unica/battery/BatteryActivity;->profile:Lorg/json/JSONObject;
 +
 +    .line 212
-+    :goto_40
++    :goto_42
 +    invoke-direct {p0}, Lio/mesalabs/unica/battery/BatteryActivity;->save()V
 +
 +    .line 213
 +    new-instance p2, Ljava/lang/StringBuilder;
 +
-+    const-string v0, "ok"
++    const-string v1, "ok"
 +
-+    invoke-virtual {p1, v0}, Lorg/json/JSONObject;->optBoolean(Ljava/lang/String;)Z
++    invoke-virtual {p1, v1}, Lorg/json/JSONObject;->optBoolean(Ljava/lang/String;)Z
++
++    move-result v1
++
++    if-eqz v1, :cond_5d
++
++    const-string v1, "policyLimited"
++
++    invoke-virtual {p1, v1}, Lorg/json/JSONObject;->optBoolean(Ljava/lang/String;)Z
++
++    move-result v1
++
++    if-eqz v1, :cond_5a
++
++    const-string v1, "Completed with Android policy limits; review details below"
++
++    goto :goto_5f
++
++    :cond_5a
++    const-string v1, "Device status checked"
++
++    goto :goto_5f
++
++    :cond_5d
++    const-string v1, "Some changes failed; review details below"
++
++    :goto_5f
++    invoke-direct {p2, v1}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
++
++    .line 214
++    invoke-virtual {p1, v0}, Lorg/json/JSONObject;->optInt(Ljava/lang/String;)I
++
++    move-result v1
++    :try_end_66
++    .catch Ljava/lang/Exception; {:try_start_1b .. :try_end_66} :catch_bb
++
++    const-string v3, "\n"
++
++    if-lez v1, :cond_7b
++
++    :try_start_6a
++    invoke-virtual {p2, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-virtual {p1, v0}, Lorg/json/JSONObject;->optInt(Ljava/lang/String;)I
 +
 +    move-result v0
 +
-+    if-eqz v0, :cond_50
++    invoke-virtual {v1, v0}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
 +
-+    const-string v0, "Device status checked"
++    move-result-object v0
 +
-+    goto :goto_52
++    const-string v1, " standby originals retained: Android did not accept exact restoration."
 +
-+    :cond_50
-+    const-string v0, "Some changes failed; review details below"
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
-+    :goto_52
-+    invoke-direct {p2, v0}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
-+
-+    .line 214
++    .line 215
++    :cond_7b
 +    const-string v0, "pendingRestore"
 +
 +    invoke-virtual {p1, v0}, Lorg/json/JSONObject;->optBoolean(Ljava/lang/String;)Z
 +
 +    move-result v0
 +
-+    if-eqz v0, :cond_62
++    if-eqz v0, :cond_88
 +
 +    const-string v0, "\nRestoration incomplete. Retry with Battery Saving off."
 +
 +    invoke-virtual {p2, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
-+    .line 215
-+    :cond_62
++    .line 216
++    :cond_88
 +    const-string v0, "\nKernel: "
 +
 +    invoke-virtual {p2, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
 +    move-result-object v0
 +
-+    const-string v2, "kernel"
++    const-string v1, "kernel"
 +
-+    invoke-virtual {p1, v2}, Lorg/json/JSONObject;->optString(Ljava/lang/String;)Ljava/lang/String;
++    invoke-virtual {p1, v1}, Lorg/json/JSONObject;->optString(Ljava/lang/String;)Ljava/lang/String;
 +
-+    move-result-object v2
++    move-result-object v1
 +
-+    invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
-+    .line 216
++    .line 217
 +    const-string v0, "notes"
 +
 +    invoke-virtual {p1, v0}, Lorg/json/JSONObject;->optJSONArray(Ljava/lang/String;)Lorg/json/JSONArray;
 +
 +    move-result-object p1
 +
-+    :goto_77
++    :goto_9d
 +    invoke-virtual {p1}, Lorg/json/JSONArray;->length()I
 +
 +    move-result v0
 +
-+    if-ge v1, v0, :cond_8d
++    if-ge v2, v0, :cond_b1
 +
-+    const-string v0, "\n"
-+
-+    invoke-virtual {p2, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++    invoke-virtual {p2, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
 +    move-result-object v0
 +
-+    invoke-virtual {p1, v1}, Lorg/json/JSONArray;->optString(I)Ljava/lang/String;
++    invoke-virtual {p1, v2}, Lorg/json/JSONArray;->optString(I)Ljava/lang/String;
 +
-+    move-result-object v2
++    move-result-object v1
 +
-+    invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
-+    add-int/lit8 v1, v1, 0x1
++    add-int/lit8 v2, v2, 0x1
 +
-+    goto :goto_77
++    goto :goto_9d
 +
-+    .line 217
-+    :cond_8d
++    .line 218
++    :cond_b1
 +    invoke-virtual {p2}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
 +
 +    move-result-object p1
@@ -5903,26 +5945,26 @@ new file mode 100644
 +    iput-object p1, p0, Lio/mesalabs/unica/battery/BatteryActivity;->status:Ljava/lang/String;
 +
 +    invoke-direct {p0}, Lio/mesalabs/unica/battery/BatteryActivity;->draw()V
-+    :try_end_96
-+    .catch Ljava/lang/Exception; {:try_start_19 .. :try_end_96} :catch_97
++    :try_end_ba
++    .catch Ljava/lang/Exception; {:try_start_6a .. :try_end_ba} :catch_bb
 +
-+    .line 218
-+    goto :goto_9b
++    .line 219
++    goto :goto_bf
 +
-+    :catch_97
++    :catch_bb
 +    move-exception p1
 +
 +    invoke-direct {p0, p1}, Lio/mesalabs/unica/battery/BatteryActivity;->error(Ljava/lang/Exception;)V
 +
-+    .line 219
-+    :goto_9b
++    .line 220
++    :goto_bf
 +    return-void
 +.end method
 +
 +.method synthetic lambda$run$32$io-mesalabs-unica-battery-BatteryActivity(Ljava/lang/Exception;)V
 +    .registers 3
 +
-+    .line 220
++    .line 221
 +    invoke-virtual {p0}, Lio/mesalabs/unica/battery/BatteryActivity;->isDestroyed()Z
 +
 +    move-result v0
@@ -5988,7 +6030,7 @@ new file mode 100644
 +
 +    invoke-virtual {p0, v0}, Lio/mesalabs/unica/battery/BatteryActivity;->runOnUiThread(Ljava/lang/Runnable;)V
 +
-+    .line 220
++    .line 221
 +    goto :goto_3b
 +
 +    .line 206
@@ -6005,7 +6047,7 @@ new file mode 100644
 +    :try_end_32
 +    .catch Ljava/lang/Exception; {:try_start_2 .. :try_end_32} :catch_32
 +
-+    .line 220
++    .line 221
 +    :catch_32
 +    move-exception p1
 +
@@ -6015,7 +6057,7 @@ new file mode 100644
 +
 +    invoke-virtual {p0, p2}, Lio/mesalabs/unica/battery/BatteryActivity;->runOnUiThread(Ljava/lang/Runnable;)V
 +
-+    .line 221
++    .line 222
 +    :goto_3b
 +    return-void
 +.end method
@@ -6023,7 +6065,7 @@ new file mode 100644
 +.method protected onActivityResult(IILandroid/content/Intent;)V
 +    .registers 8
 +
-+    .line 224
++    .line 225
 +    invoke-super {p0, p1, p2, p3}, Landroid/app/Activity;->onActivityResult(IILandroid/content/Intent;)V
 +
 +    const/4 v0, -0x1
@@ -6040,13 +6082,13 @@ new file mode 100644
 +
 +    goto/16 :goto_e6
 +
-+    .line 225
++    .line 226
 +    :cond_10
 +    invoke-virtual {p3}, Landroid/content/Intent;->getData()Landroid/net/Uri;
 +
 +    move-result-object p2
 +
-+    .line 227
++    .line 228
 +    const/4 p3, 0x1
 +
 +    const-string v1, "UTF-8"
@@ -6142,17 +6184,17 @@ new file mode 100644
 +    :goto_59
 +    throw p2
 +
-+    .line 233
++    .line 234
 +    :catch_5a
 +    move-exception p1
 +
 +    goto/16 :goto_e0
 +
-+    .line 228
++    .line 229
 +    :cond_5d
 +    if-ne p1, v2, :cond_e4
 +
-+    .line 229
++    .line 230
 +    new-instance p1, Ljava/io/ByteArrayOutputStream;
 +
 +    invoke-direct {p1}, Ljava/io/ByteArrayOutputStream;-><init>()V
@@ -6212,7 +6254,7 @@ new file mode 100644
 +    :try_start_8f
 +    invoke-virtual {p2}, Ljava/io/InputStream;->close()V
 +
-+    .line 230
++    .line 231
 +    :cond_92
 +    new-instance p2, Lorg/json/JSONObject;
 +
@@ -6230,7 +6272,7 @@ new file mode 100644
 +
 +    invoke-virtual {p1, p2, v3}, Lorg/json/JSONObject;->put(Ljava/lang/String;Z)Lorg/json/JSONObject;
 +
-+    .line 231
++    .line 232
 +    new-instance p2, Landroid/app/AlertDialog$Builder;
 +
 +    invoke-direct {p2, p0}, Landroid/app/AlertDialog$Builder;-><init>(Landroid/content/Context;)V
@@ -6271,7 +6313,7 @@ new file mode 100644
 +
 +    goto :goto_e4
 +
-+    .line 229
++    .line 230
 +    :catchall_cb
 +    move-exception p1
 +
@@ -6312,7 +6354,7 @@ new file mode 100644
 +    :try_end_e0
 +    .catch Ljava/lang/Exception; {:try_start_dc .. :try_end_e0} :catch_5a
 +
-+    .line 233
++    .line 234
 +    :goto_e0
 +    invoke-direct {p0, p1}, Lio/mesalabs/unica/battery/BatteryActivity;->error(Ljava/lang/Exception;)V
 +
@@ -6322,11 +6364,11 @@ new file mode 100644
 +    :goto_e4
 +    nop
 +
-+    .line 234
++    .line 235
 +    :goto_e5
 +    return-void
 +
-+    .line 224
++    .line 225
 +    :cond_e6
 +    :goto_e6
 +    return-void
@@ -6714,7 +6756,7 @@ diff --git a/smali_classes4/io/mesalabs/unica/battery/BatteryBoot.smali b/smali_
 new file mode 100644
 --- /dev/null
 +++ b/smali_classes4/io/mesalabs/unica/battery/BatteryBoot.smali
-@@ -0,0 +1,195 @@
+@@ -0,0 +1,177 @@
 +.class public final Lio/mesalabs/unica/battery/BatteryBoot;
 +.super Landroid/content/BroadcastReceiver;
 +.source "BatteryBoot.java"
@@ -6754,7 +6796,7 @@ new file mode 100644
 +
 +    move-result p2
 +
-+    if-eqz p2, :cond_90
++    if-eqz p2, :cond_7e
 +
 +    invoke-static {}, Landroid/os/Process;->myUid()I
 +
@@ -6762,90 +6804,72 @@ new file mode 100644
 +
 +    const/16 v0, 0x3e8
 +
-+    if-eq p2, v0, :cond_16
++    if-eq p2, v0, :cond_15
 +
-+    goto/16 :goto_90
++    goto :goto_7e
 +
 +    .line 13
-+    :cond_16
++    :cond_15
 +    new-instance p2, Lio/mesalabs/unica/battery/BatteryEngine;
 +
 +    invoke-direct {p2, p1}, Lio/mesalabs/unica/battery/BatteryEngine;-><init>(Landroid/content/Context;)V
 +
 +    .line 15
-+    :try_start_1b
++    :try_start_1a
 +    iget-object v0, p2, Lio/mesalabs/unica/battery/BatteryEngine;->ACTIVE:Ljava/io/File;
 +
 +    invoke-virtual {v0}, Ljava/io/File;->exists()Z
 +
 +    move-result v0
 +
-+    if-eqz v0, :cond_2f
++    if-eqz v0, :cond_30
 +
 +    new-instance v0, Lorg/json/JSONObject;
 +
 +    iget-object v1, p2, Lio/mesalabs/unica/battery/BatteryEngine;->ACTIVE:Ljava/io/File;
 +
-+    invoke-static {v1}, Lio/mesalabs/unica/battery/BatteryEngine;->read(Ljava/io/File;)Ljava/lang/String;
++    const/high16 v2, 0x10000
++
++    invoke-static {v1, v2}, Lio/mesalabs/unica/battery/BatteryEngine;->read(Ljava/io/File;I)Ljava/lang/String;
 +
 +    move-result-object v1
 +
 +    invoke-direct {v0, v1}, Lorg/json/JSONObject;-><init>(Ljava/lang/String;)V
 +
-+    goto :goto_33
++    goto :goto_34
 +
-+    :cond_2f
++    :cond_30
 +    invoke-static {}, Lio/mesalabs/unica/battery/Profile;->empty()Lorg/json/JSONObject;
 +
 +    move-result-object v0
 +
 +    .line 16
-+    :goto_33
-+    iget-object v1, p2, Lio/mesalabs/unica/battery/BatteryEngine;->JOURNAL:Ljava/io/File;
-+
-+    invoke-virtual {v1}, Ljava/io/File;->exists()Z
-+
-+    move-result v1
-+
-+    if-eqz v1, :cond_47
-+
-+    new-instance v1, Lorg/json/JSONObject;
-+
++    :goto_34
 +    iget-object p2, p2, Lio/mesalabs/unica/battery/BatteryEngine;->JOURNAL:Ljava/io/File;
 +
-+    invoke-static {p2}, Lio/mesalabs/unica/battery/BatteryEngine;->read(Ljava/io/File;)Ljava/lang/String;
++    invoke-static {p2}, Lio/mesalabs/unica/battery/BatteryEngine;->readJournal(Ljava/io/File;)Lorg/json/JSONObject;
 +
 +    move-result-object p2
 +
-+    invoke-direct {v1, p2}, Lorg/json/JSONObject;-><init>(Ljava/lang/String;)V
-+
-+    goto :goto_4c
-+
-+    :cond_47
-+    new-instance v1, Lorg/json/JSONObject;
-+
-+    invoke-direct {v1}, Lorg/json/JSONObject;-><init>()V
-+
 +    .line 17
-+    :goto_4c
-+    const-string p2, "enabled"
++    const-string v1, "enabled"
 +
-+    invoke-virtual {v0, p2}, Lorg/json/JSONObject;->optBoolean(Ljava/lang/String;)Z
++    invoke-virtual {v0, v1}, Lorg/json/JSONObject;->optBoolean(Ljava/lang/String;)Z
++
++    move-result v0
++
++    if-nez v0, :cond_49
++
++    invoke-virtual {p2}, Lorg/json/JSONObject;->length()I
 +
 +    move-result p2
 +
-+    if-nez p2, :cond_5b
-+
-+    invoke-virtual {v1}, Lorg/json/JSONObject;->length()I
-+
-+    move-result p2
-+
-+    if-nez p2, :cond_5b
++    if-nez p2, :cond_49
 +
 +    return-void
 +
 +    .line 18
-+    :cond_5b
++    :cond_49
 +    const-class p2, Landroid/app/job/JobScheduler;
 +
 +    invoke-virtual {p1, p2}, Landroid/content/Context;->getSystemService(Ljava/lang/Class;)Ljava/lang/Object;
@@ -6886,13 +6910,13 @@ new file mode 100644
 +
 +    .line 19
 +    invoke-virtual {p2, p1}, Landroid/app/job/JobScheduler;->schedule(Landroid/app/job/JobInfo;)I
-+    :try_end_86
-+    .catch Ljava/lang/Exception; {:try_start_1b .. :try_end_86} :catch_87
++    :try_end_74
++    .catch Ljava/lang/Exception; {:try_start_1a .. :try_end_74} :catch_75
 +
 +    .line 21
-+    goto :goto_8f
++    goto :goto_7d
 +
-+    :catch_87
++    :catch_75
 +    move-exception p1
 +
 +    const-string p2, "UnicaBattery"
@@ -6902,12 +6926,12 @@ new file mode 100644
 +    invoke-static {p2, v0, p1}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
 +
 +    .line 22
-+    :goto_8f
++    :goto_7d
 +    return-void
 +
 +    .line 12
-+    :cond_90
-+    :goto_90
++    :cond_7e
++    :goto_7e
 +    return-void
 +.end method
 
@@ -7063,14 +7087,59 @@ new file mode 100644
 +    return p1
 +.end method
 
+diff --git a/smali_classes4/io/mesalabs/unica/battery/BatteryEngine$BucketPolicyLimit.smali b/smali_classes4/io/mesalabs/unica/battery/BatteryEngine$BucketPolicyLimit.smali
+new file mode 100644
+--- /dev/null
++++ b/smali_classes4/io/mesalabs/unica/battery/BatteryEngine$BucketPolicyLimit.smali
+@@ -0,0 +1,25 @@
++.class Lio/mesalabs/unica/battery/BatteryEngine$BucketPolicyLimit;
++.super Ljava/io/IOException;
++.source "BatteryEngine.java"
++
++
++# annotations
++.annotation system Ldalvik/annotation/EnclosingClass;
++    value = Lio/mesalabs/unica/battery/BatteryEngine;
++.end annotation
++
++.annotation system Ldalvik/annotation/InnerClass;
++    accessFlags = 0x8
++    name = "BucketPolicyLimit"
++.end annotation
++
++
++# direct methods
++.method constructor <init>(Ljava/lang/String;)V
++    .registers 2
++
++    .line 257
++    invoke-direct {p0, p1}, Ljava/io/IOException;-><init>(Ljava/lang/String;)V
++
++    return-void
++.end method
+
 diff --git a/smali_classes4/io/mesalabs/unica/battery/BatteryEngine.smali b/smali_classes4/io/mesalabs/unica/battery/BatteryEngine.smali
 new file mode 100644
 --- /dev/null
 +++ b/smali_classes4/io/mesalabs/unica/battery/BatteryEngine.smali
-@@ -0,0 +1,6357 @@
+@@ -0,0 +1,7719 @@
 +.class public Lio/mesalabs/unica/battery/BatteryEngine;
 +.super Ljava/lang/Object;
 +.source "BatteryEngine.java"
++
++
++# annotations
++.annotation system Ldalvik/annotation/MemberClasses;
++    value = {
++        Lio/mesalabs/unica/battery/BatteryEngine$BucketPolicyLimit;
++    }
++.end annotation
++
++
++# static fields
++.field static final JOURNAL_LIMIT:I = 0x1000000
++
++.field static final PROFILE_LIMIT:I = 0x10000
 +
 +
 +# instance fields
@@ -7084,6 +7153,8 @@ new file mode 100644
 +
 +.field final context:Landroid/content/Context;
 +
++.field deferredRestores:I
++
 +.field journal:Lorg/json/JSONObject;
 +
 +.field final notes:Ljava/util/List;
@@ -7091,6 +7162,19 @@ new file mode 100644
 +        value = {
 +            "Ljava/util/List<",
 +            "Ljava/lang/String;",
++            ">;"
++        }
++    .end annotation
++.end field
++
++.field policyLimited:Z
++
++.field private final restoredBatch:Ljava/util/Map;
++    .annotation system Ldalvik/annotation/Signature;
++        value = {
++            "Ljava/util/Map<",
++            "Ljava/lang/String;",
++            "Lorg/json/JSONObject;",
 +            ">;"
 +        }
 +    .end annotation
@@ -7129,11 +7213,18 @@ new file mode 100644
 +
 +    iput-object v0, p0, Lio/mesalabs/unica/battery/BatteryEngine;->notes:Ljava/util/List;
 +
++    .line 323
++    new-instance v0, Ljava/util/LinkedHashMap;
++
++    invoke-direct {v0}, Ljava/util/LinkedHashMap;-><init>()V
++
++    iput-object v0, p0, Lio/mesalabs/unica/battery/BatteryEngine;->restoredBatch:Ljava/util/Map;
++
 +    .line 22
 +    iput-object p1, p0, Lio/mesalabs/unica/battery/BatteryEngine;->context:Landroid/content/Context;
 +
 +    .line 23
-+    if-nez p1, :cond_1d
++    if-nez p1, :cond_24
 +
 +    new-instance p1, Ljava/io/File;
 +
@@ -7141,9 +7232,9 @@ new file mode 100644
 +
 +    invoke-direct {p1, v0}, Ljava/io/File;-><init>(Ljava/lang/String;)V
 +
-+    goto :goto_29
++    goto :goto_30
 +
-+    :cond_1d
++    :cond_24
 +    new-instance v0, Ljava/io/File;
 +
 +    invoke-virtual {p1}, Landroid/content/Context;->getFilesDir()Ljava/io/File;
@@ -7156,7 +7247,7 @@ new file mode 100644
 +
 +    move-object p1, v0
 +
-+    :goto_29
++    :goto_30
 +    iput-object p1, p0, Lio/mesalabs/unica/battery/BatteryEngine;->DIR:Ljava/io/File;
 +
 +    .line 24
@@ -7196,7 +7287,7 @@ new file mode 100644
 +        }
 +    .end annotation
 +
-+    .line 64
++    .line 103
 +    new-instance v0, Lorg/json/JSONArray;
 +
 +    invoke-direct {v0, p0}, Lorg/json/JSONArray;-><init>(Ljava/util/Collection;)V
@@ -7212,7 +7303,7 @@ new file mode 100644
 +        }
 +    .end annotation
 +
-+    .line 39
++    .line 43
 +    new-instance v0, Ljava/io/File;
 +
 +    new-instance v1, Ljava/lang/StringBuilder;
@@ -7239,7 +7330,7 @@ new file mode 100644
 +
 +    invoke-direct {v0, v1}, Ljava/io/File;-><init>(Ljava/lang/String;)V
 +
-+    .line 40
++    .line 44
 +    new-instance v1, Ljava/io/FileOutputStream;
 +
 +    invoke-direct {v1, v0}, Ljava/io/FileOutputStream;-><init>(Ljava/io/File;)V
@@ -7263,7 +7354,7 @@ new file mode 100644
 +
 +    invoke-virtual {v1}, Ljava/io/FileOutputStream;->close()V
 +
-+    .line 41
++    .line 45
 +    invoke-virtual {v0}, Ljava/io/File;->toPath()Ljava/nio/file/Path;
 +
 +    move-result-object p1
@@ -7290,10 +7381,10 @@ new file mode 100644
 +
 +    invoke-static {p1, p0, v0}, Ljava/nio/file/Files;->move(Ljava/nio/file/Path;Ljava/nio/file/Path;[Ljava/nio/file/CopyOption;)Ljava/nio/file/Path;
 +
-+    .line 42
++    .line 46
 +    return-void
 +
-+    .line 40
++    .line 44
 +    :catchall_4d
 +    move-exception p0
 +
@@ -7316,7 +7407,7 @@ new file mode 100644
 +.method static autoCandidate(Ljava/lang/String;IZZ)Z
 +    .registers 5
 +
-+    .line 95
++    .line 134
 +    const/16 v0, 0x2710
 +
 +    if-lt p1, v0, :cond_1a
@@ -7376,12 +7467,12 @@ new file mode 100644
 +        }
 +    .end annotation
 +
-+    .line 81
++    .line 120
 +    invoke-static {p1}, Ljava/lang/Class;->forName(Ljava/lang/String;)Ljava/lang/Class;
 +
 +    move-result-object v0
 +
-+    .line 82
++    .line 121
 +    new-instance v1, Ljava/lang/StringBuilder;
 +
 +    invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
@@ -7434,7 +7525,7 @@ new file mode 100644
 +
 +    move-result-object p0
 +
-+    .line 83
++    .line 122
 +    invoke-virtual {v0, p2, p3}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
 +
 +    move-result-object p1
@@ -7444,6 +7535,344 @@ new file mode 100644
 +    move-result-object p0
 +
 +    return-object p0
++.end method
++
++.method static bucketName(I)Ljava/lang/String;
++    .registers 3
++
++    .line 253
++    sparse-switch p0, :sswitch_data_32
++
++    .line 255
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v1, "Unknown ("
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    const-string v0, ")"
++
++    invoke-virtual {p0, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    return-object p0
++
++    .line 254
++    :sswitch_1d
++    const-string p0, "Never (50)"
++
++    return-object p0
++
++    :sswitch_20
++    const-string p0, "Restricted (45)"
++
++    return-object p0
++
++    :sswitch_23
++    const-string p0, "Rare (40)"
++
++    return-object p0
++
++    :sswitch_26
++    const-string p0, "Frequent (30)"
++
++    return-object p0
++
++    .line 253
++    :sswitch_29
++    const-string p0, "Working set (20)"
++
++    return-object p0
++
++    :sswitch_2c
++    const-string p0, "Active (10)"
++
++    return-object p0
++
++    :sswitch_2f
++    const-string p0, "Exempted (5)"
++
++    return-object p0
++
++    :sswitch_data_32
++    .sparse-switch
++        0x5 -> :sswitch_2f
++        0xa -> :sswitch_2c
++        0x14 -> :sswitch_29
++        0x1e -> :sswitch_26
++        0x28 -> :sswitch_23
++        0x2d -> :sswitch_20
++        0x32 -> :sswitch_1d
++    .end sparse-switch
++.end method
++
++.method static checkBucketResult(II)V
++    .registers 10
++    .annotation system Ldalvik/annotation/Throws;
++        value = {
++            Ljava/io/IOException;
++        }
++    .end annotation
++
++    .line 259
++    if-ne p0, p1, :cond_3
++
++    return-void
++
++    .line 260
++    :cond_3
++    const/4 v0, 0x5
++
++    invoke-static {v0}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++
++    move-result-object v1
++
++    const/16 v0, 0xa
++
++    invoke-static {v0}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++
++    move-result-object v2
++
++    const/16 v0, 0x14
++
++    invoke-static {v0}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++
++    move-result-object v3
++
++    const/16 v0, 0x1e
++
++    invoke-static {v0}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++
++    move-result-object v4
++
++    const/16 v0, 0x28
++
++    invoke-static {v0}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++
++    move-result-object v5
++
++    const/16 v0, 0x2d
++
++    invoke-static {v0}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++
++    move-result-object v6
++
++    const/16 v0, 0x32
++
++    invoke-static {v0}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++
++    move-result-object v7
++
++    filled-new-array/range {v1 .. v7}, [Ljava/lang/Integer;
++
++    move-result-object v0
++
++    invoke-static {v0}, Ljava/util/Arrays;->asList([Ljava/lang/Object;)Ljava/util/List;
++
++    move-result-object v0
++
++    invoke-static {p1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++
++    move-result-object v1
++
++    invoke-interface {v0, v1}, Ljava/util/List;->contains(Ljava/lang/Object;)Z
++
++    move-result v0
++
++    if-eqz v0, :cond_71
++
++    if-ge p1, p0, :cond_71
++
++    .line 261
++    new-instance v0, Lio/mesalabs/unica/battery/BatteryEngine$BucketPolicyLimit;
++
++    new-instance v1, Ljava/lang/StringBuilder;
++
++    invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v2, "requested "
++
++    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-static {p0}, Lio/mesalabs/unica/battery/BatteryEngine;->bucketName(I)Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-virtual {v1, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    const-string v1, ", Android reports "
++
++    invoke-virtual {p0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-static {p1}, Lio/mesalabs/unica/battery/BatteryEngine;->bucketName(I)Ljava/lang/String;
++
++    move-result-object p1
++
++    invoke-virtual {p0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    const-string p1, "; requested bucket is not effective"
++
++    invoke-virtual {p0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-direct {v0, p0}, Lio/mesalabs/unica/battery/BatteryEngine$BucketPolicyLimit;-><init>(Ljava/lang/String;)V
++
++    throw v0
++
++    .line 262
++    :cond_71
++    new-instance v0, Ljava/io/IOException;
++
++    new-instance v1, Ljava/lang/StringBuilder;
++
++    invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v2, "Standby bucket readback differs: requested "
++
++    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-static {p0}, Lio/mesalabs/unica/battery/BatteryEngine;->bucketName(I)Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-virtual {v1, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    const-string v1, ", read "
++
++    invoke-virtual {p0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-static {p1}, Lio/mesalabs/unica/battery/BatteryEngine;->bucketName(I)Ljava/lang/String;
++
++    move-result-object p1
++
++    invoke-virtual {p0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-direct {v0, p0}, Ljava/io/IOException;-><init>(Ljava/lang/String;)V
++
++    throw v0
++.end method
++
++.method static compactEntry(Lorg/json/JSONObject;)Lorg/json/JSONObject;
++    .registers 9
++    .annotation system Ldalvik/annotation/Throws;
++        value = {
++            Lorg/json/JSONException;
++        }
++    .end annotation
++
++    .line 48
++    new-instance v0, Lorg/json/JSONObject;
++
++    invoke-virtual {p0}, Lorg/json/JSONObject;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-direct {v0, p0}, Lorg/json/JSONObject;-><init>(Ljava/lang/String;)V
++
++    .line 50
++    const-string v6, "effective"
++
++    const-string v7, "minimum"
++
++    const-string v1, "label"
++
++    const-string v2, "help"
++
++    const-string v3, "values"
++
++    const-string v4, "supported"
++
++    const-string v5, "current"
++
++    filled-new-array/range {v1 .. v7}, [Ljava/lang/String;
++
++    move-result-object p0
++
++    const/4 v1, 0x0
++
++    :goto_1c
++    const/4 v2, 0x7
++
++    if-ge v1, v2, :cond_27
++
++    aget-object v2, p0, v1
++
++    invoke-virtual {v0, v2}, Lorg/json/JSONObject;->remove(Ljava/lang/String;)Ljava/lang/Object;
++
++    add-int/lit8 v1, v1, 0x1
++
++    goto :goto_1c
++
++    .line 51
++    :cond_27
++    const-string p0, "kind"
++
++    invoke-virtual {v0, p0}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
++
++    move-result-object p0
++
++    const-string v1, "kernel"
++
++    invoke-virtual {v1, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result p0
++
++    if-nez p0, :cond_3a
++
++    const-string p0, "boot"
++
++    invoke-virtual {v0, p0}, Lorg/json/JSONObject;->remove(Ljava/lang/String;)Ljava/lang/Object;
++
++    .line 52
++    :cond_3a
++    const-string p0, "target"
++
++    invoke-virtual {v0, p0}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
++
++    const-string p0, "original"
++
++    invoke-virtual {v0, p0}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
++
++    .line 53
++    return-object v0
 +.end method
 +
 +.method static varargs config(Ljava/lang/String;[Ljava/lang/Class;[Ljava/lang/Object;)Ljava/lang/Object;
@@ -7467,7 +7896,7 @@ new file mode 100644
 +        }
 +    .end annotation
 +
-+    .line 52
++    .line 91
 +    const-string v0, "android.provider.DeviceConfig"
 +
 +    invoke-static {v0}, Ljava/lang/Class;->forName(Ljava/lang/String;)Ljava/lang/Class;
@@ -7487,6 +7916,122 @@ new file mode 100644
 +    return-object p0
 +.end method
 +
++.method static describe(Ljava/lang/Throwable;)Ljava/lang/String;
++    .registers 4
++
++    .line 243
++    nop
++
++    .line 244
++    const/4 v0, 0x0
++
++    :goto_2
++    const/16 v1, 0x8
++
++    if-ge v0, v1, :cond_1b
++
++    instance-of v1, p0, Ljava/lang/reflect/InvocationTargetException;
++
++    if-eqz v1, :cond_1b
++
++    .line 245
++    move-object v1, p0
++
++    check-cast v1, Ljava/lang/reflect/InvocationTargetException;
++
++    invoke-virtual {v1}, Ljava/lang/reflect/InvocationTargetException;->getTargetException()Ljava/lang/Throwable;
++
++    move-result-object v1
++
++    .line 246
++    if-eqz v1, :cond_1b
++
++    if-ne v1, p0, :cond_16
++
++    goto :goto_1b
++
++    .line 247
++    :cond_16
++    nop
++
++    .line 244
++    add-int/lit8 v0, v0, 0x1
++
++    move-object p0, v1
++
++    goto :goto_2
++
++    .line 249
++    :cond_1b
++    :goto_1b
++    invoke-virtual {p0}, Ljava/lang/Throwable;->getMessage()Ljava/lang/String;
++
++    move-result-object v0
++
++    .line 250
++    new-instance v1, Ljava/lang/StringBuilder;
++
++    invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
++
++    invoke-virtual {p0}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/Class;->getSimpleName()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-virtual {v1, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    if-eqz v0, :cond_4d
++
++    invoke-virtual {v0}, Ljava/lang/String;->isEmpty()Z
++
++    move-result v1
++
++    if-eqz v1, :cond_39
++
++    goto :goto_4d
++
++    :cond_39
++    new-instance v1, Ljava/lang/StringBuilder;
++
++    invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v2, ": "
++
++    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-virtual {v1, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v0
++
++    goto :goto_4f
++
++    :cond_4d
++    :goto_4d
++    const-string v0, ""
++
++    :goto_4f
++    invoke-virtual {p0, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    return-object p0
++.end method
++
 +.method static dumpActivity(Ljava/lang/String;)Ljava/lang/String;
 +    .registers 7
 +    .annotation system Ldalvik/annotation/Throws;
@@ -7495,17 +8040,17 @@ new file mode 100644
 +        }
 +    .end annotation
 +
-+    .line 55
++    .line 94
 +    invoke-static {}, Landroid/os/ParcelFileDescriptor;->createPipe()[Landroid/os/ParcelFileDescriptor;
 +
 +    move-result-object v0
 +
-+    .line 56
++    .line 95
 +    new-instance v1, Ljava/io/ByteArrayOutputStream;
 +
 +    invoke-direct {v1}, Ljava/io/ByteArrayOutputStream;-><init>()V
 +
-+    .line 57
++    .line 96
 +    new-instance v2, Ljava/lang/Thread;
 +
 +    new-instance v3, Lio/mesalabs/unica/battery/BatteryEngine$0;
@@ -7514,10 +8059,10 @@ new file mode 100644
 +
 +    invoke-direct {v2, v3}, Ljava/lang/Thread;-><init>(Ljava/lang/Runnable;)V
 +
-+    .line 58
++    .line 97
 +    invoke-virtual {v2}, Ljava/lang/Thread;->start()V
 +
-+    .line 59
++    .line 98
 +    const/4 v3, 0x1
 +
 +    :try_start_17
@@ -7541,12 +8086,12 @@ new file mode 100644
 +    :try_end_2a
 +    .catchall {:try_start_17 .. :try_end_2a} :catchall_4f
 +
-+    .line 60
++    .line 99
 +    aget-object p0, v0, v3
 +
 +    invoke-virtual {p0}, Landroid/os/ParcelFileDescriptor;->close()V
 +
-+    .line 61
++    .line 100
 +    const-wide/16 v3, 0x1388
 +
 +    invoke-virtual {v2, v3, v4}, Ljava/lang/Thread;->join(J)V
@@ -7557,7 +8102,7 @@ new file mode 100644
 +
 +    if-nez p0, :cond_41
 +
-+    .line 62
++    .line 101
 +    const-string p0, "UTF-8"
 +
 +    invoke-virtual {v1, p0}, Ljava/io/ByteArrayOutputStream;->toString(Ljava/lang/String;)Ljava/lang/String;
@@ -7566,7 +8111,7 @@ new file mode 100644
 +
 +    return-object p0
 +
-+    .line 61
++    .line 100
 +    :cond_41
 +    const/4 p0, 0x0
 +
@@ -7582,7 +8127,7 @@ new file mode 100644
 +
 +    throw p0
 +
-+    .line 60
++    .line 99
 +    :catchall_4f
 +    move-exception p0
 +
@@ -7606,12 +8151,12 @@ new file mode 100644
 +        }
 +    .end annotation
 +
-+    .line 76
++    .line 115
 +    new-instance v0, Ljava/util/TreeSet;
 +
 +    invoke-direct {v0}, Ljava/util/TreeSet;-><init>()V
 +
-+    .line 77
++    .line 116
 +    :try_start_5
 +    new-instance v1, Ljava/io/File;
 +
@@ -7662,7 +8207,7 @@ new file mode 100644
 +    :catch_2e
 +    move-exception p0
 +
-+    .line 78
++    .line 117
 +    :cond_2f
 +    new-instance p0, Ljava/util/ArrayList;
 +
@@ -7736,14 +8281,14 @@ new file mode 100644
 +        }
 +    .end annotation
 +
-+    .line 47
++    .line 86
 +    const-string v0, "android.os.IDeviceIdleController"
 +
 +    invoke-static {v0}, Ljava/lang/Class;->forName(Ljava/lang/String;)Ljava/lang/Class;
 +
 +    move-result-object v0
 +
-+    .line 48
++    .line 87
 +    const-string v1, "android.os.IDeviceIdleController$Stub"
 +
 +    invoke-static {v1}, Ljava/lang/Class;->forName(Ljava/lang/String;)Ljava/lang/Class;
@@ -7782,7 +8327,7 @@ new file mode 100644
 +
 +    move-result-object v1
 +
-+    .line 49
++    .line 88
 +    invoke-virtual {v0, p0, p1}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
 +
 +    move-result-object p0
@@ -7797,7 +8342,7 @@ new file mode 100644
 +.method static synthetic lambda$apply$1(Ljava/lang/String;Ljava/lang/String;)I
 +    .registers 3
 +
-+    .line 291
++    .line 372
 +    const-string v0, "power_saver"
 +
 +    invoke-virtual {p0, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -7822,7 +8367,7 @@ new file mode 100644
 +.method static synthetic lambda$apply$2(Ljava/lang/String;Ljava/lang/String;)I
 +    .registers 2
 +
-+    .line 326
++    .line 414
 +    invoke-static {p0}, Lio/mesalabs/unica/battery/BatteryEngine;->writeOrder(Ljava/lang/String;)I
 +
 +    move-result p0
@@ -7841,7 +8386,7 @@ new file mode 100644
 +.method static synthetic lambda$dumpActivity$0([Landroid/os/ParcelFileDescriptor;Ljava/io/ByteArrayOutputStream;)V
 +    .registers 7
 +
-+    .line 57
++    .line 96
 +    :try_start_0
 +    new-instance v0, Landroid/os/ParcelFileDescriptor$AutoCloseInputStream;
 +
@@ -7929,7 +8474,7 @@ new file mode 100644
 +        }
 +    .end annotation
 +
-+    .line 74
++    .line 113
 +    new-instance v0, Ljava/util/ArrayList;
 +
 +    invoke-direct {v0}, Ljava/util/ArrayList;-><init>()V
@@ -7966,128 +8511,246 @@ new file mode 100644
 +.end method
 +
 +.method static read(Ljava/io/File;)Ljava/lang/String;
-+    .registers 5
++    .registers 2
 +    .annotation system Ldalvik/annotation/Throws;
 +        value = {
 +            Ljava/io/IOException;
 +        }
 +    .end annotation
 +
-+    .line 32
++    .line 33
++    const/high16 v0, 0x100000
++
++    invoke-static {p0, v0}, Lio/mesalabs/unica/battery/BatteryEngine;->read(Ljava/io/File;I)Ljava/lang/String;
++
++    move-result-object p0
++
++    return-object p0
++.end method
++
++.method static read(Ljava/io/File;I)Ljava/lang/String;
++    .registers 7
++    .annotation system Ldalvik/annotation/Throws;
++        value = {
++            Ljava/io/IOException;
++        }
++    .end annotation
++
++    .line 36
 +    new-instance v0, Ljava/io/FileInputStream;
 +
 +    invoke-direct {v0, p0}, Ljava/io/FileInputStream;-><init>(Ljava/io/File;)V
 +
 +    :try_start_5
-+    new-instance p0, Ljava/io/ByteArrayOutputStream;
++    new-instance v1, Ljava/io/ByteArrayOutputStream;
 +
-+    invoke-direct {p0}, Ljava/io/ByteArrayOutputStream;-><init>()V
++    invoke-direct {v1}, Ljava/io/ByteArrayOutputStream;-><init>()V
 +    :try_end_a
-+    .catchall {:try_start_5 .. :try_end_a} :catchall_45
++    .catchall {:try_start_5 .. :try_end_a} :catchall_64
 +
-+    .line 33
-+    const/16 v1, 0x2000
++    .line 37
++    const/16 v2, 0x2000
 +
 +    :try_start_c
-+    new-array v1, v1, [B
++    new-array v2, v2, [B
 +
-+    .line 34
++    .line 38
 +    :goto_e
-+    invoke-virtual {v0, v1}, Ljava/io/FileInputStream;->read([B)I
++    invoke-virtual {v0, v2}, Ljava/io/FileInputStream;->read([B)I
 +
-+    move-result v2
++    move-result v3
 +
-+    const/4 v3, -0x1
++    const/4 v4, -0x1
 +
-+    if-eq v2, v3, :cond_2a
++    if-eq v3, v4, :cond_49
 +
-+    const/4 v3, 0x0
++    invoke-virtual {v1}, Ljava/io/ByteArrayOutputStream;->size()I
 +
-+    invoke-virtual {p0, v1, v3, v2}, Ljava/io/ByteArrayOutputStream;->write([BII)V
++    move-result v4
 +
-+    invoke-virtual {p0}, Ljava/io/ByteArrayOutputStream;->size()I
++    sub-int v4, p1, v4
 +
-+    move-result v2
++    if-gt v3, v4, :cond_22
 +
-+    const/high16 v3, 0x100000
++    const/4 v4, 0x0
 +
-+    if-gt v2, v3, :cond_22
++    invoke-virtual {v1, v2, v4, v3}, Ljava/io/ByteArrayOutputStream;->write([BII)V
 +
 +    goto :goto_e
 +
 +    :cond_22
-+    new-instance v1, Ljava/io/IOException;
++    new-instance v2, Ljava/io/IOException;
 +
-+    const-string v2, "File too large"
++    new-instance v3, Ljava/lang/StringBuilder;
 +
-+    invoke-direct {v1, v2}, Ljava/io/IOException;-><init>(Ljava/lang/String;)V
++    invoke-direct {v3}, Ljava/lang/StringBuilder;-><init>()V
 +
-+    throw v1
++    invoke-virtual {p0}, Ljava/io/File;->getName()Ljava/lang/String;
 +
-+    .line 35
-+    :cond_2a
-+    const-string v1, "UTF-8"
++    move-result-object p0
 +
-+    invoke-virtual {p0, v1}, Ljava/io/ByteArrayOutputStream;->toString(Ljava/lang/String;)Ljava/lang/String;
++    invoke-virtual {v3, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
-+    move-result-object v1
++    move-result-object p0
 +
-+    invoke-virtual {v1}, Ljava/lang/String;->trim()Ljava/lang/String;
++    const-string v3, " exceeds "
 +
-+    move-result-object v1
-+    :try_end_34
-+    .catchall {:try_start_c .. :try_end_34} :catchall_3b
++    invoke-virtual {p0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0, p1}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    const-string p1, " bytes; preserve the file for recovery"
++
++    invoke-virtual {p0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-direct {v2, p0}, Ljava/io/IOException;-><init>(Ljava/lang/String;)V
++
++    throw v2
++
++    .line 39
++    :cond_49
++    const-string p0, "UTF-8"
++
++    invoke-virtual {v1, p0}, Ljava/io/ByteArrayOutputStream;->toString(Ljava/lang/String;)Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/String;->trim()Ljava/lang/String;
++
++    move-result-object p0
++    :try_end_53
++    .catchall {:try_start_c .. :try_end_53} :catchall_5a
++
++    .line 40
++    :try_start_53
++    invoke-virtual {v1}, Ljava/io/ByteArrayOutputStream;->close()V
++    :try_end_56
++    .catchall {:try_start_53 .. :try_end_56} :catchall_64
++
++    invoke-virtual {v0}, Ljava/io/FileInputStream;->close()V
++
++    .line 39
++    return-object p0
 +
 +    .line 36
-+    :try_start_34
-+    invoke-virtual {p0}, Ljava/io/ByteArrayOutputStream;->close()V
-+    :try_end_37
-+    .catchall {:try_start_34 .. :try_end_37} :catchall_45
-+
-+    invoke-virtual {v0}, Ljava/io/FileInputStream;->close()V
-+
-+    .line 35
-+    return-object v1
-+
-+    .line 32
-+    :catchall_3b
-+    move-exception v1
-+
-+    :try_start_3c
-+    invoke-virtual {p0}, Ljava/io/ByteArrayOutputStream;->close()V
-+    :try_end_3f
-+    .catchall {:try_start_3c .. :try_end_3f} :catchall_40
-+
-+    goto :goto_44
-+
-+    :catchall_40
++    :catchall_5a
 +    move-exception p0
 +
-+    :try_start_41
-+    invoke-virtual {v1, p0}, Ljava/lang/Throwable;->addSuppressed(Ljava/lang/Throwable;)V
++    :try_start_5b
++    invoke-virtual {v1}, Ljava/io/ByteArrayOutputStream;->close()V
++    :try_end_5e
++    .catchall {:try_start_5b .. :try_end_5e} :catchall_5f
 +
-+    :goto_44
-+    throw v1
-+    :try_end_45
-+    .catchall {:try_start_41 .. :try_end_45} :catchall_45
++    goto :goto_63
 +
-+    :catchall_45
-+    move-exception p0
++    :catchall_5f
++    move-exception p1
 +
-+    :try_start_46
-+    invoke-virtual {v0}, Ljava/io/FileInputStream;->close()V
-+    :try_end_49
-+    .catchall {:try_start_46 .. :try_end_49} :catchall_4a
++    :try_start_60
++    invoke-virtual {p0, p1}, Ljava/lang/Throwable;->addSuppressed(Ljava/lang/Throwable;)V
 +
-+    goto :goto_4e
-+
-+    :catchall_4a
-+    move-exception v0
-+
-+    invoke-virtual {p0, v0}, Ljava/lang/Throwable;->addSuppressed(Ljava/lang/Throwable;)V
-+
-+    :goto_4e
++    :goto_63
 +    throw p0
++    :try_end_64
++    .catchall {:try_start_60 .. :try_end_64} :catchall_64
++
++    :catchall_64
++    move-exception p0
++
++    :try_start_65
++    invoke-virtual {v0}, Ljava/io/FileInputStream;->close()V
++    :try_end_68
++    .catchall {:try_start_65 .. :try_end_68} :catchall_69
++
++    goto :goto_6d
++
++    :catchall_69
++    move-exception p1
++
++    invoke-virtual {p0, p1}, Ljava/lang/Throwable;->addSuppressed(Ljava/lang/Throwable;)V
++
++    :goto_6d
++    throw p0
++.end method
++
++.method static readJournal(Ljava/io/File;)Lorg/json/JSONObject;
++    .registers 4
++    .annotation system Ldalvik/annotation/Throws;
++        value = {
++            Ljava/lang/Exception;
++        }
++    .end annotation
++
++    .line 56
++    invoke-virtual {p0}, Ljava/io/File;->exists()Z
++
++    move-result v0
++
++    if-eqz v0, :cond_12
++
++    new-instance v0, Lorg/json/JSONObject;
++
++    const/high16 v1, 0x1000000
++
++    invoke-static {p0, v1}, Lio/mesalabs/unica/battery/BatteryEngine;->read(Ljava/io/File;I)Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-direct {v0, p0}, Lorg/json/JSONObject;-><init>(Ljava/lang/String;)V
++
++    goto :goto_17
++
++    :cond_12
++    new-instance v0, Lorg/json/JSONObject;
++
++    invoke-direct {v0}, Lorg/json/JSONObject;-><init>()V
++
++    .line 57
++    :goto_17
++    invoke-virtual {v0}, Lorg/json/JSONObject;->keys()Ljava/util/Iterator;
++
++    move-result-object p0
++
++    :goto_1b
++    invoke-interface {p0}, Ljava/util/Iterator;->hasNext()Z
++
++    move-result v1
++
++    if-eqz v1, :cond_33
++
++    .line 58
++    invoke-interface {p0}, Ljava/util/Iterator;->next()Ljava/lang/Object;
++
++    move-result-object v1
++
++    check-cast v1, Ljava/lang/String;
++
++    invoke-virtual {v0, v1}, Lorg/json/JSONObject;->getJSONObject(Ljava/lang/String;)Lorg/json/JSONObject;
++
++    move-result-object v2
++
++    invoke-static {v2}, Lio/mesalabs/unica/battery/BatteryEngine;->compactEntry(Lorg/json/JSONObject;)Lorg/json/JSONObject;
++
++    move-result-object v2
++
++    invoke-virtual {v0, v1, v2}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
++
++    .line 59
++    goto :goto_1b
++
++    .line 60
++    :cond_33
++    return-object v0
 +.end method
 +
 +.method static service(Ljava/lang/String;)Landroid/os/IBinder;
@@ -8098,7 +8761,7 @@ new file mode 100644
 +        }
 +    .end annotation
 +
-+    .line 44
++    .line 83
 +    const-string v0, "android.os.ServiceManager"
 +
 +    invoke-static {v0}, Ljava/lang/Class;->forName(Ljava/lang/String;)Ljava/lang/Class;
@@ -8136,10 +8799,268 @@ new file mode 100644
 +    return-object p0
 +.end method
 +
++.method static writeJournal(Ljava/io/File;Lorg/json/JSONObject;)V
++    .registers 3
++    .annotation system Ldalvik/annotation/Throws;
++        value = {
++            Ljava/lang/Exception;
++        }
++    .end annotation
++
++    .line 62
++    const/high16 v0, 0x1000000
++
++    invoke-static {p0, p1, v0}, Lio/mesalabs/unica/battery/BatteryEngine;->writeJournal(Ljava/io/File;Lorg/json/JSONObject;I)V
++
++    return-void
++.end method
++
++.method static writeJournal(Ljava/io/File;Lorg/json/JSONObject;I)V
++    .registers 8
++    .annotation system Ldalvik/annotation/Throws;
++        value = {
++            Ljava/lang/Exception;
++        }
++    .end annotation
++
++    .line 64
++    new-instance v0, Lorg/json/JSONObject;
++
++    invoke-direct {v0}, Lorg/json/JSONObject;-><init>()V
++
++    .line 65
++    invoke-virtual {p1}, Lorg/json/JSONObject;->keys()Ljava/util/Iterator;
++
++    move-result-object v1
++
++    :goto_9
++    invoke-interface {v1}, Ljava/util/Iterator;->hasNext()Z
++
++    move-result v2
++
++    if-eqz v2, :cond_21
++
++    .line 66
++    invoke-interface {v1}, Ljava/util/Iterator;->next()Ljava/lang/Object;
++
++    move-result-object v2
++
++    check-cast v2, Ljava/lang/String;
++
++    invoke-virtual {p1, v2}, Lorg/json/JSONObject;->getJSONObject(Ljava/lang/String;)Lorg/json/JSONObject;
++
++    move-result-object v3
++
++    invoke-static {v3}, Lio/mesalabs/unica/battery/BatteryEngine;->compactEntry(Lorg/json/JSONObject;)Lorg/json/JSONObject;
++
++    move-result-object v3
++
++    invoke-virtual {v0, v2, v3}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
++
++    .line 67
++    goto :goto_9
++
++    .line 68
++    :cond_21
++    invoke-virtual {v0}, Lorg/json/JSONObject;->toString()Ljava/lang/String;
++
++    move-result-object p1
++
++    .line 69
++    sget-object v0, Ljava/nio/charset/StandardCharsets;->UTF_8:Ljava/nio/charset/Charset;
++
++    invoke-virtual {p1, v0}, Ljava/lang/String;->getBytes(Ljava/nio/charset/Charset;)[B
++
++    move-result-object v0
++
++    array-length v0, v0
++
++    if-gt v0, p2, :cond_a6
++
++    .line 72
++    new-instance p2, Ljava/io/File;
++
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++
++    invoke-virtual {p0}, Ljava/io/File;->getPath()Ljava/lang/String;
++
++    move-result-object v1
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    const-string v1, ".legacy.bak"
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v0
++
++    invoke-direct {p2, v0}, Ljava/io/File;-><init>(Ljava/lang/String;)V
++
++    .line 73
++    invoke-virtual {p0}, Ljava/io/File;->exists()Z
++
++    move-result v0
++
++    if-eqz v0, :cond_a2
++
++    invoke-virtual {p0}, Ljava/io/File;->length()J
++
++    move-result-wide v0
++
++    const-wide/32 v2, 0x100000
++
++    cmp-long v0, v0, v2
++
++    if-lez v0, :cond_a2
++
++    invoke-virtual {p2}, Ljava/io/File;->exists()Z
++
++    move-result v0
++
++    if-nez v0, :cond_a2
++
++    .line 74
++    :try_start_61
++    new-instance v0, Ljava/io/FileInputStream;
++
++    invoke-direct {v0, p0}, Ljava/io/FileInputStream;-><init>(Ljava/io/File;)V
++    :try_end_66
++    .catch Ljava/lang/Exception; {:try_start_61 .. :try_end_66} :catch_9d
++
++    :try_start_66
++    new-instance v1, Ljava/io/FileOutputStream;
++
++    invoke-direct {v1, p2}, Ljava/io/FileOutputStream;-><init>(Ljava/io/File;)V
++    :try_end_6b
++    .catchall {:try_start_66 .. :try_end_6b} :catchall_93
++
++    .line 75
++    const/16 v2, 0x2000
++
++    :try_start_6d
++    new-array v2, v2, [B
++
++    .line 76
++    :goto_6f
++    invoke-virtual {v0, v2}, Ljava/io/FileInputStream;->read([B)I
++
++    move-result v3
++
++    const/4 v4, -0x1
++
++    if-eq v3, v4, :cond_7b
++
++    const/4 v4, 0x0
++
++    invoke-virtual {v1, v2, v4, v3}, Ljava/io/FileOutputStream;->write([BII)V
++
++    goto :goto_6f
++
++    .line 77
++    :cond_7b
++    invoke-virtual {v1}, Ljava/io/FileOutputStream;->getFD()Ljava/io/FileDescriptor;
++
++    move-result-object v2
++
++    invoke-virtual {v2}, Ljava/io/FileDescriptor;->sync()V
++    :try_end_82
++    .catchall {:try_start_6d .. :try_end_82} :catchall_89
++
++    .line 78
++    :try_start_82
++    invoke-virtual {v1}, Ljava/io/FileOutputStream;->close()V
++    :try_end_85
++    .catchall {:try_start_82 .. :try_end_85} :catchall_93
++
++    :try_start_85
++    invoke-virtual {v0}, Ljava/io/FileInputStream;->close()V
++    :try_end_88
++    .catch Ljava/lang/Exception; {:try_start_85 .. :try_end_88} :catch_9d
++
++    goto :goto_a2
++
++    .line 74
++    :catchall_89
++    move-exception p0
++
++    :try_start_8a
++    invoke-virtual {v1}, Ljava/io/FileOutputStream;->close()V
++    :try_end_8d
++    .catchall {:try_start_8a .. :try_end_8d} :catchall_8e
++
++    goto :goto_92
++
++    :catchall_8e
++    move-exception p1
++
++    :try_start_8f
++    invoke-virtual {p0, p1}, Ljava/lang/Throwable;->addSuppressed(Ljava/lang/Throwable;)V
++
++    :goto_92
++    throw p0
++    :try_end_93
++    .catchall {:try_start_8f .. :try_end_93} :catchall_93
++
++    :catchall_93
++    move-exception p0
++
++    :try_start_94
++    invoke-virtual {v0}, Ljava/io/FileInputStream;->close()V
++    :try_end_97
++    .catchall {:try_start_94 .. :try_end_97} :catchall_98
++
++    goto :goto_9c
++
++    :catchall_98
++    move-exception p1
++
++    :try_start_99
++    invoke-virtual {p0, p1}, Ljava/lang/Throwable;->addSuppressed(Ljava/lang/Throwable;)V
++
++    :goto_9c
++    throw p0
++    :try_end_9d
++    .catch Ljava/lang/Exception; {:try_start_99 .. :try_end_9d} :catch_9d
++
++    .line 78
++    :catch_9d
++    move-exception p0
++
++    invoke-virtual {p2}, Ljava/io/File;->delete()Z
++
++    throw p0
++
++    .line 80
++    :cond_a2
++    :goto_a2
++    invoke-static {p0, p1}, Lio/mesalabs/unica/battery/BatteryEngine;->atomic(Ljava/io/File;Ljava/lang/String;)V
++
++    .line 81
++    return-void
++
++    .line 70
++    :cond_a6
++    new-instance p0, Ljava/io/IOException;
++
++    const-string p1, "Rollback journal capacity exceeded; no new controls applied"
++
++    invoke-direct {p0, p1}, Ljava/io/IOException;-><init>(Ljava/lang/String;)V
++
++    throw p0
++.end method
++
 +.method static writeOrder(Ljava/lang/String;)I
 +    .registers 2
 +
-+    .line 333
++    .line 422
 +    const-string v0, "power_saver"
 +
 +    invoke-virtual {p0, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -8152,7 +9073,7 @@ new file mode 100644
 +
 +    return p0
 +
-+    .line 334
++    .line 423
 +    :cond_a
 +    const-string v0, "refresh_min"
 +
@@ -8166,7 +9087,7 @@ new file mode 100644
 +
 +    return p0
 +
-+    .line 335
++    .line 424
 +    :cond_14
 +    const-string v0, "night_mode"
 +
@@ -8180,7 +9101,7 @@ new file mode 100644
 +
 +    return p0
 +
-+    .line 336
++    .line 425
 +    :cond_1e
 +    const-string v0, "cpu_"
 +
@@ -8200,13 +9121,13 @@ new file mode 100644
 +
 +    goto :goto_31
 +
-+    .line 337
++    .line 426
 +    :cond_2f
 +    const/4 p0, 0x2
 +
 +    return p0
 +
-+    .line 336
++    .line 425
 +    :cond_31
 +    :goto_31
 +    const/4 p0, 0x3
@@ -8238,7 +9159,7 @@ new file mode 100644
 +        }
 +    .end annotation
 +
-+    .line 66
++    .line 105
 +    const-string v0, "current"
 +
 +    const-string v1, "supported"
@@ -8287,7 +9208,7 @@ new file mode 100644
 +
 +    move-result-object p2
 +
-+    .line 68
++    .line 107
 +    const/4 p3, 0x0
 +
 +    :try_start_32
@@ -8295,10 +9216,10 @@ new file mode 100644
 +
 +    move-result-object p4
 +
-+    .line 69
++    .line 108
 +    nop
 +
-+    .line 70
++    .line 109
 +    invoke-interface {p6}, Ljava/util/Collection;->isEmpty()Z
 +
 +    move-result p5
@@ -8321,7 +9242,7 @@ new file mode 100644
 +    :try_end_47
 +    .catch Ljava/lang/Exception; {:try_start_32 .. :try_end_47} :catch_48
 +
-+    .line 71
++    .line 110
 +    goto :goto_52
 +
 +    :catch_48
@@ -8335,13 +9256,13 @@ new file mode 100644
 +
 +    invoke-virtual {p3, v0, p4}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
 +
-+    .line 72
++    .line 111
 +    :goto_52
 +    iget-object p3, p0, Lio/mesalabs/unica/battery/BatteryEngine;->specs:Ljava/util/LinkedHashMap;
 +
 +    invoke-virtual {p3, p1, p2}, Ljava/util/LinkedHashMap;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 +
-+    .line 73
++    .line 112
 +    return-void
 +.end method
 +
@@ -8353,7 +9274,7 @@ new file mode 100644
 +        }
 +    .end annotation
 +
-+    .line 90
++    .line 129
 +    iget-object v0, p0, Lio/mesalabs/unica/battery/BatteryEngine;->context:Landroid/content/Context;
 +
 +    invoke-virtual {v0}, Landroid/content/Context;->getPackageManager()Landroid/content/pm/PackageManager;
@@ -8374,7 +9295,7 @@ new file mode 100644
 +
 +    iget v0, v0, Landroid/content/pm/ApplicationInfo;->uid:I
 +
-+    .line 91
++    .line 130
 +    const/16 v1, 0x2710
 +
 +    if-lt v0, v1, :cond_20
@@ -8387,10 +9308,10 @@ new file mode 100644
 +
 +    if-ne v0, p1, :cond_20
 +
-+    .line 92
++    .line 131
 +    return v0
 +
-+    .line 91
++    .line 130
 +    :cond_20
 +    new-instance p1, Ljava/io/IOException;
 +
@@ -8402,14 +9323,14 @@ new file mode 100644
 +.end method
 +
 +.method apply(Lorg/json/JSONObject;)Z
-+    .registers 24
++    .registers 26
 +    .annotation system Ldalvik/annotation/Throws;
 +        value = {
 +            Ljava/lang/Exception;
 +        }
 +    .end annotation
 +
-+    .line 263
++    .line 343
 +    move-object/from16 v1, p0
 +
 +    move-object/from16 v0, p1
@@ -8418,45 +9339,52 @@ new file mode 100644
 +
 +    const-string v3, "exemption"
 +
-+    const-string v4, "enabled"
++    const/4 v4, 0x0
 +
-+    invoke-virtual {v0, v4}, Lorg/json/JSONObject;->getBoolean(Ljava/lang/String;)Z
++    iput-boolean v4, v1, Lio/mesalabs/unica/battery/BatteryEngine;->policyLimited:Z
 +
-+    move-result v4
++    iput v4, v1, Lio/mesalabs/unica/battery/BatteryEngine;->deferredRestores:I
 +
-+    .line 264
-+    new-instance v5, Lorg/json/JSONObject;
++    .line 344
++    const-string v5, "enabled"
 +
-+    invoke-direct {v5}, Lorg/json/JSONObject;-><init>()V
++    invoke-virtual {v0, v5}, Lorg/json/JSONObject;->getBoolean(Ljava/lang/String;)Z
 +
-+    const-string v6, "controls"
++    move-result v5
 +
-+    invoke-virtual {v0, v6}, Lorg/json/JSONObject;->getJSONObject(Ljava/lang/String;)Lorg/json/JSONObject;
++    .line 345
++    new-instance v6, Lorg/json/JSONObject;
 +
-+    move-result-object v6
++    invoke-direct {v6}, Lorg/json/JSONObject;-><init>()V
 +
-+    .line 265
-+    const-string v7, "false"
++    const-string v7, "controls"
 +
-+    const-string v8, "bucket:"
++    invoke-virtual {v0, v7}, Lorg/json/JSONObject;->getJSONObject(Ljava/lang/String;)Lorg/json/JSONObject;
 +
-+    const-string v9, "exemption:"
++    move-result-object v7
 +
-+    const-string v10, "bucket"
++    .line 346
++    const-string v8, "false"
 +
-+    if-eqz v4, :cond_9f
++    const-string v9, "bucket:"
 +
-+    .line 266
-+    invoke-virtual {v6}, Lorg/json/JSONObject;->keys()Ljava/util/Iterator;
++    const-string v10, "exemption:"
++
++    const-string v11, "bucket"
++
++    if-eqz v5, :cond_a5
++
++    .line 347
++    invoke-virtual {v7}, Lorg/json/JSONObject;->keys()Ljava/util/Iterator;
 +
 +    move-result-object v12
 +
-+    :goto_27
++    :goto_2c
 +    invoke-interface {v12}, Ljava/util/Iterator;->hasNext()Z
 +
 +    move-result v13
 +
-+    if-eqz v13, :cond_3b
++    if-eqz v13, :cond_40
 +
 +    invoke-interface {v12}, Ljava/util/Iterator;->next()Ljava/lang/Object;
 +
@@ -8464,16 +9392,16 @@ new file mode 100644
 +
 +    check-cast v13, Ljava/lang/String;
 +
-+    invoke-virtual {v6, v13}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
++    invoke-virtual {v7, v13}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
 +
 +    move-result-object v14
 +
-+    invoke-virtual {v5, v13, v14}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
++    invoke-virtual {v6, v13, v14}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
 +
-+    goto :goto_27
++    goto :goto_2c
 +
-+    .line 267
-+    :cond_3b
++    .line 348
++    :cond_40
 +    const-string v12, "exemptions"
 +
 +    const-string v13, "packages"
@@ -8482,159 +9410,161 @@ new file mode 100644
 +
 +    move-result-object v12
 +
-+    const/4 v14, 0x0
++    move v14, v4
 +
-+    :goto_44
++    :goto_49
 +    const/4 v15, 0x2
 +
-+    if-ge v14, v15, :cond_9a
++    if-ge v14, v15, :cond_a0
 +
 +    aget-object v15, v12, v14
 +
-+    .line 268
++    .line 349
 +    invoke-virtual {v0, v15}, Lorg/json/JSONObject;->getJSONArray(Ljava/lang/String;)Lorg/json/JSONArray;
 +
-+    move-result-object v11
++    move-result-object v4
 +
-+    .line 269
-+    move/from16 v16, v4
++    .line 350
++    move/from16 v16, v5
 +
-+    const/4 v4, 0x0
++    const/4 v5, 0x0
 +
-+    :goto_50
-+    move-object/from16 v17, v7
++    :goto_55
++    move-object/from16 v17, v8
 +
-+    invoke-virtual {v11}, Lorg/json/JSONArray;->length()I
++    invoke-virtual {v4}, Lorg/json/JSONArray;->length()I
 +
-+    move-result v7
++    move-result v8
 +
-+    if-ge v4, v7, :cond_91
++    if-ge v5, v8, :cond_96
 +
-+    new-instance v7, Ljava/lang/StringBuilder;
++    new-instance v8, Ljava/lang/StringBuilder;
 +
-+    invoke-direct {v7}, Ljava/lang/StringBuilder;-><init>()V
++    invoke-direct {v8}, Ljava/lang/StringBuilder;-><init>()V
 +
 +    invoke-virtual {v15, v13}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
 +    move-result v18
 +
-+    if-eqz v18, :cond_67
++    if-eqz v18, :cond_6c
 +
-+    move-object/from16 v18, v12
-+
-+    move-object v12, v8
-+
-+    goto :goto_6a
-+
-+    :cond_67
 +    move-object/from16 v18, v12
 +
 +    move-object v12, v9
 +
-+    :goto_6a
-+    invoke-virtual {v7, v12}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++    goto :goto_6f
 +
-+    move-result-object v7
++    :cond_6c
++    move-object/from16 v18, v12
 +
-+    invoke-virtual {v11, v4}, Lorg/json/JSONArray;->getString(I)Ljava/lang/String;
++    move-object v12, v10
++
++    :goto_6f
++    invoke-virtual {v8, v12}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v8
++
++    invoke-virtual {v4, v5}, Lorg/json/JSONArray;->getString(I)Ljava/lang/String;
 +
 +    move-result-object v12
 +
-+    invoke-virtual {v7, v12}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++    invoke-virtual {v8, v12}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
-+    move-result-object v7
++    move-result-object v8
 +
-+    invoke-virtual {v7}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++    invoke-virtual {v8}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
 +
-+    move-result-object v7
++    move-result-object v8
 +
 +    invoke-virtual {v15, v13}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
 +    move-result v12
 +
-+    if-eqz v12, :cond_85
++    if-eqz v12, :cond_8a
 +
-+    invoke-virtual {v0, v10}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
++    invoke-virtual {v0, v11}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
 +
 +    move-result-object v12
 +
-+    goto :goto_87
++    goto :goto_8c
 +
-+    :cond_85
++    :cond_8a
 +    move-object/from16 v12, v17
 +
-+    :goto_87
-+    invoke-virtual {v5, v7, v12}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
++    :goto_8c
++    invoke-virtual {v6, v8, v12}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
 +
-+    add-int/lit8 v4, v4, 0x1
++    add-int/lit8 v5, v5, 0x1
 +
-+    move-object/from16 v7, v17
++    move-object/from16 v8, v17
 +
 +    move-object/from16 v12, v18
 +
-+    goto :goto_50
++    goto :goto_55
 +
-+    .line 267
-+    :cond_91
++    .line 348
++    :cond_96
 +    move-object/from16 v18, v12
 +
 +    add-int/lit8 v14, v14, 0x1
 +
-+    move/from16 v4, v16
++    move/from16 v5, v16
 +
-+    move-object/from16 v7, v17
++    move-object/from16 v8, v17
 +
-+    goto :goto_44
++    const/4 v4, 0x0
 +
-+    :cond_9a
-+    move/from16 v16, v4
++    goto :goto_49
 +
-+    move-object/from16 v17, v7
++    :cond_a0
++    move/from16 v16, v5
 +
-+    goto :goto_a3
++    move-object/from16 v17, v8
 +
-+    .line 265
-+    :cond_9f
-+    move/from16 v16, v4
++    goto :goto_a9
 +
-+    move-object/from16 v17, v7
++    .line 346
++    :cond_a5
++    move/from16 v16, v5
 +
-+    .line 272
-+    :goto_a3
++    move-object/from16 v17, v8
++
++    .line 353
++    :goto_a9
 +    nop
 +
-+    .line 273
++    .line 354
 +    new-instance v4, Ljava/util/LinkedHashMap;
 +
 +    invoke-direct {v4}, Ljava/util/LinkedHashMap;-><init>()V
 +
-+    .line 274
-+    const-string v7, "background"
++    .line 355
++    const-string v5, "background"
 +
-+    const-string v11, ": "
++    const-string v8, ": "
 +
-+    if-eqz v16, :cond_1c6
++    if-eqz v16, :cond_1cc
 +
 +    const-string v0, "restricted"
 +
-+    invoke-virtual {v6, v7}, Lorg/json/JSONObject;->optString(Ljava/lang/String;)Ljava/lang/String;
++    invoke-virtual {v7, v5}, Lorg/json/JSONObject;->optString(Ljava/lang/String;)Ljava/lang/String;
 +
-+    move-result-object v6
++    move-result-object v7
 +
-+    invoke-virtual {v0, v6}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    invoke-virtual {v0, v7}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
 +    move-result v0
 +
-+    if-eqz v0, :cond_1c6
++    if-eqz v0, :cond_1cc
 +
-+    .line 276
-+    :try_start_bb
++    .line 357
++    :try_start_c1
 +    invoke-virtual {v1}, Lio/mesalabs/unica/battery/BatteryEngine;->backgroundTargets()Ljava/util/List;
 +
 +    move-result-object v0
 +
-+    .line 277
-+    iget-object v6, v1, Lio/mesalabs/unica/battery/BatteryEngine;->notes:Ljava/util/List;
++    .line 358
++    iget-object v7, v1, Lio/mesalabs/unica/battery/BatteryEngine;->notes:Ljava/util/List;
 +
 +    new-instance v13, Ljava/lang/StringBuilder;
 +
@@ -8664,23 +9594,23 @@ new file mode 100644
 +
 +    move-result-object v13
 +
-+    invoke-interface {v6, v13}, Ljava/util/List;->add(Ljava/lang/Object;)Z
++    invoke-interface {v7, v13}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 +
-+    .line 278
++    .line 359
 +    invoke-interface {v0}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 +
-+    move-result-object v6
++    move-result-object v7
 +
 +    const/4 v0, 0x1
 +
-+    :goto_e6
-+    invoke-interface {v6}, Ljava/util/Iterator;->hasNext()Z
++    :goto_ec
++    invoke-interface {v7}, Ljava/util/Iterator;->hasNext()Z
 +
 +    move-result v13
 +
-+    if-eqz v13, :cond_1a2
++    if-eqz v13, :cond_1a8
 +
-+    invoke-interface {v6}, Ljava/util/Iterator;->next()Ljava/lang/Object;
++    invoke-interface {v7}, Ljava/util/Iterator;->next()Ljava/lang/Object;
 +
 +    move-result-object v13
 +
@@ -8690,25 +9620,25 @@ new file mode 100644
 +
 +    const-string v15, "bg_any"
 +
-+    filled-new-array {v10, v3, v14, v15, v2}, [Ljava/lang/String;
++    filled-new-array {v11, v3, v14, v15, v2}, [Ljava/lang/String;
 +
 +    move-result-object v14
-+    :try_end_fa
-+    .catch Ljava/lang/Exception; {:try_start_bb .. :try_end_fa} :catch_1a5
++    :try_end_100
++    .catch Ljava/lang/Exception; {:try_start_c1 .. :try_end_100} :catch_1ab
 +
 +    const/4 v15, 0x0
 +
-+    :goto_fb
++    :goto_101
 +    const/16 p1, 0x1
 +
 +    const/4 v12, 0x5
 +
-+    if-ge v15, v12, :cond_19a
++    if-ge v15, v12, :cond_1a0
 +
-+    :try_start_100
++    :try_start_106
 +    aget-object v12, v14, v15
 +
-+    .line 279
++    .line 360
 +    move/from16 v16, v0
 +
 +    new-instance v0, Ljava/lang/StringBuilder;
@@ -8719,11 +9649,11 @@ new file mode 100644
 +
 +    move-result-object v0
 +
-+    move-object/from16 v18, v6
++    move-object/from16 v18, v7
 +
-+    const-string v6, ":"
++    const-string v7, ":"
 +
-+    invoke-virtual {v0, v6}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++    invoke-virtual {v0, v7}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
 +    move-result-object v0
 +
@@ -8733,60 +9663,60 @@ new file mode 100644
 +
 +    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
 +
-+    move-result-object v6
-+    :try_end_11d
-+    .catch Ljava/lang/Exception; {:try_start_100 .. :try_end_11d} :catch_198
++    move-result-object v7
++    :try_end_123
++    .catch Ljava/lang/Exception; {:try_start_106 .. :try_end_123} :catch_19e
 +
-+    .line 281
-+    :try_start_11d
++    .line 362
++    :try_start_123
 +    invoke-virtual {v1, v12, v13}, Lio/mesalabs/unica/battery/BatteryEngine;->packageDescriptor(Ljava/lang/String;Ljava/lang/String;)Lorg/json/JSONObject;
 +
 +    move-result-object v0
 +
-+    invoke-interface {v4, v6, v0}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
++    invoke-interface {v4, v7, v0}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 +
-+    .line 282
-+    invoke-virtual {v12, v10}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    .line 363
++    invoke-virtual {v12, v11}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
 +    move-result v19
 +
-+    if-eqz v19, :cond_12f
++    if-eqz v19, :cond_135
 +
 +    const-string v0, "45"
 +
 +    move-object/from16 v19, v2
 +
-+    goto :goto_166
++    goto :goto_16c
 +
-+    :cond_12f
++    :cond_135
 +    invoke-virtual {v12, v3}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
 +    move-result v19
 +
-+    if-eqz v19, :cond_13a
++    if-eqz v19, :cond_140
 +
 +    move-object/from16 v19, v2
 +
 +    move-object/from16 v0, v17
 +
-+    goto :goto_166
++    goto :goto_16c
 +
-+    :cond_13a
++    :cond_140
 +    invoke-virtual {v12, v2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
 +    move-result v12
 +
-+    if-eqz v12, :cond_162
++    if-eqz v12, :cond_168
 +
 +    new-instance v12, Ljava/lang/StringBuilder;
 +
 +    invoke-direct {v12}, Ljava/lang/StringBuilder;-><init>()V
-+    :try_end_145
-+    .catch Ljava/lang/Exception; {:try_start_11d .. :try_end_145} :catch_16e
++    :try_end_14b
++    .catch Ljava/lang/Exception; {:try_start_123 .. :try_end_14b} :catch_174
 +
 +    move-object/from16 v19, v2
 +
-+    :try_start_147
++    :try_start_14d
 +    const-string v2, ""
 +
 +    invoke-virtual {v12, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
@@ -8813,55 +9743,55 @@ new file mode 100644
 +
 +    move-result-object v0
 +
-+    goto :goto_166
++    goto :goto_16c
 +
-+    :cond_162
++    :cond_168
 +    move-object/from16 v19, v2
 +
 +    const-string v0, "1"
 +
-+    .line 283
-+    :goto_166
-+    invoke-virtual {v5, v6, v0}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
-+    :try_end_169
-+    .catch Ljava/lang/Exception; {:try_start_147 .. :try_end_169} :catch_16c
++    .line 364
++    :goto_16c
++    invoke-virtual {v6, v7, v0}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
++    :try_end_16f
++    .catch Ljava/lang/Exception; {:try_start_14d .. :try_end_16f} :catch_172
 +
-+    .line 284
++    .line 365
 +    move/from16 v0, v16
 +
-+    goto :goto_190
++    goto :goto_196
 +
-+    :catch_16c
++    :catch_172
 +    move-exception v0
 +
-+    goto :goto_171
++    goto :goto_177
 +
-+    :catch_16e
++    :catch_174
 +    move-exception v0
 +
 +    move-object/from16 v19, v2
 +
-+    :goto_171
-+    :try_start_171
++    :goto_177
++    :try_start_177
 +    iget-object v2, v1, Lio/mesalabs/unica/battery/BatteryEngine;->notes:Ljava/util/List;
 +
 +    new-instance v12, Ljava/lang/StringBuilder;
 +
 +    invoke-direct {v12}, Ljava/lang/StringBuilder;-><init>()V
 +
-+    invoke-virtual {v12, v6}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++    invoke-virtual {v12, v7}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
-+    move-result-object v6
++    move-result-object v7
 +
-+    invoke-virtual {v6, v11}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++    invoke-virtual {v7, v8}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
-+    move-result-object v6
++    move-result-object v7
 +
-+    invoke-virtual {v0}, Ljava/lang/Exception;->getMessage()Ljava/lang/String;
++    invoke-static {v0}, Lio/mesalabs/unica/battery/BatteryEngine;->describe(Ljava/lang/Throwable;)Ljava/lang/String;
 +
 +    move-result-object v0
 +
-+    invoke-virtual {v6, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++    invoke-virtual {v7, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
 +    move-result-object v0
 +
@@ -8870,62 +9800,62 @@ new file mode 100644
 +    move-result-object v0
 +
 +    invoke-interface {v2, v0}, Ljava/util/List;->add(Ljava/lang/Object;)Z
-+    :try_end_18f
-+    .catch Ljava/lang/Exception; {:try_start_171 .. :try_end_18f} :catch_198
++    :try_end_195
++    .catch Ljava/lang/Exception; {:try_start_177 .. :try_end_195} :catch_19e
 +
 +    const/4 v0, 0x0
 +
-+    .line 278
-+    :goto_190
++    .line 359
++    :goto_196
 +    add-int/lit8 v15, v15, 0x1
 +
-+    move-object/from16 v6, v18
++    move-object/from16 v7, v18
 +
 +    move-object/from16 v2, v19
 +
-+    goto/16 :goto_fb
++    goto/16 :goto_101
 +
-+    .line 286
-+    :catch_198
++    .line 367
++    :catch_19e
 +    move-exception v0
 +
-+    goto :goto_1a8
++    goto :goto_1ae
 +
-+    .line 278
-+    :cond_19a
++    .line 359
++    :cond_1a0
 +    move/from16 v16, v0
 +
 +    move-object/from16 v19, v2
 +
-+    move-object/from16 v18, v6
++    move-object/from16 v18, v7
 +
-+    goto/16 :goto_e6
++    goto/16 :goto_ec
 +
-+    .line 286
-+    :cond_1a2
++    .line 367
++    :cond_1a8
 +    const/16 p1, 0x1
 +
-+    goto :goto_1ca
++    goto :goto_1d0
 +
-+    :catch_1a5
++    :catch_1ab
 +    move-exception v0
 +
 +    const/16 p1, 0x1
 +
-+    :goto_1a8
++    :goto_1ae
 +    iget-object v2, v1, Lio/mesalabs/unica/battery/BatteryEngine;->notes:Ljava/util/List;
 +
 +    new-instance v3, Ljava/lang/StringBuilder;
 +
 +    invoke-direct {v3}, Ljava/lang/StringBuilder;-><init>()V
 +
-+    const-string v6, "Cannot enumerate background apps: "
++    const-string v7, "Cannot enumerate background apps: "
 +
-+    invoke-virtual {v3, v6}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++    invoke-virtual {v3, v7}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
 +    move-result-object v3
 +
-+    invoke-virtual {v0}, Ljava/lang/Exception;->getMessage()Ljava/lang/String;
++    invoke-static {v0}, Lio/mesalabs/unica/battery/BatteryEngine;->describe(Ljava/lang/Throwable;)Ljava/lang/String;
 +
 +    move-result-object v0
 +
@@ -8941,19 +9871,19 @@ new file mode 100644
 +
 +    const/4 v0, 0x0
 +
-+    goto :goto_1ca
++    goto :goto_1d0
 +
-+    .line 274
-+    :cond_1c6
++    .line 355
++    :cond_1cc
 +    const/16 p1, 0x1
 +
-+    .line 288
++    .line 369
 +    move/from16 v0, p1
 +
-+    :goto_1ca
-+    invoke-virtual {v5, v7}, Lorg/json/JSONObject;->remove(Ljava/lang/String;)Ljava/lang/Object;
++    :goto_1d0
++    invoke-virtual {v6, v5}, Lorg/json/JSONObject;->remove(Ljava/lang/String;)Ljava/lang/Object;
 +
-+    .line 289
++    .line 370
 +    new-instance v2, Ljava/util/ArrayList;
 +
 +    invoke-direct {v2}, Ljava/util/ArrayList;-><init>()V
@@ -8964,50 +9894,50 @@ new file mode 100644
 +
 +    move-result-object v3
 +
-+    :goto_1d8
++    :goto_1de
 +    invoke-interface {v3}, Ljava/util/Iterator;->hasNext()Z
 +
-+    move-result v6
++    move-result v5
 +
-+    if-eqz v6, :cond_1e8
++    if-eqz v5, :cond_1ee
 +
 +    invoke-interface {v3}, Ljava/util/Iterator;->next()Ljava/lang/Object;
 +
-+    move-result-object v6
++    move-result-object v5
 +
-+    check-cast v6, Ljava/lang/String;
++    check-cast v5, Ljava/lang/String;
 +
-+    invoke-interface {v2, v6}, Ljava/util/List;->add(Ljava/lang/Object;)Z
++    invoke-interface {v2, v5}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 +
-+    goto :goto_1d8
++    goto :goto_1de
 +
-+    .line 291
-+    :cond_1e8
++    .line 372
++    :cond_1ee
 +    new-instance v3, Lio/mesalabs/unica/battery/BatteryEngine$1;
 +
 +    invoke-direct {v3}, Lio/mesalabs/unica/battery/BatteryEngine$1;-><init>()V
 +
 +    invoke-interface {v2, v3}, Ljava/util/List;->sort(Ljava/util/Comparator;)V
 +
-+    .line 292
++    .line 373
 +    invoke-interface {v2}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 +
 +    move-result-object v2
 +
-+    :goto_1f4
++    :goto_1fa
 +    invoke-interface {v2}, Ljava/util/Iterator;->hasNext()Z
 +
 +    move-result v3
 +
-+    const-string v6, "null"
++    const-string v5, "null"
 +
 +    const-string v7, "kind"
 +
-+    const-string v10, "refresh"
++    const-string v12, "refresh"
 +
-+    const-string v12, "refresh_min"
++    const-string v13, "refresh_min"
 +
-+    if-eqz v3, :cond_271
++    if-eqz v3, :cond_27c
 +
 +    invoke-interface {v2}, Ljava/util/Iterator;->next()Ljava/lang/Object;
 +
@@ -9015,444 +9945,550 @@ new file mode 100644
 +
 +    check-cast v3, Ljava/lang/String;
 +
-+    .line 293
-+    iget-object v13, v1, Lio/mesalabs/unica/battery/BatteryEngine;->journal:Lorg/json/JSONObject;
++    .line 374
++    iget-object v14, v1, Lio/mesalabs/unica/battery/BatteryEngine;->journal:Lorg/json/JSONObject;
 +
-+    invoke-virtual {v13, v3}, Lorg/json/JSONObject;->getJSONObject(Ljava/lang/String;)Lorg/json/JSONObject;
-+
-+    move-result-object v13
-+
-+    .line 294
-+    invoke-virtual {v13, v7}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
-+
-+    move-result-object v7
-+
-+    const-string v14, "kernel"
-+
-+    invoke-virtual {v7, v14}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
-+
-+    move-result v7
-+
-+    if-eqz v7, :cond_231
-+
-+    iget-object v7, v1, Lio/mesalabs/unica/battery/BatteryEngine;->bootId:Ljava/lang/String;
-+
-+    const-string v14, "boot"
-+
-+    invoke-virtual {v13, v14}, Lorg/json/JSONObject;->optString(Ljava/lang/String;)Ljava/lang/String;
++    invoke-virtual {v14, v3}, Lorg/json/JSONObject;->getJSONObject(Ljava/lang/String;)Lorg/json/JSONObject;
 +
 +    move-result-object v14
 +
-+    invoke-virtual {v7, v14}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    .line 375
++    invoke-virtual {v14, v7}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
++
++    move-result-object v7
++
++    const-string v15, "kernel"
++
++    invoke-virtual {v7, v15}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
 +    move-result v7
 +
-+    if-nez v7, :cond_231
++    if-eqz v7, :cond_23b
 +
-+    iget-object v6, v1, Lio/mesalabs/unica/battery/BatteryEngine;->journal:Lorg/json/JSONObject;
++    iget-object v7, v1, Lio/mesalabs/unica/battery/BatteryEngine;->bootId:Ljava/lang/String;
 +
-+    invoke-virtual {v6, v3}, Lorg/json/JSONObject;->remove(Ljava/lang/String;)Ljava/lang/Object;
++    const-string v15, "boot"
 +
-+    invoke-virtual {v1}, Lio/mesalabs/unica/battery/BatteryEngine;->saveJournal()V
++    invoke-virtual {v14, v15}, Lorg/json/JSONObject;->optString(Ljava/lang/String;)Ljava/lang/String;
 +
-+    goto :goto_270
++    move-result-object v15
 +
-+    .line 295
-+    :cond_231
-+    invoke-virtual {v3, v12}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    invoke-virtual {v7, v15}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
 +    move-result v7
 +
-+    if-eqz v7, :cond_25e
-+
-+    invoke-virtual {v5, v10}, Lorg/json/JSONObject;->has(Ljava/lang/String;)Z
-+
-+    move-result v7
-+
-+    if-eqz v7, :cond_25e
-+
-+    .line 296
-+    const-string v7, "original"
-+
-+    invoke-virtual {v13, v7}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
-+
-+    move-result-object v12
-+
-+    invoke-virtual {v12, v6}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
-+
-+    move-result v6
-+
-+    if-nez v6, :cond_25e
-+
-+    .line 297
-+    invoke-virtual {v13, v7}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
-+
-+    move-result-object v6
-+
-+    invoke-static {v6}, Ljava/lang/Double;->parseDouble(Ljava/lang/String;)D
-+
-+    move-result-wide v6
-+
-+    invoke-virtual {v5, v10}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
-+
-+    move-result-object v10
-+
-+    invoke-static {v10}, Ljava/lang/Double;->parseDouble(Ljava/lang/String;)D
-+
-+    move-result-wide v12
-+
-+    cmpl-double v6, v6, v12
-+
-+    if-lez v6, :cond_25e
-+
-+    goto :goto_270
-+
-+    .line 299
-+    :cond_25e
-+    invoke-virtual {v5, v3}, Lorg/json/JSONObject;->has(Ljava/lang/String;)Z
-+
-+    move-result v6
-+
-+    if-nez v6, :cond_270
++    if-nez v7, :cond_23b
 +
 +    invoke-virtual {v1, v3}, Lio/mesalabs/unica/battery/BatteryEngine;->restore(Ljava/lang/String;)Z
 +
 +    move-result v3
 +
-+    if-eqz v3, :cond_26f
++    if-eqz v3, :cond_239
 +
-+    if-eqz v0, :cond_26f
++    if-eqz v0, :cond_239
 +
 +    move/from16 v0, p1
 +
-+    goto :goto_270
++    goto :goto_27a
 +
-+    :cond_26f
++    :cond_239
 +    const/4 v0, 0x0
 +
-+    .line 300
-+    :cond_270
-+    :goto_270
-+    goto :goto_1f4
++    goto :goto_27a
 +
-+    .line 301
-+    :cond_271
-+    new-instance v2, Ljava/util/LinkedHashMap;
++    .line 376
++    :cond_23b
++    invoke-virtual {v3, v13}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
-+    invoke-direct {v2}, Ljava/util/LinkedHashMap;-><init>()V
++    move-result v7
 +
-+    .line 303
-+    invoke-virtual {v5}, Lorg/json/JSONObject;->keys()Ljava/util/Iterator;
++    if-eqz v7, :cond_268
 +
-+    move-result-object v3
++    invoke-virtual {v6, v12}, Lorg/json/JSONObject;->has(Ljava/lang/String;)Z
 +
-+    :goto_27a
-+    invoke-interface {v3}, Ljava/util/Iterator;->hasNext()Z
++    move-result v7
 +
-+    move-result v13
++    if-eqz v7, :cond_268
 +
-+    if-eqz v13, :cond_38e
++    .line 377
++    const-string v7, "original"
 +
-+    .line 304
-+    invoke-interface {v3}, Ljava/util/Iterator;->next()Ljava/lang/Object;
++    invoke-virtual {v14, v7}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
 +
 +    move-result-object v13
 +
-+    check-cast v13, Ljava/lang/String;
++    invoke-virtual {v13, v5}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
-+    invoke-virtual {v5, v13}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
++    move-result v5
 +
-+    move-result-object v14
++    if-nez v5, :cond_268
 +
-+    .line 306
-+    :try_start_28a
-+    invoke-interface {v4, v13}, Ljava/util/Map;->get(Ljava/lang/Object;)Ljava/lang/Object;
++    .line 378
++    invoke-virtual {v14, v7}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
 +
-+    move-result-object v15
++    move-result-object v5
 +
-+    check-cast v15, Lorg/json/JSONObject;
++    invoke-static {v5}, Ljava/lang/Double;->parseDouble(Ljava/lang/String;)D
 +
-+    .line 307
-+    if-nez v15, :cond_2c0
++    move-result-wide v13
 +
-+    invoke-virtual {v13, v8}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
++    invoke-virtual {v6, v12}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
 +
-+    move-result v16
++    move-result-object v5
 +
-+    if-nez v16, :cond_2a2
++    invoke-static {v5}, Ljava/lang/Double;->parseDouble(Ljava/lang/String;)D
 +
-+    invoke-virtual {v13, v9}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
++    move-result-wide v16
 +
-+    move-result v16
++    cmpl-double v5, v13, v16
 +
-+    if-eqz v16, :cond_29f
++    if-lez v5, :cond_268
 +
-+    goto :goto_2a2
++    goto :goto_27a
 +
-+    :cond_29f
-+    move/from16 v16, v0
++    .line 380
++    :cond_268
++    invoke-virtual {v6, v3}, Lorg/json/JSONObject;->has(Ljava/lang/String;)Z
 +
-+    goto :goto_2c2
++    move-result v5
 +
-+    .line 308
-+    :cond_2a2
-+    :goto_2a2
-+    const/16 v15, 0x3a
++    if-nez v5, :cond_27a
 +
-+    move/from16 v16, v0
++    invoke-virtual {v1, v3}, Lio/mesalabs/unica/battery/BatteryEngine;->restore(Ljava/lang/String;)Z
 +
-+    invoke-virtual {v13, v15}, Ljava/lang/String;->indexOf(I)I
++    move-result v3
 +
-+    move-result v0
++    if-eqz v3, :cond_279
 +
-+    const/4 v15, 0x0
++    if-eqz v0, :cond_279
 +
-+    invoke-virtual {v13, v15, v0}, Ljava/lang/String;->substring(II)Ljava/lang/String;
++    move/from16 v0, p1
 +
-+    move-result-object v0
++    goto :goto_27a
 +
-+    const/16 v15, 0x3a
++    :cond_279
++    const/4 v0, 0x0
 +
-+    invoke-virtual {v13, v15}, Ljava/lang/String;->indexOf(I)I
++    .line 381
++    :cond_27a
++    :goto_27a
++    goto/16 :goto_1fa
 +
-+    move-result v15
++    .line 382
++    :cond_27c
++    invoke-virtual {v1}, Lio/mesalabs/unica/battery/BatteryEngine;->checkpointRestores()V
 +
-+    add-int/lit8 v15, v15, 0x1
++    .line 383
++    new-instance v2, Lorg/json/JSONObject;
 +
-+    invoke-virtual {v13, v15}, Ljava/lang/String;->substring(I)Ljava/lang/String;
++    iget-object v3, v1, Lio/mesalabs/unica/battery/BatteryEngine;->journal:Lorg/json/JSONObject;
 +
-+    move-result-object v15
-+
-+    invoke-virtual {v1, v0, v15}, Lio/mesalabs/unica/battery/BatteryEngine;->packageDescriptor(Ljava/lang/String;Ljava/lang/String;)Lorg/json/JSONObject;
-+
-+    move-result-object v15
-+
-+    goto :goto_2c2
-+
-+    .line 307
-+    :cond_2c0
-+    move/from16 v16, v0
-+
-+    .line 309
-+    :goto_2c2
-+    if-nez v15, :cond_312
-+
-+    .line 310
-+    iget-object v0, v1, Lio/mesalabs/unica/battery/BatteryEngine;->specs:Ljava/util/LinkedHashMap;
-+
-+    invoke-virtual {v0, v13}, Ljava/util/LinkedHashMap;->get(Ljava/lang/Object;)Ljava/lang/Object;
-+
-+    move-result-object v0
-+
-+    move-object v15, v0
-+
-+    check-cast v15, Lorg/json/JSONObject;
-+
-+    .line 311
-+    if-eqz v15, :cond_306
-+
-+    const-string v0, "supported"
-+
-+    invoke-virtual {v15, v0}, Lorg/json/JSONObject;->optBoolean(Ljava/lang/String;)Z
-+
-+    move-result v0
-+
-+    if-eqz v0, :cond_306
-+
-+    .line 312
-+    const-string v0, "values"
-+
-+    invoke-virtual {v15, v0}, Lorg/json/JSONObject;->getJSONArray(Ljava/lang/String;)Lorg/json/JSONArray;
-+
-+    move-result-object v0
-+    :try_end_2dd
-+    .catch Ljava/lang/Exception; {:try_start_28a .. :try_end_2dd} :catch_364
-+
-+    move-object/from16 v17, v3
-+
-+    const/4 v3, 0x0
-+
-+    const/16 v18, 0x0
-+
-+    :goto_2e2
-+    move-object/from16 v19, v4
-+
-+    :try_start_2e4
-+    invoke-virtual {v0}, Lorg/json/JSONArray;->length()I
-+
-+    move-result v4
-+
-+    if-ge v3, v4, :cond_2fb
-+
-+    invoke-virtual {v0, v3}, Lorg/json/JSONArray;->getString(I)Ljava/lang/String;
-+
-+    move-result-object v4
-+
-+    invoke-virtual {v14, v4}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
-+
-+    move-result v4
-+
-+    if-eqz v4, :cond_2f6
-+
-+    move/from16 v18, p1
-+
-+    :cond_2f6
-+    add-int/lit8 v3, v3, 0x1
-+
-+    move-object/from16 v4, v19
-+
-+    goto :goto_2e2
-+
-+    .line 313
-+    :cond_2fb
-+    if-eqz v18, :cond_2fe
-+
-+    goto :goto_316
-+
-+    :cond_2fe
-+    new-instance v0, Ljava/io/IOException;
-+
-+    const-string v3, "Value is outside this device\'s available choices"
-+
-+    invoke-direct {v0, v3}, Ljava/io/IOException;-><init>(Ljava/lang/String;)V
-+
-+    throw v0
-+
-+    .line 311
-+    :cond_306
-+    move-object/from16 v17, v3
-+
-+    move-object/from16 v19, v4
-+
-+    new-instance v0, Ljava/io/IOException;
-+
-+    const-string v3, "Unsupported on this device"
-+
-+    invoke-direct {v0, v3}, Ljava/io/IOException;-><init>(Ljava/lang/String;)V
-+
-+    throw v0
-+
-+    .line 309
-+    :cond_312
-+    move-object/from16 v17, v3
-+
-+    move-object/from16 v19, v4
-+
-+    .line 315
-+    :goto_316
-+    invoke-virtual {v13, v10}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
-+
-+    move-result v0
-+
-+    if-eqz v0, :cond_359
-+
-+    .line 316
-+    new-instance v0, Lorg/json/JSONObject;
-+
-+    invoke-direct {v0}, Lorg/json/JSONObject;-><init>()V
-+
-+    const-string v3, "id"
-+
-+    invoke-virtual {v0, v3, v12}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
-+
-+    move-result-object v0
-+
-+    const-string v3, "system"
-+
-+    invoke-virtual {v0, v7, v3}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
-+
-+    move-result-object v0
-+
-+    const-string v3, "target"
-+
-+    const-string v4, "min_refresh_rate"
-+
-+    invoke-virtual {v0, v3, v4}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
-+
-+    move-result-object v0
-+
-+    const-string v3, "label"
-+
-+    const-string v4, "Minimum refresh rate"
-+
-+    invoke-virtual {v0, v3, v4}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
-+
-+    move-result-object v0
-+
-+    .line 317
-+    invoke-virtual {v1, v0}, Lio/mesalabs/unica/battery/BatteryEngine;->get(Lorg/json/JSONObject;)Ljava/lang/String;
++    invoke-virtual {v3}, Lorg/json/JSONObject;->toString()Ljava/lang/String;
 +
 +    move-result-object v3
 +
-+    .line 318
-+    invoke-virtual {v3, v6}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    invoke-direct {v2, v3}, Lorg/json/JSONObject;-><init>(Ljava/lang/String;)V
++
++    .line 384
++    new-instance v3, Ljava/util/LinkedHashMap;
++
++    invoke-direct {v3}, Ljava/util/LinkedHashMap;-><init>()V
++
++    .line 386
++    invoke-virtual {v6}, Lorg/json/JSONObject;->keys()Ljava/util/Iterator;
++
++    move-result-object v14
++
++    :goto_293
++    invoke-interface {v14}, Ljava/util/Iterator;->hasNext()Z
++
++    move-result v15
++
++    if-eqz v15, :cond_3f7
++
++    .line 387
++    invoke-interface {v14}, Ljava/util/Iterator;->next()Ljava/lang/Object;
++
++    move-result-object v15
++
++    check-cast v15, Ljava/lang/String;
++
++    move/from16 v16, v0
++
++    invoke-virtual {v6, v15}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
++
++    move-result-object v0
++
++    .line 389
++    :try_start_2a5
++    invoke-interface {v4, v15}, Ljava/util/Map;->get(Ljava/lang/Object;)Ljava/lang/Object;
++
++    move-result-object v17
++
++    check-cast v17, Lorg/json/JSONObject;
++
++    .line 390
++    if-nez v17, :cond_2df
++
++    invoke-virtual {v15, v9}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
++
++    move-result v18
++
++    if-nez v18, :cond_2bf
++
++    invoke-virtual {v15, v10}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
++
++    move-result v18
++    :try_end_2b7
++    .catch Ljava/lang/Exception; {:try_start_2a5 .. :try_end_2b7} :catch_3c7
++
++    if-eqz v18, :cond_2ba
++
++    goto :goto_2bf
++
++    :cond_2ba
++    move-object/from16 v18, v4
++
++    move-object/from16 v19, v9
++
++    goto :goto_2e3
++
++    .line 391
++    :cond_2bf
++    :goto_2bf
++    move-object/from16 v18, v4
++
++    const/16 v4, 0x3a
++
++    move-object/from16 v19, v9
++
++    :try_start_2c5
++    invoke-virtual {v15, v4}, Ljava/lang/String;->indexOf(I)I
++
++    move-result v9
++
++    const/4 v4, 0x0
++
++    invoke-virtual {v15, v4, v9}, Ljava/lang/String;->substring(II)Ljava/lang/String;
++
++    move-result-object v9
++
++    const/16 v4, 0x3a
++
++    invoke-virtual {v15, v4}, Ljava/lang/String;->indexOf(I)I
 +
 +    move-result v4
 +
-+    if-nez v4, :cond_359
++    add-int/lit8 v4, v4, 0x1
 +
-+    invoke-static {v3}, Ljava/lang/Double;->parseDouble(Ljava/lang/String;)D
++    invoke-virtual {v15, v4}, Ljava/lang/String;->substring(I)Ljava/lang/String;
 +
-+    move-result-wide v3
++    move-result-object v4
 +
-+    invoke-static {v14}, Ljava/lang/Double;->parseDouble(Ljava/lang/String;)D
++    invoke-virtual {v1, v9, v4}, Lio/mesalabs/unica/battery/BatteryEngine;->packageDescriptor(Ljava/lang/String;Ljava/lang/String;)Lorg/json/JSONObject;
 +
-+    move-result-wide v20
++    move-result-object v17
 +
-+    cmpl-double v3, v3, v20
++    goto :goto_2e3
 +
-+    if-lez v3, :cond_359
++    .line 390
++    :cond_2df
++    move-object/from16 v18, v4
 +
-+    .line 319
-+    invoke-virtual {v1, v12, v0}, Lio/mesalabs/unica/battery/BatteryEngine;->snapshot(Ljava/lang/String;Lorg/json/JSONObject;)V
++    move-object/from16 v19, v9
 +
-+    invoke-interface {v2, v12, v0}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
++    .line 392
++    :goto_2e3
++    if-nez v17, :cond_335
 +
-+    .line 322
-+    :cond_359
-+    invoke-virtual {v1, v13, v15}, Lio/mesalabs/unica/battery/BatteryEngine;->snapshot(Ljava/lang/String;Lorg/json/JSONObject;)V
++    .line 393
++    iget-object v4, v1, Lio/mesalabs/unica/battery/BatteryEngine;->specs:Ljava/util/LinkedHashMap;
 +
-+    invoke-interface {v2, v13, v15}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-+    :try_end_35f
-+    .catch Ljava/lang/Exception; {:try_start_2e4 .. :try_end_35f} :catch_362
++    invoke-virtual {v4, v15}, Ljava/util/LinkedHashMap;->get(Ljava/lang/Object;)Ljava/lang/Object;
 +
-+    .line 323
-+    move/from16 v0, v16
++    move-result-object v4
 +
-+    goto :goto_388
++    check-cast v4, Lorg/json/JSONObject;
 +
-+    :catch_362
++    .line 394
++    if-eqz v4, :cond_328
++
++    const-string v9, "supported"
++
++    invoke-virtual {v4, v9}, Lorg/json/JSONObject;->optBoolean(Ljava/lang/String;)Z
++
++    move-result v9
++
++    if-eqz v9, :cond_328
++
++    .line 395
++    const-string v9, "values"
++
++    invoke-virtual {v4, v9}, Lorg/json/JSONObject;->getJSONArray(Ljava/lang/String;)Lorg/json/JSONArray;
++
++    move-result-object v9
++    :try_end_2fd
++    .catch Ljava/lang/Exception; {:try_start_2c5 .. :try_end_2fd} :catch_332
++
++    move-object/from16 v20, v4
++
++    const/4 v4, 0x0
++
++    const/16 v17, 0x0
++
++    :goto_302
++    move-object/from16 v21, v10
++
++    :try_start_304
++    invoke-virtual {v9}, Lorg/json/JSONArray;->length()I
++
++    move-result v10
++
++    if-ge v4, v10, :cond_31b
++
++    invoke-virtual {v9, v4}, Lorg/json/JSONArray;->getString(I)Ljava/lang/String;
++
++    move-result-object v10
++
++    invoke-virtual {v0, v10}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v10
++
++    if-eqz v10, :cond_316
++
++    move/from16 v17, p1
++
++    :cond_316
++    add-int/lit8 v4, v4, 0x1
++
++    move-object/from16 v10, v21
++
++    goto :goto_302
++
++    .line 396
++    :cond_31b
++    if-eqz v17, :cond_320
++
++    move-object/from16 v4, v20
++
++    goto :goto_339
++
++    :cond_320
++    new-instance v0, Ljava/io/IOException;
++
++    const-string v4, "Value is outside this device\'s available choices"
++
++    invoke-direct {v0, v4}, Ljava/io/IOException;-><init>(Ljava/lang/String;)V
++
++    throw v0
++
++    .line 394
++    :cond_328
++    move-object/from16 v21, v10
++
++    new-instance v0, Ljava/io/IOException;
++
++    const-string v4, "Unsupported on this device"
++
++    invoke-direct {v0, v4}, Ljava/io/IOException;-><init>(Ljava/lang/String;)V
++
++    throw v0
++
++    .line 409
++    :catch_332
 +    move-exception v0
 +
-+    goto :goto_369
++    goto/16 :goto_3cc
 +
-+    :catch_364
-+    move-exception v0
++    .line 392
++    :cond_335
++    move-object/from16 v21, v10
 +
-+    move-object/from16 v17, v3
++    move-object/from16 v4, v17
 +
-+    move-object/from16 v19, v4
++    .line 398
++    :goto_339
++    invoke-virtual {v4, v7}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
 +
-+    :goto_369
-+    iget-object v3, v1, Lio/mesalabs/unica/battery/BatteryEngine;->notes:Ljava/util/List;
++    move-result-object v9
++
++    invoke-virtual {v9, v11}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v9
++
++    if-eqz v9, :cond_377
++
++    invoke-virtual {v1, v4}, Lio/mesalabs/unica/battery/BatteryEngine;->get(Lorg/json/JSONObject;)Ljava/lang/String;
++
++    move-result-object v9
++
++    const-string v10, "5"
++
++    invoke-virtual {v9, v10}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v9
++
++    if-eqz v9, :cond_377
++
++    .line 399
++    move/from16 v4, p1
++
++    iput-boolean v4, v1, Lio/mesalabs/unica/battery/BatteryEngine;->policyLimited:Z
++
++    iget-object v0, v1, Lio/mesalabs/unica/battery/BatteryEngine;->notes:Ljava/util/List;
 +
 +    new-instance v4, Ljava/lang/StringBuilder;
 +
 +    invoke-direct {v4}, Ljava/lang/StringBuilder;-><init>()V
 +
-+    invoke-virtual {v4, v13}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++    invoke-virtual {v4, v15}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
 +    move-result-object v4
 +
-+    invoke-virtual {v4, v11}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++    const-string v9, ": skipped; Android keeps this app Exempted (5)"
++
++    invoke-virtual {v4, v9}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
 +    move-result-object v4
 +
-+    invoke-virtual {v0}, Ljava/lang/Exception;->getMessage()Ljava/lang/String;
++    invoke-virtual {v4}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v4
++
++    invoke-interface {v0, v4}, Ljava/util/List;->add(Ljava/lang/Object;)Z
++
++    move/from16 v0, v16
++
++    move-object/from16 v4, v18
++
++    move-object/from16 v9, v19
++
++    move-object/from16 v10, v21
++
++    const/16 p1, 0x1
++
++    goto/16 :goto_293
++
++    .line 401
++    :cond_377
++    invoke-virtual {v15, v12}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v9
++
++    if-eqz v9, :cond_3bc
++
++    .line 402
++    new-instance v9, Lorg/json/JSONObject;
++
++    invoke-direct {v9}, Lorg/json/JSONObject;-><init>()V
++
++    const-string v10, "id"
++
++    invoke-virtual {v9, v10, v13}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
++
++    move-result-object v9
++
++    const-string v10, "system"
++
++    invoke-virtual {v9, v7, v10}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
++
++    move-result-object v9
++
++    const-string v10, "target"
++
++    move-object/from16 v17, v0
++
++    const-string v0, "min_refresh_rate"
++
++    invoke-virtual {v9, v10, v0}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
 +
 +    move-result-object v0
 +
-+    invoke-virtual {v4, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++    const-string v9, "label"
++
++    const-string v10, "Minimum refresh rate"
++
++    invoke-virtual {v0, v9, v10}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
++
++    move-result-object v0
++
++    .line 403
++    invoke-virtual {v1, v0}, Lio/mesalabs/unica/battery/BatteryEngine;->get(Lorg/json/JSONObject;)Ljava/lang/String;
++
++    move-result-object v9
++
++    .line 404
++    invoke-virtual {v9, v5}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v10
++
++    if-nez v10, :cond_3bc
++
++    invoke-static {v9}, Ljava/lang/Double;->parseDouble(Ljava/lang/String;)D
++
++    move-result-wide v9
++
++    invoke-static/range {v17 .. v17}, Ljava/lang/Double;->parseDouble(Ljava/lang/String;)D
++
++    move-result-wide v22
++
++    cmpl-double v9, v9, v22
++
++    if-lez v9, :cond_3bc
++
++    .line 405
++    invoke-virtual {v1, v13, v0}, Lio/mesalabs/unica/battery/BatteryEngine;->snapshot(Ljava/lang/String;Lorg/json/JSONObject;)V
++
++    invoke-interface {v3, v13, v0}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
++
++    .line 408
++    :cond_3bc
++    invoke-virtual {v1, v15, v4}, Lio/mesalabs/unica/battery/BatteryEngine;->snapshot(Ljava/lang/String;Lorg/json/JSONObject;)V
++
++    invoke-interface {v3, v15, v4}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
++    :try_end_3c2
++    .catch Ljava/lang/Exception; {:try_start_304 .. :try_end_3c2} :catch_3c5
++
++    .line 409
++    move/from16 v0, v16
++
++    goto :goto_3ed
++
++    :catch_3c5
++    move-exception v0
++
++    goto :goto_3ce
++
++    :catch_3c7
++    move-exception v0
++
++    move-object/from16 v18, v4
++
++    move-object/from16 v19, v9
++
++    :goto_3cc
++    move-object/from16 v21, v10
++
++    :goto_3ce
++    iget-object v4, v1, Lio/mesalabs/unica/battery/BatteryEngine;->notes:Ljava/util/List;
++
++    new-instance v9, Ljava/lang/StringBuilder;
++
++    invoke-direct {v9}, Ljava/lang/StringBuilder;-><init>()V
++
++    invoke-virtual {v9, v15}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v9
++
++    invoke-virtual {v9, v8}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v9
++
++    invoke-static {v0}, Lio/mesalabs/unica/battery/BatteryEngine;->describe(Ljava/lang/Throwable;)Ljava/lang/String;
++
++    move-result-object v0
++
++    invoke-virtual {v9, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
 +    move-result-object v0
 +
@@ -9460,94 +10496,125 @@ new file mode 100644
 +
 +    move-result-object v0
 +
-+    invoke-interface {v3, v0}, Ljava/util/List;->add(Ljava/lang/Object;)Z
++    invoke-interface {v4, v0}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 +
 +    const/4 v0, 0x0
 +
-+    .line 324
-+    :goto_388
-+    move-object/from16 v3, v17
++    .line 410
++    :goto_3ed
++    move-object/from16 v4, v18
 +
-+    move-object/from16 v4, v19
++    move-object/from16 v9, v19
 +
-+    goto/16 :goto_27a
++    move-object/from16 v10, v21
 +
-+    .line 325
-+    :cond_38e
++    const/16 p1, 0x1
++
++    goto/16 :goto_293
++
++    .line 411
++    :cond_3f7
 +    move/from16 v16, v0
 +
++    invoke-interface {v3}, Ljava/util/Map;->isEmpty()Z
++
++    move-result v0
++
++    if-nez v0, :cond_407
++
++    :try_start_3ff
++    invoke-virtual {v1}, Lio/mesalabs/unica/battery/BatteryEngine;->saveJournal()V
++    :try_end_402
++    .catch Ljava/lang/Exception; {:try_start_3ff .. :try_end_402} :catch_403
++
++    .line 412
++    goto :goto_407
++
++    :catch_403
++    move-exception v0
++
++    iput-object v2, v1, Lio/mesalabs/unica/battery/BatteryEngine;->journal:Lorg/json/JSONObject;
++
++    throw v0
++
++    .line 413
++    :cond_407
++    :goto_407
 +    new-instance v0, Ljava/util/ArrayList;
 +
-+    invoke-interface {v2}, Ljava/util/Map;->keySet()Ljava/util/Set;
++    invoke-interface {v3}, Ljava/util/Map;->keySet()Ljava/util/Set;
 +
-+    move-result-object v3
++    move-result-object v2
 +
-+    invoke-direct {v0, v3}, Ljava/util/ArrayList;-><init>(Ljava/util/Collection;)V
++    invoke-direct {v0, v2}, Ljava/util/ArrayList;-><init>(Ljava/util/Collection;)V
 +
-+    .line 326
-+    new-instance v3, Lio/mesalabs/unica/battery/BatteryEngine$2;
++    .line 414
++    new-instance v2, Lio/mesalabs/unica/battery/BatteryEngine$2;
 +
-+    invoke-direct {v3}, Lio/mesalabs/unica/battery/BatteryEngine$2;-><init>()V
++    invoke-direct {v2}, Lio/mesalabs/unica/battery/BatteryEngine$2;-><init>()V
 +
-+    invoke-interface {v0, v3}, Ljava/util/List;->sort(Ljava/util/Comparator;)V
++    invoke-interface {v0, v2}, Ljava/util/List;->sort(Ljava/util/Comparator;)V
 +
-+    .line 327
++    .line 415
 +    invoke-interface {v0}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 +
-+    move-result-object v3
++    move-result-object v2
 +
-+    move/from16 v0, v16
++    :goto_41c
++    invoke-interface {v2}, Ljava/util/Iterator;->hasNext()Z
 +
-+    :goto_3a7
-+    invoke-interface {v3}, Ljava/util/Iterator;->hasNext()Z
++    move-result v0
 +
-+    move-result v4
++    if-eqz v0, :cond_48b
 +
-+    if-eqz v4, :cond_3ed
++    invoke-interface {v2}, Ljava/util/Iterator;->next()Ljava/lang/Object;
 +
-+    invoke-interface {v3}, Ljava/util/Iterator;->next()Ljava/lang/Object;
++    move-result-object v0
 +
-+    move-result-object v4
++    move-object v4, v0
 +
 +    check-cast v4, Ljava/lang/String;
 +
-+    .line 328
-+    :try_start_3b3
-+    invoke-interface {v2, v4}, Ljava/util/Map;->get(Ljava/lang/Object;)Ljava/lang/Object;
++    .line 416
++    :try_start_429
++    invoke-interface {v3, v4}, Ljava/util/Map;->get(Ljava/lang/Object;)Ljava/lang/Object;
 +
-+    move-result-object v6
++    move-result-object v0
 +
-+    check-cast v6, Lorg/json/JSONObject;
++    check-cast v0, Lorg/json/JSONObject;
 +
-+    invoke-virtual {v4, v12}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    invoke-virtual {v4, v13}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
-+    move-result v7
++    move-result v5
 +
-+    if-eqz v7, :cond_3c4
++    if-eqz v5, :cond_43a
 +
-+    invoke-virtual {v5, v10}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
++    invoke-virtual {v6, v12}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
 +
-+    move-result-object v7
++    move-result-object v5
 +
-+    goto :goto_3c8
++    goto :goto_43e
 +
-+    :cond_3c4
-+    invoke-virtual {v5, v4}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
++    :cond_43a
++    invoke-virtual {v6, v4}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
 +
-+    move-result-object v7
++    move-result-object v5
 +
-+    :goto_3c8
-+    invoke-virtual {v1, v4, v6, v7}, Lio/mesalabs/unica/battery/BatteryEngine;->change(Ljava/lang/String;Lorg/json/JSONObject;Ljava/lang/String;)V
-+    :try_end_3cb
-+    .catch Ljava/lang/Exception; {:try_start_3b3 .. :try_end_3cb} :catch_3cc
++    :goto_43e
++    invoke-virtual {v1, v4, v0, v5}, Lio/mesalabs/unica/battery/BatteryEngine;->change(Ljava/lang/String;Lorg/json/JSONObject;Ljava/lang/String;)V
++    :try_end_441
++    .catch Lio/mesalabs/unica/battery/BatteryEngine$BucketPolicyLimit; {:try_start_429 .. :try_end_441} :catch_466
++    .catch Ljava/lang/Exception; {:try_start_429 .. :try_end_441} :catch_443
 +
-+    .line 329
-+    goto :goto_3a7
++    .line 418
++    const/4 v5, 0x1
 +
-+    :catch_3cc
++    goto :goto_41c
++
++    :catch_443
 +    move-exception v0
 +
-+    iget-object v6, v1, Lio/mesalabs/unica/battery/BatteryEngine;->notes:Ljava/util/List;
++    iget-object v5, v1, Lio/mesalabs/unica/battery/BatteryEngine;->notes:Ljava/util/List;
 +
 +    new-instance v7, Ljava/lang/StringBuilder;
 +
@@ -9557,11 +10624,11 @@ new file mode 100644
 +
 +    move-result-object v4
 +
-+    invoke-virtual {v4, v11}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++    invoke-virtual {v4, v8}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
 +    move-result-object v4
 +
-+    invoke-virtual {v0}, Ljava/lang/Exception;->getMessage()Ljava/lang/String;
++    invoke-static {v0}, Lio/mesalabs/unica/battery/BatteryEngine;->describe(Ljava/lang/Throwable;)Ljava/lang/String;
 +
 +    move-result-object v0
 +
@@ -9573,15 +10640,58 @@ new file mode 100644
 +
 +    move-result-object v0
 +
-+    invoke-interface {v6, v0}, Ljava/util/List;->add(Ljava/lang/Object;)Z
++    invoke-interface {v5, v0}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 +
-+    const/4 v0, 0x0
++    const/4 v5, 0x1
 +
-+    goto :goto_3a7
++    const/16 v16, 0x0
 +
-+    .line 330
-+    :cond_3ed
-+    return v0
++    goto :goto_41c
++
++    .line 417
++    :catch_466
++    move-exception v0
++
++    const/4 v5, 0x1
++
++    iput-boolean v5, v1, Lio/mesalabs/unica/battery/BatteryEngine;->policyLimited:Z
++
++    iget-object v7, v1, Lio/mesalabs/unica/battery/BatteryEngine;->notes:Ljava/util/List;
++
++    new-instance v9, Ljava/lang/StringBuilder;
++
++    invoke-direct {v9}, Ljava/lang/StringBuilder;-><init>()V
++
++    invoke-virtual {v9, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v4
++
++    const-string v9, ": Android policy limit: "
++
++    invoke-virtual {v4, v9}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v4
++
++    invoke-virtual {v0}, Lio/mesalabs/unica/battery/BatteryEngine$BucketPolicyLimit;->getMessage()Ljava/lang/String;
++
++    move-result-object v0
++
++    invoke-virtual {v4, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v0
++
++    invoke-interface {v7, v0}, Ljava/util/List;->add(Ljava/lang/Object;)Z
++
++    .line 418
++    goto :goto_41c
++
++    .line 419
++    :cond_48b
++    return v16
 +.end method
 +
 +.method backgroundTargets()Ljava/util/List;
@@ -9601,14 +10711,14 @@ new file mode 100644
 +        }
 +    .end annotation
 +
-+    .line 98
++    .line 137
 +    iget-object v0, p0, Lio/mesalabs/unica/battery/BatteryEngine;->context:Landroid/content/Context;
 +
 +    invoke-virtual {v0}, Landroid/content/Context;->getPackageManager()Landroid/content/pm/PackageManager;
 +
 +    move-result-object v0
 +
-+    .line 99
++    .line 138
 +    new-instance v1, Ljava/util/HashSet;
 +
 +    const-string v2, "com.google.android.gms"
@@ -9629,7 +10739,7 @@ new file mode 100644
 +
 +    invoke-direct {v1, v2}, Ljava/util/HashSet;-><init>(Ljava/util/Collection;)V
 +
-+    .line 100
++    .line 139
 +    new-instance v2, Landroid/content/Intent;
 +
 +    const-string v3, "android.intent.action.MAIN"
@@ -9642,14 +10752,14 @@ new file mode 100644
 +
 +    move-result-object v2
 +
-+    .line 101
++    .line 140
 +    const/high16 v3, 0x10000
 +
 +    invoke-virtual {v0, v2, v3}, Landroid/content/pm/PackageManager;->resolveActivity(Landroid/content/Intent;I)Landroid/content/pm/ResolveInfo;
 +
 +    move-result-object v2
 +
-+    .line 102
++    .line 141
 +    if-eqz v2, :cond_3b
 +
 +    iget-object v3, v2, Landroid/content/pm/ResolveInfo;->activityInfo:Landroid/content/pm/ActivityInfo;
@@ -9662,7 +10772,7 @@ new file mode 100644
 +
 +    invoke-interface {v1, v2}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
 +
-+    .line 103
++    .line 142
 +    :cond_3b
 +    iget-object v2, p0, Lio/mesalabs/unica/battery/BatteryEngine;->context:Landroid/content/Context;
 +
@@ -9674,7 +10784,7 @@ new file mode 100644
 +
 +    check-cast v2, Landroid/view/inputmethod/InputMethodManager;
 +
-+    .line 104
++    .line 143
 +    invoke-virtual {v2}, Landroid/view/inputmethod/InputMethodManager;->getEnabledInputMethodList()Ljava/util/List;
 +
 +    move-result-object v2
@@ -9704,7 +10814,7 @@ new file mode 100644
 +
 +    goto :goto_4d
 +
-+    .line 105
++    .line 144
 +    :cond_61
 +    iget-object v2, p0, Lio/mesalabs/unica/battery/BatteryEngine;->context:Landroid/content/Context;
 +
@@ -9716,7 +10826,7 @@ new file mode 100644
 +
 +    check-cast v2, Landroid/telecom/TelecomManager;
 +
-+    .line 106
++    .line 145
 +    invoke-virtual {v2}, Landroid/telecom/TelecomManager;->getDefaultDialerPackage()Ljava/lang/String;
 +
 +    move-result-object v2
@@ -9725,20 +10835,20 @@ new file mode 100644
 +
 +    invoke-interface {v1, v2}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
 +
-+    .line 107
++    .line 146
 +    :cond_74
 +    new-instance v2, Ljava/util/HashSet;
 +
 +    invoke-direct {v2}, Ljava/util/HashSet;-><init>()V
 +
-+    .line 108
++    .line 147
 +    const/4 v3, 0x0
 +
 +    invoke-virtual {v0, v3}, Landroid/content/pm/PackageManager;->getInstalledApplications(I)Ljava/util/List;
 +
 +    move-result-object v4
 +
-+    .line 109
++    .line 148
 +    invoke-interface {v4}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 +
 +    move-result-object v5
@@ -9757,7 +10867,7 @@ new file mode 100644
 +
 +    check-cast v6, Landroid/content/pm/ApplicationInfo;
 +
-+    .line 110
++    .line 149
 +    iget-object v7, v6, Landroid/content/pm/ApplicationInfo;->packageName:Ljava/lang/String;
 +
 +    invoke-interface {v1, v7}, Ljava/util/Set;->contains(Ljava/lang/Object;)Z
@@ -9817,13 +10927,13 @@ new file mode 100644
 +
 +    goto :goto_82
 +
-+    .line 111
++    .line 150
 +    :cond_bd
 +    new-instance v0, Ljava/util/ArrayList;
 +
 +    invoke-direct {v0}, Ljava/util/ArrayList;-><init>()V
 +
-+    .line 112
++    .line 151
 +    invoke-interface {v4}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 +
 +    move-result-object v1
@@ -9860,7 +10970,7 @@ new file mode 100644
 +
 +    goto :goto_c6
 +
-+    .line 113
++    .line 152
 +    :cond_e4
 +    invoke-static {v0}, Ljava/util/Collections;->sort(Ljava/util/List;)V
 +
@@ -9875,13 +10985,24 @@ new file mode 100644
 +        }
 +    .end annotation
 +
-+    .line 250
++    .line 319
++    iget-object v0, p0, Lio/mesalabs/unica/battery/BatteryEngine;->journal:Lorg/json/JSONObject;
++
++    invoke-virtual {v0, p1}, Lorg/json/JSONObject;->has(Ljava/lang/String;)Z
++
++    move-result v0
++
++    if-nez v0, :cond_e
++
 +    invoke-virtual {p0, p1, p2}, Lio/mesalabs/unica/battery/BatteryEngine;->snapshot(Ljava/lang/String;Lorg/json/JSONObject;)V
 +
-+    .line 251
++    invoke-virtual {p0}, Lio/mesalabs/unica/battery/BatteryEngine;->saveJournal()V
++
++    .line 320
++    :cond_e
 +    invoke-virtual {p0, p2, p3}, Lio/mesalabs/unica/battery/BatteryEngine;->set(Lorg/json/JSONObject;Ljava/lang/String;)V
 +
-+    .line 252
++    .line 321
 +    iget-object v0, p0, Lio/mesalabs/unica/battery/BatteryEngine;->notes:Ljava/util/List;
 +
 +    new-instance v1, Ljava/lang/StringBuilder;
@@ -9914,8 +11035,107 @@ new file mode 100644
 +
 +    invoke-interface {v0, p1}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 +
-+    .line 253
++    .line 322
 +    return-void
++.end method
++
++.method checkpointRestores()V
++    .registers 6
++    .annotation system Ldalvik/annotation/Throws;
++        value = {
++            Ljava/lang/Exception;
++        }
++    .end annotation
++
++    .line 325
++    iget-object v0, p0, Lio/mesalabs/unica/battery/BatteryEngine;->restoredBatch:Ljava/util/Map;
++
++    invoke-interface {v0}, Ljava/util/Map;->isEmpty()Z
++
++    move-result v0
++
++    if-eqz v0, :cond_9
++
++    return-void
++
++    .line 326
++    :cond_9
++    :try_start_9
++    invoke-virtual {p0}, Lio/mesalabs/unica/battery/BatteryEngine;->saveJournal()V
++    :try_end_c
++    .catch Ljava/lang/Exception; {:try_start_9 .. :try_end_c} :catch_14
++    .catchall {:try_start_9 .. :try_end_c} :catchall_12
++
++    .line 328
++    iget-object v0, p0, Lio/mesalabs/unica/battery/BatteryEngine;->restoredBatch:Ljava/util/Map;
++
++    invoke-interface {v0}, Ljava/util/Map;->clear()V
++
++    .line 329
++    return-void
++
++    .line 328
++    :catchall_12
++    move-exception v0
++
++    goto :goto_3c
++
++    .line 327
++    :catch_14
++    move-exception v0
++
++    :try_start_15
++    iget-object v1, p0, Lio/mesalabs/unica/battery/BatteryEngine;->restoredBatch:Ljava/util/Map;
++
++    invoke-interface {v1}, Ljava/util/Map;->entrySet()Ljava/util/Set;
++
++    move-result-object v1
++
++    invoke-interface {v1}, Ljava/util/Set;->iterator()Ljava/util/Iterator;
++
++    move-result-object v1
++
++    :goto_1f
++    invoke-interface {v1}, Ljava/util/Iterator;->hasNext()Z
++
++    move-result v2
++
++    if-eqz v2, :cond_3b
++
++    invoke-interface {v1}, Ljava/util/Iterator;->next()Ljava/lang/Object;
++
++    move-result-object v2
++
++    check-cast v2, Ljava/util/Map$Entry;
++
++    iget-object v3, p0, Lio/mesalabs/unica/battery/BatteryEngine;->journal:Lorg/json/JSONObject;
++
++    invoke-interface {v2}, Ljava/util/Map$Entry;->getKey()Ljava/lang/Object;
++
++    move-result-object v4
++
++    check-cast v4, Ljava/lang/String;
++
++    invoke-interface {v2}, Ljava/util/Map$Entry;->getValue()Ljava/lang/Object;
++
++    move-result-object v2
++
++    invoke-virtual {v3, v4, v2}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
++
++    goto :goto_1f
++
++    :cond_3b
++    throw v0
++    :try_end_3c
++    .catchall {:try_start_15 .. :try_end_3c} :catchall_12
++
++    .line 328
++    :goto_3c
++    iget-object v1, p0, Lio/mesalabs/unica/battery/BatteryEngine;->restoredBatch:Ljava/util/Map;
++
++    invoke-interface {v1}, Ljava/util/Map;->clear()V
++
++    throw v0
 +.end method
 +
 +.method discover()V
@@ -9926,7 +11146,7 @@ new file mode 100644
 +        }
 +    .end annotation
 +
-+    .line 124
++    .line 163
 +    const-string v8, ""
 +
 +    const/4 v9, 0x0
@@ -9944,7 +11164,7 @@ new file mode 100644
 +
 +    move-result-object v0
 +
-+    .line 125
++    .line 164
 +    move v2, v9
 +
 +    :goto_10
@@ -9954,7 +11174,7 @@ new file mode 100644
 +
 +    if-ge v2, v3, :cond_9d
 +
-+    .line 126
++    .line 165
 +    invoke-virtual {v0, v2}, Lorg/json/JSONArray;->getJSONObject(I)Lorg/json/JSONObject;
 +
 +    move-result-object v3
@@ -9965,7 +11185,7 @@ new file mode 100644
 +
 +    move-result-object v4
 +
-+    .line 128
++    .line 167
 +    const-string v5, "wifi_pm"
 +
 +    invoke-virtual {v4, v5}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -9980,7 +11200,7 @@ new file mode 100644
 +
 +    goto :goto_7b
 +
-+    .line 129
++    .line 168
 +    :cond_2d
 +    const-string v5, "wifi_wakeup"
 +
@@ -9996,7 +11216,7 @@ new file mode 100644
 +
 +    goto :goto_7b
 +
-+    .line 130
++    .line 169
 +    :cond_3a
 +    const-string v5, "aspm"
 +
@@ -10012,7 +11232,7 @@ new file mode 100644
 +
 +    goto :goto_7b
 +
-+    .line 131
++    .line 170
 +    :cond_47
 +    const-string v5, "swappiness"
 +
@@ -10028,7 +11248,7 @@ new file mode 100644
 +
 +    goto :goto_7b
 +
-+    .line 132
++    .line 171
 +    :cond_54
 +    const-string v5, "gpu"
 +
@@ -10044,7 +11264,7 @@ new file mode 100644
 +
 +    goto :goto_7b
 +
-+    .line 133
++    .line 172
 +    :cond_61
 +    new-instance v5, Ljava/lang/StringBuilder;
 +
@@ -10072,7 +11292,7 @@ new file mode 100644
 +
 +    const-string v6, "A lower ceiling trades peak speed for potentially lower power. Longer task execution can cancel the saving."
 +
-+    .line 134
++    .line 173
 +    :goto_7b
 +    const-string v7, "label"
 +
@@ -10104,12 +11324,12 @@ new file mode 100644
 +    :try_end_99
 +    .catch Ljava/lang/Exception; {:try_start_3 .. :try_end_99} :catch_9e
 +
-+    .line 125
++    .line 164
 +    add-int/lit8 v2, v2, 0x1
 +
 +    goto/16 :goto_10
 +
-+    .line 136
++    .line 175
 +    :cond_9d
 +    goto :goto_bb
 +
@@ -10128,7 +11348,7 @@ new file mode 100644
 +
 +    move-result-object v3
 +
-+    invoke-virtual {v0}, Ljava/lang/Exception;->getMessage()Ljava/lang/String;
++    invoke-static {v0}, Lio/mesalabs/unica/battery/BatteryEngine;->describe(Ljava/lang/Throwable;)Ljava/lang/String;
 +
 +    move-result-object v0
 +
@@ -10142,7 +11362,7 @@ new file mode 100644
 +
 +    invoke-interface {v2, v0}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 +
-+    .line 138
++    .line 177
 +    :goto_bb
 +    :try_start_bb
 +    const-string v0, "settings"
@@ -10166,7 +11386,7 @@ new file mode 100644
 +
 +    move-object v0, v8
 +
-+    .line 139
++    .line 178
 +    :goto_cb
 +    const-string v2, "CUR_MAX_CACHED_PROCESSES=(\\d+)"
 +
@@ -10199,7 +11419,7 @@ new file mode 100644
 +    :cond_e5
 +    const/4 v0, -0x1
 +
-+    .line 140
++    .line 179
 +    :goto_e6
 +    const/16 v2, 0x20
 +
@@ -10223,7 +11443,7 @@ new file mode 100644
 +
 +    invoke-virtual/range {v1 .. v7}, Lio/mesalabs/unica/battery/BatteryEngine;->add(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Collection;)V
 +
-+    .line 141
++    .line 180
 +    iget-object v2, p0, Lio/mesalabs/unica/battery/BatteryEngine;->specs:Ljava/util/LinkedHashMap;
 +
 +    const-string v3, "cached"
@@ -10262,7 +11482,7 @@ new file mode 100644
 +
 +    invoke-virtual {v2, v11, v0}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
 +
-+    .line 142
++    .line 181
 +    const-string v0, "enabled"
 +
 +    const-string v2, "disabled"
@@ -10291,7 +11511,7 @@ new file mode 100644
 +
 +    invoke-virtual/range {v1 .. v7}, Lio/mesalabs/unica/battery/BatteryEngine;->add(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Collection;)V
 +
-+    .line 144
++    .line 183
 +    :try_start_13d
 +    const-string v0, "cao"
 +
@@ -10308,7 +11528,7 @@ new file mode 100644
 +
 +    move-object v0, v8
 +
-+    .line 145
++    .line 184
 +    :goto_146
 +    const-string v2, "(?im)^.*(?:mUseFreezer|use_freezer|freezer enabled|freezer_enabled).*$"
 +
@@ -10320,7 +11540,7 @@ new file mode 100644
 +
 +    move-result-object v0
 +
-+    .line 146
++    .line 185
 +    iget-object v2, p0, Lio/mesalabs/unica/battery/BatteryEngine;->specs:Ljava/util/LinkedHashMap;
 +
 +    const-string v3, "freezer"
@@ -10353,16 +11573,16 @@ new file mode 100644
 +    :goto_16b
 +    invoke-virtual {v2, v11, v0}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
 +
-+    .line 147
++    .line 186
 +    new-instance v7, Ljava/util/ArrayList;
 +
 +    invoke-direct {v7}, Ljava/util/ArrayList;-><init>()V
 +
-+    .line 149
++    .line 188
 +    :try_start_173
 +    iget-object v0, p0, Lio/mesalabs/unica/battery/BatteryEngine;->context:Landroid/content/Context;
 +
-+    .line 150
++    .line 189
 +    const-class v2, Landroid/hardware/display/DisplayManager;
 +
 +    invoke-virtual {v0, v2}, Landroid/content/Context;->getSystemService(Ljava/lang/Class;)Ljava/lang/Object;
@@ -10375,7 +11595,7 @@ new file mode 100644
 +
 +    move-result-object v0
 +
-+    .line 151
++    .line 190
 +    new-instance v2, Ljava/util/TreeSet;
 +
 +    invoke-direct {v2}, Ljava/util/TreeSet;-><init>()V
@@ -10411,7 +11631,7 @@ new file mode 100644
 +
 +    goto :goto_18c
 +
-+    .line 152
++    .line 191
 +    :cond_1a2
 +    invoke-virtual {v2}, Ljava/util/TreeSet;->iterator()Ljava/util/Iterator;
 +
@@ -10465,7 +11685,7 @@ new file mode 100644
 +
 +    goto :goto_1a6
 +
-+    .line 153
++    .line 192
 +    :cond_1d3
 +    goto :goto_1dc
 +
@@ -10478,7 +11698,7 @@ new file mode 100644
 +
 +    invoke-interface {v0, v2}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 +
-+    .line 154
++    .line 193
 +    :goto_1dc
 +    const-string v5, "system"
 +
@@ -10494,7 +11714,7 @@ new file mode 100644
 +
 +    invoke-virtual/range {v1 .. v7}, Lio/mesalabs/unica/battery/BatteryEngine;->add(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Collection;)V
 +
-+    .line 155
++    .line 194
 +    const-string v0, "0"
 +
 +    const-string v8, "1"
@@ -10521,7 +11741,7 @@ new file mode 100644
 +
 +    invoke-virtual/range {v1 .. v7}, Lio/mesalabs/unica/battery/BatteryEngine;->add(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Collection;)V
 +
-+    .line 156
++    .line 195
 +    filled-new-array {v0, v8}, [Ljava/lang/String;
 +
 +    move-result-object v1
@@ -10544,7 +11764,7 @@ new file mode 100644
 +
 +    invoke-virtual/range {v1 .. v7}, Lio/mesalabs/unica/battery/BatteryEngine;->add(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Collection;)V
 +
-+    .line 157
++    .line 196
 +    filled-new-array {v0, v8}, [Ljava/lang/String;
 +
 +    move-result-object v1
@@ -10567,7 +11787,7 @@ new file mode 100644
 +
 +    invoke-virtual/range {v1 .. v7}, Lio/mesalabs/unica/battery/BatteryEngine;->add(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Collection;)V
 +
-+    .line 158
++    .line 197
 +    const-string v1, "unrestricted"
 +
 +    const-string v2, "restricted"
@@ -10594,7 +11814,7 @@ new file mode 100644
 +
 +    invoke-virtual/range {v1 .. v7}, Lio/mesalabs/unica/battery/BatteryEngine;->add(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Collection;)V
 +
-+    .line 159
++    .line 198
 +    filled-new-array {v0, v8}, [Ljava/lang/String;
 +
 +    move-result-object v1
@@ -10617,7 +11837,7 @@ new file mode 100644
 +
 +    invoke-virtual/range {v1 .. v7}, Lio/mesalabs/unica/battery/BatteryEngine;->add(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Collection;)V
 +
-+    .line 160
++    .line 199
 +    const/16 v1, 0xff
 +
 +    invoke-static {v10, v1}, Lio/mesalabs/unica/battery/BatteryEngine;->range(II)Ljava/util/List;
@@ -10638,7 +11858,7 @@ new file mode 100644
 +
 +    invoke-virtual/range {v1 .. v7}, Lio/mesalabs/unica/battery/BatteryEngine;->add(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Collection;)V
 +
-+    .line 161
++    .line 200
 +    const-string v1, "60000"
 +
 +    const-string v2, "120000"
@@ -10669,7 +11889,7 @@ new file mode 100644
 +
 +    invoke-virtual/range {v1 .. v7}, Lio/mesalabs/unica/battery/BatteryEngine;->add(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Collection;)V
 +
-+    .line 162
++    .line 201
 +    filled-new-array {v0, v8}, [Ljava/lang/String;
 +
 +    move-result-object v1
@@ -10692,7 +11912,7 @@ new file mode 100644
 +
 +    invoke-virtual/range {v1 .. v7}, Lio/mesalabs/unica/battery/BatteryEngine;->add(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Collection;)V
 +
-+    .line 163
++    .line 202
 +    filled-new-array {v0, v8}, [Ljava/lang/String;
 +
 +    move-result-object v1
@@ -10715,7 +11935,7 @@ new file mode 100644
 +
 +    invoke-virtual/range {v1 .. v7}, Lio/mesalabs/unica/battery/BatteryEngine;->add(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Collection;)V
 +
-+    .line 164
++    .line 203
 +    filled-new-array {v0, v8}, [Ljava/lang/String;
 +
 +    move-result-object v1
@@ -10738,7 +11958,7 @@ new file mode 100644
 +
 +    invoke-virtual/range {v1 .. v7}, Lio/mesalabs/unica/battery/BatteryEngine;->add(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Collection;)V
 +
-+    .line 165
++    .line 204
 +    filled-new-array {v0, v8}, [Ljava/lang/String;
 +
 +    move-result-object v1
@@ -10761,7 +11981,7 @@ new file mode 100644
 +
 +    invoke-virtual/range {v1 .. v7}, Lio/mesalabs/unica/battery/BatteryEngine;->add(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Collection;)V
 +
-+    .line 166
++    .line 205
 +    const-string v1, "Window animations"
 +
 +    const-string v2, "window_animation_scale"
@@ -10805,7 +12025,7 @@ new file mode 100644
 +
 +    aget-object v1, v11, v12
 +
-+    .line 167
++    .line 206
 +    aget-object v2, v1, v9
 +
 +    aget-object v3, v1, v10
@@ -10832,12 +12052,12 @@ new file mode 100644
 +
 +    invoke-virtual/range {v1 .. v7}, Lio/mesalabs/unica/battery/BatteryEngine;->add(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Collection;)V
 +
-+    .line 166
++    .line 205
 +    add-int/lit8 v12, v12, 0x1
 +
 +    goto :goto_30d
 +
-+    .line 168
++    .line 207
 +    :cond_32e
 +    const-string v1, "2"
 +
@@ -10865,7 +12085,7 @@ new file mode 100644
 +
 +    invoke-virtual/range {v1 .. v7}, Lio/mesalabs/unica/battery/BatteryEngine;->add(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Collection;)V
 +
-+    .line 169
++    .line 208
 +    return-void
 +.end method
 +
@@ -10877,21 +12097,21 @@ new file mode 100644
 +        }
 +    .end annotation
 +
-+    .line 362
++    .line 453
 +    invoke-static {}, Landroid/os/Process;->myUid()I
 +
 +    move-result v0
 +
 +    const/16 v1, 0x3e8
 +
-+    if-ne v0, v1, :cond_c4
++    if-ne v0, v1, :cond_b3
 +
-+    .line 363
++    .line 454
 +    const-class v0, Lio/mesalabs/unica/battery/BatteryEngine;
 +
 +    monitor-enter v0
 +
-+    .line 364
++    .line 455
 +    :try_start_b
 +    iget-object v1, p0, Lio/mesalabs/unica/battery/BatteryEngine;->DIR:Ljava/io/File;
 +
@@ -10920,7 +12140,7 @@ new file mode 100644
 +
 +    throw p1
 +
-+    .line 365
++    .line 456
 +    :cond_24
 +    :goto_24
 +    new-instance v1, Ljava/io/RandomAccessFile;
@@ -10937,7 +12157,7 @@ new file mode 100644
 +
 +    invoke-direct {v1, v2, v3}, Ljava/io/RandomAccessFile;-><init>(Ljava/io/File;Ljava/lang/String;)V
 +    :try_end_34
-+    .catchall {:try_start_b .. :try_end_34} :catchall_c1
++    .catchall {:try_start_b .. :try_end_34} :catchall_b0
 +
 +    :try_start_34
 +    invoke-virtual {v1}, Ljava/io/RandomAccessFile;->getChannel()Ljava/nio/channels/FileChannel;
@@ -10948,9 +12168,9 @@ new file mode 100644
 +
 +    move-result-object v2
 +    :try_end_3c
-+    .catchall {:try_start_34 .. :try_end_3c} :catchall_b7
++    .catchall {:try_start_34 .. :try_end_3c} :catchall_a6
 +
-+    .line 366
++    .line 457
 +    :try_start_3c
 +    const-string v3, "boot"
 +
@@ -10958,22 +12178,24 @@ new file mode 100644
 +
 +    move-result v3
 +
-+    if-eqz v3, :cond_9d
++    if-eqz v3, :cond_8c
 +
-+    .line 367
++    .line 458
 +    iget-object v3, p0, Lio/mesalabs/unica/battery/BatteryEngine;->ACTIVE:Ljava/io/File;
 +
 +    invoke-virtual {v3}, Ljava/io/File;->exists()Z
 +
 +    move-result v3
 +
-+    if-eqz v3, :cond_5c
++    if-eqz v3, :cond_5e
 +
 +    new-instance v3, Lorg/json/JSONObject;
 +
 +    iget-object v4, p0, Lio/mesalabs/unica/battery/BatteryEngine;->ACTIVE:Ljava/io/File;
 +
-+    invoke-static {v4}, Lio/mesalabs/unica/battery/BatteryEngine;->read(Ljava/io/File;)Ljava/lang/String;
++    const/high16 v5, 0x10000
++
++    invoke-static {v4, v5}, Lio/mesalabs/unica/battery/BatteryEngine;->read(Ljava/io/File;I)Ljava/lang/String;
 +
 +    move-result-object v4
 +
@@ -10983,55 +12205,35 @@ new file mode 100644
 +
 +    move-result-object v3
 +
-+    goto :goto_60
++    goto :goto_62
 +
-+    :cond_5c
++    :cond_5e
 +    invoke-static {}, Lio/mesalabs/unica/battery/Profile;->empty()Lorg/json/JSONObject;
 +
 +    move-result-object v3
 +
-+    .line 368
-+    :goto_60
++    .line 459
++    :goto_62
 +    iget-object v4, p0, Lio/mesalabs/unica/battery/BatteryEngine;->JOURNAL:Ljava/io/File;
 +
-+    invoke-virtual {v4}, Ljava/io/File;->exists()Z
++    invoke-static {v4}, Lio/mesalabs/unica/battery/BatteryEngine;->readJournal(Ljava/io/File;)Lorg/json/JSONObject;
 +
-+    move-result v4
++    move-result-object v4
 +
-+    if-eqz v4, :cond_74
-+
-+    new-instance v4, Lorg/json/JSONObject;
-+
-+    iget-object v5, p0, Lio/mesalabs/unica/battery/BatteryEngine;->JOURNAL:Ljava/io/File;
-+
-+    invoke-static {v5}, Lio/mesalabs/unica/battery/BatteryEngine;->read(Ljava/io/File;)Ljava/lang/String;
-+
-+    move-result-object v5
-+
-+    invoke-direct {v4, v5}, Lorg/json/JSONObject;-><init>(Ljava/lang/String;)V
-+
-+    goto :goto_79
-+
-+    :cond_74
-+    new-instance v4, Lorg/json/JSONObject;
-+
-+    invoke-direct {v4}, Lorg/json/JSONObject;-><init>()V
-+
-+    .line 369
-+    :goto_79
++    .line 460
 +    const-string v5, "enabled"
 +
 +    invoke-virtual {v3, v5}, Lorg/json/JSONObject;->getBoolean(Ljava/lang/String;)Z
 +
 +    move-result v3
 +
-+    if-nez v3, :cond_9d
++    if-nez v3, :cond_8c
 +
 +    invoke-virtual {v4}, Lorg/json/JSONObject;->length()I
 +
 +    move-result v3
 +
-+    if-nez v3, :cond_9d
++    if-nez v3, :cond_8c
 +
 +    new-instance p1, Lorg/json/JSONObject;
 +
@@ -11044,112 +12246,112 @@ new file mode 100644
 +    invoke-virtual {p1, p2, v3}, Lorg/json/JSONObject;->put(Ljava/lang/String;Z)Lorg/json/JSONObject;
 +
 +    move-result-object p1
-+    :try_end_93
-+    .catchall {:try_start_3c .. :try_end_93} :catchall_ab
++    :try_end_82
++    .catchall {:try_start_3c .. :try_end_82} :catchall_9a
 +
-+    .line 372
-+    if-eqz v2, :cond_98
++    .line 463
++    if-eqz v2, :cond_87
 +
-+    :try_start_95
++    :try_start_84
 +    invoke-virtual {v2}, Ljava/nio/channels/FileLock;->close()V
-+    :try_end_98
-+    .catchall {:try_start_95 .. :try_end_98} :catchall_b7
++    :try_end_87
++    .catchall {:try_start_84 .. :try_end_87} :catchall_a6
 +
-+    :cond_98
-+    :try_start_98
++    :cond_87
++    :try_start_87
 +    invoke-virtual {v1}, Ljava/io/RandomAccessFile;->close()V
 +
 +    monitor-exit v0
-+    :try_end_9c
-+    .catchall {:try_start_98 .. :try_end_9c} :catchall_c1
++    :try_end_8b
++    .catchall {:try_start_87 .. :try_end_8b} :catchall_b0
 +
-+    .line 369
++    .line 460
 +    return-object p1
 +
-+    .line 371
-+    :cond_9d
-+    :try_start_9d
++    .line 462
++    :cond_8c
++    :try_start_8c
 +    invoke-virtual {p0, p1, p2}, Lio/mesalabs/unica/battery/BatteryEngine;->run(Ljava/lang/String;Lorg/json/JSONObject;)Lorg/json/JSONObject;
 +
 +    move-result-object p1
-+    :try_end_a1
-+    .catchall {:try_start_9d .. :try_end_a1} :catchall_ab
++    :try_end_90
++    .catchall {:try_start_8c .. :try_end_90} :catchall_9a
 +
-+    .line 372
-+    if-eqz v2, :cond_a6
++    .line 463
++    if-eqz v2, :cond_95
 +
-+    :try_start_a3
++    :try_start_92
 +    invoke-virtual {v2}, Ljava/nio/channels/FileLock;->close()V
-+    :try_end_a6
-+    .catchall {:try_start_a3 .. :try_end_a6} :catchall_b7
++    :try_end_95
++    .catchall {:try_start_92 .. :try_end_95} :catchall_a6
 +
-+    :cond_a6
-+    :try_start_a6
++    :cond_95
++    :try_start_95
 +    invoke-virtual {v1}, Ljava/io/RandomAccessFile;->close()V
 +
 +    monitor-exit v0
-+    :try_end_aa
-+    .catchall {:try_start_a6 .. :try_end_aa} :catchall_c1
++    :try_end_99
++    .catchall {:try_start_95 .. :try_end_99} :catchall_b0
 +
-+    .line 371
++    .line 462
 +    return-object p1
 +
-+    .line 365
-+    :catchall_ab
++    .line 456
++    :catchall_9a
 +    move-exception p1
 +
-+    if-eqz v2, :cond_b6
++    if-eqz v2, :cond_a5
 +
-+    :try_start_ae
++    :try_start_9d
 +    invoke-virtual {v2}, Ljava/nio/channels/FileLock;->close()V
-+    :try_end_b1
-+    .catchall {:try_start_ae .. :try_end_b1} :catchall_b2
++    :try_end_a0
++    .catchall {:try_start_9d .. :try_end_a0} :catchall_a1
 +
-+    goto :goto_b6
++    goto :goto_a5
 +
-+    :catchall_b2
++    :catchall_a1
 +    move-exception p2
 +
-+    :try_start_b3
++    :try_start_a2
 +    invoke-virtual {p1, p2}, Ljava/lang/Throwable;->addSuppressed(Ljava/lang/Throwable;)V
 +
-+    :cond_b6
-+    :goto_b6
++    :cond_a5
++    :goto_a5
 +    throw p1
-+    :try_end_b7
-+    .catchall {:try_start_b3 .. :try_end_b7} :catchall_b7
++    :try_end_a6
++    .catchall {:try_start_a2 .. :try_end_a6} :catchall_a6
 +
-+    :catchall_b7
++    :catchall_a6
 +    move-exception p1
 +
-+    :try_start_b8
++    :try_start_a7
 +    invoke-virtual {v1}, Ljava/io/RandomAccessFile;->close()V
-+    :try_end_bb
-+    .catchall {:try_start_b8 .. :try_end_bb} :catchall_bc
++    :try_end_aa
++    .catchall {:try_start_a7 .. :try_end_aa} :catchall_ab
 +
-+    goto :goto_c0
++    goto :goto_af
 +
-+    :catchall_bc
++    :catchall_ab
 +    move-exception p2
 +
-+    :try_start_bd
++    :try_start_ac
 +    invoke-virtual {p1, p2}, Ljava/lang/Throwable;->addSuppressed(Ljava/lang/Throwable;)V
 +
-+    :goto_c0
++    :goto_af
 +    throw p1
 +
-+    .line 373
-+    :catchall_c1
++    .line 464
++    :catchall_b0
 +    move-exception p1
 +
 +    monitor-exit v0
-+    :try_end_c3
-+    .catchall {:try_start_bd .. :try_end_c3} :catchall_c1
++    :try_end_b2
++    .catchall {:try_start_ac .. :try_end_b2} :catchall_b0
 +
 +    throw p1
 +
-+    .line 362
-+    :cond_c4
++    .line 453
++    :cond_b3
 +    new-instance p1, Ljava/io/IOException;
 +
 +    const-string p2, "Only owner Settings may apply battery profiles"
@@ -11167,7 +12369,7 @@ new file mode 100644
 +        }
 +    .end annotation
 +
-+    .line 171
++    .line 210
 +    const-string v0, "kind"
 +
 +    invoke-virtual {p1, v0}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
@@ -11180,7 +12382,7 @@ new file mode 100644
 +
 +    move-result-object v1
 +
-+    .line 172
++    .line 211
 +    const-string v2, "power"
 +
 +    invoke-virtual {v0, v2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -11217,7 +12419,7 @@ new file mode 100644
 +    :goto_2a
 +    return-object v3
 +
-+    .line 173
++    .line 212
 +    :cond_2b
 +    const-string v2, "sync"
 +
@@ -11241,7 +12443,7 @@ new file mode 100644
 +    :goto_3b
 +    return-object v3
 +
-+    .line 174
++    .line 213
 +    :cond_3c
 +    const-string v2, "data_saver"
 +
@@ -11279,7 +12481,7 @@ new file mode 100644
 +    :goto_59
 +    return-object v3
 +
-+    .line 175
++    .line 214
 +    :cond_5a
 +    const-string v2, "night"
 +
@@ -11323,7 +12525,7 @@ new file mode 100644
 +
 +    return-object p1
 +
-+    .line 176
++    .line 215
 +    :cond_84
 +    const-string v2, "policy"
 +
@@ -11331,7 +12533,7 @@ new file mode 100644
 +
 +    move-result v2
 +
-+    if-eqz v2, :cond_ae
++    if-eqz v2, :cond_b0
 +
 +    iget-object p1, p0, Lio/mesalabs/unica/battery/BatteryEngine;->ACTIVE:Ljava/io/File;
 +
@@ -11341,13 +12543,15 @@ new file mode 100644
 +
 +    const-string v0, "unrestricted"
 +
-+    if-eqz p1, :cond_ad
++    if-eqz p1, :cond_af
 +
 +    new-instance p1, Lorg/json/JSONObject;
 +
 +    iget-object v1, p0, Lio/mesalabs/unica/battery/BatteryEngine;->ACTIVE:Ljava/io/File;
 +
-+    invoke-static {v1}, Lio/mesalabs/unica/battery/BatteryEngine;->read(Ljava/io/File;)Ljava/lang/String;
++    const/high16 v2, 0x10000
++
++    invoke-static {v1, v2}, Lio/mesalabs/unica/battery/BatteryEngine;->read(Ljava/io/File;I)Ljava/lang/String;
 +
 +    move-result-object v1
 +
@@ -11365,11 +12569,11 @@ new file mode 100644
 +
 +    move-result-object v0
 +
-+    :cond_ad
++    :cond_af
 +    return-object v0
 +
-+    .line 177
-+    :cond_ae
++    .line 216
++    :cond_b0
 +    const-string v2, "net_uid"
 +
 +    invoke-virtual {v0, v2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -11378,7 +12582,7 @@ new file mode 100644
 +
 +    const/4 v4, 0x1
 +
-+    if-eqz v2, :cond_d4
++    if-eqz v2, :cond_d6
 +
 +    new-array v0, v4, [Ljava/lang/Class;
 +
@@ -11410,8 +12614,8 @@ new file mode 100644
 +
 +    return-object p1
 +
-+    .line 178
-+    :cond_d4
++    .line 217
++    :cond_d6
 +    const-string v2, "bg_run"
 +
 +    invoke-virtual {v0, v2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -11420,7 +12624,7 @@ new file mode 100644
 +
 +    const/4 v6, 0x2
 +
-+    if-nez v2, :cond_19a
++    if-nez v2, :cond_19c
 +
 +    const-string v2, "bg_any"
 +
@@ -11428,19 +12632,19 @@ new file mode 100644
 +
 +    move-result v2
 +
-+    if-eqz v2, :cond_e7
++    if-eqz v2, :cond_e9
 +
-+    goto/16 :goto_19a
++    goto/16 :goto_19c
 +
-+    .line 188
-+    :cond_e7
++    .line 227
++    :cond_e9
 +    const-string p1, "kernel"
 +
 +    invoke-virtual {v0, p1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
 +    move-result p1
 +
-+    if-eqz p1, :cond_fc
++    if-eqz p1, :cond_fe
 +
 +    const-string p1, "get"
 +
@@ -11456,8 +12660,8 @@ new file mode 100644
 +
 +    return-object p1
 +
-+    .line 189
-+    :cond_fc
++    .line 228
++    :cond_fe
 +    const-string p1, "device_config"
 +
 +    invoke-virtual {v0, p1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -11466,9 +12670,9 @@ new file mode 100644
 +
 +    const-string v2, "null"
 +
-+    if-eqz p1, :cond_12c
++    if-eqz p1, :cond_12e
 +
-+    .line 190
++    .line 229
 +    const-string p1, "/"
 +
 +    invoke-virtual {v1, p1}, Ljava/lang/String;->split(Ljava/lang/String;)[Ljava/lang/String;
@@ -11499,29 +12703,29 @@ new file mode 100644
 +
 +    move-result-object p1
 +
-+    if-nez p1, :cond_127
++    if-nez p1, :cond_129
 +
-+    goto :goto_12b
++    goto :goto_12d
 +
-+    :cond_127
++    :cond_129
 +    invoke-virtual {p1}, Ljava/lang/Object;->toString()Ljava/lang/String;
 +
 +    move-result-object v2
 +
-+    :goto_12b
++    :goto_12d
 +    return-object v2
 +
-+    .line 192
-+    :cond_12c
++    .line 231
++    :cond_12e
 +    const-string p1, "bucket"
 +
 +    invoke-virtual {v0, p1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
 +    move-result p1
 +
-+    if-eqz p1, :cond_159
++    if-eqz p1, :cond_15b
 +
-+    .line 193
++    .line 232
 +    iget-object p1, p0, Lio/mesalabs/unica/battery/BatteryEngine;->context:Landroid/content/Context;
 +
 +    const-class v0, Landroid/app/usage/UsageStatsManager;
@@ -11532,7 +12736,7 @@ new file mode 100644
 +
 +    check-cast p1, Landroid/app/usage/UsageStatsManager;
 +
-+    .line 194
++    .line 233
 +    const-class v0, Landroid/app/usage/UsageStatsManager;
 +
 +    new-array v2, v4, [Ljava/lang/Class;
@@ -11561,17 +12765,17 @@ new file mode 100644
 +
 +    return-object p1
 +
-+    .line 196
-+    :cond_159
++    .line 235
++    :cond_15b
 +    const-string p1, "exemption"
 +
 +    invoke-virtual {v0, p1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
 +    move-result p1
 +
-+    if-eqz p1, :cond_17a
++    if-eqz p1, :cond_17c
 +
-+    .line 197
++    .line 236
 +    new-array p1, v5, [Ljava/lang/Class;
 +
 +    new-array v0, v5, [Ljava/lang/Object;
@@ -11584,7 +12788,7 @@ new file mode 100644
 +
 +    check-cast p1, [Ljava/lang/String;
 +
-+    .line 198
++    .line 237
 +    invoke-static {p1}, Ljava/util/Arrays;->asList([Ljava/lang/Object;)Ljava/util/List;
 +
 +    move-result-object p1
@@ -11599,8 +12803,8 @@ new file mode 100644
 +
 +    return-object p1
 +
-+    .line 200
-+    :cond_17a
++    .line 239
++    :cond_17c
 +    const-string p1, "global"
 +
 +    invoke-virtual {v0, p1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -11609,7 +12813,7 @@ new file mode 100644
 +
 +    iget-object v0, p0, Lio/mesalabs/unica/battery/BatteryEngine;->context:Landroid/content/Context;
 +
-+    if-eqz p1, :cond_18d
++    if-eqz p1, :cond_18f
 +
 +    invoke-virtual {v0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
 +
@@ -11619,9 +12823,9 @@ new file mode 100644
 +
 +    move-result-object p1
 +
-+    goto :goto_195
++    goto :goto_197
 +
-+    :cond_18d
++    :cond_18f
 +    invoke-virtual {v0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
 +
 +    move-result-object p1
@@ -11630,28 +12834,28 @@ new file mode 100644
 +
 +    move-result-object p1
 +
-+    .line 201
-+    :goto_195
-+    if-nez p1, :cond_198
++    .line 240
++    :goto_197
++    if-nez p1, :cond_19a
 +
-+    goto :goto_199
++    goto :goto_19b
 +
-+    :cond_198
++    :cond_19a
 +    move-object v2, p1
 +
-+    :goto_199
++    :goto_19b
 +    return-object v2
 +
-+    .line 179
-+    :cond_19a
-+    :goto_19a
++    .line 218
++    :cond_19c
++    :goto_19c
 +    const-string v0, "op"
 +
 +    invoke-virtual {p1, v0}, Lorg/json/JSONObject;->getInt(Ljava/lang/String;)I
 +
 +    move-result v0
 +
-+    .line 180
++    .line 219
 +    new-array v1, v6, [Ljava/lang/Class;
 +
 +    sget-object v2, Ljava/lang/Integer;->TYPE:Ljava/lang/Class;
@@ -11690,25 +12894,25 @@ new file mode 100644
 +
 +    check-cast p1, Ljava/util/List;
 +
-+    .line 181
-+    if-eqz p1, :cond_22a
++    .line 220
++    if-eqz p1, :cond_22c
 +
 +    invoke-interface {p1}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 +
 +    move-result-object p1
 +
-+    :goto_1cc
++    :goto_1ce
 +    invoke-interface {p1}, Ljava/util/Iterator;->hasNext()Z
 +
 +    move-result v1
 +
-+    if-eqz v1, :cond_22a
++    if-eqz v1, :cond_22c
 +
 +    invoke-interface {p1}, Ljava/util/Iterator;->next()Ljava/lang/Object;
 +
 +    move-result-object v1
 +
-+    .line 182
++    .line 221
 +    invoke-virtual {v1}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
 +
 +    move-result-object v2
@@ -11729,17 +12933,17 @@ new file mode 100644
 +
 +    check-cast v1, Ljava/util/List;
 +
-+    .line 183
++    .line 222
 +    invoke-interface {v1}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 +
 +    move-result-object v1
 +
-+    :cond_1ee
++    :cond_1f0
 +    invoke-interface {v1}, Ljava/util/Iterator;->hasNext()Z
 +
 +    move-result v2
 +
-+    if-eqz v2, :cond_229
++    if-eqz v2, :cond_22b
 +
 +    invoke-interface {v1}, Ljava/util/Iterator;->next()Ljava/lang/Object;
 +
@@ -11769,9 +12973,9 @@ new file mode 100644
 +
 +    move-result v3
 +
-+    if-ne v3, v0, :cond_1ee
++    if-ne v3, v0, :cond_1f0
 +
-+    .line 184
++    .line 223
 +    invoke-virtual {v2}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
 +
 +    move-result-object p1
@@ -11796,12 +13000,12 @@ new file mode 100644
 +
 +    return-object p1
 +
-+    .line 185
-+    :cond_229
-+    goto :goto_1cc
++    .line 224
++    :cond_22b
++    goto :goto_1ce
 +
-+    .line 186
-+    :cond_22a
++    .line 225
++    :cond_22c
 +    const-class p1, Landroid/app/AppOpsManager;
 +
 +    new-array v1, v4, [Ljava/lang/Class;
@@ -11858,14 +13062,14 @@ new file mode 100644
 +        }
 +    .end annotation
 +
-+    .line 86
++    .line 125
 +    const-string v0, "android.net.NetworkPolicyManager"
 +
 +    invoke-static {v0}, Ljava/lang/Class;->forName(Ljava/lang/String;)Ljava/lang/Class;
 +
 +    move-result-object v0
 +
-+    .line 87
++    .line 126
 +    invoke-virtual {v0, p1, p2}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
 +
 +    move-result-object p1
@@ -11893,7 +13097,7 @@ new file mode 100644
 +        }
 +    .end annotation
 +
-+    .line 116
++    .line 155
 +    const-string v0, "com.android.settings"
 +
 +    invoke-virtual {p2, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -11918,7 +13122,7 @@ new file mode 100644
 +
 +    if-nez v0, :cond_63
 +
-+    .line 117
++    .line 156
 +    iget-object v0, p0, Lio/mesalabs/unica/battery/BatteryEngine;->context:Landroid/content/Context;
 +
 +    invoke-virtual {v0}, Landroid/content/Context;->getPackageManager()Landroid/content/pm/PackageManager;
@@ -11933,7 +13137,7 @@ new file mode 100644
 +
 +    iget v0, v0, Landroid/content/pm/ApplicationInfo;->uid:I
 +
-+    .line 118
++    .line 157
 +    new-instance v1, Lorg/json/JSONObject;
 +
 +    invoke-direct {v1}, Lorg/json/JSONObject;-><init>()V
@@ -11962,7 +13166,7 @@ new file mode 100644
 +
 +    move-result-object p2
 +
-+    .line 119
++    .line 158
 +    const-string v0, "bg_run"
 +
 +    invoke-virtual {p1, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -11998,11 +13202,11 @@ new file mode 100644
 +
 +    invoke-virtual {p2, v0, p1}, Lorg/json/JSONObject;->put(Ljava/lang/String;I)Lorg/json/JSONObject;
 +
-+    .line 120
++    .line 159
 +    :cond_62
 +    return-object p2
 +
-+    .line 116
++    .line 155
 +    :cond_63
 +    new-instance p1, Ljava/io/IOException;
 +
@@ -12014,21 +13218,21 @@ new file mode 100644
 +.end method
 +
 +.method restore(Ljava/lang/String;)Z
-+    .registers 7
++    .registers 9
 +    .annotation system Ldalvik/annotation/Throws;
 +        value = {
 +            Ljava/lang/Exception;
 +        }
 +    .end annotation
 +
-+    .line 255
++    .line 331
 +    iget-object v0, p0, Lio/mesalabs/unica/battery/BatteryEngine;->journal:Lorg/json/JSONObject;
 +
 +    invoke-virtual {v0, p1}, Lorg/json/JSONObject;->getJSONObject(Ljava/lang/String;)Lorg/json/JSONObject;
 +
 +    move-result-object v0
 +
-+    .line 256
++    .line 332
 +    const-string v1, "kind"
 +
 +    invoke-virtual {v0, v1}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
@@ -12041,49 +13245,56 @@ new file mode 100644
 +
 +    move-result v1
 +
-+    const/4 v2, 0x1
++    const/4 v2, 0x0
 +
-+    if-eqz v1, :cond_2c
++    const/4 v3, 0x1
++
++    if-eqz v1, :cond_26
 +
 +    iget-object v1, p0, Lio/mesalabs/unica/battery/BatteryEngine;->bootId:Ljava/lang/String;
 +
-+    const-string v3, "boot"
++    const-string v4, "boot"
 +
-+    invoke-virtual {v0, v3}, Lorg/json/JSONObject;->optString(Ljava/lang/String;)Ljava/lang/String;
++    invoke-virtual {v0, v4}, Lorg/json/JSONObject;->optString(Ljava/lang/String;)Ljava/lang/String;
 +
-+    move-result-object v3
++    move-result-object v4
 +
-+    invoke-virtual {v1, v3}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    invoke-virtual {v1, v4}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
 +    move-result v1
 +
-+    if-nez v1, :cond_2c
++    if-nez v1, :cond_26
 +
-+    .line 257
-+    iget-object v0, p0, Lio/mesalabs/unica/battery/BatteryEngine;->journal:Lorg/json/JSONObject;
++    move v1, v3
 +
-+    invoke-virtual {v0, p1}, Lorg/json/JSONObject;->remove(Ljava/lang/String;)Ljava/lang/Object;
++    goto :goto_27
 +
-+    invoke-virtual {p0}, Lio/mesalabs/unica/battery/BatteryEngine;->saveJournal()V
++    :cond_26
++    move v1, v2
 +
-+    return v2
++    .line 333
++    :goto_27
++    const-string v4, ": "
 +
-+    .line 259
-+    :cond_2c
-+    :try_start_2c
-+    const-string v1, "original"
++    if-nez v1, :cond_8e
 +
-+    invoke-virtual {v0, v1}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
++    :try_start_2b
++    const-string v5, "original"
 +
-+    move-result-object v1
++    invoke-virtual {v0, v5}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
 +
-+    invoke-virtual {p0, v0, v1}, Lio/mesalabs/unica/battery/BatteryEngine;->set(Lorg/json/JSONObject;Ljava/lang/String;)V
++    move-result-object v5
 +
-+    iget-object v1, p0, Lio/mesalabs/unica/battery/BatteryEngine;->journal:Lorg/json/JSONObject;
++    invoke-virtual {p0, v0, v5}, Lio/mesalabs/unica/battery/BatteryEngine;->set(Lorg/json/JSONObject;Ljava/lang/String;)V
++    :try_end_34
++    .catch Lio/mesalabs/unica/battery/BatteryEngine$BucketPolicyLimit; {:try_start_2b .. :try_end_34} :catch_5b
++    .catch Ljava/lang/Exception; {:try_start_2b .. :try_end_34} :catch_35
 +
-+    invoke-virtual {v1, p1}, Lorg/json/JSONObject;->remove(Ljava/lang/String;)Ljava/lang/Object;
++    .line 335
++    goto :goto_8e
 +
-+    invoke-virtual {p0}, Lio/mesalabs/unica/battery/BatteryEngine;->saveJournal()V
++    :catch_35
++    move-exception v0
 +
 +    iget-object v1, p0, Lio/mesalabs/unica/battery/BatteryEngine;->notes:Ljava/util/List;
 +
@@ -12091,59 +13302,21 @@ new file mode 100644
 +
 +    invoke-direct {v3}, Ljava/lang/StringBuilder;-><init>()V
 +
-+    const-string v4, "label"
++    const-string v5, "Restore failed for "
 +
-+    invoke-virtual {v0, v4, p1}, Lorg/json/JSONObject;->optString(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
++    invoke-virtual {v3, v5}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
-+    move-result-object v0
++    move-result-object v3
 +
-+    invoke-virtual {v3, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
-+
-+    move-result-object v0
-+
-+    const-string v3, ": restored"
-+
-+    invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
-+
-+    move-result-object v0
-+
-+    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
-+
-+    move-result-object v0
-+
-+    invoke-interface {v1, v0}, Ljava/util/List;->add(Ljava/lang/Object;)Z
-+    :try_end_5b
-+    .catch Ljava/lang/Exception; {:try_start_2c .. :try_end_5b} :catch_5c
-+
-+    return v2
-+
-+    .line 260
-+    :catch_5c
-+    move-exception v0
-+
-+    iget-object v1, p0, Lio/mesalabs/unica/battery/BatteryEngine;->notes:Ljava/util/List;
-+
-+    new-instance v2, Ljava/lang/StringBuilder;
-+
-+    invoke-direct {v2}, Ljava/lang/StringBuilder;-><init>()V
-+
-+    const-string v3, "Restore failed for "
-+
-+    invoke-virtual {v2, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
-+
-+    move-result-object v2
-+
-+    invoke-virtual {v2, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++    invoke-virtual {v3, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
 +    move-result-object p1
 +
-+    const-string v2, ": "
-+
-+    invoke-virtual {p1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++    invoke-virtual {p1, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
 +    move-result-object p1
 +
-+    invoke-virtual {v0}, Ljava/lang/Exception;->getMessage()Ljava/lang/String;
++    invoke-static {v0}, Lio/mesalabs/unica/battery/BatteryEngine;->describe(Ljava/lang/Throwable;)Ljava/lang/String;
 +
 +    move-result-object v0
 +
@@ -12157,9 +13330,130 @@ new file mode 100644
 +
 +    invoke-interface {v1, p1}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 +
-+    const/4 p1, 0x0
++    return v2
 +
-+    return p1
++    .line 334
++    :catch_5b
++    move-exception v0
++
++    iput-boolean v3, p0, Lio/mesalabs/unica/battery/BatteryEngine;->policyLimited:Z
++
++    iget v1, p0, Lio/mesalabs/unica/battery/BatteryEngine;->deferredRestores:I
++
++    add-int/2addr v1, v3
++
++    iput v1, p0, Lio/mesalabs/unica/battery/BatteryEngine;->deferredRestores:I
++
++    iget-object v1, p0, Lio/mesalabs/unica/battery/BatteryEngine;->notes:Ljava/util/List;
++
++    new-instance v2, Ljava/lang/StringBuilder;
++
++    invoke-direct {v2}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v5, "Restore deferred for "
++
++    invoke-virtual {v2, v5}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v2
++
++    invoke-virtual {v2, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p1
++
++    invoke-virtual {p1, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p1
++
++    invoke-virtual {v0}, Lio/mesalabs/unica/battery/BatteryEngine$BucketPolicyLimit;->getMessage()Ljava/lang/String;
++
++    move-result-object v0
++
++    invoke-virtual {p1, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p1
++
++    const-string v0, "; saved original retained"
++
++    invoke-virtual {p1, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p1
++
++    invoke-virtual {p1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p1
++
++    invoke-interface {v1, p1}, Ljava/util/List;->add(Ljava/lang/Object;)Z
++
++    return v3
++
++    .line 336
++    :cond_8e
++    :goto_8e
++    iget-object v2, p0, Lio/mesalabs/unica/battery/BatteryEngine;->journal:Lorg/json/JSONObject;
++
++    invoke-virtual {v2, p1}, Lorg/json/JSONObject;->remove(Ljava/lang/String;)Ljava/lang/Object;
++
++    iget-object v2, p0, Lio/mesalabs/unica/battery/BatteryEngine;->restoredBatch:Ljava/util/Map;
++
++    invoke-interface {v2, p1, v0}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
++
++    .line 338
++    iget-object v2, p0, Lio/mesalabs/unica/battery/BatteryEngine;->restoredBatch:Ljava/util/Map;
++
++    invoke-interface {v2}, Ljava/util/Map;->size()I
++
++    move-result v2
++
++    const/16 v5, 0x40
++
++    if-lt v2, v5, :cond_a5
++
++    invoke-virtual {p0}, Lio/mesalabs/unica/battery/BatteryEngine;->checkpointRestores()V
++
++    .line 339
++    :cond_a5
++    iget-object v2, p0, Lio/mesalabs/unica/battery/BatteryEngine;->notes:Ljava/util/List;
++
++    new-instance v5, Ljava/lang/StringBuilder;
++
++    invoke-direct {v5}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v6, "label"
++
++    invoke-virtual {v0, v6, p1}, Lorg/json/JSONObject;->optString(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
++
++    move-result-object p1
++
++    invoke-virtual {v5, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p1
++
++    invoke-virtual {p1, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p1
++
++    if-eqz v1, :cond_bf
++
++    const-string v0, "old kernel snapshot discarded"
++
++    goto :goto_c1
++
++    :cond_bf
++    const-string v0, "restored"
++
++    :goto_c1
++    invoke-virtual {p1, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p1
++
++    invoke-virtual {p1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p1
++
++    invoke-interface {v2, p1}, Ljava/util/List;->add(Ljava/lang/Object;)Z
++
++    .line 340
++    return v3
 +.end method
 +
 +.method run(Ljava/lang/String;Lorg/json/JSONObject;)Lorg/json/JSONObject;
@@ -12170,7 +13464,7 @@ new file mode 100644
 +        }
 +    .end annotation
 +
-+    .line 340
++    .line 429
 +    new-instance v0, Ljava/io/File;
 +
 +    const-string v1, "/proc/sys/kernel/random/boot_id"
@@ -12183,136 +13477,143 @@ new file mode 100644
 +
 +    iput-object v0, p0, Lio/mesalabs/unica/battery/BatteryEngine;->bootId:Ljava/lang/String;
 +
-+    .line 341
++    .line 430
 +    iget-object v0, p0, Lio/mesalabs/unica/battery/BatteryEngine;->JOURNAL:Ljava/io/File;
 +
-+    invoke-virtual {v0}, Ljava/io/File;->exists()Z
++    invoke-static {v0}, Lio/mesalabs/unica/battery/BatteryEngine;->readJournal(Ljava/io/File;)Lorg/json/JSONObject;
 +
-+    move-result v0
++    move-result-object v0
 +
-+    if-eqz v0, :cond_21
-+
-+    new-instance v0, Lorg/json/JSONObject;
-+
-+    iget-object v1, p0, Lio/mesalabs/unica/battery/BatteryEngine;->JOURNAL:Ljava/io/File;
-+
-+    invoke-static {v1}, Lio/mesalabs/unica/battery/BatteryEngine;->read(Ljava/io/File;)Ljava/lang/String;
-+
-+    move-result-object v1
-+
-+    invoke-direct {v0, v1}, Lorg/json/JSONObject;-><init>(Ljava/lang/String;)V
-+
-+    goto :goto_26
-+
-+    :cond_21
-+    new-instance v0, Lorg/json/JSONObject;
-+
-+    invoke-direct {v0}, Lorg/json/JSONObject;-><init>()V
-+
-+    :goto_26
 +    iput-object v0, p0, Lio/mesalabs/unica/battery/BatteryEngine;->journal:Lorg/json/JSONObject;
 +
-+    .line 342
++    .line 431
 +    invoke-virtual {p0}, Lio/mesalabs/unica/battery/BatteryEngine;->discover()V
 +
-+    .line 343
++    .line 432
 +    iget-object v0, p0, Lio/mesalabs/unica/battery/BatteryEngine;->ACTIVE:Ljava/io/File;
 +
 +    invoke-virtual {v0}, Ljava/io/File;->exists()Z
 +
 +    move-result v0
 +
-+    if-eqz v0, :cond_43
++    const/high16 v1, 0x10000
++
++    if-eqz v0, :cond_32
 +
 +    new-instance v0, Lorg/json/JSONObject;
 +
-+    iget-object v1, p0, Lio/mesalabs/unica/battery/BatteryEngine;->ACTIVE:Ljava/io/File;
++    iget-object v2, p0, Lio/mesalabs/unica/battery/BatteryEngine;->ACTIVE:Ljava/io/File;
 +
-+    invoke-static {v1}, Lio/mesalabs/unica/battery/BatteryEngine;->read(Ljava/io/File;)Ljava/lang/String;
++    invoke-static {v2, v1}, Lio/mesalabs/unica/battery/BatteryEngine;->read(Ljava/io/File;I)Ljava/lang/String;
 +
-+    move-result-object v1
++    move-result-object v2
 +
-+    invoke-direct {v0, v1}, Lorg/json/JSONObject;-><init>(Ljava/lang/String;)V
++    invoke-direct {v0, v2}, Lorg/json/JSONObject;-><init>(Ljava/lang/String;)V
 +
 +    invoke-static {v0}, Lio/mesalabs/unica/battery/Profile;->validate(Lorg/json/JSONObject;)Lorg/json/JSONObject;
 +
 +    move-result-object v0
 +
-+    goto :goto_47
++    goto :goto_36
 +
-+    :cond_43
++    :cond_32
 +    invoke-static {}, Lio/mesalabs/unica/battery/Profile;->empty()Lorg/json/JSONObject;
 +
 +    move-result-object v0
 +
-+    .line 344
-+    :goto_47
++    .line 433
++    :goto_36
 +    nop
 +
-+    .line 345
-+    const-string v1, "apply"
-+
-+    invoke-virtual {p1, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
-+
-+    move-result v2
-+
-+    const/4 v3, 0x1
-+
-+    if-nez v2, :cond_5c
-+
-+    const-string v2, "boot"
++    .line 434
++    const-string v2, "apply"
 +
 +    invoke-virtual {p1, v2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
-+    move-result v2
++    move-result v3
 +
-+    if-eqz v2, :cond_5a
++    const/4 v4, 0x1
 +
-+    goto :goto_5c
++    if-nez v3, :cond_4b
 +
-+    :cond_5a
-+    move p1, v3
++    const-string v3, "boot"
 +
-+    goto :goto_7b
++    invoke-virtual {p1, v3}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
-+    .line 346
-+    :cond_5c
-+    :goto_5c
-+    invoke-virtual {p1, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v3
++
++    if-eqz v3, :cond_49
++
++    goto :goto_4b
++
++    :cond_49
++    move p1, v4
++
++    goto :goto_7c
++
++    .line 435
++    :cond_4b
++    :goto_4b
++    invoke-virtual {p1, v2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
 +    move-result p1
 +
-+    if-eqz p1, :cond_6f
++    if-eqz p1, :cond_70
 +
-+    .line 347
++    .line 436
 +    invoke-static {p2}, Lio/mesalabs/unica/battery/Profile;->validate(Lorg/json/JSONObject;)Lorg/json/JSONObject;
 +
 +    move-result-object v0
 +
-+    .line 348
-+    iget-object p1, p0, Lio/mesalabs/unica/battery/BatteryEngine;->ACTIVE:Ljava/io/File;
-+
++    .line 437
 +    invoke-virtual {v0}, Lorg/json/JSONObject;->toString()Ljava/lang/String;
++
++    move-result-object p1
++
++    .line 438
++    sget-object p2, Ljava/nio/charset/StandardCharsets;->UTF_8:Ljava/nio/charset/Charset;
++
++    invoke-virtual {p1, p2}, Ljava/lang/String;->getBytes(Ljava/nio/charset/Charset;)[B
 +
 +    move-result-object p2
 +
-+    invoke-static {p1, p2}, Lio/mesalabs/unica/battery/BatteryEngine;->atomic(Ljava/io/File;Ljava/lang/String;)V
++    array-length p2, p2
 +
-+    .line 350
-+    :cond_6f
++    if-gt p2, v1, :cond_68
++
++    .line 439
++    iget-object p2, p0, Lio/mesalabs/unica/battery/BatteryEngine;->ACTIVE:Ljava/io/File;
++
++    invoke-static {p2, p1}, Lio/mesalabs/unica/battery/BatteryEngine;->atomic(Ljava/io/File;Ljava/lang/String;)V
++
++    goto :goto_70
++
++    .line 438
++    :cond_68
++    new-instance p1, Ljava/io/IOException;
++
++    const-string p2, "Profile exceeds 64 KB"
++
++    invoke-direct {p1, p2}, Ljava/io/IOException;-><init>(Ljava/lang/String;)V
++
++    throw p1
++
++    .line 441
++    :cond_70
++    :goto_70
 +    invoke-virtual {p0, v0}, Lio/mesalabs/unica/battery/BatteryEngine;->apply(Lorg/json/JSONObject;)Z
 +
 +    move-result p1
 +
-+    .line 351
++    .line 442
 +    iget-object p2, p0, Lio/mesalabs/unica/battery/BatteryEngine;->specs:Ljava/util/LinkedHashMap;
 +
 +    invoke-virtual {p2}, Ljava/util/LinkedHashMap;->clear()V
 +
 +    invoke-virtual {p0}, Lio/mesalabs/unica/battery/BatteryEngine;->discover()V
 +
-+    .line 353
-+    :goto_7b
++    .line 444
++    :goto_7c
 +    new-instance p2, Lorg/json/JSONArray;
 +
 +    invoke-direct {p2}, Lorg/json/JSONArray;-><init>()V
@@ -12327,12 +13628,12 @@ new file mode 100644
 +
 +    move-result-object v1
 +
-+    :goto_8a
++    :goto_8b
 +    invoke-interface {v1}, Ljava/util/Iterator;->hasNext()Z
 +
 +    move-result v2
 +
-+    if-eqz v2, :cond_ce
++    if-eqz v2, :cond_cf
 +
 +    invoke-interface {v1}, Ljava/util/Iterator;->next()Ljava/lang/Object;
 +
@@ -12340,24 +13641,24 @@ new file mode 100644
 +
 +    check-cast v2, Lorg/json/JSONObject;
 +
-+    .line 354
-+    new-instance v4, Lorg/json/JSONObject;
++    .line 445
++    new-instance v3, Lorg/json/JSONObject;
 +
 +    invoke-virtual {v2}, Lorg/json/JSONObject;->toString()Ljava/lang/String;
 +
 +    move-result-object v5
 +
-+    invoke-direct {v4, v5}, Lorg/json/JSONObject;-><init>(Ljava/lang/String;)V
++    invoke-direct {v3, v5}, Lorg/json/JSONObject;-><init>(Ljava/lang/String;)V
 +
 +    const-string v5, "target"
 +
-+    invoke-virtual {v4, v5}, Lorg/json/JSONObject;->remove(Ljava/lang/String;)Ljava/lang/Object;
++    invoke-virtual {v3, v5}, Lorg/json/JSONObject;->remove(Ljava/lang/String;)Ljava/lang/Object;
 +
 +    const-string v5, "kind"
 +
-+    invoke-virtual {v4, v5}, Lorg/json/JSONObject;->remove(Ljava/lang/String;)Ljava/lang/Object;
++    invoke-virtual {v3, v5}, Lorg/json/JSONObject;->remove(Ljava/lang/String;)Ljava/lang/Object;
 +
-+    .line 355
++    .line 446
 +    iget-object v5, p0, Lio/mesalabs/unica/battery/BatteryEngine;->journal:Lorg/json/JSONObject;
 +
 +    const-string v6, "id"
@@ -12370,7 +13671,7 @@ new file mode 100644
 +
 +    move-result v5
 +
-+    if-eqz v5, :cond_ca
++    if-eqz v5, :cond_cb
 +
 +    iget-object v5, p0, Lio/mesalabs/unica/battery/BatteryEngine;->journal:Lorg/json/JSONObject;
 +
@@ -12388,17 +13689,17 @@ new file mode 100644
 +
 +    move-result-object v2
 +
-+    invoke-virtual {v4, v5, v2}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
++    invoke-virtual {v3, v5, v2}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
 +
-+    .line 356
-+    :cond_ca
-+    invoke-virtual {p2, v4}, Lorg/json/JSONArray;->put(Ljava/lang/Object;)Lorg/json/JSONArray;
++    .line 447
++    :cond_cb
++    invoke-virtual {p2, v3}, Lorg/json/JSONArray;->put(Ljava/lang/Object;)Lorg/json/JSONArray;
 +
-+    .line 357
-+    goto :goto_8a
++    .line 448
++    goto :goto_8b
 +
-+    .line 358
-+    :cond_ce
++    .line 449
++    :cond_cf
 +    new-instance v1, Lorg/json/JSONObject;
 +
 +    invoke-direct {v1}, Lorg/json/JSONObject;-><init>()V
@@ -12406,6 +13707,22 @@ new file mode 100644
 +    const-string v2, "ok"
 +
 +    invoke-virtual {v1, v2, p1}, Lorg/json/JSONObject;->put(Ljava/lang/String;Z)Lorg/json/JSONObject;
++
++    move-result-object p1
++
++    const-string v1, "policyLimited"
++
++    iget-boolean v2, p0, Lio/mesalabs/unica/battery/BatteryEngine;->policyLimited:Z
++
++    invoke-virtual {p1, v1, v2}, Lorg/json/JSONObject;->put(Ljava/lang/String;Z)Lorg/json/JSONObject;
++
++    move-result-object p1
++
++    const-string v1, "deferredRestores"
++
++    iget v2, p0, Lio/mesalabs/unica/battery/BatteryEngine;->deferredRestores:I
++
++    invoke-virtual {p1, v1, v2}, Lorg/json/JSONObject;->put(Ljava/lang/String;I)Lorg/json/JSONObject;
 +
 +    move-result-object p1
 +
@@ -12433,14 +13750,14 @@ new file mode 100644
 +
 +    move-result-object p1
 +
-+    .line 359
++    .line 450
 +    const-string p2, "enabled"
 +
 +    invoke-virtual {v0, p2}, Lorg/json/JSONObject;->getBoolean(Ljava/lang/String;)Z
 +
 +    move-result p2
 +
-+    if-nez p2, :cond_102
++    if-nez p2, :cond_113
 +
 +    iget-object p2, p0, Lio/mesalabs/unica/battery/BatteryEngine;->journal:Lorg/json/JSONObject;
 +
@@ -12448,17 +13765,17 @@ new file mode 100644
 +
 +    move-result p2
 +
-+    if-lez p2, :cond_102
++    if-lez p2, :cond_113
 +
-+    goto :goto_103
++    goto :goto_114
 +
-+    :cond_102
-+    const/4 v3, 0x0
++    :cond_113
++    const/4 v4, 0x0
 +
-+    :goto_103
++    :goto_114
 +    const-string p2, "pendingRestore"
 +
-+    invoke-virtual {p1, p2, v3}, Lorg/json/JSONObject;->put(Ljava/lang/String;Z)Lorg/json/JSONObject;
++    invoke-virtual {p1, p2, v4}, Lorg/json/JSONObject;->put(Ljava/lang/String;Z)Lorg/json/JSONObject;
 +
 +    move-result-object p1
 +
@@ -12476,7 +13793,7 @@ new file mode 100644
 +
 +    move-result-object p1
 +
-+    .line 358
++    .line 449
 +    return-object p1
 +.end method
 +
@@ -12488,16 +13805,12 @@ new file mode 100644
 +        }
 +    .end annotation
 +
-+    .line 239
++    .line 308
 +    iget-object v0, p0, Lio/mesalabs/unica/battery/BatteryEngine;->JOURNAL:Ljava/io/File;
 +
 +    iget-object v1, p0, Lio/mesalabs/unica/battery/BatteryEngine;->journal:Lorg/json/JSONObject;
 +
-+    invoke-virtual {v1}, Lorg/json/JSONObject;->toString()Ljava/lang/String;
-+
-+    move-result-object v1
-+
-+    invoke-static {v0, v1}, Lio/mesalabs/unica/battery/BatteryEngine;->atomic(Ljava/io/File;Ljava/lang/String;)V
++    invoke-static {v0, v1}, Lio/mesalabs/unica/battery/BatteryEngine;->writeJournal(Ljava/io/File;Lorg/json/JSONObject;)V
 +
 +    return-void
 +.end method
@@ -12510,7 +13823,7 @@ new file mode 100644
 +        }
 +    .end annotation
 +
-+    .line 204
++    .line 268
 +    const-string v0, "kind"
 +
 +    invoke-virtual {p1, v0}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
@@ -12523,7 +13836,7 @@ new file mode 100644
 +
 +    move-result-object v1
 +
-+    .line 205
++    .line 269
 +    invoke-virtual {p0, p1}, Lio/mesalabs/unica/battery/BatteryEngine;->get(Lorg/json/JSONObject;)Ljava/lang/String;
 +
 +    move-result-object v2
@@ -12561,7 +13874,7 @@ new file mode 100644
 +    :cond_2e
 +    return-void
 +
-+    .line 206
++    .line 270
 +    :cond_2f
 +    const-string v2, "power"
 +
@@ -12577,7 +13890,7 @@ new file mode 100644
 +
 +    if-eqz v2, :cond_73
 +
-+    .line 207
++    .line 271
 +    const-class v0, Landroid/os/PowerManager;
 +
 +    new-array v1, v7, [Ljava/lang/Class;
@@ -12622,13 +13935,13 @@ new file mode 100644
 +
 +    move-result v0
 +
-+    .line 208
++    .line 272
 +    if-eqz v0, :cond_6b
 +
-+    .line 209
-+    goto/16 :goto_288
++    .line 273
++    goto/16 :goto_2ae
 +
-+    .line 208
++    .line 272
 +    :cond_6b
 +    new-instance p1, Ljava/io/IOException;
 +
@@ -12638,7 +13951,7 @@ new file mode 100644
 +
 +    throw p1
 +
-+    .line 209
++    .line 273
 +    :cond_73
 +    const-string v2, "sync"
 +
@@ -12654,9 +13967,9 @@ new file mode 100644
 +
 +    invoke-static {v0}, Landroid/content/ContentResolver;->setMasterSyncAutomatically(Z)V
 +
-+    goto/16 :goto_288
++    goto/16 :goto_2ae
 +
-+    .line 210
++    .line 274
 +    :cond_84
 +    const-string v2, "data_saver"
 +
@@ -12688,9 +14001,9 @@ new file mode 100644
 +
 +    invoke-virtual {p0, v2, v0, v1}, Lio/mesalabs/unica/battery/BatteryEngine;->network(Ljava/lang/String;[Ljava/lang/Class;[Ljava/lang/Object;)Ljava/lang/Object;
 +
-+    goto/16 :goto_288
++    goto/16 :goto_2ae
 +
-+    .line 211
++    .line 275
 +    :cond_a5
 +    invoke-virtual {v0, v4}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
@@ -12698,7 +14011,7 @@ new file mode 100644
 +
 +    if-eqz v2, :cond_10c
 +
-+    .line 212
++    .line 276
 +    iget-object v0, p0, Lio/mesalabs/unica/battery/BatteryEngine;->context:Landroid/content/Context;
 +
 +    const-class v1, Landroid/app/UiModeManager;
@@ -12709,7 +14022,7 @@ new file mode 100644
 +
 +    check-cast v0, Landroid/app/UiModeManager;
 +
-+    .line 213
++    .line 277
 +    invoke-virtual {p2, v3}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
 +    move-result v1
@@ -12722,7 +14035,7 @@ new file mode 100644
 +
 +    if-eqz v1, :cond_103
 +
-+    .line 214
++    .line 278
 +    const-class v1, Landroid/app/UiModeManager;
 +
 +    new-array v2, v7, [Ljava/lang/Class;
@@ -12751,7 +14064,7 @@ new file mode 100644
 +
 +    invoke-virtual {v1, v0, v2}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
 +
-+    .line 215
++    .line 279
 +    const-class v1, Landroid/app/UiModeManager;
 +
 +    const-string v2, "getNightModeCustomType"
@@ -12791,7 +14104,7 @@ new file mode 100644
 +
 +    throw p1
 +
-+    .line 216
++    .line 280
 +    :cond_103
 +    invoke-static {p2}, Ljava/lang/Integer;->parseInt(Ljava/lang/String;)I
 +
@@ -12799,11 +14112,11 @@ new file mode 100644
 +
 +    invoke-virtual {v0, v1}, Landroid/app/UiModeManager;->setNightMode(I)V
 +
-+    .line 217
++    .line 281
 +    :goto_10a
-+    goto/16 :goto_288
++    goto/16 :goto_2ae
 +
-+    .line 218
++    .line 282
 +    :cond_10c
 +    const-string v2, "net_uid"
 +
@@ -12849,9 +14162,9 @@ new file mode 100644
 +
 +    invoke-virtual {p0, v2, v0, v1}, Lio/mesalabs/unica/battery/BatteryEngine;->network(Ljava/lang/String;[Ljava/lang/Class;[Ljava/lang/Object;)Ljava/lang/Object;
 +
-+    goto/16 :goto_288
++    goto/16 :goto_2ae
 +
-+    .line 219
++    .line 283
 +    :cond_13a
 +    const-string v2, "bg_run"
 +
@@ -12861,7 +14174,7 @@ new file mode 100644
 +
 +    const/4 v4, 0x3
 +
-+    if-nez v2, :cond_249
++    if-nez v2, :cond_26f
 +
 +    const-string v2, "bg_any"
 +
@@ -12871,9 +14184,9 @@ new file mode 100644
 +
 +    if-eqz v2, :cond_14d
 +
-+    goto/16 :goto_249
++    goto/16 :goto_26f
 +
-+    .line 221
++    .line 285
 +    :cond_14d
 +    const-string v2, "kernel"
 +
@@ -12887,9 +14200,9 @@ new file mode 100644
 +
 +    invoke-static {v0, v1, p2}, Lio/mesalabs/unica/battery/BatteryTransport;->request(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lorg/json/JSONObject;
 +
-+    goto/16 :goto_288
++    goto/16 :goto_2ae
 +
-+    .line 222
++    .line 286
 +    :cond_15c
 +    const-string v2, "device_config"
 +
@@ -12901,14 +14214,14 @@ new file mode 100644
 +
 +    if-eqz v2, :cond_1c4
 +
-+    .line 223
++    .line 287
 +    const-string v0, "/"
 +
 +    invoke-virtual {v1, v0}, Ljava/lang/String;->split(Ljava/lang/String;)[Ljava/lang/String;
 +
 +    move-result-object v0
 +
-+    .line 224
++    .line 288
 +    invoke-virtual {p2, v5}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
 +    move-result v1
@@ -12943,7 +14256,7 @@ new file mode 100644
 +
 +    goto :goto_1b4
 +
-+    .line 225
++    .line 289
 +    :cond_18d
 +    const/4 v1, 0x4
 +
@@ -12985,19 +14298,19 @@ new file mode 100644
 +
 +    check-cast v0, Ljava/lang/Boolean;
 +
-+    .line 224
++    .line 288
 +    :goto_1b4
 +    invoke-virtual {v0}, Ljava/lang/Boolean;->booleanValue()Z
 +
 +    move-result v0
 +
-+    .line 226
++    .line 290
 +    if-eqz v0, :cond_1bc
 +
-+    .line 227
-+    goto/16 :goto_288
++    .line 291
++    goto/16 :goto_2ae
 +
-+    .line 226
++    .line 290
 +    :cond_1bc
 +    new-instance p1, Ljava/io/IOException;
 +
@@ -13007,7 +14320,7 @@ new file mode 100644
 +
 +    throw p1
 +
-+    .line 227
++    .line 291
 +    :cond_1c4
 +    const-string v2, "bucket"
 +
@@ -13015,60 +14328,107 @@ new file mode 100644
 +
 +    move-result v2
 +
-+    if-eqz v2, :cond_1f7
++    if-eqz v2, :cond_21d
 +
-+    .line 228
-+    const-class v0, Landroid/app/usage/UsageStatsManager;
++    .line 292
++    invoke-static {p2}, Ljava/lang/Integer;->parseInt(Ljava/lang/String;)I
 +
-+    new-array v2, v3, [Ljava/lang/Class;
++    move-result p2
 +
-+    const-class v3, Ljava/lang/String;
-+
-+    aput-object v3, v2, v8
-+
-+    sget-object v3, Ljava/lang/Integer;->TYPE:Ljava/lang/Class;
-+
-+    aput-object v3, v2, v7
-+
-+    const-string v3, "setAppStandbyBucket"
-+
-+    invoke-virtual {v0, v3, v2}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
++    invoke-virtual {p0, p1}, Lio/mesalabs/unica/battery/BatteryEngine;->get(Lorg/json/JSONObject;)Ljava/lang/String;
 +
 +    move-result-object v0
 +
-+    iget-object v2, p0, Lio/mesalabs/unica/battery/BatteryEngine;->context:Landroid/content/Context;
++    invoke-static {v0}, Ljava/lang/Integer;->parseInt(Ljava/lang/String;)I
 +
-+    const-class v3, Landroid/app/usage/UsageStatsManager;
++    move-result v0
 +
-+    invoke-virtual {v2, v3}, Landroid/content/Context;->getSystemService(Ljava/lang/Class;)Ljava/lang/Object;
++    .line 293
++    const/4 v2, 0x5
 +
-+    move-result-object v2
++    if-eq v0, v2, :cond_215
 +
-+    invoke-static {p2}, Ljava/lang/Integer;->parseInt(Ljava/lang/String;)I
++    .line 294
++    const/16 v0, 0xa
 +
-+    move-result v3
++    if-lt p2, v0, :cond_1f2
 +
-+    invoke-static {v3}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++    const/16 v0, 0x32
 +
-+    move-result-object v3
++    if-gt p2, v0, :cond_1f2
 +
-+    filled-new-array {v1, v3}, [Ljava/lang/Object;
++    .line 295
++    invoke-virtual {p0, v1, p2}, Lio/mesalabs/unica/battery/BatteryEngine;->writeBucket(Ljava/lang/String;I)V
 +
-+    move-result-object v1
++    .line 296
++    invoke-virtual {p0, p1}, Lio/mesalabs/unica/battery/BatteryEngine;->get(Lorg/json/JSONObject;)Ljava/lang/String;
 +
-+    invoke-virtual {v0, v2, v1}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
++    move-result-object p1
 +
-+    goto/16 :goto_288
++    invoke-static {p1}, Ljava/lang/Integer;->parseInt(Ljava/lang/String;)I
 +
-+    .line 229
-+    :cond_1f7
++    move-result p1
++
++    invoke-static {p2, p1}, Lio/mesalabs/unica/battery/BatteryEngine;->checkBucketResult(II)V
++
++    .line 297
++    return-void
++
++    .line 294
++    :cond_1f2
++    new-instance p1, Lio/mesalabs/unica/battery/BatteryEngine$BucketPolicyLimit;
++
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v1, "saved "
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-static {p2}, Lio/mesalabs/unica/battery/BatteryEngine;->bucketName(I)Ljava/lang/String;
++
++    move-result-object p2
++
++    invoke-virtual {v0, p2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p2
++
++    const-string v0, " is system-managed and cannot be assigned through the standby API"
++
++    invoke-virtual {p2, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p2
++
++    invoke-virtual {p2}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p2
++
++    invoke-direct {p1, p2}, Lio/mesalabs/unica/battery/BatteryEngine$BucketPolicyLimit;-><init>(Ljava/lang/String;)V
++
++    throw p1
++
++    .line 293
++    :cond_215
++    new-instance p1, Lio/mesalabs/unica/battery/BatteryEngine$BucketPolicyLimit;
++
++    const-string p2, "Android keeps this app Exempted (5); bucket change skipped"
++
++    invoke-direct {p1, p2}, Lio/mesalabs/unica/battery/BatteryEngine$BucketPolicyLimit;-><init>(Ljava/lang/String;)V
++
++    throw p1
++
++    .line 298
++    :cond_21d
 +    const-string v2, "exemption"
 +
 +    invoke-virtual {v0, v2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
 +    move-result v2
 +
-+    if-eqz v2, :cond_21a
++    if-eqz v2, :cond_240
 +
 +    const-string v0, "true"
 +
@@ -13076,16 +14436,16 @@ new file mode 100644
 +
 +    move-result v0
 +
-+    if-eqz v0, :cond_20a
++    if-eqz v0, :cond_230
 +
 +    const-string v0, "addPowerSaveWhitelistApp"
 +
-+    goto :goto_20c
++    goto :goto_232
 +
-+    :cond_20a
++    :cond_230
 +    const-string v0, "removePowerSaveWhitelistApp"
 +
-+    :goto_20c
++    :goto_232
 +    new-array v2, v7, [Ljava/lang/Class;
 +
 +    const-class v3, Ljava/lang/String;
@@ -13098,25 +14458,25 @@ new file mode 100644
 +
 +    invoke-static {v0, v2, v1}, Lio/mesalabs/unica/battery/BatteryEngine;->idle(Ljava/lang/String;[Ljava/lang/Class;[Ljava/lang/Object;)Ljava/lang/Object;
 +
-+    goto :goto_288
++    goto :goto_2ae
 +
-+    .line 231
-+    :cond_21a
++    .line 300
++    :cond_240
 +    invoke-virtual {p2, v5}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
 +    move-result v2
 +
-+    if-eqz v2, :cond_222
++    if-eqz v2, :cond_248
 +
 +    const/4 v2, 0x0
 +
-+    goto :goto_223
++    goto :goto_249
 +
-+    :cond_222
++    :cond_248
 +    move-object v2, p2
 +
-+    .line 232
-+    :goto_223
++    .line 301
++    :goto_249
 +    const-string v3, "global"
 +
 +    invoke-virtual {v0, v3}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -13125,7 +14485,7 @@ new file mode 100644
 +
 +    iget-object v3, p0, Lio/mesalabs/unica/battery/BatteryEngine;->context:Landroid/content/Context;
 +
-+    if-eqz v0, :cond_236
++    if-eqz v0, :cond_25c
 +
 +    invoke-virtual {v3}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
 +
@@ -13135,9 +14495,9 @@ new file mode 100644
 +
 +    move-result v0
 +
-+    goto :goto_23e
++    goto :goto_264
 +
-+    :cond_236
++    :cond_25c
 +    invoke-virtual {v3}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
 +
 +    move-result-object v0
@@ -13146,13 +14506,13 @@ new file mode 100644
 +
 +    move-result v0
 +
-+    .line 233
-+    :goto_23e
-+    if-eqz v0, :cond_241
++    .line 302
++    :goto_264
++    if-eqz v0, :cond_267
 +
-+    goto :goto_288
++    goto :goto_2ae
 +
-+    :cond_241
++    :cond_267
 +    new-instance p1, Ljava/io/IOException;
 +
 +    const-string p2, "Android rejected the setting"
@@ -13161,9 +14521,9 @@ new file mode 100644
 +
 +    throw p1
 +
-+    .line 220
-+    :cond_249
-+    :goto_249
++    .line 284
++    :cond_26f
++    :goto_26f
 +    const-class v0, Landroid/app/AppOpsManager;
 +
 +    new-array v1, v4, [Ljava/lang/Class;
@@ -13226,8 +14586,8 @@ new file mode 100644
 +
 +    invoke-virtual {v0, v1, v2}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
 +
-+    .line 235
-+    :goto_288
++    .line 304
++    :goto_2ae
 +    invoke-virtual {p0, p1}, Lio/mesalabs/unica/battery/BatteryEngine;->get(Lorg/json/JSONObject;)Ljava/lang/String;
 +
 +    move-result-object p1
@@ -13236,10 +14596,10 @@ new file mode 100644
 +
 +    move-result v0
 +
-+    .line 236
-+    if-nez v0, :cond_2a3
++    .line 305
++    if-nez v0, :cond_2c9
 +
-+    :try_start_292
++    :try_start_2b8
 +    invoke-static {p2}, Ljava/lang/Double;->parseDouble(Ljava/lang/String;)D
 +
 +    move-result-wide v1
@@ -13247,36 +14607,36 @@ new file mode 100644
 +    invoke-static {p1}, Ljava/lang/Double;->parseDouble(Ljava/lang/String;)D
 +
 +    move-result-wide v3
-+    :try_end_29a
-+    .catch Ljava/lang/Exception; {:try_start_292 .. :try_end_29a} :catch_2a2
++    :try_end_2c0
++    .catch Ljava/lang/Exception; {:try_start_2b8 .. :try_end_2c0} :catch_2c8
 +
 +    cmpl-double v0, v1, v3
 +
-+    if-nez v0, :cond_29f
++    if-nez v0, :cond_2c5
 +
-+    goto :goto_2a0
++    goto :goto_2c6
 +
-+    :cond_29f
++    :cond_2c5
 +    move v7, v8
 +
-+    :goto_2a0
++    :goto_2c6
 +    move v0, v7
 +
-+    goto :goto_2a3
++    goto :goto_2c9
 +
-+    :catch_2a2
++    :catch_2c8
 +    move-exception v1
 +
-+    .line 237
-+    :cond_2a3
-+    :goto_2a3
-+    if-eqz v0, :cond_2a6
++    .line 306
++    :cond_2c9
++    :goto_2c9
++    if-eqz v0, :cond_2cc
 +
-+    .line 238
++    .line 307
 +    return-void
 +
-+    .line 237
-+    :cond_2a6
++    .line 306
++    :cond_2cc
 +    new-instance v0, Ljava/io/IOException;
 +
 +    new-instance v1, Ljava/lang/StringBuilder;
@@ -13320,16 +14680,16 @@ new file mode 100644
 +        }
 +    .end annotation
 +
-+    .line 241
++    .line 310
 +    iget-object v0, p0, Lio/mesalabs/unica/battery/BatteryEngine;->journal:Lorg/json/JSONObject;
 +
 +    invoke-virtual {v0, p1}, Lorg/json/JSONObject;->has(Ljava/lang/String;)Z
 +
 +    move-result v0
 +
-+    if-nez v0, :cond_62
++    if-nez v0, :cond_63
 +
-+    .line 242
++    .line 311
 +    new-instance v0, Lorg/json/JSONObject;
 +
 +    invoke-virtual {p2}, Lorg/json/JSONObject;->toString()Ljava/lang/String;
@@ -13338,7 +14698,7 @@ new file mode 100644
 +
 +    invoke-direct {v0, v1}, Lorg/json/JSONObject;-><init>(Ljava/lang/String;)V
 +
-+    .line 243
++    .line 312
 +    invoke-virtual {p0, p2}, Lio/mesalabs/unica/battery/BatteryEngine;->get(Lorg/json/JSONObject;)Ljava/lang/String;
 +
 +    move-result-object v1
@@ -13355,7 +14715,7 @@ new file mode 100644
 +
 +    invoke-virtual {v1, v3, v4}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
 +
-+    .line 244
++    .line 313
 +    const-string v1, "kind"
 +
 +    invoke-virtual {p2, v1}, Lorg/json/JSONObject;->getString(Ljava/lang/String;)Ljava/lang/String;
@@ -13382,7 +14742,7 @@ new file mode 100644
 +
 +    if-eqz p2, :cond_5a
 +
-+    .line 245
++    .line 314
 +    const-class p2, Landroid/app/UiModeManager;
 +
 +    const-string v1, "getNightModeCustomType"
@@ -13413,16 +14773,73 @@ new file mode 100644
 +
 +    invoke-virtual {v0, v1, p2}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
 +
-+    .line 246
++    .line 315
 +    :cond_5a
 +    iget-object p2, p0, Lio/mesalabs/unica/battery/BatteryEngine;->journal:Lorg/json/JSONObject;
 +
++    invoke-static {v0}, Lio/mesalabs/unica/battery/BatteryEngine;->compactEntry(Lorg/json/JSONObject;)Lorg/json/JSONObject;
++
++    move-result-object v0
++
 +    invoke-virtual {p2, p1, v0}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
 +
-+    invoke-virtual {p0}, Lio/mesalabs/unica/battery/BatteryEngine;->saveJournal()V
++    .line 317
++    :cond_63
++    return-void
++.end method
 +
-+    .line 248
-+    :cond_62
++.method writeBucket(Ljava/lang/String;I)V
++    .registers 7
++    .annotation system Ldalvik/annotation/Throws;
++        value = {
++            Ljava/lang/Exception;
++        }
++    .end annotation
++
++    .line 265
++    const-class v0, Landroid/app/usage/UsageStatsManager;
++
++    const/4 v1, 0x2
++
++    new-array v1, v1, [Ljava/lang/Class;
++
++    const/4 v2, 0x0
++
++    const-class v3, Ljava/lang/String;
++
++    aput-object v3, v1, v2
++
++    const/4 v2, 0x1
++
++    sget-object v3, Ljava/lang/Integer;->TYPE:Ljava/lang/Class;
++
++    aput-object v3, v1, v2
++
++    const-string v2, "setAppStandbyBucket"
++
++    invoke-virtual {v0, v2, v1}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
++
++    move-result-object v0
++
++    iget-object v1, p0, Lio/mesalabs/unica/battery/BatteryEngine;->context:Landroid/content/Context;
++
++    const-class v2, Landroid/app/usage/UsageStatsManager;
++
++    invoke-virtual {v1, v2}, Landroid/content/Context;->getSystemService(Ljava/lang/Class;)Ljava/lang/Object;
++
++    move-result-object v1
++
++    invoke-static {p2}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++
++    move-result-object p2
++
++    filled-new-array {p1, p2}, [Ljava/lang/Object;
++
++    move-result-object p1
++
++    invoke-virtual {v0, v1, p1}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
++
++    .line 266
 +    return-void
 +.end method
 

@@ -25,13 +25,17 @@ public class BatteryEngine {
     }
     final LinkedHashMap<String, JSONObject> specs = new LinkedHashMap<>();
     final List<String> notes = new ArrayList<>();
+    boolean policyLimited;
+    int deferredRestores;
     JSONObject journal;
     String bootId;
-    static String read(File f) throws IOException {
+    static final int PROFILE_LIMIT=64*1024, JOURNAL_LIMIT=16*1024*1024;
+    static String read(File f) throws IOException {return read(f,1048576);}
+    static String read(File f,int limit) throws IOException {
         // procfs can return EOF after a one-byte probe: always start with a bulk read.
         try (FileInputStream in = new FileInputStream(f); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             byte[] buffer = new byte[8192]; int count;
-            while ((count = in.read(buffer)) != -1) { out.write(buffer, 0, count); if (out.size() > 1048576) throw new IOException("File too large"); }
+            while ((count = in.read(buffer)) != -1) { if(count>limit-out.size())throw new IOException(f.getName()+" exceeds "+limit+" bytes; preserve the file for recovery"); out.write(buffer, 0, count); }
             return out.toString("UTF-8").trim();
         }
     }
@@ -39,6 +43,41 @@ public class BatteryEngine {
         File tmp = new File(f.getPath() + ".tmp");
         try (FileOutputStream o = new FileOutputStream(tmp)) { o.write(s.getBytes(StandardCharsets.UTF_8)); o.getFD().sync(); }
         Files.move(tmp.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+    }
+    static JSONObject compactEntry(JSONObject source)throws JSONException {
+        JSONObject result=new JSONObject(source.toString());
+        // Keep all restoration/unknown fields; only strip known presentation metadata.
+        for(String field:new String[]{"label","help","values","supported","current","effective","minimum"})result.remove(field);
+        if(!"kernel".equals(result.getString("kind")))result.remove("boot");
+        result.getString("target");result.getString("original");
+        return result;
+    }
+    static JSONObject readJournal(File file)throws Exception {
+        JSONObject result=file.exists()?new JSONObject(read(file,JOURNAL_LIMIT)):new JSONObject();
+        for(Iterator<String> keys=result.keys();keys.hasNext();) {
+            String key=keys.next();result.put(key,compactEntry(result.getJSONObject(key)));
+        }
+        return result;
+    }
+    static void writeJournal(File file,JSONObject data)throws Exception {writeJournal(file,data,JOURNAL_LIMIT);}
+    static void writeJournal(File file,JSONObject data,int limit)throws Exception {
+        JSONObject compact=new JSONObject();
+        for(Iterator<String> keys=data.keys();keys.hasNext();) {
+            String key=keys.next();compact.put(key,compactEntry(data.getJSONObject(key)));
+        }
+        String serialized=compact.toString();
+        if(serialized.getBytes(StandardCharsets.UTF_8).length>limit)
+            throw new IOException("Rollback journal capacity exceeded; no new controls applied");
+        // Preserve the supplied oversized legacy format before its first compact rewrite.
+        File backup=new File(file.getPath()+".legacy.bak");
+        if(file.exists() && file.length()>1048576 && !backup.exists()) {
+            try(FileInputStream in=new FileInputStream(file);FileOutputStream out=new FileOutputStream(backup)) {
+                byte[] buffer=new byte[8192];int count;
+                while((count=in.read(buffer))!=-1)out.write(buffer,0,count);
+                out.getFD().sync();
+            }catch(Exception e){backup.delete();throw e;}
+        }
+        atomic(file,serialized);
     }
     static android.os.IBinder service(String name)throws Exception {
         return (android.os.IBinder)Class.forName("android.os.ServiceManager").getMethod("getService",String.class).invoke(null,name);
@@ -133,7 +172,7 @@ public class BatteryEngine {
                 else {label="CPU ceiling · "+id.substring(4);help="A lower ceiling trades peak speed for potentially lower power. Longer task execution can cancel the saving.";}
                 d.put("label",label).put("help",help).put("kind","kernel").put("target",id);specs.put(id,d);
             }
-        } catch(Exception e) {notes.add("Kernel controls unavailable: "+e.getMessage());}
+        } catch(Exception e) {notes.add("Kernel controls unavailable: "+describe(e));}
         String activity;
         try { activity = dumpActivity("settings"); } catch (Exception e) { activity=""; notes.add("Cached-process effective limit unavailable"); }
         int cached=-1; Matcher m=Pattern.compile("CUR_MAX_CACHED_PROCESSES=(\\d+)").matcher(activity); if(m.find()) cached=Integer.parseInt(m.group(1));
@@ -173,7 +212,7 @@ public class BatteryEngine {
         if(kind.equals("sync"))return android.content.ContentResolver.getMasterSyncAutomatically()?"1":"0";
         if(kind.equals("data_saver"))return (Boolean)network("getRestrictBackground",new Class<?>[]{})?"1":"0";
         if(kind.equals("night"))return ""+context.getSystemService(android.app.UiModeManager.class).getNightMode();
-        if(kind.equals("policy"))return ACTIVE.exists()?new JSONObject(read(ACTIVE)).optJSONObject("controls").optString("background","unrestricted"):"unrestricted";
+        if(kind.equals("policy"))return ACTIVE.exists()?new JSONObject(read(ACTIVE,PROFILE_LIMIT)).optJSONObject("controls").optString("background","unrestricted"):"unrestricted";
         if(kind.equals("net_uid"))return network("getUidPolicy",new Class<?>[]{int.class},appUid(d)).toString();
         if(kind.equals("bg_run") || kind.equals("bg_any")) {
             int op=d.getInt("op");
@@ -200,6 +239,31 @@ public class BatteryEngine {
         String value=kind.equals("global")?android.provider.Settings.Global.getString(context.getContentResolver(),target):android.provider.Settings.System.getString(context.getContentResolver(),target);
         return value==null?"null":value;
     }
+    static String describe(Throwable error) {
+        Throwable cause=error;
+        for(int i=0;i<8 && cause instanceof java.lang.reflect.InvocationTargetException;i++) {
+            Throwable next=((java.lang.reflect.InvocationTargetException)cause).getTargetException();
+            if(next==null || next==cause)break;
+            cause=next;
+        }
+        String message=cause.getMessage();
+        return cause.getClass().getSimpleName()+(message==null || message.isEmpty()?"":": "+message);
+    }
+    static String bucketName(int bucket) {
+        switch(bucket){case 5:return "Exempted (5)";case 10:return "Active (10)";case 20:return "Working set (20)";
+            case 30:return "Frequent (30)";case 40:return "Rare (40)";case 45:return "Restricted (45)";case 50:return "Never (50)";
+            default:return "Unknown ("+bucket+")";}
+    }
+    static class BucketPolicyLimit extends IOException {BucketPolicyLimit(String message){super(message);}}
+    static void checkBucketResult(int requested,int actual)throws IOException {
+        if(requested==actual)return;
+        if(Arrays.asList(5,10,20,30,40,45,50).contains(actual) && actual<requested)
+            throw new BucketPolicyLimit("requested "+bucketName(requested)+", Android reports "+bucketName(actual)+"; requested bucket is not effective");
+        throw new IOException("Standby bucket readback differs: requested "+bucketName(requested)+", read "+bucketName(actual));
+    }
+    void writeBucket(String target,int value)throws Exception {
+        android.app.usage.UsageStatsManager.class.getMethod("setAppStandbyBucket",String.class,int.class).invoke(context.getSystemService(android.app.usage.UsageStatsManager.class),target,value);
+    }
     void set(JSONObject d,String value)throws Exception {
         String kind=d.getString("kind"),target=d.getString("target");
         if(value.equals(get(d)) && !(kind.equals("night") && value.equals("3") && d.has("nightCustomType")))return; // Saver can reject no-ops while charging.
@@ -225,7 +289,12 @@ public class BatteryEngine {
                 :(Boolean)config("setProperty",new Class<?>[]{String.class,String.class,String.class,boolean.class},t[0],t[1],value,false);
             if(!ok)throw new IOException("Device configuration rejected the change");
         } else if(kind.equals("bucket")) {
-            android.app.usage.UsageStatsManager.class.getMethod("setAppStandbyBucket",String.class,int.class).invoke(context.getSystemService(android.app.usage.UsageStatsManager.class),target,Integer.parseInt(value));
+            int requested=Integer.parseInt(value),current=Integer.parseInt(get(d));
+            if(current==5)throw new BucketPolicyLimit("Android keeps this app Exempted (5); bucket change skipped");
+            if(requested<10 || requested>50)throw new BucketPolicyLimit("saved "+bucketName(requested)+" is system-managed and cannot be assigned through the standby API");
+            writeBucket(target,requested);
+            checkBucketResult(requested,Integer.parseInt(get(d)));
+            return;
         } else if(kind.equals("exemption"))idle(value.equals("true")?"addPowerSaveWhitelistApp":"removePowerSaveWhitelistApp",new Class<?>[]{String.class},target);
         else {
             String actual=value.equals("null")?null:value;
@@ -236,30 +305,42 @@ public class BatteryEngine {
         if(!equal)try{equal=Double.parseDouble(value)==Double.parseDouble(actual);}catch(Exception ignored){}
         if(!equal)throw new IOException("Readback differs: requested "+value+", read "+actual);
     }
-    void saveJournal() throws Exception { atomic(JOURNAL,journal.toString()); }
+    void saveJournal() throws Exception { writeJournal(JOURNAL,journal); }
     void snapshot(String key, JSONObject descriptor) throws Exception {
         if(!journal.has(key)) {
             JSONObject entry=new JSONObject(descriptor.toString());
             entry.put("original",get(descriptor)).put("boot",bootId);
             if(descriptor.getString("kind").equals("night") && entry.getString("original").equals("3"))
                 entry.put("nightCustomType",android.app.UiModeManager.class.getMethod("getNightModeCustomType").invoke(context.getSystemService(android.app.UiModeManager.class)));
-            journal.put(key,entry); saveJournal(); // Durable undo before the first write.
+            journal.put(key,compactEntry(entry)); // apply() persists the complete batch before any new write.
         }
     }
     void change(String key, JSONObject descriptor, String value) throws Exception {
-        snapshot(key,descriptor);
+        if(!journal.has(key)){snapshot(key,descriptor);saveJournal();}
         set(descriptor,value);
         notes.add(descriptor.optString("label",key)+": applied "+value);
     }
+    private final Map<String,JSONObject> restoredBatch=new LinkedHashMap<>();
+    void checkpointRestores()throws Exception {
+        if(restoredBatch.isEmpty())return;
+        try {saveJournal();}
+        catch(Exception e){for(Map.Entry<String,JSONObject> entry:restoredBatch.entrySet())journal.put(entry.getKey(),entry.getValue());throw e;}
+        finally {restoredBatch.clear();}
+    }
     boolean restore(String key) throws Exception {
         JSONObject d=journal.getJSONObject(key);
-        if(d.getString("kind").equals("kernel") && !bootId.equals(d.optString("boot"))) {
-            journal.remove(key); saveJournal(); return true; // Kernel values do not survive reboot.
-        }
-        try { set(d,d.getString("original")); journal.remove(key); saveJournal(); notes.add(d.optString("label",key)+": restored"); return true; }
-        catch(Exception e) { notes.add("Restore failed for "+key+": "+e.getMessage()); return false; }
+        boolean staleKernel=d.getString("kind").equals("kernel") && !bootId.equals(d.optString("boot"));
+        if(!staleKernel)try {set(d,d.getString("original"));}
+        catch(BucketPolicyLimit e){policyLimited=true;deferredRestores++;notes.add("Restore deferred for "+key+": "+e.getMessage()+"; saved original retained");return true;}
+        catch(Exception e){notes.add("Restore failed for "+key+": "+describe(e));return false;}
+        journal.remove(key);restoredBatch.put(key,d);
+        // On interruption the disk still retains the originals: repeating restoration is safe.
+        if(restoredBatch.size()>=64)checkpointRestores();
+        notes.add(d.optString("label",key)+": "+(staleKernel?"old kernel snapshot discarded":"restored"));
+        return true;
     }
     boolean apply(JSONObject profile) throws Exception {
+        policyLimited=false;deferredRestores=0;
         boolean enabled=profile.getBoolean("enabled");
         JSONObject desired=new JSONObject(); JSONObject controls=profile.getJSONObject("controls");
         if(enabled) {
@@ -281,9 +362,9 @@ public class BatteryEngine {
                         JSONObject d=packageDescriptor(kind,pkg);appDescriptors.put(key,d);
                         String value=kind.equals("bucket")?"45":kind.equals("exemption")?"false":kind.equals("net_uid")?""+((Integer.parseInt(get(d))|1)&~4):"1";
                         desired.put(key,value);
-                    }catch(Exception e){success=false;notes.add(key+": "+e.getMessage());}
+                    }catch(Exception e){success=false;notes.add(key+": "+describe(e));}
                 }
-            }catch(Exception e){success=false;notes.add("Cannot enumerate background apps: "+e.getMessage());}
+            }catch(Exception e){success=false;notes.add("Cannot enumerate background apps: "+describe(e));}
         }
         desired.remove("background"); // Expansion policy, not a system setting.
         List<String> originals=new ArrayList<>(); for(Iterator<String> it=journal.keys();it.hasNext();) originals.add(it.next());
@@ -291,13 +372,15 @@ public class BatteryEngine {
         originals.sort((a,b)->Integer.compare(a.equals("power_saver")?0:1,b.equals("power_saver")?0:1));
         for(String k:originals) {
             JSONObject e=journal.getJSONObject(k);
-            if(e.getString("kind").equals("kernel") && !bootId.equals(e.optString("boot"))) { journal.remove(k); saveJournal(); }
+            if(e.getString("kind").equals("kernel") && !bootId.equals(e.optString("boot"))) { success=restore(k)&&success; }
             else if (k.equals("refresh_min") && desired.has("refresh")
                     && !e.getString("original").equals("null")
                     && Double.parseDouble(e.getString("original")) > Double.parseDouble(desired.getString("refresh"))) {
                 // Retain the original minimum while a lower maximum remains selected.
             } else if(!desired.has(k)) success=restore(k)&&success;
         }
+        checkpointRestores();
+        JSONObject beforeSnapshots=new JSONObject(journal.toString());
         Map<String,JSONObject> prepared=new LinkedHashMap<>();
         // Snapshot ALL selected controls before any write: Battery Saver has cross-control effects.
         for(Iterator<String> it=desired.keys();it.hasNext();) {
@@ -312,6 +395,9 @@ public class BatteryEngine {
                     boolean valid=false;JSONArray values=d.getJSONArray("values");for(int i=0;i<values.length();i++)if(value.equals(values.getString(i)))valid=true;
                     if(!valid)throw new IOException("Value is outside this device's available choices");
                 }
+                if(d.getString("kind").equals("bucket") && get(d).equals("5")) {
+                    policyLimited=true;notes.add(key+": skipped; Android keeps this app Exempted (5)");continue;
+                }
                 if(key.equals("refresh")) {
                     JSONObject min=new JSONObject().put("id","refresh_min").put("kind","system").put("target","min_refresh_rate").put("label","Minimum refresh rate");
                     String before=get(min);
@@ -320,13 +406,16 @@ public class BatteryEngine {
                     }
                 }
                 snapshot(key,d);prepared.put(key,d);
-            }catch(Exception e){success=false;notes.add(key+": "+e.getMessage());}
+            }catch(Exception e){success=false;notes.add(key+": "+describe(e));}
         }
+        if(!prepared.isEmpty())try {saveJournal();}
+        catch(Exception e){journal=beforeSnapshots;throw e;} // Never apply without durable, readable undo.
         List<String> order=new ArrayList<>(prepared.keySet());
         order.sort((a,b)->Integer.compare(writeOrder(a),writeOrder(b)));
         for(String key:order)try {
             change(key,prepared.get(key),key.equals("refresh_min")?desired.getString("refresh"):desired.getString(key));
-        }catch(Exception e){success=false;notes.add(key+": "+e.getMessage());}
+        }catch(BucketPolicyLimit e){policyLimited=true;notes.add(key+": Android policy limit: "+e.getMessage());}
+        catch(Exception e){success=false;notes.add(key+": "+describe(e));}
         return success;
     }
     static int writeOrder(String key) {
@@ -338,14 +427,16 @@ public class BatteryEngine {
     }
     JSONObject run(String mode, JSONObject requested) throws Exception {
         bootId=read(new File("/proc/sys/kernel/random/boot_id"));
-        journal=JOURNAL.exists()?new JSONObject(read(JOURNAL)):new JSONObject();
+        journal=readJournal(JOURNAL);
         discover();
-        JSONObject profile=ACTIVE.exists()?Profile.validate(new JSONObject(read(ACTIVE))):Profile.empty();
+        JSONObject profile=ACTIVE.exists()?Profile.validate(new JSONObject(read(ACTIVE,PROFILE_LIMIT))):Profile.empty();
         boolean ok=true;
         if(mode.equals("apply") || mode.equals("boot")) {
             if(mode.equals("apply")) {
                 profile=Profile.validate(requested);
-                atomic(ACTIVE,profile.toString());
+                String serialized=profile.toString();
+                if(serialized.getBytes(StandardCharsets.UTF_8).length>PROFILE_LIMIT)throw new IOException("Profile exceeds 64 KB");
+                atomic(ACTIVE,serialized);
             }
             ok=apply(profile);
             specs.clear(); discover();
@@ -355,7 +446,7 @@ public class BatteryEngine {
             if(journal.has(d.getString("id"))) safe.put("original",journal.getJSONObject(d.getString("id")).getString("original"));
             capabilities.put(safe);
         }
-        return new JSONObject().put("ok",ok).put("profile",profile).put("capabilities",capabilities).put("notes",array(notes))
+        return new JSONObject().put("ok",ok).put("policyLimited",policyLimited).put("deferredRestores",deferredRestores).put("profile",profile).put("capabilities",capabilities).put("notes",array(notes))
                 .put("pendingRestore",!profile.getBoolean("enabled") && journal.length()>0).put("kernel",System.getProperty("os.version", "Unknown"));
     }
     JSONObject execute(String mode,JSONObject requested)throws Exception {
@@ -364,8 +455,8 @@ public class BatteryEngine {
             if(!DIR.isDirectory()&&!DIR.mkdirs())throw new IOException("Cannot create battery profile storage");
             try(RandomAccessFile file=new RandomAccessFile(new File(DIR,"lock"),"rw");FileLock lock=file.getChannel().lock()) {
                 if(mode.equals("boot")) {
-                    JSONObject p=ACTIVE.exists()?Profile.validate(new JSONObject(read(ACTIVE))):Profile.empty();
-                    JSONObject undo=JOURNAL.exists()?new JSONObject(read(JOURNAL)):new JSONObject();
+                    JSONObject p=ACTIVE.exists()?Profile.validate(new JSONObject(read(ACTIVE,PROFILE_LIMIT))):Profile.empty();
+                    JSONObject undo=readJournal(JOURNAL);
                     if(!p.getBoolean("enabled")&&undo.length()==0)return new JSONObject().put("ok",true);
                 }
                 return run(mode,requested);

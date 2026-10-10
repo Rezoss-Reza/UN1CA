@@ -93,7 +93,7 @@ public final class BatteryActivity extends Activity {
             if(name.equals("Stingy"))confirmStingy(select,()->{});else if(name.equals("NOSLEN")) confirmNoslen(select,()->{});else select.run();
         });
         page=content;text("Controls",20);
-        for(int i=0;i<caps.length();i++)try{control(caps.getJSONObject(i));}catch(Exception e){text(e.getMessage(),13);}
+        for(int i=0;i<caps.length();i++)try{control(caps.getJSONObject(i));}catch(Exception e){text(BatteryEngine.describe(e),13);}
         card();text("Targeted app restrictions",18);
         text("Only select apps whose background work you can limit. Restricting messaging, alarms, VPN, wearables or Samsung feature providers can break expected behavior. No apps are selected by Balanced or Efficiency.",13);
         if("restricted".equals(profile.optJSONObject("controls").optString("background")))text("Aggressive restrictions automatically cover downloaded apps, launchable preinstalled apps and app stores when applied. The manual list below adds standby restrictions; it is not an exception list.",13);
@@ -195,7 +195,7 @@ public final class BatteryActivity extends Activity {
             });
         });
     }
-    private void error(Exception e){status="Could not complete: "+e.getMessage();draw();}
+    private void error(Exception e){status="Could not complete: "+BatteryEngine.describe(e);draw();}
     private void run(String operation,JSONObject requested){
         if(busy)return;
         final String input=requested==null?null:requested.toString();
@@ -210,7 +210,8 @@ public final class BatteryActivity extends Activity {
                         if(operation.equals("apply") || !getPreferences(0).contains("draft"))profile=actual;
                         else profile.put("enabled",actual.getBoolean("enabled"));
                         save();
-                        StringBuilder message=new StringBuilder(reply.optBoolean("ok")?"Device status checked":"Some changes failed; review details below");
+                        StringBuilder message=new StringBuilder(reply.optBoolean("ok")?(reply.optBoolean("policyLimited")?"Completed with Android policy limits; review details below":"Device status checked"):"Some changes failed; review details below");
+                        if(reply.optInt("deferredRestores")>0)message.append("\n").append(reply.optInt("deferredRestores")).append(" standby originals retained: Android did not accept exact restoration.");
                         if(reply.optBoolean("pendingRestore"))message.append("\nRestoration incomplete. Retry with Battery Saving off.");
                         message.append("\nKernel: ").append(reply.optString("kernel"));
                         JSONArray notes=reply.optJSONArray("notes");for(int i=0;i<notes.length();i++)message.append("\n").append(notes.optString(i));

@@ -3124,12 +3124,12 @@ diff --git a/smali_classes4/io/mesalabs/unica/settings/spoof/HideDeveloperStatus
 
      invoke-static {v1, v2}, Lio/mesalabs/unica/utils/Utils;->getResourceId(Ljava/lang/String;Ljava/lang/String;)I
 
-@@ -42,313 +65,4172 @@
+@@ -42,313 +65,4180 @@
 
      sput-object v0, Lio/mesalabs/unica/settings/spoof/HideDeveloperStatusFragment;->SEARCH_INDEX_DATA_PROVIDER:Lcom/android/settings/search/BaseSearchIndexProvider;
 
 +    .line 29
-+    const/4 v0, 0x7
++    const/16 v0, 0x8
 +
 +    new-array v1, v0, [Ljava/lang/String;
 +
@@ -3175,6 +3175,12 @@ diff --git a/smali_classes4/io/mesalabs/unica/settings/spoof/HideDeveloperStatus
 +
 +    aput-object v2, v1, v9
 +
++    const-string/jumbo v2, "encryption_spoof"
++
++    const/4 v10, 0x7
++
++    aput-object v2, v1, v10
++
 +    sput-object v1, Lio/mesalabs/unica/settings/spoof/HideDeveloperStatusFragment;->APP_KEYS:[Ljava/lang/String;
 +
 +    .line 30
@@ -3207,6 +3213,10 @@ diff --git a/smali_classes4/io/mesalabs/unica/settings/spoof/HideDeveloperStatus
 +    const-string/jumbo v2, "LSPosed / Xposed modules"
 +
 +    aput-object v2, v1, v9
++
++    const-string/jumbo v2, "Encryption Spoof"
++
++    aput-object v2, v1, v10
 +
 +    sput-object v1, Lio/mesalabs/unica/settings/spoof/HideDeveloperStatusFragment;->APP_LABELS:[Ljava/lang/String;
 +
@@ -3245,80 +3255,78 @@ diff --git a/smali_classes4/io/mesalabs/unica/settings/spoof/HideDeveloperStatus
 +    sput-object v1, Lio/mesalabs/unica/settings/spoof/HideDeveloperStatusFragment;->SETTING_LABELS:[Ljava/lang/String;
 +
 +    .line 33
-+    const/16 v1, 0x8
++    new-array v1, v0, [Ljava/lang/String;
 +
-+    new-array v2, v1, [Ljava/lang/String;
-+
-+    const-string/jumbo v10, "1015"
-+
-+    aput-object v10, v2, v3
-+
-+    const-string/jumbo v10, "1023"
-+
-+    aput-object v10, v2, v4
-+
-+    const-string/jumbo v10, "1032"
-+
-+    aput-object v10, v2, v5
-+
-+    const-string/jumbo v10, "1077"
-+
-+    aput-object v10, v2, v6
-+
-+    const-string/jumbo v10, "1078"
-+
-+    aput-object v10, v2, v7
-+
-+    const-string/jumbo v10, "1079"
-+
-+    aput-object v10, v2, v8
-+
-+    const-string/jumbo v10, "3003"
-+
-+    aput-object v10, v2, v9
-+
-+    const-string/jumbo v10, "9997"
-+
-+    aput-object v10, v2, v0
-+
-+    sput-object v2, Lio/mesalabs/unica/settings/spoof/HideDeveloperStatusFragment;->GID_KEYS:[Ljava/lang/String;
-+
-+    .line 34
-+    new-array v1, v1, [Ljava/lang/String;
-+
-+    const-string/jumbo v2, "SDCARD_RW (1015) \u2014 media write access"
++    const-string/jumbo v2, "1015"
 +
 +    aput-object v2, v1, v3
 +
-+    const-string/jumbo v2, "MEDIA_RW (1023) \u2014 media write access"
++    const-string/jumbo v2, "1023"
 +
 +    aput-object v2, v1, v4
 +
-+    const-string/jumbo v2, "PACKAGE_INFO (1032) \u2014 package details"
++    const-string/jumbo v2, "1032"
 +
 +    aput-object v2, v1, v5
 +
-+    const-string/jumbo v2, "EXTERNAL_STORAGE (1077) \u2014 USB storage access"
++    const-string/jumbo v2, "1077"
 +
 +    aput-object v2, v1, v6
 +
-+    const-string/jumbo v2, "EXT_DATA_RW (1078) \u2014 external app data"
++    const-string/jumbo v2, "1078"
 +
 +    aput-object v2, v1, v7
 +
-+    const-string/jumbo v2, "EXT_OBB_RW (1079) \u2014 external OBB data"
++    const-string/jumbo v2, "1079"
 +
 +    aput-object v2, v1, v8
 +
-+    const-string/jumbo v2, "INET (3003) \u2014 removes network access; apps may crash"
++    const-string/jumbo v2, "3003"
 +
 +    aput-object v2, v1, v9
 +
-+    const-string/jumbo v2, "SHARED_USER (9997) \u2014 may block all shared storage access"
++    const-string/jumbo v2, "9997"
 +
-+    aput-object v2, v1, v0
++    aput-object v2, v1, v10
 +
-+    sput-object v1, Lio/mesalabs/unica/settings/spoof/HideDeveloperStatusFragment;->GID_LABELS:[Ljava/lang/String;
++    sput-object v1, Lio/mesalabs/unica/settings/spoof/HideDeveloperStatusFragment;->GID_KEYS:[Ljava/lang/String;
++
++    .line 34
++    new-array v0, v0, [Ljava/lang/String;
++
++    const-string/jumbo v1, "SDCARD_RW (1015) \u2014 media write access"
++
++    aput-object v1, v0, v3
++
++    const-string/jumbo v1, "MEDIA_RW (1023) \u2014 media write access"
++
++    aput-object v1, v0, v4
++
++    const-string/jumbo v1, "PACKAGE_INFO (1032) \u2014 package details"
++
++    aput-object v1, v0, v5
++
++    const-string/jumbo v1, "EXTERNAL_STORAGE (1077) \u2014 USB storage access"
++
++    aput-object v1, v0, v6
++
++    const-string/jumbo v1, "EXT_DATA_RW (1078) \u2014 external app data"
++
++    aput-object v1, v0, v7
++
++    const-string/jumbo v1, "EXT_OBB_RW (1079) \u2014 external OBB data"
++
++    aput-object v1, v0, v8
++
++    const-string/jumbo v1, "INET (3003) \u2014 removes network access; apps may crash"
++
++    aput-object v1, v0, v9
++
++    const-string/jumbo v1, "SHARED_USER (9997) \u2014 may block all shared storage access"
++
++    aput-object v1, v0, v10
++
++    sput-object v0, Lio/mesalabs/unica/settings/spoof/HideDeveloperStatusFragment;->GID_LABELS:[Ljava/lang/String;
 +
 +    .line 36
 +    new-array v0, v5, [Ljava/lang/String;

@@ -21,4 +21,4 @@ diff --git a/smali/com/samsung/android/app/facewidget/utils/KeyguardClockProvide
 +
      iget-object v0, p0, Lcom/samsung/android/app/facewidget/utils/KeyguardClockProvider;->faceWidgetController:Lcom/samsung/android/app/facewidget/FaceWidgetController;
 
-     invoke-virtual {v0}, Lcom/samsung/android/app/facewidget/FaceWidgetController;->b()Laod/w89;
+     invoke-virtual {v0}, Lcom/samsung/android/app/facewidget/FaceWidgetController;->b()Laod/x89;

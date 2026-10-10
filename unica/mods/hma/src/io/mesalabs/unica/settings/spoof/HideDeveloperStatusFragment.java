@@ -26,8 +26,8 @@ public final class HideDeveloperStatusFragment extends SettingsPreferenceFragmen
     private static final int CHUNK_SIZE=30000;
     private JSONObject config;
     private final Handler handler=new Handler(Looper.getMainLooper());
-    private static final String[] APP_KEYS={"accessibility_apps","custom_rom","detector_apps","root_apps","shizuku_dhizuku","sus_apps","xposed"};
-    private static final String[] APP_LABELS={"Accessibility apps","Custom ROM apps","Detector / checker apps","Root managers and rooted apps","Shizuku / Dhizuku apps","Suspicious apps","LSPosed / Xposed modules"};
+    private static final String[] APP_KEYS={"accessibility_apps","custom_rom","detector_apps","root_apps","shizuku_dhizuku","sus_apps","xposed","encryption_spoof"};
+    private static final String[] APP_LABELS={"Accessibility apps","Custom ROM apps","Detector / checker apps","Root managers and rooted apps","Shizuku / Dhizuku apps","Suspicious apps","LSPosed / Xposed modules","Encryption Spoof"};
     private static final String[] SETTING_KEYS={"accessibility","dev_options","input_method"};
     private static final String[] SETTING_LABELS={"Accessibility — hide settings and service lists","Developer options — hide ADB, developer and mock-location settings","Input method — report Gboard and Google TTS; filter keyboard lists"};
     private static final String[] GID_KEYS={"1015","1023","1032","1077","1078","1079","3003","9997"};

@@ -145,7 +145,7 @@ PRINT_BUILD_INFO()
     echo -n "timestamp="
     grep "^timestamp" <<< "$TARGET_BUILD_INFO" | cut -d "=" -f 2 -s
     echo -n "security_patch_version="
-    grep "^security_patch" <<< "$TARGET_BUILD_INFO" | cut -d "=" -f 2 -s
+    grep "^security_patch=" <<< "$TARGET_BUILD_INFO" | cut -d "=" -f 2 -s
     echo -n "incremental="
     if [ "$SOURCE_BUILD_INFO" ]; then
         grep "^timestamp" <<< "$SOURCE_BUILD_INFO" | cut -d "=" -f 2 -s

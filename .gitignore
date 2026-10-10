@@ -19,6 +19,23 @@ out/
 /.vscode/
 /tools/apktool/framework/
 
+# Local Horizontal Lock library creation/analysis tools. Keep ROM installation
+# inputs and prebuilt libraries available in a fresh checkout.
+/unica/mods/rezoss/horizontal-lock/*
+!/unica/mods/rezoss/horizontal-lock/install.sh
+!/unica/mods/rezoss/horizontal-lock/rom/
+/unica/mods/rezoss/horizontal-lock/rom/*
+!/unica/mods/rezoss/horizontal-lock/rom/payload/
+
+# Local FanCam model-development workspaces. Only ROM payloads and the
+# redistribution licenses belong in Git; keep training/probe tools locally.
+/unica/mods/rezoss/fancam/*
+!/unica/mods/rezoss/fancam/experimental/
+/unica/mods/rezoss/fancam/experimental/*
+!/unica/mods/rezoss/fancam/experimental/system/
+!/unica/mods/rezoss/fancam/experimental/LICENSE-OSNet.txt
+!/unica/mods/rezoss/fancam/experimental/LICENSE-YOLOv7.txt
+
 *.bak*
 *.log
 *.pyc

@@ -52,6 +52,17 @@ hook='''    move/from16 v0, p3
 '''
 new=change_method(old,' start(',lambda m:m.replace('    invoke-direct/range {p0 .. p0}, Landroid/os/ZygoteProcess;->fetchUsapPoolEnabledPropWithMinInterval()Z',hook+'    invoke-direct/range {p0 .. p0}, Landroid/os/ZygoteProcess;->fetchUsapPoolEnabledPropWithMinInterval()Z',1))
 fw.append((p,old,new))
+p='smali_classes3/android/os/SystemProperties.smali';old=(tmp/'framework-nodebug'/p).read_text();new=old
+for signature in [' get(Ljava/lang/String;)Ljava/lang/String;', ' get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;']:
+    def property_hook(m):
+        assert '    .locals 0' in m
+        m=m.replace('    .locals 0','    .locals 1',1)
+        anchor='    invoke-static {p0'
+        start=m.index(anchor)
+        hook="    invoke-static {p0}, Lio/mesalabs/unica/HmaPolicy;->systemProperty(Ljava/lang/String;)Ljava/lang/String;\n\n    move-result-object v0\n\n    if-eqz v0, :hma_real_property\n\n    return-object v0\n\n    :hma_real_property\n"
+        return m[:start]+hook+m[start:]
+    new=change_method(new,signature,property_hook)
+fw.append((p,old,new))
 patchfile(repo/'unica/mods/hma/smali/system/framework/framework.jar/0002-Add-HMA-OSS-privacy-policy.patch','Add HMA-OSS-inspired per-user privacy policy and provider hooks',fw)
 
 services=[]

@@ -1,4 +1,5 @@
 /application>/i
+        <activity android:name="io.mesalabs.unica.ota.OtaActivity" android:exported="false" android:configChanges="keyboardHidden|orientation|screenSize" android:label="@string/unica_ota_title"/>
         <activity android:name="io.mesalabs.unica.battery.BatteryActivity" android:exported="false" android:label="@string/unica_battery_title"/>
         <receiver android:name="io.mesalabs.unica.battery.BatteryBoot" android:exported="false">
             <intent-filter><action android:name="android.intent.action.BOOT_COMPLETED"/></intent-filter>

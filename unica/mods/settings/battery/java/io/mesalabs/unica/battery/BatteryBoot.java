@@ -12,8 +12,8 @@ public final class BatteryBoot extends BroadcastReceiver {
         if(!Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()) || android.os.Process.myUid()!=1000)return;
         BatteryEngine engine=new BatteryEngine(context);
         try {
-            JSONObject profile=engine.ACTIVE.exists()?new JSONObject(BatteryEngine.read(engine.ACTIVE)):Profile.empty();
-            JSONObject undo=engine.JOURNAL.exists()?new JSONObject(BatteryEngine.read(engine.JOURNAL)):new JSONObject();
+            JSONObject profile=engine.ACTIVE.exists()?new JSONObject(BatteryEngine.read(engine.ACTIVE,BatteryEngine.PROFILE_LIMIT)):Profile.empty();
+            JSONObject undo=BatteryEngine.readJournal(engine.JOURNAL);
             if(!profile.optBoolean("enabled")&&undo.length()==0)return;
             JobScheduler scheduler=context.getSystemService(JobScheduler.class);
             scheduler.schedule(new JobInfo.Builder(0x554e4241,new ComponentName(context,ApplyJob.class))

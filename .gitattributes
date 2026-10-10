@@ -20,6 +20,7 @@
 *.bcube binary
 *.cube binary
 *.dlc binary
+*.der binary
 
 # ROM-specific prebuilt blobs
 prebuilts/bootable/deprecated-ota/updater binary
@@ -29,9 +30,11 @@ unica/mods/prophide/system/bin/rezetprop binary
 unica/mods/rezoss/system_ext/bin/mosey_server binary
 unica/mods/rezoss/local-summary-service/system/bin/unica-summary-llama-server binary
 unica/mods/settings/system/bin/unica-battery binary
+unica/mods/settings/system/bin/unica-ota-stage binary
 
 # Device-specific prebuilt blobs
 target/dm3q/installer/root/unica/dfe/tools/* binary
+target/dm3q/installer/root/unica/ota/cancel binary
 target/a52sxq/patches/wpss/vendor/firmware/** binary
 target/a53x/patches/*/vendor/** binary
 target/a73xq/patches/wpss/vendor/firmware/** binary

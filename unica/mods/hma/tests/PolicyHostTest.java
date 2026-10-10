@@ -61,6 +61,15 @@ public class PolicyHostTest {
         expect("input_method","secure","tts_default_synth","com.google.android.tts",true);
         expect("","global","adb_enabled",null,false);
         expect("dev_options","global","unica_hma_policy",null,false);
+        Class<?> cfg=Class.forName("io.mesalabs.unica.HmaPolicy$Config");
+        Constructor<?> ctor=cfg.getDeclaredConstructor(String.class);ctor.setAccessible(true);
+        Method crypto=HmaPolicy.class.getDeclaredMethod("encryptionProperty",cfg,String.class);crypto.setAccessible(true);
+        Object encrypted=ctor.newInstance("{\"apps\":[\"encryption_spoof\"]}");
+        check("encrypted".equals(crypto.invoke(null,encrypted,"ro.crypto.state")),"encryption state spoof");
+        check("file".equals(crypto.invoke(null,encrypted,"ro.crypto.type")),"encryption type spoof");
+        check(crypto.invoke(null,encrypted,"ro.build.fingerprint")==null,"unrelated property unchanged");
+        check(crypto.invoke(null,ctor.newInstance("{}"),"ro.crypto.state")==null,"encryption preset disabled");
+        check(crypto.invoke(null,null,"ro.crypto.state")==null,"missing encryption policy");
         Method uid=HmaPolicy.class.getDeclaredMethod("appUid",int.class);uid.setAccessible(true);
         for(int excluded:new int[]{-1,0,1000,2000,9999,20000,99000,101000})check(!(Boolean)uid.invoke(null,excluded),"exclude UID "+excluded);
         for(int included:new int[]{10000,19999,110000,119999})check((Boolean)uid.invoke(null,included),"include UID "+included);

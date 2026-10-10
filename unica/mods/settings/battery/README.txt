@@ -146,3 +146,59 @@ All four Settings patches passed dry-run and real application with --fuzz=0
 after the Settings source overlay on a fresh firmware decode in /tmp.
 These are source/compatibility checks, not live Stingy enforcement, boot/restore
 or battery-consumption measurements.
+
+Large-journal recovery fix (2026-10-07)
+--------------------------------------
+The supplied failure journal contained 6,421 records and was 1,323,484 bytes,
+which exceeded the former shared 1 MiB reader limit. All engine and boot paths
+now use a dedicated 16 MiB journal reader. Journal writes enforce the same byte
+limit before replacing the durable file. Profiles have their own 64 KiB limit.
+Errors identify the file and limit instead of only saying "File too large".
+
+Rollback entries omit UI labels, help, choice arrays, current/effective values,
+and boot identifiers for non-kernel settings. Original values, kind, target,
+UID, app-op, custom dark schedule metadata, kernel boot IDs, and unknown fields
+are retained. Reading old journals compacts them in memory; their first rewrite
+backs up an existing file above 1 MiB as original.json.legacy.bak.
+
+New snapshots are saved together before new control writes. A capacity or disk
+failure aborts new writes and preserves the previous journal. Restoration uses
+checkpoints of up to 64 records; interruption leaves originals on disk for safe
+retry. A failed checkpoint also restores those records to the in-memory journal.
+This avoids thousands of complete journal rewrites for large app inventories.
+
+Regression tests include a synthetic 6,500-entry legacy file and optionally the
+actual failing journal, byte-identical legacy backups, exact rollback-field
+preservation, capacity rejection without file replacement or control writes,
+failed checkpoint retention, and simulated full restoration. Optional fixture:
+    CLASSPATH=/data/local/tmp/unica-journal-tests.jar app_process /system/bin \
+        io.mesalabs.unica.battery.BatteryTests /data/local/tmp/original-fixture.json
+All control writes in these tests are simulated; they do not enable a preset.
+The temporary compact recovery file is only for its originating phone. Do not
+replace a journal with {} or clear Settings data: that discards saved originals.
+
+Standby policy handling (2026-10-09)
+-----------------------------------
+Exempted (5) apps are skipped for bucket writes, without creating a new undo
+record. Existing undo records remain intact. If a bucket write returns a known,
+less restrictive bucket (for example Never 50 -> Working set 20), the result is
+reported as an Android policy limit, not as an applied restriction. Unexpected
+readbacks and real API exceptions remain failures.
+
+When exact bucket restoration is not accepted, the original is retained and
+reported as deferred. System-owned originals such as Exempted (5) are never
+sent as invalid arguments to the standby setter. A later exact restoration
+clears the record normally. This does not bypass Android exemptions or claim
+that a refused restriction took effect.
+
+The UI distinguishes completed operations with policy limits from actual
+failures and reports the deferred-original count. Reflection exceptions are
+unwrapped to show their underlying type/message; a missing message falls back
+to the exception type instead of displaying null.
+
+144 Android regression assertions passed, including bucket-policy outcomes,
+error reporting, deferred/exact rollback and the supplied 6,421-entry journal.
+All setting writes were simulated. Java/D8, generated-smali/full classes4 DEX
+assembly, zero-fuzz Settings patch-stack checks and git diff --check passed.
+Rebuild/deploy Settings for the new behavior; live enforcement remains subject
+to the device's Android/Samsung policy.

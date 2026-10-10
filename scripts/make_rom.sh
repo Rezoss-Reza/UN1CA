@@ -5,6 +5,16 @@
 # [
 source "$SRC_DIR/scripts/utils/build_utils.sh" || exit 1
 
+# The helper records the old release before invoking a fresh direct ROM build.
+if [[ " $* " == *" -ota "* ]] || [[ " $* " == *" --ota "* ]]; then
+    if [[ $# != 1 ]]; then
+        echo 'Use make_rom -ota alone; it builds the full release and OTA' >&2
+        exit 1
+    fi
+    "$SRC_DIR/scripts/build_release_ota.sh" --build-auto
+    exit $?
+fi
+
 FORCE=false
 BUILD_ROM=false
 BUILD_TARGET_FILES=true
@@ -103,6 +113,7 @@ PRINT_USAGE()
     echo " -x, --no-target-files : Do not build target-files zip" >&2
     echo " -z, --build-rom-zip : Build flashable zip" >&2
     echo " -r, --build-rom-direct : Build flashable zip directly without target-files zip" >&2
+    echo " -ota, --ota : Build a fresh full release and block-delta OTA from the latest existing release" >&2
 }
 # ]
 

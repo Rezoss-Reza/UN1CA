@@ -7,7 +7,7 @@ ANDROID_JAR="${ANDROID_JAR:-$SDK/platforms/android-37.0/android.jar}"
 D8="${D8:-$SDK/build-tools/37.0.0/d8}"
 WORK=$(mktemp -d /tmp/unica-battery-tests.XXXXXX)
 mkdir -p "$WORK/classes" "$WORK/dex"
-javac -source 8 -target 8 -Xlint:-options -cp "$ANDROID_JAR" -d "$WORK/classes" "$HERE/../java/io/mesalabs/unica/battery/Profile.java" "$HERE/../java/io/mesalabs/unica/battery/BatteryEngine.java" "$HERE/../java/io/mesalabs/unica/battery/BatteryTransport.java" "$HERE/BatteryTests.java"
+javac -source 8 -target 8 -Xlint:-options -cp "$ANDROID_JAR" -d "$WORK/classes" "$HERE/../java/io/mesalabs/unica/battery/Profile.java" "$HERE/../java/io/mesalabs/unica/battery/BatteryEngine.java" "$HERE/../java/io/mesalabs/unica/battery/BatteryTransport.java" "$HERE/BatteryTests.java" "$HERE/JournalTests.java"
 jar cf "$WORK/tests.jar" -C "$WORK/classes" .
 "$D8" --min-api 35 --lib "$ANDROID_JAR" --output "$WORK/dex" "$WORK/tests.jar"
 jar cf "$WORK/battery-tests.jar" -C "$WORK/dex" classes.dex

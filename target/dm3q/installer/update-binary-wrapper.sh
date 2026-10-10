@@ -29,17 +29,33 @@ unzip -oq "$ZIPFILE" "META-INF/com/google/android/update-binary.unica" -d "$TMPD
 }
 chmod 0755 "$ORIGINAL"
 
+# OTA-only preflight; full release installation keeps its existing behavior.
+OTA_HOOKS="$TMPDIR/unica/ota/hooks.sh"
+OTA_ACTIVE=false
+if unzip -l "$ZIPFILE" | grep -q 'unica/ota/update.properties'; then
+    unzip -oq "$ZIPFILE" 'unica/ota/hooks.sh' -d "$TMPDIR" || exit 1
+    [ -f "$OTA_HOOKS" ] || exit 1
+    . "$OTA_HOOKS"
+    OTA_ACTIVE=true
+    ota_preflight || exit 1
+fi
+
 "$ORIGINAL" "$API" "$OUTFD" "$ZIPFILE"
 STATUS="$?"
 if [ "$STATUS" != "0" ]; then
+    $OTA_ACTIVE && ota_complete
     exit "$STATUS"
 fi
 
-unzip -oq "$ZIPFILE" "unica/dfe/dfe-maintain.sh" -d "$TMPDIR" || exit 0
+if ! unzip -oq "$ZIPFILE" "unica/dfe/dfe-maintain.sh" -d "$TMPDIR"; then
+    if $OTA_ACTIVE; then STATUS=1; ota_complete; exit 1; fi
+    exit 0
+fi
 chmod 0755 "$DFE_SCRIPT"
 
 sh "$DFE_SCRIPT" "$OUTFD" "$ZIPFILE"
 STATUS="$?"
 
+$OTA_ACTIVE && ota_complete
 rm -rf "$TMPDIR"
 exit "$STATUS"

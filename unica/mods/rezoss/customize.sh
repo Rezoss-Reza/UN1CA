@@ -10,6 +10,9 @@ ADD_TO_WORK_DIR "$MODPATH" "system_ext" "." 0 0 755 "u:object_r:system_file:s0"
 LOG "- Adding mountless AOSP zip boot animation support"
 ADD_TO_WORK_DIR "$MODPATH/bootanimation_zip" "system" \
     "system/bin/bootanimation_zip" 0 2000 755 "u:object_r:bootanim_exec:s0"
+# The branded payload retains the stock SONAME through its loader alias.
+ADD_TO_WORK_DIR "$MODPATH/bootanimation_zip" "system" \
+    "system/lib64/libbootanimation_rezoss_custom.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "$MODPATH/bootanimation_zip" "system" \
     "system/lib64/libbootanimation.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "m3qxxx" "system" \
@@ -630,37 +633,50 @@ if [[ "$TARGET_CODENAME" == "dm3q" ]]; then
     LOG "- Adding EXPERIMENTAL SM8550 Human/Pet Detection SNPE 2.10 DLC"
     LOG "- WARNING: Human/Pet Detection is partial; stock SNAP/Camera integration is unverified"
     # EXPERIMENTAL My FanCam DLCs: learned UN1CA replacements, not S26U weights.
-    # Locator v3 SNPE 2.10: conditional class-score contract repaired; stock
-    # SNAP/native decoder and live Gallery person detection/selection passed.
-    # ReID v21 SNPE 2.10: unit-normalized appearance repairs Samsung's
-    # dot-product matching contract; 16 regression inputs / 1,920 SNAP runs passed.
-    # Live Gallery kept the selected middle dancer's processed track across the
-    # full 15-second public clip. User confirmed focus; export callbacks passed.
-    # EXPERIMENTAL: one non-detected frame at 13.1s was retained in the track.
-    # A held-out pose-accuracy outlier remains; other clips are not validated.
-    # Installed by explicit user request, not a claim of general compatibility.
-    # ReID facial mapping is provisional and difficult poses may fail detection.
+    # Custom payloads use the _rezoss_custom suffix; loader aliases stay stable.
+    # Locator v4 SNPE 2.10: trained head improves sampled person recall;
+    # stock SNAP numerical/native ABI checks cover 102 inputs. Strict ONNX
+    # box parity still fails 55 inputs; background false-positives remain.
+    # ReID v22 SNPE 2.10: crowded appearance conv5/FC adaptation with training-
+    # only distillation; combined repaired pose and integer RGB resize policy.
+    # Stock SNAP numerical checks cover 549 inputs; 533 host pose outputs
+    # remain bit-identical to the preceding combined experimental candidate.
+    # WARNING: 95% identity/recall and spectator-separation gates still FAIL.
+    # Gallery identity continuity, crop/zoom, preview/export are NOT validated
+    # for v4/v22. Prior v21 single-clip Gallery evidence does not validate v22.
+    # ReID measured ~40% slower than v21 on one repeated input; facial
+    # mapping remains provisional and this is not end-to-end Gallery timing.
+    # Explicit experimental user opt-in on 2026-10-07 despite these failures.
+    # Rollback: archived UN1CA-FanCam-Crowded-Rollout-20261007-210113/
+    # rom-source-backup/ retains v3/v21 DLCs, aliases and this script.
     LOG "- Adding EXPERIMENTAL SM8550 My FanCam Locator/ReID DLCs"
-    LOG "- WARNING: EXPERIMENTAL ReID v21 passed one Gallery clip; pose outlier and general tracking remain unverified"
+    LOG "- WARNING: EXPERIMENTAL Locator v4/ReID v22: accuracy gates FAIL; known false-positives/box drift; Gallery cropping is unverified"
     for f in \
         "07-03_Video_HumanPetDetection_v2.0.1_SM8850_SNPE238.dlc" \
+        "07-03_Video_HumanPetDetection_UN1CA_Experimental_v1_SM8550-SNPE210.dlc" \
         "Detection.dlc" \
         "07-21_Video_ReframingTargetLocator_v0.1.0_SM8850-SNPE239.dlc" \
         "07-22_Video_ReframingReID_v0.2.3_SM8850-SNPE244.dlc" \
         "07-21_Video_ReframingTargetLocator_UN1CA_Experimental_v1_SM8550-SNPE244.dlc" \
         "07-21_Video_ReframingTargetLocator_UN1CA_Experimental_v2_SM8550-SNPE210.dlc" \
+        "07-21_Video_ReframingTargetLocator_UN1CA_Experimental_v3_SM8550-SNPE210_rezoss_custom.dlc" \
         "07-22_Video_ReframingReID_UN1CA_Experimental_v1_SM8550-SNPE244.dlc" \
         "07-22_Video_ReframingReID_UN1CA_Experimental_v2_SM8550-SNPE210.dlc" \
+        "07-22_Video_ReframingReID_UN1CA_Experimental_v21_SM8550-SNPE210_rezoss_custom.dlc" \
+        "07-21_Video_ReframingTargetLocator_UN1CA_Experimental_v3_SM8550-SNPE210.dlc" \
+        "07-21_Video_ReframingTargetLocator_UN1CA_Experimental_v4_SM8550-SNPE210.dlc" \
+        "07-22_Video_ReframingReID_UN1CA_Experimental_v21_SM8550-SNPE210.dlc" \
+        "07-22_Video_ReframingReID_UN1CA_Experimental_v22_SM8550-SNPE210.dlc" \
         "Locator.dlc" \
         "Reid.dlc"; do
         DELETE_FROM_WORK_DIR "system" "system/etc/mediacontextanalyzer/$f"
     done
     # Stable loader aliases point to explicitly named SM8550 experimental files.
     for f in \
-        "07-03_Video_HumanPetDetection_UN1CA_Experimental_v1_SM8550-SNPE210.dlc" \
+        "07-03_Video_HumanPetDetection_UN1CA_Experimental_v1_SM8550-SNPE210_rezoss_custom.dlc" \
         "Detection.dlc" \
-        "07-21_Video_ReframingTargetLocator_UN1CA_Experimental_v3_SM8550-SNPE210.dlc" \
-        "07-22_Video_ReframingReID_UN1CA_Experimental_v21_SM8550-SNPE210.dlc" \
+        "07-21_Video_ReframingTargetLocator_UN1CA_Experimental_v4_SM8550-SNPE210_rezoss_custom.dlc" \
+        "07-22_Video_ReframingReID_UN1CA_Experimental_v22_SM8550-SNPE210_rezoss_custom.dlc" \
         "Locator.dlc" \
         "Reid.dlc"; do
         ADD_TO_WORK_DIR "$MODPATH/fancam/experimental" "system" "system/etc/mediacontextanalyzer/$f" 0 0 644 "u:object_r:system_file:s0"
@@ -717,7 +733,7 @@ done
 # =============================================================================
 # Experimental dm3q-only horizon correction, linked into the stock S23U EIS node.
 # Exact-firmware checks and stock backup are handled by the installer.
-. "$MODPATH/horizontal-lock/rom/install.sh"
+. "$MODPATH/horizontal-lock/install.sh"
 
 # =============================================================================
 # Disabled Experiments - Camera Vendor Stack
@@ -857,43 +873,59 @@ unset REZOSS_DEPTH_SYSTEMUI_DIR REZOSS_DEPTH_SYSTEMUI_HOOK
 
 LOG "- Downloading latest Samsung Always On Display app"
 DOWNLOAD_FILE "$(GET_GALAXY_STORE_DOWNLOAD_URL "com.samsung.android.app.aodservice")" \
-    "$WORK_DIR/system/system/priv-app/AODService_v80/AODService_v80.apk"
+    "$WORK_DIR/system/system/priv-app/AODService_v80/AODService_v80.apk" || return 1
+
+# The Galaxy Store APK may change obfuscated class names. Preserve any cached
+# decode (including partial failed applies) and decode the downloaded APK fresh.
+REZOSS_AOD_TEMP="$(mktemp -d /tmp/unica-aod.XXXXXX)" || return 1
+REZOSS_AOD_DECODE="$APKTOOL_DIR/system/priv-app/AODService_v80/AODService_v80.apk"
+REZOSS_AOD_PATCH_DIR="$REZOSS_AOD_TEMP/patches"
+if [[ -d "$REZOSS_AOD_DECODE" ]]; then
+    LOG "- Preserving previous AOD decode at $REZOSS_AOD_TEMP/previous-decode"
+    mv "$REZOSS_AOD_DECODE" "$REZOSS_AOD_TEMP/previous-decode" || return 1
+fi
+DECODE_APK "system" "system/priv-app/AODService_v80/AODService_v80.apk" || return 1
+LOG "- Resolve AOD hooks and preflight all nine patches with zero fuzz"
+python3 "$MODPATH/aodservice/prepare_patches.py" "$REZOSS_AOD_DECODE" \
+    "$MODPATH/aodservice/AODService_v80.apk" "$REZOSS_AOD_PATCH_DIR" || return 1
 
 LOG "- Patch AODService UN1CA clock font list integration"
 APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
-    "$MODPATH/aodservice/AODService_v80.apk/0001-Expose-UN1CA-Font-Selector-fonts-to-clock-picker.patch"
+    "$REZOSS_AOD_PATCH_DIR/0001-Expose-UN1CA-Font-Selector-fonts-to-clock-picker.patch" || return 1
 
 LOG "- Patch AODService stretch clock font type sync"
 APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
-    "$MODPATH/aodservice/AODService_v80.apk/0002-Mirror-stretch-clock-font-type-to-AOD.patch"
+    "$REZOSS_AOD_PATCH_DIR/0002-Mirror-stretch-clock-font-type-to-AOD.patch" || return 1
 
 LOG "- Patch AODService stretch clock font type startup backfill"
 APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
-    "$MODPATH/aodservice/AODService_v80.apk/0003-Backfill-AOD-stretch-font-type-on-startup.patch"
+    "$REZOSS_AOD_PATCH_DIR/0003-Backfill-AOD-stretch-font-type-on-startup.patch" || return 1
 
 LOG "- Patch AODService stretch clock font render normalization"
 APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
-    "$MODPATH/aodservice/AODService_v80.apk/0004-Normalize-stretch-font-data-before-AOD-render.patch"
+    "$REZOSS_AOD_PATCH_DIR/0004-Normalize-stretch-font-data-before-AOD-render.patch" || return 1
 
 LOG "- Patch AODService AOD stretch font heights"
 APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
-    "$MODPATH/aodservice/AODService_v80.apk/0005-Preserve-AOD-stretch-font-heights.patch"
+    "$REZOSS_AOD_PATCH_DIR/0005-Preserve-AOD-stretch-font-heights.patch" || return 1
 
 LOG "- Patch AODService AOD stretch renderer gate"
 APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
-    "$MODPATH/aodservice/AODService_v80.apk/0006-Allow-AOD-stretch-render-when-font-heights-exist.patch"
+    "$REZOSS_AOD_PATCH_DIR/0006-Allow-AOD-stretch-render-when-font-heights-exist.patch" || return 1
 
 LOG "- Patch AODService to use lockscreen clock style for AOD rendering"
 APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
-    "$MODPATH/aodservice/AODService_v80.apk/0007-Use-lockscreen-clock-style-for-AOD-render.patch"
+    "$REZOSS_AOD_PATCH_DIR/0007-Use-lockscreen-clock-style-for-AOD-render.patch" || return 1
 
 LOG "- Expand lockscreen widget grid and preserve widget proportions when resizing"
 APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
-    "$MODPATH/aodservice/AODService_v80.apk/0008-Expand-and-resize-lockscreen-widget-container.patch"
+    "$REZOSS_AOD_PATCH_DIR/0008-Expand-and-resize-lockscreen-widget-container.patch" || return 1
 
 LOG "- Patch AODService SDK clock item stretch font data"
 APPLY_PATCH "system" "system/priv-app/AODService_v80/AODService_v80.apk" \
-    "$MODPATH/aodservice/AODService_v80.apk/0009-Normalize-AOD-SDK-clock-item-stretch-font-data.patch"
+    "$REZOSS_AOD_PATCH_DIR/0009-Normalize-AOD-SDK-clock-item-stretch-font-data.patch" || return 1
+
+unset REZOSS_AOD_TEMP REZOSS_AOD_DECODE REZOSS_AOD_PATCH_DIR
 
 LOG "- Patch VisualCloudCore Galaxy Store model check"
 APPLY_PATCH "system" "system/app/VisualCloudCore/VisualCloudCore.apk" \

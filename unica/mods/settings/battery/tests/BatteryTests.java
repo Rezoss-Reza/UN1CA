@@ -116,6 +116,41 @@ public final class BatteryTests {
         check(android.app.UiModeManager.class.getMethod("getNightModeCustomType")!=null && android.app.UiModeManager.class.getMethod("setNightModeCustomType",int.class)!=null,"dark schedule restoration API");
         check(android.os.PowerManager.class.getMethod("setPowerSaveModeEnabled",boolean.class)!=null,"Saver API");
     }
+    static class Buckets extends BatteryEngine {
+        int current=20,result=45,writes;Exception failure;
+        Buckets()throws Exception{super(null);journal=new JSONObject();bootId="one";}
+        @Override String get(JSONObject d){return ""+current;}
+        @Override void writeBucket(String pkg,int value)throws Exception {writes++;if(failure!=null)throw failure;current=result;}
+        @Override JSONObject packageDescriptor(String kind,String pkg)throws Exception{return new JSONObject().put("kind",kind).put("target",pkg);}
+        @Override void saveJournal(){}
+    }
+    static void bucketTests()throws Exception {
+        JSONObject p=Profile.empty().put("enabled",true).put("packages",new JSONArray().put("com.test.app"));
+        String key="bucket:com.test.app";
+        Buckets f=new Buckets();f.current=5;
+        check(f.apply(p)&&f.policyLimited,"exempt target reported as policy limit");
+        check(f.writes==0 && f.journal.length()==0,"exempt bucket never written or newly journaled");
+        f=new Buckets();check(f.apply(p)&&!f.policyLimited,"ordinary bucket restriction succeeds");
+        check(f.current==45 && f.journal.getJSONObject(key).getString("original").equals("20"),"ordinary restriction saved original");
+        f=new Buckets();f.result=20;
+        check(f.apply(p)&&f.policyLimited,"clamped restriction classified separately");
+        check(f.journal.has(key),"clamped restriction keeps undo");
+        check(!f.notes.toString().contains("applied 45"),"clamped restriction never claimed applied");
+        f=new Buckets();f.result=20;f.journal.put(key,new JSONObject().put("kind","bucket").put("target","com.test.app").put("original","50"));
+        check(f.apply(Profile.empty())&&f.policyLimited&&f.deferredRestores==1,"Never to Working-set restoration deferred");
+        check(f.journal.getJSONObject(key).getString("original").equals("50"),"deferred original preserved exactly");
+        f.result=50;check(f.apply(Profile.empty())&&f.journal.length()==0&&!f.policyLimited&&f.deferredRestores==0,"later exact restoration clears undo");
+        f=new Buckets();f.journal.put(key,new JSONObject().put("kind","bucket").put("target","com.test.app").put("original","5"));
+        check(f.apply(Profile.empty())&&f.deferredRestores==1&&f.writes==0,"system-owned saved bucket never sent to setter");
+        check(f.journal.has(key),"system-owned original retained");
+        f=new Buckets();f.result=50;
+        check(!f.apply(p)&&!f.policyLimited,"unexpected more restricted result remains failure");
+        f=new Buckets();f.failure=new java.lang.reflect.InvocationTargetException(new SecurityException("test permission denied"));
+        check(!f.apply(p),"permission rejection remains failure");
+        check(f.notes.toString().contains("SecurityException: test permission denied"),"reflection cause exposed");
+        check(BatteryEngine.describe(new java.lang.reflect.InvocationTargetException(new IllegalArgumentException())).equals("IllegalArgumentException"),"null cause message gets type fallback");
+        check(BatteryEngine.describe(new java.lang.reflect.InvocationTargetException(new java.lang.reflect.InvocationTargetException(new java.io.IOException("nested")))).equals("IOException: nested"),"nested reflection exceptions unwrapped");
+    }
     static JSONObject enabled(String value)throws Exception{JSONObject p=Profile.empty();p.put("enabled",true);p.getJSONObject("controls").put("swappiness",value);return p;}
     public static void main(String[] args)throws Exception{
         JSONObject p=Profile.empty();check(!Profile.validate(p).getBoolean("enabled"),"disabled by default");
@@ -153,6 +188,8 @@ public final class BatteryTests {
         f=new Fake();f.specs.get("swappiness").put("kind","global");f.live.put("swappiness","null");f.apply(enabled("60"));f.bootId="two";
         check(f.apply(Profile.empty()),"persistent restore across reboot");check(f.live.get("swappiness").equals("null"),"absent setting restored as deletion");
         stingyTests();
+        bucketTests();
+        JournalTests.run(args);
         System.out.println("PASS "+count+" profile and rollback assertions");
     }
 }

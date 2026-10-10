@@ -1,0 +1,49 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+package io.mesalabs.unica.ota;
+import android.app.*;import android.content.*;import android.net.Uri;import android.os.*;import android.view.*;import android.widget.*;
+import java.io.*;import java.util.*;import java.util.concurrent.*;
+
+public final class OtaActivity extends Activity {
+ private static final String FOLDER="1AwB5M1gD24vCJm97u0CtZSdWzF0Vus7B";
+ private static final File REQUEST=new File("/data/misc/unica_ota/request"), ZIP=new File(REQUEST,"update.zip");
+ private final ExecutorService worker=Executors.newSingleThreadExecutor();
+ private TextView status;private LinearLayout page;private boolean busy;private final List<Button> actions=new ArrayList<>();
+ @Override public void onCreate(Bundle b){super.onCreate(b);setTitle("OTA Update");if(getActionBar()!=null)getActionBar().setDisplayHomeAsUpEnabled(true);
+  ScrollView scroll=new ScrollView(this);page=new LinearLayout(this);page.setOrientation(1);int p=(int)(20*getResources().getDisplayMetrics().density);page.setPadding(p,p,p,p);scroll.addView(page);setContentView(scroll);
+  status=new TextView(this);status.setTextSize(17);status.setPadding(0,p,0,p);page.addView(status);
+  action("Download latest OTA",()->openDownloadFolder());
+  action("Select a local OTA ZIP",()->{Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("application/zip").addCategory(Intent.CATEGORY_OPENABLE);startActivityForResult(i,1);});
+  action("Install and reboot",()->{if(!ZIP.exists()){show("Select the downloaded OTA ZIP first.");return;}new AlertDialog.Builder(this).setTitle("Install OTA update?").setMessage("The phone will restart into OrangeFox. Press Volume Down during its initial 5-second countdown to cancel.").setNegativeButton("Cancel",null).setPositiveButton("Install",(d,w)->run(()->install())).show();});
+  try{show("Installed: "+OtaPackage.prop("ro.unica.version")+"\nRelease: "+OtaPackage.prop("ro.unica.timestamp"));
+   File result=new File("/data/misc/unica_ota/staged/result");if(result.exists())try(InputStream in=new FileInputStream(result)){show(status.getText()+"\nLast installation: "+new String(OtaPackage.read(in,4096),"UTF-8"));}
+  }catch(Exception e){show("Updater setup: "+e.getMessage());}
+ }
+ @Override protected void onResume(){super.onResume();
+  boolean dark=(getResources().getConfiguration().uiMode&0x30)==0x20;
+  boolean transparent=android.provider.Settings.System.getInt(getContentResolver(),"unica_settings_bg_transparency_enabled",0)!=0;
+  int level=Math.max(70,Math.min(100,android.provider.Settings.System.getInt(getContentResolver(),"unica_settings_bg_transparency_level",70)));
+  int bg=dark?0xff000000:0xfff2f2f2;int surface=dark?0xff17171a:0xffffffff;
+  if(transparent){surface=(surface&0xffffff)|((255-level*255/100)<<24);bg=android.graphics.Color.TRANSPARENT;getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);}else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
+  getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(bg));
+  android.graphics.drawable.GradientDrawable shape=new android.graphics.drawable.GradientDrawable();shape.setColor(surface);shape.setCornerRadius(28*getResources().getDisplayMetrics().density);page.setBackground(shape);
+ }
+ private interface Work{void go()throws Exception;}
+ private void action(String title,Runnable work){Button b=new Button(this);b.setText(title);b.setAllCaps(false);b.setMinHeight((int)(48*getResources().getDisplayMetrics().density));b.setOnClickListener(v->work.run());page.addView(b);actions.add(b);}
+ private void show(String s){runOnUiThread(()->{if(!isFinishing())status.setText(s);});}
+ private void run(Work job){if(busy)return;busy=true;for(Button b:actions)b.setEnabled(false);worker.execute(()->{try{job.go();}catch(Exception e){show(e.getMessage()==null?"Update operation failed":e.getMessage());}finally{runOnUiThread(()->{busy=false;for(Button b:actions)b.setEnabled(true);});}});}
+ @Override public boolean onOptionsItemSelected(MenuItem i){if(i.getItemId()==android.R.id.home){if(!busy)finish();return true;}return super.onOptionsItemSelected(i);}
+ @Override public void onBackPressed(){if(busy)Toast.makeText(this,"Wait for the update operation to finish",Toast.LENGTH_SHORT).show();else super.onBackPressed();}
+ @Override protected void onDestroy(){worker.shutdown();super.onDestroy();}
+ @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==1&&result==RESULT_OK&&data!=null){Uri uri=data.getData();run(()->{File part=new File(REQUEST,"local.part");try(InputStream in=getContentResolver().openInputStream(uri);OutputStream out=new FileOutputStream(part)){copy(in,out);}try{OtaPackage.verify(part);if(!part.renameTo(ZIP))throw new IOException("Cannot save selected update");show("OTA verified. Ready to install.");}finally{part.delete();}});}}
+ private void openDownloadFolder(){
+  Intent intent=new Intent(Intent.ACTION_VIEW,Uri.parse("https://drive.google.com/drive/folders/"+FOLDER+"?usp=sharing"));
+  intent.addCategory(Intent.CATEGORY_BROWSABLE);
+  try{startActivity(intent);show("Download the latest OTA from the folder, then return here and select its ZIP.");}
+  catch(ActivityNotFoundException e){show("No app can open the download folder. Install a browser, or select an OTA ZIP downloaded elsewhere.");}
+ }
+ private void copy(InputStream in,OutputStream out)throws Exception{if(in==null)throw new IOException("Cannot open update");byte[] b=new byte[1024*1024];int n;long done=0,last=0;while((n=in.read(b))!=-1){done+=n;if(done>16L*1024*1024*1024)throw new IOException("Update exceeds size limit");out.write(b,0,n);if(System.currentTimeMillis()-last>1000){show("Reading OTA: "+done/1048576+" MiB");last=System.currentTimeMillis();}}}
+ private void install()throws Exception{show("Verifying OTA before reboot…");OtaPackage.verify(ZIP);String id=Long.toString(System.currentTimeMillis());try(FileOutputStream out=new FileOutputStream(new File(REQUEST,"id"))){out.write(id.getBytes("UTF-8"));out.getFD().sync();}
+  Class.forName("android.os.SystemProperties").getMethod("set",String.class,String.class).invoke(null,"sys.unica.ota.request",id);
+  long end=System.currentTimeMillis()+600000;File response=new File("/data/misc/unica_ota/staged/response");while(System.currentTimeMillis()<end){if(response.exists()){String text;try(InputStream in=new FileInputStream(response)){text=new String(OtaPackage.read(in,4096),"UTF-8").trim();}if(text.startsWith(id+" ")){if(!text.equals(id+" ready"))throw new IOException(text.substring(id.length()+1));show("Rebooting into OrangeFox…");((PowerManager)getSystemService(POWER_SERVICE)).reboot("recovery");return;}}Thread.sleep(1000);}throw new IOException("Recovery staging timed out. Do not reboot until the request is checked.");
+ }
+}

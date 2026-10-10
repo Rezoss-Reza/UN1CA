@@ -12,3 +12,5 @@ system/etc/unica/scpm_allowlist_apply.sh 0 2000 755 capabilities=0x0
 system/bin 0 0 755 capabilities=0x0
 system/bin/unica-battery 0 0 755 capabilities=0x0
 system/etc/init/unica_battery.rc 0 0 644 capabilities=0x0
+system/bin/unica-ota-stage 0 0 755 capabilities=0x0
+system/etc/init/unica_ota.rc 0 0 644 capabilities=0x0
