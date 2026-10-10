@@ -256,6 +256,10 @@ public final class BatteryTests {
         f=new Fake();f.apply(enabled("60"));f.bootId="two";f.live.put("swappiness","140");check(f.apply(Profile.empty()),"reboot disable");check(f.live.get("swappiness").equals("140"),"old kernel snapshot not forced after reboot");
         f=new Fake();f.specs.get("swappiness").put("kind","global");f.live.put("swappiness","null");f.apply(enabled("60"));f.bootId="two";
         check(f.apply(Profile.empty()),"persistent restore across reboot");check(f.live.get("swappiness").equals("null"),"absent setting restored as deletion");
+        for(String id:new String[]{"cpu_policy0","min_cpu_policy0","min_cpu_policy7","gpu","min_gpu"})
+            check(BatteryTransport.validControl(id),"transport accepts fixed frequency control "+id);
+        for(String id:new String[]{"min_swappiness","min_cpu_policy1000","min_cpu_policy0/../x","min_gpu;reboot","/sys/devices/system/cpu"})
+            check(!BatteryTransport.validControl(id),"transport rejects invalid control "+id);
         stingyTests();
         bucketTests();
         JournalTests.run(args);

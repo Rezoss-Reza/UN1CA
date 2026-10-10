@@ -14,11 +14,14 @@ public final class BatteryTransport {
             byte[] b=new byte[8192];int n;while((n=in.read(b))!=-1){out.write(b,0,n);if(out.size()>limit)throw new IOException("Battery message too large");}return out.toString("UTF-8");
         }
     }
+    static boolean validControl(String control) {
+        return control.matches("wifi_pm|wifi_wakeup|aspm|swappiness|(?:min_)?(?:gpu|cpu_policy[0-9]{1,3})");
+    }
     public static synchronized JSONObject request(String operation,String control,String value)throws Exception {
         if(android.os.Process.myUid()!=1000)throw new IOException("Battery Saving is available to the device owner's Settings only");
         if(!REQUEST.getParentFile().isDirectory())throw new IOException("Battery Saving service is not installed. Install the updated ROM.");
         if(!java.util.Arrays.asList("list","get","set").contains(operation))throw new IOException("Invalid kernel operation");
-        if(!operation.equals("list")&&!control.matches("wifi_pm|wifi_wakeup|aspm|swappiness|gpu|cpu_policy[0-9]{1,3}"))throw new IOException("Invalid kernel control");
+        if(!operation.equals("list")&&!validControl(control))throw new IOException("Invalid kernel control");
         if(operation.equals("set")&&!value.matches("[a-z0-9_]{1,20}"))throw new IOException("Invalid kernel value");
         String id=UUID.randomUUID().toString(),message=id+"\n"+operation+"\n";
         if(!operation.equals("list"))message+=control+"\n";

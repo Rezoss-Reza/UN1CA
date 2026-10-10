@@ -248,3 +248,13 @@ Rebuild/check:
   bash unica/mods/settings/battery/tests/build.sh
 Run the printed test JAR with app_process when Android is booted. Profile and
 journal tests simulate control writes; they do not enable Battery Saving.
+
+Minimum-control transport regression (2026-10-10)
+------------------------------------------------
+The native worker accepted min_cpu_policyN/min_gpu but the Java IPC allowlist
+rejected them before sending a request, producing "Invalid kernel control"
+under the parent CPU/GPU ceiling. BatteryTransport now accepts exactly those
+fixed minimum IDs; arbitrary paths and unrelated min_ controls remain invalid.
+186 assertions passed under device app_process, including transport validation
+and Android API-presence checks; policy writes were simulated. No live profile
+was applied. The generated Settings patch must be installed to fix the UI error.

@@ -16302,7 +16302,7 @@ diff --git a/smali_classes4/io/mesalabs/unica/battery/BatteryTransport.smali b/s
 new file mode 100644
 --- /dev/null
 +++ b/smali_classes4/io/mesalabs/unica/battery/BatteryTransport.smali
-@@ -0,0 +1,734 @@
+@@ -0,0 +1,745 @@
 +.class public final Lio/mesalabs/unica/battery/BatteryTransport;
 +.super Ljava/lang/Object;
 +.source "BatteryTransport.java"
@@ -16491,7 +16491,7 @@ new file mode 100644
 +
 +    monitor-enter v0
 +
-+    .line 18
++    .line 21
 +    :try_start_3
 +    invoke-static {}, Landroid/os/Process;->myUid()I
 +
@@ -16499,9 +16499,9 @@ new file mode 100644
 +
 +    const/16 v2, 0x3e8
 +
-+    if-ne v1, v2, :cond_1d5
++    if-ne v1, v2, :cond_1d3
 +
-+    .line 19
++    .line 22
 +    sget-object v1, Lio/mesalabs/unica/battery/BatteryTransport;->REQUEST:Ljava/io/File;
 +
 +    invoke-virtual {v1}, Ljava/io/File;->getParentFile()Ljava/io/File;
@@ -16512,9 +16512,9 @@ new file mode 100644
 +
 +    move-result v1
 +
-+    if-eqz v1, :cond_1cd
++    if-eqz v1, :cond_1cb
 +
-+    .line 20
++    .line 23
 +    const-string v1, "list"
 +
 +    const-string v2, "get"
@@ -16533,28 +16533,26 @@ new file mode 100644
 +
 +    move-result v1
 +
-+    if-eqz v1, :cond_1c5
++    if-eqz v1, :cond_1c3
 +
-+    .line 21
++    .line 24
 +    const-string v1, "list"
 +
 +    invoke-virtual {p0, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
 +    move-result v1
 +
-+    if-nez v1, :cond_44
++    if-nez v1, :cond_42
 +
-+    const-string v1, "wifi_pm|wifi_wakeup|aspm|swappiness|gpu|cpu_policy[0-9]{1,3}"
-+
-+    invoke-virtual {p1, v1}, Ljava/lang/String;->matches(Ljava/lang/String;)Z
++    invoke-static {p1}, Lio/mesalabs/unica/battery/BatteryTransport;->validControl(Ljava/lang/String;)Z
 +
 +    move-result v1
 +
-+    if-eqz v1, :cond_3c
++    if-eqz v1, :cond_3a
 +
-+    goto :goto_44
++    goto :goto_42
 +
-+    :cond_3c
++    :cond_3a
 +    new-instance p0, Ljava/io/IOException;
 +
 +    const-string p1, "Invalid kernel control"
@@ -16563,16 +16561,16 @@ new file mode 100644
 +
 +    throw p0
 +
-+    .line 22
-+    :cond_44
-+    :goto_44
++    .line 25
++    :cond_42
++    :goto_42
 +    const-string v1, "set"
 +
 +    invoke-virtual {p0, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
 +    move-result v1
 +
-+    if-eqz v1, :cond_5d
++    if-eqz v1, :cond_5b
 +
 +    const-string v1, "[a-z0-9_]{1,20}"
 +
@@ -16580,11 +16578,11 @@ new file mode 100644
 +
 +    move-result v1
 +
-+    if-eqz v1, :cond_55
++    if-eqz v1, :cond_53
 +
-+    goto :goto_5d
++    goto :goto_5b
 +
-+    :cond_55
++    :cond_53
 +    new-instance p0, Ljava/io/IOException;
 +
 +    const-string p1, "Invalid kernel value"
@@ -16593,9 +16591,9 @@ new file mode 100644
 +
 +    throw p0
 +
-+    .line 23
-+    :cond_5d
-+    :goto_5d
++    .line 26
++    :cond_5b
++    :goto_5b
 +    invoke-static {}, Ljava/util/UUID;->randomUUID()Ljava/util/UUID;
 +
 +    move-result-object v1
@@ -16632,14 +16630,14 @@ new file mode 100644
 +
 +    move-result-object v2
 +
-+    .line 24
++    .line 27
 +    const-string v3, "list"
 +
 +    invoke-virtual {p0, v3}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
 +    move-result v3
 +
-+    if-nez v3, :cond_a1
++    if-nez v3, :cond_9f
 +
 +    new-instance v3, Ljava/lang/StringBuilder;
 +
@@ -16663,15 +16661,15 @@ new file mode 100644
 +
 +    move-result-object v2
 +
-+    .line 25
-+    :cond_a1
++    .line 28
++    :cond_9f
 +    const-string p1, "set"
 +
 +    invoke-virtual {p0, p1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
 +    move-result p0
 +
-+    if-eqz p0, :cond_c0
++    if-eqz p0, :cond_be
 +
 +    new-instance p0, Ljava/lang/StringBuilder;
 +
@@ -16695,8 +16693,8 @@ new file mode 100644
 +
 +    move-result-object v2
 +
-+    .line 26
-+    :cond_c0
++    .line 29
++    :cond_be
 +    new-instance p0, Ljava/io/File;
 +
 +    new-instance p1, Ljava/lang/StringBuilder;
@@ -16725,14 +16723,14 @@ new file mode 100644
 +
 +    invoke-direct {p0, p1}, Ljava/io/File;-><init>(Ljava/lang/String;)V
 +
-+    .line 27
++    .line 30
 +    new-instance p1, Ljava/io/FileOutputStream;
 +
 +    invoke-direct {p1, p0}, Ljava/io/FileOutputStream;-><init>(Ljava/io/File;)V
-+    :try_end_e3
-+    .catchall {:try_start_3 .. :try_end_e3} :catchall_1dd
++    :try_end_e1
++    .catchall {:try_start_3 .. :try_end_e1} :catchall_1db
 +
-+    :try_start_e3
++    :try_start_e1
 +    const-string p2, "UTF-8"
 +
 +    invoke-virtual {v2, p2}, Ljava/lang/String;->getBytes(Ljava/lang/String;)[B
@@ -16746,13 +16744,13 @@ new file mode 100644
 +    move-result-object p2
 +
 +    invoke-virtual {p2}, Ljava/io/FileDescriptor;->sync()V
-+    :try_end_f3
-+    .catchall {:try_start_e3 .. :try_end_f3} :catchall_1bb
++    :try_end_f1
++    .catchall {:try_start_e1 .. :try_end_f1} :catchall_1b9
 +
-+    :try_start_f3
++    :try_start_f1
 +    invoke-virtual {p1}, Ljava/io/FileOutputStream;->close()V
 +
-+    .line 28
++    .line 31
 +    invoke-virtual {p0}, Ljava/io/File;->getPath()Ljava/lang/String;
 +
 +    move-result-object p1
@@ -16761,7 +16759,7 @@ new file mode 100644
 +
 +    invoke-static {p1, p2}, Landroid/system/Os;->chmod(Ljava/lang/String;I)V
 +
-+    .line 29
++    .line 32
 +    invoke-virtual {p0}, Ljava/io/File;->toPath()Ljava/nio/file/Path;
 +
 +    move-result-object p0
@@ -16790,7 +16788,7 @@ new file mode 100644
 +
 +    invoke-static {p0, p1, v2}, Ljava/nio/file/Files;->move(Ljava/nio/file/Path;Ljava/nio/file/Path;[Ljava/nio/file/CopyOption;)Ljava/nio/file/Path;
 +
-+    .line 30
++    .line 33
 +    const-string p0, "android.os.SystemProperties"
 +
 +    invoke-static {p0}, Ljava/lang/Class;->forName(Ljava/lang/String;)Ljava/lang/Class;
@@ -16813,7 +16811,7 @@ new file mode 100644
 +
 +    move-result-object p0
 +
-+    .line 31
++    .line 34
 +    invoke-static {}, Landroid/os/SystemClock;->elapsedRealtime()J
 +
 +    move-result-wide p1
@@ -16824,26 +16822,26 @@ new file mode 100644
 +
 +    const-wide/16 v2, 0x0
 +
-+    .line 32
-+    :goto_138
++    .line 35
++    :goto_136
 +    invoke-static {}, Landroid/os/SystemClock;->elapsedRealtime()J
 +
 +    move-result-wide v5
 +
 +    cmp-long v5, v5, p1
 +
-+    if-gez v5, :cond_1b3
++    if-gez v5, :cond_1b1
 +
-+    .line 33
++    .line 36
 +    sget-object v5, Lio/mesalabs/unica/battery/BatteryTransport;->RESPONSE:Ljava/io/File;
 +
 +    invoke-virtual {v5}, Ljava/io/File;->exists()Z
 +
 +    move-result v5
 +
-+    if-eqz v5, :cond_17d
++    if-eqz v5, :cond_17b
 +
-+    .line 34
++    .line 37
 +    new-instance v5, Lorg/json/JSONObject;
 +
 +    sget-object v6, Lio/mesalabs/unica/battery/BatteryTransport;->RESPONSE:Ljava/io/File;
@@ -16856,7 +16854,7 @@ new file mode 100644
 +
 +    invoke-direct {v5, v6}, Lorg/json/JSONObject;-><init>(Ljava/lang/String;)V
 +
-+    .line 35
++    .line 38
 +    const-string v6, "id"
 +
 +    invoke-virtual {v5, v6}, Lorg/json/JSONObject;->optString(Ljava/lang/String;)Ljava/lang/String;
@@ -16867,7 +16865,7 @@ new file mode 100644
 +
 +    move-result v6
 +
-+    if-eqz v6, :cond_17d
++    if-eqz v6, :cond_17b
 +
 +    const-string p0, "result"
 +
@@ -16880,17 +16878,17 @@ new file mode 100644
 +    invoke-virtual {p0, p1}, Lorg/json/JSONObject;->has(Ljava/lang/String;)Z
 +
 +    move-result p1
-+    :try_end_16d
-+    .catchall {:try_start_f3 .. :try_end_16d} :catchall_1dd
++    :try_end_16b
++    .catchall {:try_start_f1 .. :try_end_16b} :catchall_1db
 +
-+    if-nez p1, :cond_171
++    if-nez p1, :cond_16f
 +
 +    monitor-exit v0
 +
 +    return-object p0
 +
-+    :cond_171
-+    :try_start_171
++    :cond_16f
++    :try_start_16f
 +    new-instance p1, Ljava/io/IOException;
 +
 +    const-string p2, "error"
@@ -16903,16 +16901,16 @@ new file mode 100644
 +
 +    throw p1
 +
-+    .line 37
-+    :cond_17d
++    .line 40
++    :cond_17b
 +    invoke-static {}, Landroid/os/SystemClock;->elapsedRealtime()J
 +
 +    move-result-wide v5
 +
-+    .line 38
++    .line 41
 +    cmp-long v7, v5, v2
 +
-+    if-ltz v7, :cond_1ad
++    if-ltz v7, :cond_1ab
 +
 +    const-string v2, "sys.unica.battery.request"
 +
@@ -16956,17 +16954,17 @@ new file mode 100644
 +
 +    move v4, v7
 +
-+    .line 39
-+    :cond_1ad
++    .line 42
++    :cond_1ab
 +    const-wide/16 v5, 0x64
 +
 +    invoke-static {v5, v6}, Ljava/lang/Thread;->sleep(J)V
 +
-+    .line 40
-+    goto :goto_138
++    .line 43
++    goto :goto_136
 +
-+    .line 41
-+    :cond_1b3
++    .line 44
++    :cond_1b1
 +    new-instance p0, Ljava/io/IOException;
 +
 +    const-string p1, "Battery kernel service did not respond. Refresh status before retrying."
@@ -16974,31 +16972,31 @@ new file mode 100644
 +    invoke-direct {p0, p1}, Ljava/io/IOException;-><init>(Ljava/lang/String;)V
 +
 +    throw p0
-+    :try_end_1bb
-+    .catchall {:try_start_171 .. :try_end_1bb} :catchall_1dd
++    :try_end_1b9
++    .catchall {:try_start_16f .. :try_end_1b9} :catchall_1db
 +
-+    .line 27
-+    :catchall_1bb
++    .line 30
++    :catchall_1b9
 +    move-exception p0
 +
-+    :try_start_1bc
++    :try_start_1ba
 +    invoke-virtual {p1}, Ljava/io/FileOutputStream;->close()V
-+    :try_end_1bf
-+    .catchall {:try_start_1bc .. :try_end_1bf} :catchall_1c0
++    :try_end_1bd
++    .catchall {:try_start_1ba .. :try_end_1bd} :catchall_1be
 +
-+    goto :goto_1c4
++    goto :goto_1c2
 +
-+    :catchall_1c0
++    :catchall_1be
 +    move-exception p1
 +
-+    :try_start_1c1
++    :try_start_1bf
 +    invoke-virtual {p0, p1}, Ljava/lang/Throwable;->addSuppressed(Ljava/lang/Throwable;)V
 +
-+    :goto_1c4
++    :goto_1c2
 +    throw p0
 +
-+    .line 20
-+    :cond_1c5
++    .line 23
++    :cond_1c3
 +    new-instance p0, Ljava/io/IOException;
 +
 +    const-string p1, "Invalid kernel operation"
@@ -17007,8 +17005,8 @@ new file mode 100644
 +
 +    throw p0
 +
-+    .line 19
-+    :cond_1cd
++    .line 22
++    :cond_1cb
 +    new-instance p0, Ljava/io/IOException;
 +
 +    const-string p1, "Battery Saving service is not installed. Install the updated ROM."
@@ -17017,8 +17015,8 @@ new file mode 100644
 +
 +    throw p0
 +
-+    .line 18
-+    :cond_1d5
++    .line 21
++    :cond_1d3
 +    new-instance p0, Ljava/io/IOException;
 +
 +    const-string p1, "Battery Saving is available to the device owner\'s Settings only"
@@ -17027,15 +17025,28 @@ new file mode 100644
 +
 +    throw p0
 +
-+    .line 17
-+    :catchall_1dd
++    .line 20
++    :catchall_1db
 +    move-exception p0
 +
 +    monitor-exit v0
-+    :try_end_1df
-+    .catchall {:try_start_1c1 .. :try_end_1df} :catchall_1dd
++    :try_end_1dd
++    .catchall {:try_start_1bf .. :try_end_1dd} :catchall_1db
 +
 +    throw p0
++.end method
++
++.method static validControl(Ljava/lang/String;)Z
++    .registers 2
++
++    .line 18
++    const-string v0, "wifi_pm|wifi_wakeup|aspm|swappiness|(?:min_)?(?:gpu|cpu_policy[0-9]{1,3})"
++
++    invoke-virtual {p0, v0}, Ljava/lang/String;->matches(Ljava/lang/String;)Z
++
++    move-result p0
++
++    return p0
 +.end method
 
 diff --git a/smali_classes4/io/mesalabs/unica/battery/Profile.smali b/smali_classes4/io/mesalabs/unica/battery/Profile.smali
