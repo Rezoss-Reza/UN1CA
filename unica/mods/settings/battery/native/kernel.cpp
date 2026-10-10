@@ -30,7 +30,9 @@ static vector<string> words(string s){std::istringstream in(s);vector<string> ou
 static string quote(const string& s){string out="\"";for(unsigned char c:s){if(c=='"'||c=='\\')out+='\\';if(c>=32&&c<127)out+=c;}return out+'"';}
 static string jsonArray(const vector<string>& a){string s="[";for(size_t i=0;i<a.size();i++){if(i)s+=',';s+=quote(a[i]);}return s+"]";}
 static bool cpuId(const string& id){string prefix="cpu_policy";return id.compare(0,prefix.size(),prefix)==0&&number(id.substr(prefix.size()))&&id.size()<=prefix.size()+3;}
+static bool floorId(const string& id){return id=="min_gpu" || (id.compare(0,4,"min_")==0 && cpuId(id.substr(4)));}
 static string pathFor(const string& id){
+ if(floorId(id)){string p=pathFor(id.substr(4));p.replace(p.rfind("max_freq"),8,"min_freq");return p;}
  if(cpuId(id))return "/sys/devices/system/cpu/cpufreq/"+id.substr(4)+"/scaling_max_freq";
  if(id=="gpu")return "/sys/class/kgsl/kgsl-3d0/devfreq/max_freq";
  if(id=="aspm")return "/sys/module/pcie_aspm/parameters/policy";
@@ -44,6 +46,7 @@ static string pathFor(const string& id){
 }
 static string get(const string& id){string v=readFile(pathFor(id));if(id=="aspm"){size_t a=v.find('['),b=v.find(']');if(a==string::npos||b==string::npos||b<=a)throw std::runtime_error("Missing ASPM state");return v.substr(a+1,b-a-1);}return v;}
 static vector<string> choices(const string& id){
+ if(floorId(id))return choices(id.substr(4));
  if(id=="wifi_pm")return {"auto","on"};if(id=="wifi_wakeup")return {"enabled","disabled"};
  if(id=="swappiness"){vector<string> a;for(int i=0;i<=200;i++)a.push_back(std::to_string(i));return a;}
  if(id=="aspm"){string s=readFile(pathFor(id));s.erase(std::remove(s.begin(),s.end(),'['),s.end());s.erase(std::remove(s.begin(),s.end(),']'),s.end());vector<string> out;for(auto& v:words(s))if(v=="default"||v=="performance"||v=="powersave"||v=="powersupersave")out.push_back(v);return out;}
@@ -55,6 +58,7 @@ static vector<string> choices(const string& id){
 }
 static string set(const string& id,const string& value){
  vector<string> allowed=choices(id);if(std::find(allowed.begin(),allowed.end(),value)==allowed.end())throw std::runtime_error("Unsupported value");
+ if(floorId(id) && std::stoull(value)>std::stoull(get(id.substr(4))))throw std::runtime_error("Minimum exceeds current ceiling; restore ceiling first");
  string path=pathFor(id);int fd=open(path.c_str(),O_WRONLY|O_CLOEXEC|O_NOFOLLOW);if(fd<0)throw std::runtime_error("Control is not writable");
  string data=value+"\n";ssize_t n=write(fd,data.data(),data.size());int err=errno;close(fd);if(n!=(ssize_t)data.size())throw std::runtime_error(strerror(err));
  string actual=get(id);if(actual!=value)throw std::runtime_error("Kernel readback differs from requested value");return actual;
@@ -63,7 +67,7 @@ static string list(){
  vector<string> ids={"wifi_pm","wifi_wakeup","aspm","swappiness","gpu"};
  DIR* dir=opendir("/sys/devices/system/cpu/cpufreq");if(dir){dirent* e;while((e=readdir(dir))){string id="cpu_"+string(e->d_name);if(cpuId(id))ids.push_back(id);}closedir(dir);}
  std::sort(ids.begin(),ids.end());string out="[";
- for(size_t i=0;i<ids.size();i++){if(i)out+=',';out+="{\"id\":"+quote(ids[i]);try{string v=get(ids[i]);auto a=choices(ids[i]);out+=",\"supported\":true,\"current\":"+quote(v)+",\"values\":"+jsonArray(a);if(cpuId(ids[i])||ids[i]=="gpu"){try{string floor=readFile(cpuId(ids[i])?"/sys/devices/system/cpu/cpufreq/"+ids[i].substr(4)+"/scaling_min_freq":"/sys/class/kgsl/kgsl-3d0/devfreq/min_freq");if(number(floor))out+=",\"minimum\":"+quote(floor);}catch(const std::exception&) {}}}catch(const std::exception&){out+=",\"supported\":false,\"current\":\"Unavailable\",\"values\":[]";}out+='}';}return out+"]";
+ for(size_t i=0;i<ids.size();i++){if(i)out+=',';out+="{\"id\":"+quote(ids[i]);try{string v=get(ids[i]);auto a=choices(ids[i]);out+=",\"supported\":true,\"current\":"+quote(v)+",\"values\":"+jsonArray(a);if(cpuId(ids[i])||ids[i]=="gpu"){try{string floor=readFile(cpuId(ids[i])?"/sys/devices/system/cpu/cpufreq/"+ids[i].substr(4)+"/scaling_min_freq":"/sys/class/kgsl/kgsl-3d0/devfreq/min_freq");if(number(floor)){out+=",\"minimum\":"+quote(floor);if(access(pathFor("min_"+ids[i]).c_str(),W_OK)==0)out+=",\"adjustableMinimum\":true";}}catch(const std::exception&) {}}}catch(const std::exception&){out+=",\"supported\":false,\"current\":\"Unavailable\",\"values\":[]";}out+='}';}return out+"]";
 }
 static void respond(const string& id,const string& result){
  string path=base+"responses/response.json",temp=path+".tmp";
@@ -95,6 +99,9 @@ int main(){
  check(uuid("12345678-1234-1234-1234-123456789abc"));check(!uuid("../bad"));
  check(cpuId("cpu_policy7"));check(!cpuId("cpu_policy7/../../etc/passwd"));check(!cpuId("cpu_policy7;reboot"));check(!cpuId("cpu_policy1000"));
  check(pathFor("cpu_policy7")=="/sys/devices/system/cpu/cpufreq/policy7/scaling_max_freq");
+ check(pathFor("min_cpu_policy7")=="/sys/devices/system/cpu/cpufreq/policy7/scaling_min_freq");
+ check(pathFor("min_gpu")=="/sys/class/kgsl/kgsl-3d0/devfreq/min_freq");
+ check(!floorId("min_cpu_policy7/../x"));
  check(choices("swappiness").size()==201);check(choices("wifi_pm")==vector<string>({"auto","on"}));
  for(string id:{"/proc/sysrq-trigger","reboot","cpu_policy../7","gpu/../x"}){bool denied=false;try{pathFor(id);}catch(const std::exception&){denied=true;}check(denied);}
  check(!number("60;reboot"));check(!number("-1"));check(number("3360000"));

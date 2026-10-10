@@ -47,7 +47,7 @@ public class BatteryEngine {
     static JSONObject compactEntry(JSONObject source)throws JSONException {
         JSONObject result=new JSONObject(source.toString());
         // Keep all restoration/unknown fields; only strip known presentation metadata.
-        for(String field:new String[]{"label","help","values","supported","current","effective","minimum"})result.remove(field);
+        for(String field:new String[]{"label","help","values","supported","current","effective","minimum","adjustableMinimum"})result.remove(field);
         if(!"kernel".equals(result.getString("kind")))result.remove("boot");
         result.getString("target");result.getString("original");
         return result;
@@ -130,30 +130,43 @@ public class BatteryEngine {
         if(uid<10000 || uid!=d.getInt("uid"))throw new IOException("App identity changed; refusing UID policy write");
         return uid;
     }
-    static boolean autoCandidate(String pkg,int uid,boolean system,boolean launchable) {
-        return uid>=10000 && (!system || launchable || pkg.equals("com.android.vending") || pkg.equals("com.sec.android.app.samsungapps"));
-    }
-    List<String> backgroundTargets()throws Exception {
+    private Set<Integer> recoveryUids;
+    Set<Integer> protectedAppUids() throws Exception {
+        if(recoveryUids!=null)return recoveryUids;
         android.content.pm.PackageManager pm=context.getPackageManager();
-        Set<String> protectedApps=new HashSet<>(Arrays.asList("com.android.settings","com.android.systemui","com.google.android.gms","com.android.phone"));
+        Set<String> protectedApps=new HashSet<>(Arrays.asList("android","com.android.settings","com.android.systemui",
+                "com.android.providers.settings","com.android.keychain","com.android.credentialmanager"));
+        String permissions=(String)android.content.pm.PackageManager.class.getMethod("getPermissionControllerPackageName").invoke(pm);if(permissions!=null)protectedApps.add(permissions);
         android.content.Intent home=new android.content.Intent(android.content.Intent.ACTION_MAIN).addCategory(android.content.Intent.CATEGORY_HOME);
         android.content.pm.ResolveInfo launcher=pm.resolveActivity(home,android.content.pm.PackageManager.MATCH_DEFAULT_ONLY);
         if(launcher!=null && launcher.activityInfo!=null)protectedApps.add(launcher.activityInfo.packageName);
         android.view.inputmethod.InputMethodManager imm=context.getSystemService(android.view.inputmethod.InputMethodManager.class);
         for(android.view.inputmethod.InputMethodInfo keyboard:imm.getEnabledInputMethodList())protectedApps.add(keyboard.getPackageName());
-        android.telecom.TelecomManager telecom=context.getSystemService(android.telecom.TelecomManager.class);
-        String dialer=telecom.getDefaultDialerPackage();if(dialer!=null)protectedApps.add(dialer);
-        Set<Integer> protectedUids=new HashSet<>();
-        List<android.content.pm.ApplicationInfo> apps=pm.getInstalledApplications(0);
-        for(android.content.pm.ApplicationInfo app:apps)
-            if(protectedApps.contains(app.packageName)||!autoCandidate(app.packageName,app.uid,(app.flags&android.content.pm.ApplicationInfo.FLAG_SYSTEM)!=0,pm.getLaunchIntentForPackage(app.packageName)!=null))protectedUids.add(app.uid);
+        // Accessibility and device administrators can be needed to operate/unlock the phone.
+        android.view.accessibility.AccessibilityManager accessibility=context.getSystemService(android.view.accessibility.AccessibilityManager.class);
+        for(android.accessibilityservice.AccessibilityServiceInfo info:accessibility.getEnabledAccessibilityServiceList(android.accessibilityservice.AccessibilityServiceInfo.FEEDBACK_ALL_MASK))
+            protectedApps.add(info.getResolveInfo().serviceInfo.packageName);
+        android.app.admin.DevicePolicyManager policy=context.getSystemService(android.app.admin.DevicePolicyManager.class);
+        List<android.content.ComponentName> admins=policy.getActiveAdmins();
+        if(admins!=null)for(android.content.ComponentName admin:admins)protectedApps.add(admin.getPackageName());
+        Set<Integer> result=new HashSet<>();
+        for(android.content.pm.ApplicationInfo app:pm.getInstalledApplications(0))
+            if(protectedApps.contains(app.packageName)||app.uid<10000)result.add(app.uid);
+        recoveryUids=result;return result;
+    }
+    static boolean restrictionTarget(int uid,Set<Integer> protectedUids) {
+        return uid>=10000 && !protectedUids.contains(uid);
+    }
+    List<String> backgroundTargets()throws Exception {
+        Set<Integer> protectedUids=protectedAppUids();
         List<String> result=new ArrayList<>();
-        for(android.content.pm.ApplicationInfo app:apps)if(!protectedUids.contains(app.uid))result.add(app.packageName);
+        for(android.content.pm.ApplicationInfo app:context.getPackageManager().getInstalledApplications(0))
+            if(restrictionTarget(app.uid,protectedUids))result.add(app.packageName);
         Collections.sort(result);return result;
     }
     JSONObject packageDescriptor(String kind,String pkg)throws Exception {
-        if(pkg.equals("com.android.settings") || pkg.equals("com.android.systemui") || pkg.equals("com.google.android.gms"))throw new IOException("Essential service protected");
         int uid=context.getPackageManager().getApplicationInfo(pkg,0).uid;
+        if(!restrictionTarget(uid,protectedAppUids()))throw new IOException("Recovery component or shared UID protected");
         JSONObject d=new JSONObject().put("kind",kind).put("target",pkg).put("label",pkg).put("uid",uid);
         if(kind.equals("bg_run") || kind.equals("bg_any"))d.put("op",kind.equals("bg_run")?63:70);
         return d;
@@ -194,11 +207,17 @@ public class BatteryEngine {
         add("power_saver","Android Battery Saver","Requests Android's low-power policy. Charging or Samsung policy can switch it off.","power","",Arrays.asList("0","1"));
         add("sync","Automatic account sync","Off stops Android sync adapters. Apps with their own network schedulers require background restrictions too.","sync","",Arrays.asList("0","1"));
         add("data_saver","Data Saver","Restricts background data on metered networks; Wi-Fi is not necessarily metered.","data_saver","",Arrays.asList("0","1"));
-        add("background","Aggressive app restrictions","Restricts downloaded apps, launchable preinstalled apps and app stores, including notifications, jobs, background services and metered background data. Removes their user-added Doze exemptions. Protects system services, launcher, keyboards and dialer. Reapply after installing apps. Foreground services and OS exemptions can still run.","policy","",Arrays.asList("unrestricted","restricted"));
+        add("background","Aggressive app restrictions","Restricts user and non-essential system apps, including Play services, Play Store and Galaxy Store. Notifications, alarms, calls, connectivity and background work can fail. Removes their user-added Doze exemptions. Protects core UIDs, Settings, SystemUI, credential and permission components, launcher, enabled keyboards, accessibility services and device administrators. Reapply after installing apps. Foreground services and OS exemptions can still run.","policy","",Arrays.asList("unrestricted","restricted"));
         add("brightness_mode","Adaptive brightness","Manual mode prevents automatic brightness increases. Review brightness before going outdoors.","system","screen_brightness_mode",Arrays.asList("0","1"));
         add("brightness","Manual brightness","Stingy selects 8 (captured from the device brightness setting) on Android's legacy 1–255 setting scale; this is not a measured panel luminance percentage.","system","screen_brightness",range(1,255));
         add("timeout","Screen timeout","A shorter timeout reduces unattended screen-on time. Apps holding the screen awake can override it.","system","screen_off_timeout",Arrays.asList("15000","30000","60000","120000"));
         add("aod","Always On Display","Off avoids ambient display activity.","system","aod_mode",Arrays.asList("0","1"));
+        add("wifi_enabled","Wi-Fi radio","Off disconnects ALL Wi-Fi, including foreground traffic and Wi-Fi Calling. Mobile data may take over and use more power/data. For no scanning while off, also disable Wi-Fi scanning.","wifi","",Arrays.asList("0","1"));
+        try {
+            List<android.telephony.SubscriptionInfo> subscriptions=context.getSystemService(android.telephony.SubscriptionManager.class).getActiveSubscriptionInfoList();
+            if(subscriptions!=null)for(android.telephony.SubscriptionInfo sub:subscriptions)
+                add("wifi_calling_"+sub.getSubscriptionId(),"Wi-Fi Calling · SIM "+(sub.getSimSlotIndex()+1),"Off disables carrier Wi-Fi Calling for this subscription, not ordinary Wi-Fi data. Calls can fail with poor cellular coverage. Carrier policy may reject the change.","wifi_calling",""+sub.getSubscriptionId(),Arrays.asList("0","1"));
+        } catch(Exception e){notes.add("Wi-Fi Calling discovery unavailable: "+describe(e));}
         add("wifi_scan","Wi-Fi scanning while off","Disables always-available Wi-Fi scans; reduces location accuracy.","global","wifi_scan_always_enabled",Arrays.asList("0","1"));
         add("ble_scan","Bluetooth scanning while off","Disables always-available BLE scans; can impair location and nearby-device discovery.","global","ble_scan_always_enabled",Arrays.asList("0","1"));
         add("mobile_always","Keep mobile data active on Wi-Fi","Off reduces simultaneous data connectivity; Wi-Fi-to-mobile handover can be slower.","global","mobile_data_always_on",Arrays.asList("0","1"));
@@ -206,8 +225,23 @@ public class BatteryEngine {
             add(animation[0],animation[1],"Zero removes optional animation work; apps may ignore this scale.","global",animation[2],Arrays.asList("0","0.5","1"));
         add("night_mode","System dark mode","Always dark can reduce OLED display power in apps that follow the theme. App-specific themes and wallpaper are unchanged.","night","",Arrays.asList("0","1","2","3"));
     }
+    android.telephony.ims.ImsMmTelManager callingManager(String target)throws Exception {
+        int sub=Integer.parseInt(target);
+        if(context.getSystemService(android.telephony.SubscriptionManager.class).getActiveSubscriptionInfo(sub)==null)
+            throw new IOException("Subscription is not active; saved Wi-Fi Calling state retained");
+        // Verify setter availability before advertising this reversible control.
+        android.telephony.ims.ImsMmTelManager.class.getMethod("setVoWiFiSettingEnabled",boolean.class);
+        return context.getSystemService(android.telephony.ims.ImsManager.class).getImsMmTelManager(sub);
+    }
     String get(JSONObject d) throws Exception {
         String kind=d.getString("kind"), target=d.getString("target");
+        if(kind.equals("wifi")) {
+            int state=context.getSystemService(android.net.wifi.WifiManager.class).getWifiState();
+            if(state!=android.net.wifi.WifiManager.WIFI_STATE_ENABLED && state!=android.net.wifi.WifiManager.WIFI_STATE_DISABLED)
+                throw new IOException("Wi-Fi state is changing or unavailable; retry when stable");
+            return state==android.net.wifi.WifiManager.WIFI_STATE_ENABLED?"1":"0";
+        }
+        if(kind.equals("wifi_calling"))return callingManager(target).isVoWiFiSettingEnabled()?"1":"0";
         if(kind.equals("power"))return context.getSystemService(android.os.PowerManager.class).isPowerSaveMode()?"1":"0";
         if(kind.equals("sync"))return android.content.ContentResolver.getMasterSyncAutomatically()?"1":"0";
         if(kind.equals("data_saver"))return (Boolean)network("getRestrictBackground",new Class<?>[]{})?"1":"0";
@@ -267,7 +301,15 @@ public class BatteryEngine {
     void set(JSONObject d,String value)throws Exception {
         String kind=d.getString("kind"),target=d.getString("target");
         if(value.equals(get(d)) && !(kind.equals("night") && value.equals("3") && d.has("nightCustomType")))return; // Saver can reject no-ops while charging.
-        if(kind.equals("power")) {
+        if(kind.equals("wifi")) {
+            android.net.wifi.WifiManager wifi=context.getSystemService(android.net.wifi.WifiManager.class);
+            if(!wifi.setWifiEnabled(value.equals("1")))throw new IOException("Wi-Fi request rejected");
+            int expected=value.equals("1")?android.net.wifi.WifiManager.WIFI_STATE_ENABLED:android.net.wifi.WifiManager.WIFI_STATE_DISABLED;
+            long deadline=android.os.SystemClock.elapsedRealtime()+5000;
+            while(wifi.getWifiState()!=expected && android.os.SystemClock.elapsedRealtime()<deadline)Thread.sleep(100);
+        } else if(kind.equals("wifi_calling")) {
+            android.telephony.ims.ImsMmTelManager.class.getMethod("setVoWiFiSettingEnabled",boolean.class).invoke(callingManager(target),value.equals("1"));
+        } else if(kind.equals("power")) {
             boolean ok=(Boolean)android.os.PowerManager.class.getMethod("setPowerSaveModeEnabled",boolean.class).invoke(context.getSystemService(android.os.PowerManager.class),value.equals("1"));
             if(!ok)throw new IOException("Battery Saver request rejected (possibly charging)");
         } else if(kind.equals("sync"))android.content.ContentResolver.setMasterSyncAutomatically(value.equals("1"));
@@ -352,10 +394,13 @@ public class BatteryEngine {
         }
         boolean success=true;
         Map<String,JSONObject> appDescriptors=new LinkedHashMap<>();
-        if(enabled && "restricted".equals(controls.optString("background"))) {
+        if(enabled) {
             try {
-                List<String> targets=backgroundTargets();
-                notes.add("Aggressive background policy: "+targets.size()+" apps; system services, launcher, keyboards and dialer protected");
+                Set<String> targets=new TreeSet<>();
+                if("restricted".equals(controls.optString("background")))targets.addAll(backgroundTargets());
+                JSONArray selected=profile.optJSONArray("restricted_packages");
+                if(selected!=null)for(int i=0;i<selected.length();i++)targets.add(selected.getString(i));
+                if(!targets.isEmpty())notes.add("Full background restrictions: "+targets.size()+" apps; recovery components and their shared UIDs protected");
                 for(String pkg:targets)for(String kind:new String[]{"bucket","exemption","bg_run","bg_any","net_uid"}) {
                     String key=kind+":"+pkg;
                     try {
@@ -369,11 +414,13 @@ public class BatteryEngine {
         desired.remove("background"); // Expansion policy, not a system setting.
         List<String> originals=new ArrayList<>(); for(Iterator<String> it=journal.keys();it.hasNext();) originals.add(it.next());
         // Saver can change other policies as a side effect: restore it before their snapshots.
-        originals.sort((a,b)->Integer.compare(a.equals("power_saver")?0:1,b.equals("power_saver")?0:1));
+        originals.sort((a,b)->Integer.compare(restoreOrder(a),restoreOrder(b)));
         for(String k:originals) {
             JSONObject e=journal.getJSONObject(k);
             if(e.getString("kind").equals("kernel") && !bootId.equals(e.optString("boot"))) { success=restore(k)&&success; }
-            else if (k.equals("refresh_min") && desired.has("refresh")
+            else if (k.startsWith("min_") && desired.has(k.substring(4))) {
+                // Retain the saved floor until its ceiling is released.
+            } else if (k.equals("refresh_min") && desired.has("refresh")
                     && !e.getString("original").equals("null")
                     && Double.parseDouble(e.getString("original")) > Double.parseDouble(desired.getString("refresh"))) {
                 // Retain the original minimum while a lower maximum remains selected.
@@ -398,6 +445,13 @@ public class BatteryEngine {
                 if(d.getString("kind").equals("bucket") && get(d).equals("5")) {
                     policyLimited=true;notes.add(key+": skipped; Android keeps this app Exempted (5)");continue;
                 }
+                if((key.startsWith("cpu_policy") || key.equals("gpu")) && d.optBoolean("adjustableMinimum")) {
+                    String minKey="min_"+key;
+                    JSONObject min=new JSONObject().put("id",minKey).put("kind","kernel").put("target",minKey).put("label","Frequency floor · "+key);
+                    if(Long.parseLong(get(min))>Long.parseLong(value)) {
+                        snapshot(minKey,min);prepared.put(minKey,min);
+                    }
+                }
                 if(key.equals("refresh")) {
                     JSONObject min=new JSONObject().put("id","refresh_min").put("kind","system").put("target","min_refresh_rate").put("label","Minimum refresh rate");
                     String before=get(min);
@@ -413,14 +467,17 @@ public class BatteryEngine {
         List<String> order=new ArrayList<>(prepared.keySet());
         order.sort((a,b)->Integer.compare(writeOrder(a),writeOrder(b)));
         for(String key:order)try {
-            change(key,prepared.get(key),key.equals("refresh_min")?desired.getString("refresh"):desired.getString(key));
+            change(key,prepared.get(key),key.startsWith("min_")?desired.getString(key.substring(4)):key.equals("refresh_min")?desired.getString("refresh"):desired.getString(key));
         }catch(BucketPolicyLimit e){policyLimited=true;notes.add(key+": Android policy limit: "+e.getMessage());}
         catch(Exception e){success=false;notes.add(key+": "+describe(e));}
         return success;
     }
+    static int restoreOrder(String key) {
+        return key.equals("power_saver")?0:key.startsWith("min_")?2:1;
+    }
     static int writeOrder(String key) {
         if(key.equals("power_saver"))return 0;
-        if(key.equals("refresh_min"))return 1;
+        if(key.equals("refresh_min") || key.startsWith("min_"))return 1;
         if(key.equals("night_mode"))return 4; // May recreate Settings; all writes are already journaled.
         if(key.startsWith("cpu_") || key.equals("gpu"))return 3;
         return 2;

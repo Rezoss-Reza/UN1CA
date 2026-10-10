@@ -30,11 +30,24 @@ public final class OtaActivity extends Activity {
  private interface Work{void go()throws Exception;}
  private void action(String title,Runnable work){Button b=new Button(this);b.setText(title);b.setAllCaps(false);b.setMinHeight((int)(48*getResources().getDisplayMetrics().density));b.setOnClickListener(v->work.run());page.addView(b);actions.add(b);}
  private void show(String s){runOnUiThread(()->{if(!isFinishing())status.setText(s);});}
- private void run(Work job){if(busy)return;busy=true;for(Button b:actions)b.setEnabled(false);worker.execute(()->{try{job.go();}catch(Exception e){show(e.getMessage()==null?"Update operation failed":e.getMessage());}finally{runOnUiThread(()->{busy=false;for(Button b:actions)b.setEnabled(true);});}});}
+ private void run(Work job){if(busy)return;busy=true;for(Button b:actions)b.setEnabled(false);worker.execute(()->{try{job.go();}catch(Exception e){android.util.Log.e("UnicaOTA","Update operation failed",e);show(e.getMessage()==null?"Update operation failed":e.getMessage());}finally{runOnUiThread(()->{busy=false;for(Button b:actions)b.setEnabled(true);});}});}
  @Override public boolean onOptionsItemSelected(MenuItem i){if(i.getItemId()==android.R.id.home){if(!busy)finish();return true;}return super.onOptionsItemSelected(i);}
  @Override public void onBackPressed(){if(busy)Toast.makeText(this,"Wait for the update operation to finish",Toast.LENGTH_SHORT).show();else super.onBackPressed();}
  @Override protected void onDestroy(){worker.shutdown();super.onDestroy();}
- @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==1&&result==RESULT_OK&&data!=null){Uri uri=data.getData();run(()->{File part=new File(REQUEST,"local.part");try(InputStream in=getContentResolver().openInputStream(uri);OutputStream out=new FileOutputStream(part)){copy(in,out);}try{OtaPackage.verify(part);if(!part.renameTo(ZIP))throw new IOException("Cannot save selected update");show("OTA verified. Ready to install.");}finally{part.delete();}});}}
+ @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==1&&result==RESULT_OK&&data!=null){Uri uri=data.getData();run(()->selectZip(uri));}}
+ private void selectZip(Uri uri)throws Exception{
+  File part=new File(REQUEST,"local.part");String step="Opening selected OTA";
+  try{
+   try(InputStream in=getContentResolver().openInputStream(uri)){
+    step="Creating OTA staging file";
+    try(OutputStream out=new FileOutputStream(part)){step="Copying selected OTA";copy(in,out);}
+   }
+   step="Verifying selected OTA";show("Verifying selected OTA…");OtaPackage.verify(part);
+   step="Saving verified OTA";if(!part.renameTo(ZIP))throw new IOException("Cannot save selected update");
+   show("OTA verified. Ready to install.");
+  }catch(Exception e){throw new IOException(step+": "+(e.getMessage()==null?e.getClass().getSimpleName():e.getMessage()),e);}
+  finally{part.delete();}
+ }
  private void openDownloadFolder(){
   Intent intent=new Intent(Intent.ACTION_VIEW,Uri.parse("https://drive.google.com/drive/folders/"+FOLDER+"?usp=sharing"));
   intent.addCategory(Intent.CATEGORY_BROWSABLE);

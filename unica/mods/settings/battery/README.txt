@@ -26,9 +26,12 @@ Stingy is an explicitly aggressive preset. Selection is a draft; review its
 warning and use Save and apply. It is not enabled automatically by a ROM update.
 It selects only supported choices reported by this device:
 
-- CPU: lowest advertised ceiling at or above each policy's live minimum.
-  GPU: same rule, using devfreq minimum. Neither lowers minimum clocks or
-  offlines cores. Missing minimum metadata means no automatic clock override.
+- CPU/GPU: lowest advertised frequency. With the updated native worker, a
+  higher active minimum is lowered first, with a separate rollback snapshot.
+  Disabling restores ceilings before minimums; failed restores retain snapshots.
+  Older workers retain the live-minimum constraint. No cores are offlined.
+  Minimum clocks can cause severe lag or watchdog freezes and do not guarantee
+  lower energy use. Re-select Stingy after updating to generate the new values.
 - Refresh: lowest advertised display rate; lower min_refresh_rate too when the
   existing minimum exceeds the new ceiling, with a separate undo record.
 - Wi-Fi runtime PM: auto; wakeup: disabled. ASPM: powersupersave, falling back to
@@ -39,8 +42,8 @@ It selects only supported choices reported by this device:
 - Data Saver: on. For automatically targeted apps, UID network policy adds
   REJECT_METERED_BACKGROUND (1), removes ALLOW_METERED_BACKGROUND (4), and
   preserves all other flags. This is not a block on all Wi-Fi traffic.
-- Background: automatically target downloaded apps, launchable preinstalled
-  apps, Play Store and Galaxy Store. Use restricted standby bucket 45, UID
+- Background: automatically target user and non-essential system apps, even
+  without launcher icons, including Play services, Play Store and Galaxy Store. Use restricted standby bucket 45, UID
   RUN_IN_BACKGROUND and RUN_ANY_IN_BACKGROUND app-ops MODE_IGNORED (1), and
   remove user-added Doze exemptions. UID app-op snapshots preserve the original
   UID mode, not an effective mode merged with per-package policy.
@@ -52,10 +55,29 @@ It selects only supported choices reported by this device:
 - Cache limit and swappiness: unchanged; fewer cached apps or more reclaim can
   increase CPU/storage work and cannot establish maximum battery efficiency.
 
-Automatic targeting protects Settings, SystemUI, Play services, phone services,
-the default dialer, default launcher and enabled keyboards. Non-launchable
-system services and all packages sharing a protected UID remain protected.
-The manual app list is additional standby control, not an exception list.
+Automatic and manual targeting protect core UIDs below 10000, Settings,
+SystemUI, settings provider, keychain/credential and permission components,
+the default launcher, enabled keyboards, enabled accessibility services and
+active device administrators. All packages sharing their UIDs stay protected.
+Play services and the default dialer no longer have blanket exemptions.
+Calls, alarms, location, account functions and connectivity can be affected.
+Custom profiles have a separate full-restriction app selector, including Play
+Store, Play services and Galaxy Store. It applies the same five per-app controls
+without enabling automatic targeting. The standby-only and Doze-only lists
+remain separate. These lists add restrictions; they are not exception lists.
+The optional restricted_packages profile field defaults to empty for old backups.
+
+Custom Wi-Fi controls:
+- Wi-Fi radio off disconnects all Wi-Fi, including foreground traffic. It can
+  trigger mobile-data fallback; it is not a background-only firewall.
+- Wi-Fi Calling controls appear per active subscription. Turning one off changes
+  that subscription's carrier setting; ordinary Wi-Fi traffic remains enabled.
+  A removed SIM causes restoration to be deferred with its original retained.
+- Wi-Fi scanning while off is a separate existing toggle. Disable it as well if
+  scanning is unwanted. These new radio/calling controls are opt-in; Stingy
+  does not silently turn off the radio or change Wi-Fi Calling preferences.
+- All controls snapshot before writes and check readback. Wi-Fi transition waits
+  are bounded to five seconds. Carrier/Android policy may reject requests.
 Targets are rediscovered on apply and boot; reapply after installing new apps.
 
 Expect missing notifications, failed background uploads/backups, app updates,
@@ -202,3 +224,27 @@ All setting writes were simulated. Java/D8, generated-smali/full classes4 DEX
 assembly, zero-fuzz Settings patch-stack checks and git diff --check passed.
 Rebuild/deploy Settings for the new behavior; live enforcement remains subject
 to the device's Android/Samsung policy.
+
+Minimum-frequency validation (2026-10-10)
+-----------------------------------------
+154 simulated profile/rollback assertions and 19 native allowlist assertions
+passed. Native worker rebuilt; Settings patch regenerated from Java.
+No live frequency writes, full ROM flash, or battery measurements performed.
+
+Expanded restrictions and wireless controls validation (2026-10-10)
+-----------------------------------------------------------------
+Java/D8/native build and zero-fuzz Settings patch apply with the existing
+Settings patch stack passed; full smali_classes4 DEX assembly passed.
+177 profile/rollback assertions passed on the host using Android-compatible
+JSON and simulated policy IO. Host copies skipped seven Android API-presence
+checks and relocated journal test files to /tmp. The Android test JAR built,
+but the connected device had no app_process runtime available, so device API,
+Wi-Fi Calling, radio transitions and actual restriction enforcement remain
+unverified. No live app/network/calling policies were changed.
+
+Rebuild/check:
+  source buildenv.sh dm3q
+  bash unica/mods/settings/battery/build.sh
+  bash unica/mods/settings/battery/tests/build.sh
+Run the printed test JAR with app_process when Android is booted. Profile and
+journal tests simulate control writes; they do not enable Battery Saving.

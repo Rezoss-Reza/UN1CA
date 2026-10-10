@@ -20,7 +20,8 @@ ota_preflight() {
     TARGET="$(sed -n 's/^target_timestamp=//p' "$PROPS")"
     case "$BASE:$TARGET" in *[!0-9:]*|:*) ui_print 'E: Invalid OTA identity'; return 1;; esac
     [ -n "$BASE" ] && [ -n "$TARGET" ] || return 1
-    mount /system 2>/dev/null || true
+    # OrangeFox dm3q uses /system_root; /system is its recovery runtime tree.
+    mount /system_root 2>/dev/null || mount /system 2>/dev/null || true
     CURRENT=""
     for BUILDPROP in /system_root/system/build.prop /system/system/build.prop /system/build.prop; do
         [ -f "$BUILDPROP" ] || continue
@@ -29,7 +30,13 @@ ota_preflight() {
     done
     umount /system 2>/dev/null || true
     umount /system_root 2>/dev/null || true
+    if [ -z "$CURRENT" ]; then
+        ui_print 'E: Cannot read installed ROM identity. Check the recovery system mount.'
+        ota_result 'Rejected: installed ROM identity unavailable'
+        return 1
+    fi
     if [ "$CURRENT" != "$BASE" ] && [ "$CURRENT" != "$TARGET" ]; then
+        ui_print "Installed release: $CURRENT; required base: $BASE; target: $TARGET"
         ui_print 'E: OTA base does not match. Install the full ROM instead.'
         ota_result 'Rejected: wrong base ROM'
         return 1

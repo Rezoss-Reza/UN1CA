@@ -66,6 +66,32 @@ public final class BatteryTests {
         caps.put(descriptor("brightness","128","1","8","26","128"));caps.put(descriptor("timeout","60000","15000","60000"));caps.put(descriptor("night_mode","1","0","1","2","3"));
         JSONObject stingy=Profile.validate(Profile.preset("Stingy",caps)), c=stingy.getJSONObject("controls");
         check(!stingy.getBoolean("enabled"),"Stingy selection stays disabled");
+        caps.getJSONObject(0).put("adjustableMinimum",true);
+        check(Profile.preset("Stingy",caps).getJSONObject("controls").getString("cpu_policy0").equals("307200"),"new worker selects hardware minimum below active floor");
+        Fake clock=new Fake(){
+            @Override void set(JSONObject d,String v)throws Exception {
+                String id=d.getString("target");
+                if(id.equals("cpu_policy0") && Long.parseLong(v)<Long.parseLong(live.get("min_cpu_policy0")))throw new java.io.IOException("ceiling below floor");
+                if(id.equals("min_cpu_policy0") && Long.parseLong(v)>Long.parseLong(live.get("cpu_policy0")))throw new java.io.IOException("floor above ceiling");
+                super.set(d,v);
+            }
+        };
+        clock.specs.put("cpu_policy0",caps.getJSONObject(0));
+        clock.live.put("cpu_policy0","2016000");clock.live.put("min_cpu_policy0","556800");
+        JSONObject low=Profile.empty().put("enabled",true);
+        low.getJSONObject("controls").put("cpu_policy0","307200");
+        check(clock.apply(low),"lower floor before ceiling");
+        check(clock.live.get("min_cpu_policy0").equals("307200"),"floor lowered");
+        check(clock.apply(low),"repeat minimum profile");
+        check(clock.journal.getJSONObject("min_cpu_policy0").getString("original").equals("556800"),"original floor retained");
+        clock.failWrite=true;
+        check(!clock.apply(Profile.empty()),"failed restore reported");
+        check(clock.journal.has("min_cpu_policy0") && clock.journal.has("cpu_policy0"),"failed frequency restoration remains recoverable");
+        clock.failWrite=false;
+        check(clock.apply(Profile.empty()),"restore ceiling before floor");
+        check(clock.live.get("cpu_policy0").equals("2016000") && clock.live.get("min_cpu_policy0").equals("556800"),"both limits restored");
+        check(clock.journal.length()==0,"frequency journal cleared after restore");
+
         check(c.getString("cpu_policy0").equals("556800"),"CPU respects live floor and unsorted table");
         check(c.getString("cpu_policy7").equals("864000"),"prime cluster floor");
         check(c.getString("gpu").equals("124800000"),"minimum GPU");
@@ -87,12 +113,17 @@ public final class BatteryTests {
         rejects(()->{JSONObject x=Profile.empty();x.getJSONObject("controls").put("background","stop-everything");Profile.validate(x);},"invalid background policy");
         rejects(()->{JSONObject x=Profile.empty();x.getJSONObject("controls").put("brightness","0");Profile.validate(x);},"black screen rejected");
         rejects(()->{JSONObject x=Profile.empty();x.getJSONObject("controls").put("sync","false");Profile.validate(x);},"invalid boolean choice");
-        check(!BatteryEngine.autoCandidate("com.android.systemui",1000,false,true),"system UID protected");
-        check(!BatteryEngine.autoCandidate("com.vendor.service",10001,true,false),"system package protected");
-        check(BatteryEngine.autoCandidate("com.test.app",10123,false,true),"downloaded app included");
-        check(BatteryEngine.autoCandidate("com.android.vending",10124,true,false),"Play Store included");
-        check(BatteryEngine.autoCandidate("com.sec.android.app.samsungapps",10125,true,false),"Galaxy Store included");
-        check(BatteryEngine.autoCandidate("com.vendor.mail",10126,true,true),"launchable preinstalled app included");
+        check(!BatteryEngine.restrictionTarget(1000,Collections.emptySet()),"system UID protected");
+        check(BatteryEngine.restrictionTarget(10001,Collections.emptySet()),"non-launchable system app included");
+        check(BatteryEngine.restrictionTarget(10123,Collections.emptySet()),"Play services included");
+        Set<Integer> recovery=new HashSet<>(Arrays.asList(10100));
+        check(!BatteryEngine.restrictionTarget(10100,recovery),"all packages sharing recovery UID protected");
+        check(!BatteryEngine.restrictionTarget(1000,recovery),"core UID protected even without package entry");
+        check(BatteryEngine.restrictionTarget(10123,recovery),"other app UID eligible");
+        check(BatteryEngine.restrictionTarget(10123,Collections.emptySet()),"downloaded app included");
+        check(BatteryEngine.restrictionTarget(10124,Collections.emptySet()),"Play Store included");
+        check(BatteryEngine.restrictionTarget(10125,Collections.emptySet()),"Galaxy Store included");
+        check(BatteryEngine.restrictionTarget(10126,Collections.emptySet()),"launchable preinstalled app included");
         PolicyFake f=new PolicyFake();JSONObject p=Profile.empty().put("enabled",true);
         p.getJSONObject("controls").put("background","restricted").put("power_saver","1").put("sync","0").put("data_saver","1");
         Map<String,String> original=new HashMap<>(f.live);
@@ -109,6 +140,44 @@ public final class BatteryTests {
         f=new PolicyFake();f.apply(p);f.failAppRestore=true;
         check(!f.apply(Profile.empty()),"appop restore failure reported");check(f.journal.has("bg_any:com.test.app"),"appop retry record retained");
         f.failAppRestore=false;check(f.apply(Profile.empty()),"appop restoration retried");
+        PolicyFake expanded=new PolicyFake(){
+            @Override List<String> backgroundTargets(){return Arrays.asList("com.google.android.gms","com.android.vending","com.sec.android.app.samsungapps","com.vendor.headless");}
+        };
+        for(String pkg:expanded.backgroundTargets())for(String kind:new String[]{"bucket","exemption","bg_run","bg_any","net_uid"})
+            expanded.live.put(kind+":"+pkg,kind.equals("bucket")?"20":kind.equals("exemption")?"true":"0");
+        Map<String,String> expandedOriginal=new HashMap<>(expanded.live);
+        check(expanded.apply(p),"expanded system restrictions apply");
+        for(String pkg:expanded.backgroundTargets()) {
+            check(expanded.live.get("bg_any:"+pkg).equals("1") && expanded.live.get("net_uid:"+pkg).equals("1"),pkg+" background execution and metered data restricted");
+            check(expanded.live.get("bucket:"+pkg).equals("45") && expanded.live.get("exemption:"+pkg).equals("false"),pkg+" standby and Doze restrictions");
+        }
+        check(expanded.apply(Profile.empty()) && expanded.live.equals(expandedOriginal),"expanded system restrictions fully restored");
+        check(android.content.pm.PackageManager.class.getMethod("getPermissionControllerPackageName")!=null,"permission controller discovery API");
+        JSONObject custom=Profile.empty().put("enabled",true).put("preset","Custom")
+                .put("restricted_packages",new JSONArray().put("com.google.android.gms").put("com.android.vending").put("com.sec.android.app.samsungapps"));
+        check(Profile.validate(custom).getJSONArray("restricted_packages").length()==3,"custom list imports all three requested packages");
+        check(expanded.apply(custom),"custom full restrictions without global expansion");
+        check(!expanded.journal.has("bg_any:com.vendor.headless"),"unselected system app remains untouched in custom mode");
+        for(String pkg:new String[]{"com.google.android.gms","com.android.vending","com.sec.android.app.samsungapps"})
+            check(expanded.live.get("bg_any:"+pkg).equals("1") && expanded.live.get("net_uid:"+pkg).equals("1"),pkg+" custom restriction");
+        check(expanded.apply(Profile.empty()) && expanded.live.equals(expandedOriginal),"custom restrictions restore");
+        JSONObject legacy=Profile.empty();legacy.remove("restricted_packages");
+        check(Profile.validate(legacy).getJSONArray("restricted_packages").length()==0,"old profile imports with empty full-restriction list");
+        rejects(()->Profile.validate(Profile.empty().put("restricted_packages",new JSONArray().put("invalid;pkg"))),"invalid full-restriction package rejected");
+        Fake wireless=new Fake();
+        for(String id:new String[]{"wifi_enabled","wifi_calling_1"}) {
+            wireless.specs.put(id,descriptor(id,"1","0","1").put("kind",id.equals("wifi_enabled")?"wifi":"wifi_calling"));wireless.live.put(id,"1");
+        }
+        JSONObject wirelessProfile=Profile.empty().put("enabled",true);
+        wirelessProfile.getJSONObject("controls").put("wifi_enabled","0").put("wifi_calling_1","0");
+        check(Profile.validate(wirelessProfile).getJSONObject("controls").length()==2,"wireless choices validate");
+        check(wireless.apply(wirelessProfile),"wireless controls journal and apply");
+        wireless.failWrite=true;
+        check(!wireless.apply(Profile.empty()) && wireless.journal.has("wifi_enabled"),"failed Wi-Fi restore retains original");
+        wireless.failWrite=false;
+        check(wireless.apply(Profile.empty()) && wireless.live.get("wifi_enabled").equals("1") && wireless.live.get("wifi_calling_1").equals("1"),"wireless controls restored");
+        check(android.telephony.ims.ImsMmTelManager.class.getMethod("setVoWiFiSettingEnabled",boolean.class)!=null,"Wi-Fi Calling setter available");
+        rejects(()->{JSONObject invalid=Profile.empty();invalid.getJSONObject("controls").put("wifi_calling_1","2");Profile.validate(invalid);},"invalid Wi-Fi Calling state");
         // Resolve the exact hidden APIs on the device without changing live settings.
         check(Class.forName("com.android.internal.app.IAppOpsService").getMethod("getUidOps",int.class,int[].class)!=null,"UID appop snapshot API");
         check(android.app.AppOpsManager.class.getMethod("setUidMode",int.class,int.class,int.class)!=null,"UID appop setter API");

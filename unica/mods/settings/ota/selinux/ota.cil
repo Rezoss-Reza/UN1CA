@@ -28,7 +28,8 @@
 (typeattributeset system_internal_property_type (unica_ota_prop))
 (allow system_app unica_ota_data (dir (search getattr)))
 (allow system_app unica_ota_request (dir (search read open getattr write add_name remove_name)))
-(allow system_app unica_ota_request (file (create read write open getattr setattr rename unlink)))
+; Android ZipFile maps the central directory of the copied OTA during verification.
+(allow system_app unica_ota_request (file (create read write open getattr setattr rename unlink map)))
 (allow system_app unica_ota_staged (dir (search read open getattr)))
 (allow system_app unica_ota_staged (file (read open getattr)))
 (allow system_app unica_ota_prop (property_service (set)))

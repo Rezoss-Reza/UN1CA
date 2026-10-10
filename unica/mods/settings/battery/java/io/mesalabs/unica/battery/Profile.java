@@ -9,12 +9,12 @@ public final class Profile {
     public static JSONObject empty() throws JSONException {
         return new JSONObject().put("format", "unica-battery").put("version", 1)
                 .put("enabled", false).put("preset", "Balanced").put("controls", new JSONObject())
-                .put("packages", new JSONArray()).put("bucket", "45").put("exemptions", new JSONArray());
+                .put("packages", new JSONArray()).put("restricted_packages", new JSONArray()).put("bucket", "45").put("exemptions", new JSONArray());
     }
     public static JSONObject validate(JSONObject input) throws JSONException {
         if (!"unica-battery".equals(input.optString("format")) || input.optInt("version") != 1)
             throw new JSONException("Unsupported battery profile format/version");
-        Set<String> fields = new HashSet<>(Arrays.asList("format", "version", "enabled", "preset", "controls", "packages", "bucket", "exemptions"));
+        Set<String> fields = new HashSet<>(Arrays.asList("format", "version", "enabled", "preset", "controls", "packages", "restricted_packages", "bucket", "exemptions"));
         for (Iterator<String> it = input.keys(); it.hasNext();) if (!fields.contains(it.next())) throw new JSONException("Unknown profile field");
         if (!(input.get("enabled") instanceof Boolean)) throw new JSONException("Invalid enable switch");
         JSONObject out = empty();
@@ -26,11 +26,12 @@ public final class Profile {
         if (controls.length() > 32) throw new JSONException("Too many controls");
         for (Iterator<String> it = controls.keys(); it.hasNext();) {
             String k = it.next(), v = controls.getString(k);
-            if (!k.matches("wifi_pm|wifi_wakeup|aspm|swappiness|cached|freezer|gpu|refresh|power_saver|sync|data_saver|background|brightness_mode|brightness|timeout|aod|wifi_scan|ble_scan|mobile_always|window_animation|transition_animation|animator|night_mode|cpu_policy[0-9]{1,3}")) throw new JSONException("Unknown control: " + k);
+            if (!k.matches("wifi_enabled|wifi_calling_[0-9]{1,9}|wifi_pm|wifi_wakeup|aspm|swappiness|cached|freezer|gpu|refresh|power_saver|sync|data_saver|background|brightness_mode|brightness|timeout|aod|wifi_scan|ble_scan|mobile_always|window_animation|transition_animation|animator|night_mode|cpu_policy[0-9]{1,3}")) throw new JSONException("Unknown control: " + k);
             boolean valid;
+            if(k.startsWith("wifi_calling_")){if(!Arrays.asList("0","1").contains(v))throw new JSONException("Invalid Wi-Fi Calling value");clean.put(k,v);continue;}
             switch (k) {
                 case "background": valid = Arrays.asList("unrestricted", "restricted").contains(v); break;
-                case "power_saver": case "sync": case "data_saver": case "brightness_mode":
+                case "wifi_enabled": case "power_saver": case "sync": case "data_saver": case "brightness_mode":
                 case "aod": case "wifi_scan": case "ble_scan": case "mobile_always":
                     valid = Arrays.asList("0", "1").contains(v); break;
                 case "window_animation": case "transition_animation": case "animator":
@@ -57,8 +58,8 @@ public final class Profile {
         String bucket = input.getString("bucket");
         if (!Arrays.asList("10", "20", "30", "40", "45").contains(bucket)) throw new JSONException("Invalid standby bucket");
         out.put("bucket", bucket);
-        for (String field : new String[]{"packages", "exemptions"}) {
-            JSONArray a = input.getJSONArray(field), b = new JSONArray(); Set<String> seen = new HashSet<>();
+        for (String field : new String[]{"packages", "exemptions", "restricted_packages"}) {
+            JSONArray a = field.equals("restricted_packages") && !input.has(field)?new JSONArray():input.getJSONArray(field), b = new JSONArray(); Set<String> seen = new HashSet<>();
             if (a.length() > 100) throw new JSONException("Select at most 100 apps");
             for (int i = 0; i < a.length(); i++) {
                 String p = a.getString(i);
@@ -76,14 +77,14 @@ public final class Profile {
     public static JSONObject preset(String name, JSONArray capabilities) throws JSONException {
         JSONObject p = empty(); p.put("preset", name); JSONObject c = p.getJSONObject("controls");
         if (name.equals("Stingy")) {
-            // Device-specific ceilings; never guess hardware frequencies or lower active floors.
+            // New workers can reversibly lower frequency floors; older workers keep their active floors.
             for (int i=0;i<capabilities.length();i++) {
                 JSONObject d=capabilities.getJSONObject(i);
                 if(!d.optBoolean("supported"))continue;
                 String id=d.getString("id"), choice=null;
                 JSONArray values=d.getJSONArray("values");
                 if(id.startsWith("cpu_") || id.equals("gpu") || id.equals("refresh")) {
-                    long minimum=d.optLong("minimum",id.equals("refresh")?0:-1), best=Long.MAX_VALUE;
+                    long minimum=d.optBoolean("adjustableMinimum")?0:d.optLong("minimum",id.equals("refresh")?0:-1), best=Long.MAX_VALUE;
                     if(minimum<0)continue; // Old/unreadable worker metadata: do not guess a usable floor.
                     for(int j=0;j<values.length();j++) {
                         long n=Long.parseLong(values.getString(j));
