@@ -220,6 +220,69 @@ public final class BatteryTests {
         check(BatteryEngine.describe(new java.lang.reflect.InvocationTargetException(new IllegalArgumentException())).equals("IllegalArgumentException"),"null cause message gets type fallback");
         check(BatteryEngine.describe(new java.lang.reflect.InvocationTargetException(new java.lang.reflect.InvocationTargetException(new java.io.IOException("nested")))).equals("IOException: nested"),"nested reflection exceptions unwrapped");
     }
+    static class DisabledApps extends BatteryEngine {
+        int enabledState=0,bucket=5,writes,saves,markers;boolean deny,protectedUid,changedUid;
+        String markerBoot;
+        DisabledApps()throws Exception{super(null);journal=new JSONObject();bootId="one";}
+        @Override int standbyBucket(String pkg){return bucket;}
+        @Override int packageEnabledState(String pkg){return enabledState;}
+        @Override int appUid(JSONObject d)throws Exception{if(changedUid)throw new java.io.IOException("Identity changed");return 10123;}
+        @Override Set<Integer> protectedAppUids(){return protectedUid?new HashSet<>(Arrays.asList(10123)):Collections.emptySet();}
+        @Override JSONObject packageDescriptor(String kind,String pkg)throws Exception{
+            if(protectedUid)throw new java.io.IOException("Protected");
+            return new JSONObject().put("kind",kind).put("target",pkg).put("uid",10123);
+        }
+        @Override void markRestartPending(){markers++;markerBoot=bootId;}
+        @Override boolean restartPending(){return bootId.equals(markerBoot);}
+        @Override void writePackageEnabledState(String pkg,int state)throws Exception{
+            if(saves==0 || !journal.has("app_enabled:"+pkg) || !restartPending())throw new AssertionError("Disable without durable undo and restart marker");
+            if(deny)throw new java.io.IOException("PackageManager denied");
+            writes++;enabledState=state;
+        }
+        @Override void saveJournal(){saves++;}
+    }
+    static void disabledAppTests()throws Exception{
+        JSONObject p=Profile.empty().put("enabled",true).put("disabled_packages",new JSONArray().put("com.test.exempt"));
+        check(Profile.validate(p).getJSONArray("disabled_packages").length()==1,"disable profile accepted");
+        JSONObject old=Profile.empty();old.remove("disabled_packages");
+        check(Profile.validate(old).getJSONArray("disabled_packages").length()==0,"old profiles do not disable apps");
+        rejects(()->Profile.validate(Profile.empty().put("disabled_packages",new JSONArray().put("bad;pkg"))),"disable package validated");
+        check(Profile.validate(Profile.empty().put("disabled_packages",new JSONArray().put("com.test.exempt").put("com.test.exempt"))).getJSONArray("disabled_packages").length()==1,"disable selection deduplicated");
+        DisabledApps f=new DisabledApps();
+        check(f.apply(p)&&f.enabledState==3,"exempt app disabled completely");
+        check(f.journal.getJSONObject("app_enabled:com.test.exempt").getString("original").equals("0"),"default enabled state preserved");
+        check(f.restartPending()&&f.hasDisabledApps(),"restart pending and managed app reported");
+        check(f.apply(p)&&f.writes==1,"repeated apply avoids extra mutation");
+        f.bootId="two";f.bucket=10;
+        check(!f.restartPending()&&f.apply(p)&&f.writes==1,"boot reapply never creates a restart loop");
+        check(f.apply(Profile.empty())&&f.enabledState==0&&f.journal.length()==0,"disable master restores original across reboot");
+        check(f.restartPending(),"restoration requests restart");
+        for(int original:new int[]{1,2,3,4}){
+            f=new DisabledApps();f.enabledState=original;
+            check(f.apply(p)&&f.apply(Profile.empty())&&f.enabledState==original,"exact enabled state restored "+original);
+        }
+        f=new DisabledApps();f.deny=true;
+        check(!f.apply(p)&&f.journal.has("app_enabled:com.test.exempt"),"failed disable retains undo");
+        f=new DisabledApps();f.apply(p);f.deny=true;
+        check(!f.apply(Profile.empty())&&f.journal.has("app_enabled:com.test.exempt"),"failed restore retains undo");
+        f.deny=false;check(f.apply(Profile.empty())&&f.enabledState==0,"restore retry succeeds");
+        f=new DisabledApps();f.bucket=20;check(!f.apply(p)&&f.writes==0&&f.journal.length()==0,"new selection must still be Exempted");
+        f=new DisabledApps();f.protectedUid=true;check(!f.apply(p)&&f.writes==0,"protected recovery UID cannot be disabled");
+        f=new DisabledApps();f.apply(p);f.changedUid=true;
+        check(!f.apply(Profile.empty())&&f.journal.length()==1,"changed identity blocks restore and retains undo");
+        f=new DisabledApps();JSONObject invalid=new JSONObject(p.toString());invalid.getJSONObject("controls").put("swappiness","999");
+        check(!f.apply(invalid)&&f.writes==0,"other apply failure prevents package disable");
+        DisabledApps diskFailure=new DisabledApps(){@Override void saveJournal(){throw new IllegalStateException("disk failure");}};
+        try{diskFailure.apply(p);throw new AssertionError("expected disk failure");}catch(IllegalStateException expected){}
+        check(diskFailure.writes==0&&diskFailure.markers==0,"no disable or restart marker before journal persistence");
+        JSONObject reply=new JSONObject().put("ok",true).put("restartPending",true);
+        check(BatteryEngine.canAutoRestart("apply",true,reply),"confirmed successful apply can restart");
+        check(!BatteryEngine.canAutoRestart("apply",false,reply),"no restart without confirmation");
+        check(!BatteryEngine.canAutoRestart("boot",true,reply)&&!BatteryEngine.canAutoRestart("probe",true,reply),"boot and refresh never restart");
+        check(!BatteryEngine.canAutoRestart("apply",true,new JSONObject(reply.toString()).put("ok",false)),"failed apply never restarts");
+        check(!BatteryEngine.canAutoRestart("apply",true,new JSONObject(reply.toString()).put("pendingRestore",true)),"incomplete restoration never restarts");
+        check(!BatteryEngine.canAutoRestart("apply",true,new JSONObject(reply.toString()).put("restartPending",false)),"unchanged state never restarts");
+    }
     static JSONObject enabled(String value)throws Exception{JSONObject p=Profile.empty();p.put("enabled",true);p.getJSONObject("controls").put("swappiness",value);return p;}
     public static void main(String[] args)throws Exception{
         JSONObject p=Profile.empty();check(!Profile.validate(p).getBoolean("enabled"),"disabled by default");
@@ -260,6 +323,7 @@ public final class BatteryTests {
             check(BatteryTransport.validControl(id),"transport accepts fixed frequency control "+id);
         for(String id:new String[]{"min_swappiness","min_cpu_policy1000","min_cpu_policy0/../x","min_gpu;reboot","/sys/devices/system/cpu"})
             check(!BatteryTransport.validControl(id),"transport rejects invalid control "+id);
+        disabledAppTests();
         stingyTests();
         bucketTests();
         JournalTests.run(args);

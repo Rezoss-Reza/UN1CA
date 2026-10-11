@@ -101,6 +101,9 @@ public final class BatteryActivity extends Activity {
         appButton("restricted_packages","Choose apps for full restrictions");
         appButton("packages","Choose apps for standby only");
         discrete("Standby bucket",new String[]{"10","20","30","40","45"},new String[]{"Active","Working set","Frequent","Rare","Restricted"},profile.optString("bucket","45"),value->{try{profile.put("bucket",value);custom();}catch(Exception ignored){}});
+        card();text("Exempted App",18);
+        text("Disable selected apps completely, not just their exemptions. Their services and features will stop. Calls, alarms, notifications, accounts and connectivity can fail. Protected recovery apps cannot be selected. Save and apply will ask before restarting after successful changes. Deselect or turn Battery Saving off to restore saved app states.",13);
+        exemptedAppsButton();
         card();text("Doze exemptions",18);
         text("Remove only unnecessary user-added exemptions. Essential messaging and service dependencies should retain them. System exemptions may be protected by Android.",13);
         appButton("exemptions","Choose exemptions to remove");
@@ -200,8 +203,63 @@ public final class BatteryActivity extends Activity {
             });
         });
     }
+    private void exemptedAppsButton(){
+        JSONArray selection=profile.optJSONArray("disabled_packages");
+        text(selection==null || selection.length()==0?"No apps selected for disabling":selection.toString(),12);
+        button("Choose Exempted App",ready,v->{
+            Set<String> chosen=new HashSet<>(),managed=new HashSet<>();
+            JSONArray selected=profile.optJSONArray("disabled_packages"),saved=response==null?null:response.optJSONArray("managedDisabledApps");
+            if(selected!=null)for(int i=0;i<selected.length();i++)chosen.add(selected.optString(i));
+            if(saved!=null)for(int i=0;i<saved.length();i++)managed.add(saved.optString(i));
+            busy=true;status="Reading Exempted (5) apps…";draw();
+            worker.execute(()->{try{
+                BatteryEngine engine=new BatteryEngine(getApplicationContext());
+                Set<Integer> protectedUids=engine.protectedAppUids();
+                List<ApplicationInfo> installed=getPackageManager().getInstalledApplications(android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS);
+                installed.sort(Comparator.comparing(a->a.loadLabel(getPackageManager()).toString(),String.CASE_INSENSITIVE_ORDER));
+                List<String> packages=new ArrayList<>(),labels=new ArrayList<>();List<Boolean> protectedRows=new ArrayList<>();
+                for(ApplicationInfo app:installed){
+                    int bucket=engine.standbyBucket(app.packageName);
+                    if(bucket!=5 && !chosen.contains(app.packageName) && !managed.contains(app.packageName))continue;
+                    boolean blocked=!BatteryEngine.restrictionTarget(app.uid,protectedUids);
+                    packages.add(app.packageName);protectedRows.add(blocked);
+                    labels.add(app.loadLabel(getPackageManager())+"\n"+app.packageName+"\n"+(blocked?"Protected — needed for recovery":managed.contains(app.packageName)?"Saved app state available for restoration":"Exempted (5)"));
+                }
+                runOnUiThread(()->{if(isDestroyed())return;busy=false;draw();
+                    boolean[] checked=new boolean[packages.size()];for(int i=0;i<checked.length;i++)checked[i]=chosen.contains(packages.get(i));
+                    new AlertDialog.Builder(this).setTitle("Exempted App — disable completely")
+                        .setMultiChoiceItems(labels.toArray(new String[0]),checked,(dialog,which,on)->{
+                            if(on && protectedRows.get(which)){
+                                ((AlertDialog)dialog).getListView().setItemChecked(which,false);checked[which]=false;
+                                Toast.makeText(this,"This app or its shared UID is protected for recovery",Toast.LENGTH_LONG).show();
+                            }else checked[which]=on;
+                        }).setNegativeButton("Cancel",null).setPositiveButton("Save selection",(dialog,which)->{try{
+                            JSONArray result=new JSONArray();for(int i=0;i<checked.length;i++)if(checked[i])result.put(packages.get(i));
+                            if(result.length()>100)throw new IOException("Select at most 100 apps");
+                            profile.put("disabled_packages",result);custom();status="Selection saved. Save and apply will confirm app disabling and restart.";draw();
+                        }catch(Exception e){error(e);}}).show();
+                });
+            }catch(Exception e){runOnUiThread(()->{if(isDestroyed())return;busy=false;error(e);});}});
+        });
+    }
+    private boolean needsRestartConfirmation(JSONObject requested){
+        JSONArray selected=requested.optJSONArray("disabled_packages");
+        return (requested.optBoolean("enabled") && selected!=null && selected.length()>0)
+                || (response!=null && (response.optBoolean("hasDisabledApps") || response.optBoolean("restartPending")));
+    }
     private void error(Exception e){status="Could not complete: "+BatteryEngine.describe(e);draw();}
     private void run(String operation,JSONObject requested){
+        if(busy)return;
+        if(operation.equals("apply") && needsRestartConfirmation(requested)){
+            final String copy=requested.toString();
+            new AlertDialog.Builder(this).setTitle("Save, apply and restart?")
+                .setMessage("Selected Exempted Apps will be disabled completely while Battery Saving is enabled. Apps removed from the selection, or all saved apps when Battery Saving is turned off, will return to their original enabled states. Calls, alarms, notifications and connectivity can stop working. Save your work. After successful app-state changes this phone will restart automatically. If changes fail, it will stay on so you can review the errors. Disabling takes effect immediately; the restart completes this workflow.")
+                .setNegativeButton("Cancel",null).setPositiveButton("Save, apply & restart",(dialog,which)->{try{runConfirmed(operation,new JSONObject(copy),true);}catch(Exception e){error(e);}}).show();
+            return;
+        }
+        runConfirmed(operation,requested,false);
+    }
+    private void runConfirmed(String operation,JSONObject requested,boolean restartConfirmed){
         if(busy)return;
         final String input=requested==null?null:requested.toString();
         busy=true;status="Checking battery service…";draw();
@@ -220,9 +278,13 @@ public final class BatteryActivity extends Activity {
                         if(reply.optBoolean("pendingRestore"))message.append("\nRestoration incomplete. Retry with Battery Saving off.");
                         message.append("\nKernel: ").append(reply.optString("kernel"));
                         JSONArray notes=reply.optJSONArray("notes");for(int i=0;i<notes.length();i++)message.append("\n").append(notes.optString(i));
+                        if(reply.optBoolean("restartPending"))message.append("\nApp-state changes await restart.");
                         status=message.toString();draw();
                     }catch(Exception e){error(e);}
                 });
+                if(BatteryEngine.canAutoRestart(operation,restartConfirmed,reply)) {
+                    getSystemService(PowerManager.class).reboot(null);
+                }
             }catch(Exception e){runOnUiThread(()->{if(isDestroyed())return;busy=false;error(e);});}
         });
     }

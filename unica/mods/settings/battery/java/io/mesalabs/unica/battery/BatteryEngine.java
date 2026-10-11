@@ -164,6 +164,30 @@ public class BatteryEngine {
             if(restrictionTarget(app.uid,protectedUids))result.add(app.packageName);
         Collections.sort(result);return result;
     }
+    int packageEnabledState(String pkg)throws Exception {
+        return context.getPackageManager().getApplicationEnabledSetting(pkg);
+    }
+    void writePackageEnabledState(String pkg,int state)throws Exception {
+        context.getPackageManager().setApplicationEnabledSetting(pkg,state,android.content.pm.PackageManager.SYNCHRONOUS);
+    }
+    int standbyBucket(String pkg)throws Exception {
+        return (Integer)android.app.usage.UsageStatsManager.class.getMethod("getAppStandbyBucket",String.class).invoke(context.getSystemService(android.app.usage.UsageStatsManager.class),pkg);
+    }
+    void markRestartPending()throws Exception {
+        atomic(new File(DIR,"app-restart.json"),new JSONObject().put("boot",bootId).toString());
+    }
+    boolean restartPending()throws Exception {
+        File marker=new File(DIR,"app-restart.json");
+        return marker.exists() && bootId.equals(new JSONObject(read(marker,4096)).optString("boot"));
+    }
+    static boolean canAutoRestart(String operation,boolean confirmed,JSONObject reply) {
+        return operation.equals("apply") && confirmed && reply.optBoolean("ok")
+                && !reply.optBoolean("pendingRestore") && reply.optBoolean("restartPending");
+    }
+    boolean hasDisabledApps() {
+        for(Iterator<String> keys=journal.keys();keys.hasNext();)if(keys.next().startsWith("app_enabled:"))return true;
+        return false;
+    }
     JSONObject packageDescriptor(String kind,String pkg)throws Exception {
         int uid=context.getPackageManager().getApplicationInfo(pkg,0).uid;
         if(!restrictionTarget(uid,protectedAppUids()))throw new IOException("Recovery component or shared UID protected");
@@ -235,6 +259,10 @@ public class BatteryEngine {
     }
     String get(JSONObject d) throws Exception {
         String kind=d.getString("kind"), target=d.getString("target");
+        if(kind.equals("app_enabled")) {
+            appUid(d);
+            return ""+packageEnabledState(target);
+        }
         if(kind.equals("wifi")) {
             int state=context.getSystemService(android.net.wifi.WifiManager.class).getWifiState();
             if(state!=android.net.wifi.WifiManager.WIFI_STATE_ENABLED && state!=android.net.wifi.WifiManager.WIFI_STATE_DISABLED)
@@ -301,7 +329,14 @@ public class BatteryEngine {
     void set(JSONObject d,String value)throws Exception {
         String kind=d.getString("kind"),target=d.getString("target");
         if(value.equals(get(d)) && !(kind.equals("night") && value.equals("3") && d.has("nightCustomType")))return; // Saver can reject no-ops while charging.
-        if(kind.equals("wifi")) {
+        if(kind.equals("app_enabled")) {
+            int uid=appUid(d), state=Integer.parseInt(value);
+            if(state<0 || state>4)throw new IOException("Invalid saved app enabled state");
+            if(state==3 && !restrictionTarget(uid,protectedAppUids()))throw new IOException("Recovery component or shared UID protected");
+            // Persist before the mutation: an interrupted/failed apply must retain the restart requirement.
+            markRestartPending();
+            writePackageEnabledState(target,state);
+        } else if(kind.equals("wifi")) {
             android.net.wifi.WifiManager wifi=context.getSystemService(android.net.wifi.WifiManager.class);
             if(!wifi.setWifiEnabled(value.equals("1")))throw new IOException("Wi-Fi request rejected");
             int expected=value.equals("1")?android.net.wifi.WifiManager.WIFI_STATE_ENABLED:android.net.wifi.WifiManager.WIFI_STATE_DISABLED;
@@ -411,6 +446,10 @@ public class BatteryEngine {
                 }
             }catch(Exception e){success=false;notes.add("Cannot enumerate background apps: "+describe(e));}
         }
+        if(enabled) {
+            JSONArray disabled=profile.optJSONArray("disabled_packages");
+            if(disabled!=null)for(int i=0;i<disabled.length();i++)desired.put("app_enabled:"+disabled.getString(i),"3");
+        }
         desired.remove("background"); // Expansion policy, not a system setting.
         List<String> originals=new ArrayList<>(); for(Iterator<String> it=journal.keys();it.hasNext();) originals.add(it.next());
         // Saver can change other policies as a side effect: restore it before their snapshots.
@@ -434,7 +473,7 @@ public class BatteryEngine {
             String key=it.next(),value=desired.getString(key);
             try {
                 JSONObject d=appDescriptors.get(key);
-                if(d==null && (key.startsWith("bucket:") || key.startsWith("exemption:")))
+                if(d==null && (key.startsWith("bucket:") || key.startsWith("exemption:") || key.startsWith("app_enabled:")))
                     d=packageDescriptor(key.substring(0,key.indexOf(':')),key.substring(key.indexOf(':')+1));
                 if(d==null) {
                     d=specs.get(key);
@@ -442,6 +481,8 @@ public class BatteryEngine {
                     boolean valid=false;JSONArray values=d.getJSONArray("values");for(int i=0;i<values.length();i++)if(value.equals(values.getString(i)))valid=true;
                     if(!valid)throw new IOException("Value is outside this device's available choices");
                 }
+                if(key.startsWith("app_enabled:") && !journal.has(key) && standbyBucket(d.getString("target"))!=5)
+                    throw new IOException("App is no longer Exempted (5); refresh the list before selecting it");
                 if(d.getString("kind").equals("bucket") && get(d).equals("5")) {
                     policyLimited=true;notes.add(key+": skipped; Android keeps this app Exempted (5)");continue;
                 }
@@ -467,15 +508,17 @@ public class BatteryEngine {
         List<String> order=new ArrayList<>(prepared.keySet());
         order.sort((a,b)->Integer.compare(writeOrder(a),writeOrder(b)));
         for(String key:order)try {
+            if(key.startsWith("app_enabled:") && !success) {notes.add(key+": app disabling skipped because another change failed");continue;}
             change(key,prepared.get(key),key.startsWith("min_")?desired.getString(key.substring(4)):key.equals("refresh_min")?desired.getString("refresh"):desired.getString(key));
         }catch(BucketPolicyLimit e){policyLimited=true;notes.add(key+": Android policy limit: "+e.getMessage());}
         catch(Exception e){success=false;notes.add(key+": "+describe(e));}
         return success;
     }
     static int restoreOrder(String key) {
-        return key.equals("power_saver")?0:key.startsWith("min_")?2:1;
+        return key.startsWith("app_enabled:")?-1:key.equals("power_saver")?0:key.startsWith("min_")?2:1;
     }
     static int writeOrder(String key) {
+        if(key.startsWith("app_enabled:"))return 5; // Disable packages after every other control.
         if(key.equals("power_saver"))return 0;
         if(key.equals("refresh_min") || key.startsWith("min_"))return 1;
         if(key.equals("night_mode"))return 4; // May recreate Settings; all writes are already journaled.
@@ -498,13 +541,15 @@ public class BatteryEngine {
             ok=apply(profile);
             specs.clear(); discover();
         }
+        JSONArray disabledApps=new JSONArray();
+        for(Iterator<String> keys=journal.keys();keys.hasNext();) {String key=keys.next();if(key.startsWith("app_enabled:"))disabledApps.put(key.substring(12));}
         JSONArray capabilities=new JSONArray(); for(JSONObject d:specs.values()) {
             JSONObject safe=new JSONObject(d.toString()); safe.remove("target"); safe.remove("kind");
             if(journal.has(d.getString("id"))) safe.put("original",journal.getJSONObject(d.getString("id")).getString("original"));
             capabilities.put(safe);
         }
         return new JSONObject().put("ok",ok).put("policyLimited",policyLimited).put("deferredRestores",deferredRestores).put("profile",profile).put("capabilities",capabilities).put("notes",array(notes))
-                .put("pendingRestore",!profile.getBoolean("enabled") && journal.length()>0).put("kernel",System.getProperty("os.version", "Unknown"));
+                .put("managedDisabledApps",disabledApps).put("restartPending",restartPending()).put("hasDisabledApps",hasDisabledApps()).put("pendingRestore",!profile.getBoolean("enabled") && journal.length()>0).put("kernel",System.getProperty("os.version", "Unknown"));
     }
     JSONObject execute(String mode,JSONObject requested)throws Exception {
         if(android.os.Process.myUid()!=1000)throw new IOException("Only owner Settings may apply battery profiles");

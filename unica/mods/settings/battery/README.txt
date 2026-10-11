@@ -258,3 +258,40 @@ fixed minimum IDs; arbitrary paths and unrelated min_ controls remain invalid.
 186 assertions passed under device app_process, including transport validation
 and Android API-presence checks; policy writes were simulated. No live profile
 was applied. The generated Settings patch must be installed to fix the UI error.
+
+Exempted App: complete package disabling (2026-10-11)
+---------------------------------------------------
+The Exempted App selector lists installed apps currently in standby bucket 5,
+plus selected apps and apps with saved enabled states so they can be restored.
+Recovery-critical apps and their shared UIDs are visible but cannot be selected.
+This feature disables the app completely (DISABLED_USER), not its exemption.
+The optional disabled_packages profile field defaults to empty for old backups;
+no preset selects apps for complete disabling automatically.
+
+Before a new selection is applied, the backend rechecks bucket 5, package UID
+and recovery protection. It journals the exact enabled state (DEFAULT, ENABLED,
+DISABLED, DISABLED_USER or DISABLED_UNTIL_USED), then uses PackageManager's
+SYNCHRONOUS flag to persist the change before restarting. Disabling happens
+last, and is skipped when another apply operation failed. Deselecting apps or
+disabling Battery Saving restores saved app states before other restorations.
+Failed writes/restores retain the original records for retry. No platform.xml
+or system Doze exemption list is edited.
+
+A separate confirmation says Save, apply & restart. Successful confirmed apply
+restarts only when an app-state mutation is pending for this boot. Failed apply
+or incomplete restoration cannot auto-restart. A durable app-restart.json marker
+survives activity loss/rejected restart; a later confirmed successful apply can
+retry. Probe and boot reapplication never restart. Changes take effect immediately;
+the automatic restart completes the requested workflow. Package features, calls,
+alarms, notifications and connectivity may be lost while packages are disabled.
+
+Validation: 216 host profile/rollback assertions passed using Android-compatible
+JSON and simulated package/policy writes, including restart gates, persistence
+failure and all original enabled states. Seven device API-presence checks were
+skipped on the host. The Android test JAR compiled, but no device was connected
+for this validation. Actual package disabling/reboot and post-flash UI are untested.
+
+Rebuild and compile tests:
+  source buildenv.sh dm3q
+  bash unica/mods/settings/battery/build.sh
+  bash unica/mods/settings/battery/tests/build.sh

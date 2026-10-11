@@ -18,15 +18,16 @@ for source in sorted(Path(sys.argv[1]).rglob('*.smali')):
     parts.append(f'diff --git a/{path} b/{path}\nnew file mode 100644\n--- /dev/null\n+++ b/{path}\n@@ -0,0 +1,{len(lines)} @@\n')
     parts.extend('+' + line for line in lines)
     parts.append('\n')
-# Settings already holds the other needed platform permissions. DeviceConfig
-# writes require this signature permission in addition to its existing read grant.
+# Declare the signature permissions for DeviceConfig writes and reversible app
+# disabling. Settings already holds REBOOT for the confirmed restart flow.
 parts.append('diff --git a/AndroidManifest.xml b/AndroidManifest.xml\n'
              '--- a/AndroidManifest.xml\n+++ b/AndroidManifest.xml\n'
-              '@@ -1,4 +1,5 @@\n'
+              '@@ -1,4 +1,6 @@\n'
              '     <uses-permission android:name="android.permission.KILL_UID"/>\n'
              '     <uses-permission android:name="android.permission.ACCESS_SHORTCUTS"/>\n'
              '     <uses-permission android:name="com.android.alarm.permission.SET_ALARM"/>\n'
              '+    <uses-permission android:name="android.permission.WRITE_DEVICE_CONFIG"/>\n'
+             '+    <uses-permission android:name="android.permission.CHANGE_COMPONENT_ENABLED_STATE"/>\n'
              ' </manifest>\n')
 content = ''.join(parts)
 if output.exists() and output.read_text() != content:

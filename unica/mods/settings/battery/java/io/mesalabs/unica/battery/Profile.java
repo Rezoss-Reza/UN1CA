@@ -9,12 +9,12 @@ public final class Profile {
     public static JSONObject empty() throws JSONException {
         return new JSONObject().put("format", "unica-battery").put("version", 1)
                 .put("enabled", false).put("preset", "Balanced").put("controls", new JSONObject())
-                .put("packages", new JSONArray()).put("restricted_packages", new JSONArray()).put("bucket", "45").put("exemptions", new JSONArray());
+                .put("packages", new JSONArray()).put("restricted_packages", new JSONArray()).put("disabled_packages", new JSONArray()).put("bucket", "45").put("exemptions", new JSONArray());
     }
     public static JSONObject validate(JSONObject input) throws JSONException {
         if (!"unica-battery".equals(input.optString("format")) || input.optInt("version") != 1)
             throw new JSONException("Unsupported battery profile format/version");
-        Set<String> fields = new HashSet<>(Arrays.asList("format", "version", "enabled", "preset", "controls", "packages", "restricted_packages", "bucket", "exemptions"));
+        Set<String> fields = new HashSet<>(Arrays.asList("format", "version", "enabled", "preset", "controls", "packages", "restricted_packages", "disabled_packages", "bucket", "exemptions"));
         for (Iterator<String> it = input.keys(); it.hasNext();) if (!fields.contains(it.next())) throw new JSONException("Unknown profile field");
         if (!(input.get("enabled") instanceof Boolean)) throw new JSONException("Invalid enable switch");
         JSONObject out = empty();
@@ -58,8 +58,8 @@ public final class Profile {
         String bucket = input.getString("bucket");
         if (!Arrays.asList("10", "20", "30", "40", "45").contains(bucket)) throw new JSONException("Invalid standby bucket");
         out.put("bucket", bucket);
-        for (String field : new String[]{"packages", "exemptions", "restricted_packages"}) {
-            JSONArray a = field.equals("restricted_packages") && !input.has(field)?new JSONArray():input.getJSONArray(field), b = new JSONArray(); Set<String> seen = new HashSet<>();
+        for (String field : new String[]{"packages", "exemptions", "restricted_packages", "disabled_packages"}) {
+            JSONArray a = (field.equals("restricted_packages") || field.equals("disabled_packages")) && !input.has(field)?new JSONArray():input.getJSONArray(field), b = new JSONArray(); Set<String> seen = new HashSet<>();
             if (a.length() > 100) throw new JSONException("Select at most 100 apps");
             for (int i = 0; i < a.length(); i++) {
                 String p = a.getString(i);
