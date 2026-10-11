@@ -11,7 +11,7 @@
 #include <cerrno>
 static const char* source="/data/misc/unica_ota/request/update.zip";
 static const char* staged="/data/misc/unica_ota/staged/update.zip";
-void writeFile(const char* p,const std::string& s){int f=open(p,O_WRONLY|O_CREAT|O_TRUNC|O_NOFOLLOW|O_CLOEXEC,0640);if(f<0)throw std::runtime_error("Cannot write recovery request");fchown(f,0,1000);if(write(f,s.data(),s.size())!=(ssize_t)s.size()||fsync(f)){close(f);throw std::runtime_error("Cannot sync request");}close(f);}
+void writeFile(const char* p,const std::string& s){int f=open(p,O_WRONLY|O_CREAT|O_TRUNC|O_NOFOLLOW|O_CLOEXEC,0600);if(f<0)throw std::runtime_error("Cannot write recovery request");if(fchown(f,0,1000)||fchmod(f,0640)){close(f);throw std::runtime_error("Cannot set recovery request permissions");}if(write(f,s.data(),s.size())!=(ssize_t)s.size()||fsync(f)){close(f);throw std::runtime_error("Cannot sync request");}close(f);}
 int main(){
  int lock=open("/data/misc/unica_ota/staged/lock",O_CREAT|O_RDWR|O_NOFOLLOW,0600);if(lock<0||flock(lock,LOCK_EX|LOCK_NB))return 1;
  bool queued=false; std::string id;

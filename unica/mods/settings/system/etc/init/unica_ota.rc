@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 service unica_ota /system/bin/unica-ota-stage
     user root
-    group system
+    group system cache
     capabilities CHOWN
     seclabel u:r:unica_ota:s0
     disabled

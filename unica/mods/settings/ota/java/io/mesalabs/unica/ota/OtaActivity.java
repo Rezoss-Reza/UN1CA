@@ -68,7 +68,7 @@ public final class OtaActivity extends Activity {
   try{
    try(InputStream in=getContentResolver().openInputStream(uri)){
     step="Creating OTA staging file";
-    try(OutputStream out=new FileOutputStream(part)){step="Copying selected OTA";copy(in,out);}
+    try(FileOutputStream out=new FileOutputStream(part)){step="Copying selected OTA";copy(in,out);android.system.Os.fchmod(out.getFD(),0640);out.getFD().sync();}
    }
    step="Verifying selected OTA";show("Verifying selected OTA…");OtaPackage.verify(part);
    step="Saving verified OTA";if(!part.renameTo(ZIP))throw new IOException("Cannot save selected update");
@@ -83,7 +83,7 @@ public final class OtaActivity extends Activity {
   catch(ActivityNotFoundException e){show("No app can open the download folder. Install a browser, or select an OTA ZIP downloaded elsewhere.");}
  }
  private void copy(InputStream in,OutputStream out)throws Exception{if(in==null)throw new IOException("Cannot open update");byte[] b=new byte[1024*1024];int n;long done=0,last=0;while((n=in.read(b))!=-1){done+=n;if(done>16L*1024*1024*1024)throw new IOException("Update exceeds size limit");out.write(b,0,n);if(System.currentTimeMillis()-last>1000){show("Reading OTA: "+done/1048576+" MiB");last=System.currentTimeMillis();}}}
- private void install()throws Exception{show("Verifying OTA before reboot…");OtaPackage.verify(ZIP);String id=Long.toString(System.currentTimeMillis());try(FileOutputStream out=new FileOutputStream(new File(REQUEST,"id"))){out.write(id.getBytes("UTF-8"));out.getFD().sync();}
+ private void install()throws Exception{show("Verifying OTA before reboot…");OtaPackage.verify(ZIP);String id=Long.toString(System.currentTimeMillis());try(FileOutputStream out=new FileOutputStream(new File(REQUEST,"id"))){out.write(id.getBytes("UTF-8"));android.system.Os.fchmod(out.getFD(),0640);out.getFD().sync();}
   Class.forName("android.os.SystemProperties").getMethod("set",String.class,String.class).invoke(null,"sys.unica.ota.request",id);
   long end=System.currentTimeMillis()+600000;File response=new File("/data/misc/unica_ota/staged/response");while(System.currentTimeMillis()<end){if(response.exists()){String text;try(InputStream in=new FileInputStream(response)){text=new String(OtaPackage.read(in,4096),"UTF-8").trim();}if(text.startsWith(id+" ")){if(!text.equals(id+" ready"))throw new IOException(text.substring(id.length()+1));show("Rebooting into OrangeFox…");((PowerManager)getSystemService(POWER_SERVICE)).reboot("recovery");return;}}Thread.sleep(1000);}throw new IOException("Recovery staging timed out. Do not reboot until the request is checked.");
  }

@@ -580,6 +580,12 @@ if [ "${UNICA_OTA_RELEASE_INSTALLER:-}" ]; then
     chmod 0755 "$TMP_DIR/META-INF/com/google/android/update-binary"
     mkdir -p "$TMP_DIR/unica/ota"
     cp -a "$SRC_DIR/target/$TARGET_CODENAME/installer/root/unica/ota/"* "$TMP_DIR/unica/ota/" || exit 1
+    # signapk -w replaces this entry with the same certificate after metadata
+    # generation. Stage it now so the updater's signed entry list covers it.
+    if ! $DEBUG || $ROM_IS_OFFICIAL; then
+        mkdir -p "$TMP_DIR/META-INF/com/android" || exit 1
+        cp "$PUBLIC_KEY_PATH" "$TMP_DIR/META-INF/com/android/otacert" || exit 1
+    fi
     python3 "$SRC_DIR/scripts/internal/ota_metadata.py" package \
         "$TMP_DIR" "$SOURCE_ZIP" "$TARGET_ZIP" || exit 1
 fi

@@ -42,6 +42,9 @@
 (allow unica_ota unica_ota_staged (file (create read write open getattr setattr rename unlink lock)))
 (allow unica_ota cache_file (dir (search read open getattr write add_name remove_name)))
 (allow unica_ota cache_file (file (create read write open getattr setattr rename unlink link)))
+; Samsung labels /cache/recovery separately from /cache/unica-ota.
+(allow unica_ota cache_recovery_file (dir (search read open getattr write add_name remove_name)))
+(allow unica_ota cache_recovery_file (file (create read write open getattr setattr rename unlink link)))
 (allow unica_ota self (capability (chown)))
 (allow unica_ota system_file (file (read open getattr map execute)))
 (allow unica_ota system_file (dir (search getattr)))

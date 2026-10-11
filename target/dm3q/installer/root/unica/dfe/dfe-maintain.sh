@@ -343,8 +343,12 @@ run_dfe() {
 
     image_size="$("$BUSYBOX" stat -c %s "$TMPDIR/vendor_mod.img")"
     case "$image_size" in ""|*[!0-9]*|0) return 1 ;; esac
-    if [ "$image_size" -gt "$vendor_size" ]; then
-        ui_print "[DFE] Rebuilt vendor ($image_size bytes) exceeds partition ($vendor_size bytes)."
+    # Recovery sh may compare integers as signed 32-bit values. BusyBox awk
+    # uses floating-point numbers, exact for byte counts at these sizes.
+    # Require a successful fit check before writing; equal sizes are allowed.
+    if ! "$BUSYBOX" awk -v image="$image_size" -v capacity="$vendor_size" \
+        'BEGIN { exit !((image + 0) <= (capacity + 0)) }' >>"$DFE_LOG" 2>&1; then
+        ui_print "[DFE] Vendor size check failed: image $image_size bytes, partition $vendor_size bytes; refusing to write."
         return 1
     fi
     # Reserve space for readback before touching the partition.

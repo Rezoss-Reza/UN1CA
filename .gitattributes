@@ -21,6 +21,7 @@
 *.cube binary
 *.dlc binary
 *.der binary
+*.zip binary
 
 # ROM-specific prebuilt blobs
 prebuilts/bootable/deprecated-ota/updater binary
@@ -29,6 +30,7 @@ unica/mods/paradigm/system/** binary
 unica/mods/prophide/system/bin/rezetprop binary
 unica/mods/rezoss/system_ext/bin/mosey_server binary
 unica/mods/rezoss/local-summary-service/system/bin/unica-summary-llama-server binary
+unica/mods/rezoss/ksu-next/magiskboot binary
 unica/mods/settings/system/bin/unica-battery binary
 unica/mods/settings/system/bin/unica-ota-stage binary
 
