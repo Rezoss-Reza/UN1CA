@@ -3,12 +3,18 @@ Block-delta OTA from two full dm3q recovery release ZIPs
     source buildenv.sh dm3q
     unica make_rom -ota
 
-The shortcut records the newest existing full dm3q out/UN1CA_*.zip as its OTA
+The shortcut records the newest existing full dm3q ROM ZIP in out/ as its OTA
 baseline, using embedded release timestamps, not filesystem modification times.
 It then runs make_rom -f -r with a fresh ROM_BUILD_TIMESTAMP, ensuring a fresh
 full ROM build even when the completed-build cache would otherwise be reused.
 It generates the delta against the exact newly created full ZIP and creates
-out/OTA_UN1CA_OneUI9_Rezoss_ddmmyy_hhmmss.zip using Europe/Paris time.
+out/OTA_ddmmyy-hhmmss_basecommit-newcommit_UN1CA_OneUI9_Rezoss.zip using
+Europe/Paris time. Both commit IDs come from the releases' embedded
+build_info.txt version fields; the optional -dirty suffix is omitted.
+For example: OTA_111026-181216_9bdbf6e9-d8f7e810_UN1CA_OneUI9_Rezoss.zip.
+Full ROM names use ddmmyy-hhmmss_commit_OneUI9.0-firmware_UN1CA-version_Rezoss_device.zip.
+Automatic discovery accepts both these names and older UN1CA_*.zip releases.
+Automatic naming stops if either release has no recognizable commit ID.
 One existing full release is required. Ambiguous baseline timestamps or more
 than one newly created release stop generation. Incremental ZIPs are excluded.
 The shortcut must be used alone. Existing releases are retained; if delta
@@ -66,3 +72,19 @@ a 5-second Volume Down cancellation gate. A .zip.ota.json signed catalog record
 is generated alongside the ZIP as an optional catalog. The browser/local ZIP
 flow requires uploading only the OTA ZIP to the public Drive folder. See
 unica/mods/settings/ota/README.txt for key setup and bootstrap requirements.
+
+Optional download integrity protection (dm3q):
+    unica make_rom -r -sha
+    unica make_rom -ota -sha
+
+-sha adds an embedded SHA-256 payload manifest and a mandatory recovery
+preflight before the original updater or DFE can write partitions. The recovery
+must provide unzip, sha256sum and mkfifo; missing tools or a checksum failure
+stop installation. No extra preflight is enabled when -sha is omitted.
+The OTA command protects both its newly built full release and its delta ZIP.
+Each finished ZIP is validated and gets a .zip.sha256 checksum file. Check a
+download on Ubuntu with: sha256sum -c ROM.zip.sha256
+This detects accidental payload corruption; it does not replace signature
+verification. The wrapper itself and OTA signed envelope are excluded from the
+payload list to avoid circular hashes. Actual recovery performance needs a
+flash test; large packages require a complete read before installation.

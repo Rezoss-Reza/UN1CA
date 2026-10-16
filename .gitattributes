@@ -22,6 +22,7 @@
 *.dlc binary
 *.der binary
 *.zip binary
+*.pte.[0-9][0-9] binary
 
 # ROM-specific prebuilt blobs
 prebuilts/bootable/deprecated-ota/updater binary
@@ -33,6 +34,7 @@ unica/mods/rezoss/local-summary-service/system/bin/unica-summary-llama-server bi
 unica/mods/rezoss/ksu-next/magiskboot binary
 unica/mods/settings/system/bin/unica-battery binary
 unica/mods/settings/system/bin/unica-ota-stage binary
+unica/mods/tee-simulator/payload/system/bin/unica-teesim-inject binary
 
 # Device-specific prebuilt blobs
 target/dm3q/installer/root/unica/dfe/tools/* binary

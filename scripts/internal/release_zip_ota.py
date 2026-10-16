@@ -185,7 +185,7 @@ def installer(release, directory):
         if script.count(marker) != 1:
             raise ValueError('Unsupported release installer ending')
         for name in z.namelist():
-            if name.endswith('/') or name in ('META-INF/com/google/android/updater-script', 'build_info.txt'):
+            if name.startswith('unica/integrity/') or name.endswith('/') or name in ('META-INF/com/google/android/updater-script', 'build_info.txt'):
                 continue
             if name.startswith('META-INF/') and not name.startswith('META-INF/com/google/android/'):
                 continue
@@ -203,9 +203,14 @@ def installer(release, directory):
             target.write('\n' + script.split(marker)[1])
 
 
+def release_paths(directory):
+    # Keep older releases usable as baselines alongside the new date-first names.
+    return set(directory.glob('UN1CA_*.zip')) | set(directory.glob('*_UN1CA-*_Rezoss_*.zip'))
+
+
 def scan_releases(directory):
     releases = []
-    for path in directory.glob('UN1CA_*.zip'):
+    for path in release_paths(directory):
         if not path.is_file():
             continue
         try:
@@ -225,17 +230,31 @@ def scan_releases(directory):
 def select_releases(directory):
     releases = scan_releases(directory)
     if len(releases) < 2:
-        raise ValueError('Need at least two full dm3q UN1CA_*.zip releases in out/; build the new release with make_rom -r first')
+        raise ValueError('Need at least two full dm3q ROM ZIP releases in out/; build the new release with make_rom -r first')
     if any(sum(timestamp == selected[0] for timestamp, _ in releases) != 1
            for selected in releases[:2]):
         raise ValueError('Ambiguous release timestamps; use build_release_ota OLD NEW OUTPUT explicitly')
     return releases[1][1], releases[0][1]
 
 
+def release_commit(release):
+    with zipfile.ZipFile(release) as archive:
+        version = properties(archive.read('build_info.txt').decode()).get('version', '')
+    commit = re.search(r'-([0-9a-fA-F]{7,40})(?:-dirty)?$', version)
+    if not commit:
+        raise ValueError(f'Cannot determine release commit from build_info.txt version in {release.name}')
+    return commit.group(1).lower()
+
+
+def automatic_output(directory, old, new):
+    base_commit, new_commit = release_commit(old), release_commit(new)
+    stamp = datetime.now(ZoneInfo('Europe/Paris')).strftime('%d%m%y-%H%M%S')
+    return directory / f'OTA_{stamp}_{base_commit}-{new_commit}_UN1CA_OneUI9_Rezoss.zip'
+
+
 def automatic(directory):
     old, new = select_releases(directory)
-    stamp = datetime.now(ZoneInfo('Europe/Paris')).strftime('%d%m%y_%H%M%S')
-    output = directory / f'OTA_UN1CA_OneUI9_Rezoss_{stamp}.zip'
+    output = automatic_output(directory, old, new)
     print(f'Old release: {old}\nNew release: {new}\nOTA output:  {output}', flush=True)
     build(old, new, output)
 
@@ -244,23 +263,24 @@ def build_automatic(directory):
     directory = directory.resolve()
     releases = scan_releases(directory)
     if not releases:
-        raise ValueError('Need one existing full dm3q UN1CA_*.zip in out/ as the OTA baseline')
+        raise ValueError('Need one existing full dm3q ROM ZIP in out/ as the OTA baseline')
     timestamp, old = releases[0]
     if sum(stamp == timestamp for stamp, _ in releases) != 1:
         raise ValueError('Ambiguous newest release timestamp; choose the baseline explicitly')
+    release_commit(old)  # Reject an unknown baseline commit before rebuilding.
     now = int(time.time())
     if now <= timestamp:
         raise ValueError('Baseline timestamp is not older than current time; retry when the clock has advanced')
-    previous = set(directory.glob('UN1CA_*.zip'))
+    previous = set(release_paths(directory))
     env = dict(os.environ, ROM_BUILD_TIMESTAMP=str(now))
     print(f'OTA baseline: {old}\nBuilding fresh full release (make_rom -f -r)...', flush=True)
-    subprocess.run([str(Path(env['SRC_DIR']) / 'scripts/make_rom.sh'), '-f', '-r'], env=env, check=True)
+    subprocess.run([str(Path(env['SRC_DIR']) / 'scripts/make_rom.sh'), '-f', '-r']
+                   + (['-sha'] if env.get('UNICA_PACKAGE_SHA') == 'true' else []), env=env, check=True)
     created = [path for _, path in scan_releases(directory) if path not in previous]
     if len(created) != 1:
         raise ValueError('Expected exactly one newly created full release; full ZIPs are retained, OTA generation stopped')
     new = created[0]
-    stamp = datetime.now(ZoneInfo('Europe/Paris')).strftime('%d%m%y_%H%M%S')
-    output = directory / f'OTA_UN1CA_OneUI9_Rezoss_{stamp}.zip'
+    output = automatic_output(directory, old, new)
     print(f'Old release: {old}\nNew release: {new}\nOTA output:  {output}', flush=True)
     build(old, new, output)
 
@@ -294,6 +314,9 @@ def build(old, new, output):
             bad = z.testzip()
             if bad:
                 raise ValueError(f'ZIP integrity failure: {bad}')
+        checksum = None
+        if os.environ.get('UNICA_PACKAGE_SHA') == 'true':
+            checksum = Path(str(result) + '.sha256').read_text().split()[0]
         # Publish a complete file atomically without replacing any existing ZIP.
         staged = None
         try:
@@ -306,6 +329,8 @@ def build(old, new, output):
         finally:
             if staged is not None:
                 staged.unlink()
+    if checksum is not None:
+        Path(str(output) + '.sha256').write_text(f'{checksum}  {output.name}\n')
     print(f'Created {output}')
     subprocess.run([sys.executable, str(Path(__file__).with_name('ota_metadata.py')),
                     'sidecar', str(output)], check=True)

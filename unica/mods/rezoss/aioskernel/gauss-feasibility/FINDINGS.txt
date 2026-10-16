@@ -1,0 +1,33 @@
+Samsung Gauss V73 feasibility, 2026-10-14
+
+The exported Samsung context is DSP architecture 81. A V73 backend alone does
+not make that compiled decoder portable. The complete graph I/O metadata was
+recovered (three graphs, 1294 input/output entries and their quantization).
+The shared weight blob is 1,878,839,296 opaque bytes; the available context
+metadata does not expose its operator connectivity or individual base weights.
+This investigation did not reconstruct the full decoder or establish that all
+base weights can be recovered. It does not prove recovery is impossible.
+
+The installed contextual_reply FlatBuffer contains 167 readable payloads.
+164 LoRA matrices were matched by name, shape and byte count to the context
+I/O; three forecast prefix/embedding payloads remain unmapped. Those adapters
+are specific to the Samsung base model and cannot be attached to Qwen weights.
+
+One recovered q_lora_d_1_A matrix [3072,32] was used in an inferred projection
+on V73 through QNN graph construction, finalization and execution. All 32
+outputs returned. Against an independent integer accumulator reference, the
+maximum absolute error was 0.0012636780750119314, RMSE 0.0007427483400500312,
+with no saturation. The predeclared tolerance was two output LSBs; observed
+maximum was five LSBs. Therefore the strict numerical check FAILED. There was
+no comparison against execution on the original Samsung donor hardware.
+
+The diagnostic pins libQnnHtpPrepare.so until process exit to avoid a QNN
+online-prepare teardown crash. This is not a production backend workaround.
+The new replacement-model pipeline uses precompiled contexts instead.
+
+Reproduction sources: inspect_adapter.py, probe_lora_matmul.c,
+compare_projection.py, run_projection.sh in this directory.
+Raw evidence: /tmp/gauss-v73-feasibility-20261014/
+
+Decision: pursue the user-authorized replacement backend while retaining
+Samsung routing; do not advertise reconstructed Samsung Gauss inference.

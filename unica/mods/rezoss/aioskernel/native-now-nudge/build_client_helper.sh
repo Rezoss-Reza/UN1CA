@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Generate helper smali from maintained Java; never hand-edit extracted smali.
+set -euo pipefail
+: "${SRC_DIR:?Source buildenv.sh dm3q first}"
+DECODED=${1:?Usage: build_client_helper.sh SMARTSUGGESTIONS_DECODE}
+ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+SDK=${ANDROID_HOME:-$HOME/Android/Sdk}
+TOOLS=$SDK/build-tools/37.0.0
+WORK=$(mktemp -d /tmp/nudge-client-helper.XXXXXX)
+[[ ! -e "$DECODED/smali_classes17" ]] || { echo 'Unexpected classes17; inspect DEX overlap' >&2; exit 1; }
+mkdir -p "$WORK/classes" "$WORK/dex"
+javac -source 8 -target 8 -Xlint:-options -classpath "$SDK/platforms/android-37.0/android.jar" \
+    -d "$WORK/classes" "$ROOT"/client-java/io/mesalabs/rezoss/ai/*.java
+jar cf "$WORK/client.jar" -C "$WORK/classes" .
+"$TOOLS/d8" --min-api 28 --lib "$SDK/platforms/android-37.0/android.jar" --output "$WORK/dex" "$WORK/client.jar"
+java -cp "$SRC_DIR/out/tools/bin/apktool.jar" com.android.tools.smali.baksmali.Main \
+    disassemble --api 28 "$WORK/dex/classes.dex" -o "$WORK/smali_classes17"
+cp -a "$WORK/smali_classes17" "$DECODED/"

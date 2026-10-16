@@ -17,7 +17,15 @@ enable_pkg()
         true
 }
 
-if [ "$(getprop persist.sys.unica.enable_aioskernelservice 2>/dev/null)" != "1" ]; then
+if [ "$(getprop ro.unica.now_nudge_v73 2>/dev/null)" = "1" ]; then
+    enable_pkg "com.samsung.android.aioskernelservice"
+    # Initialize only absent settings; preserve explicit user opt-out on reboot.
+    for key in rezoss_aios_v73_backend rezoss_now_nudge_native; do
+        if [ "$(settings get global "$key" 2>/dev/null)" = "null" ]; then
+            settings put global "$key" 1
+        fi
+    done
+elif [ "$(getprop persist.sys.unica.enable_aioskernelservice 2>/dev/null)" != "1" ]; then
     disable_pkg "com.samsung.android.aioskernelservice"
 fi
 

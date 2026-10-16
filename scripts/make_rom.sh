@@ -5,12 +5,18 @@
 # [
 source "$SRC_DIR/scripts/utils/build_utils.sh" || exit 1
 
-# The helper records the old release before invoking a fresh direct ROM build.
+# Integrity protection is opt-in for this invocation, including child builds.
+export UNICA_PACKAGE_SHA=false
+for option in "$@"; do
+    [[ "$option" != -sha ]] || export UNICA_PACKAGE_SHA=true
+done
 if [[ " $* " == *" -ota "* ]] || [[ " $* " == *" --ota "* ]]; then
-    if [[ $# != 1 ]]; then
-        echo 'Use make_rom -ota alone; it builds the full release and OTA' >&2
-        exit 1
-    fi
+    for option in "$@"; do
+        case "$option" in
+            -ota|--ota|-sha) ;;
+            *) echo 'Use make_rom -ota [-sha]; it builds the full release and OTA' >&2; exit 1;;
+        esac
+    done
     "$SRC_DIR/scripts/build_release_ota.sh" --build-auto
     exit $?
 fi
@@ -76,6 +82,8 @@ PREPARE_SCRIPT()
             BUILD_TARGET_FILES=false
             BUILD_FLASHABLE_ZIP=false
             BUILD_DIRECT_FLASHABLE_ZIP=true
+        elif [[ "$1" == "-sha" ]]; then
+            : # Already exported above.
         else
             if [[ "$1" == "-"* ]]; then
                 LOGE "Unknown option: $1"
@@ -113,11 +121,16 @@ PRINT_USAGE()
     echo " -x, --no-target-files : Do not build target-files zip" >&2
     echo " -z, --build-rom-zip : Build flashable zip" >&2
     echo " -r, --build-rom-direct : Build flashable zip directly without target-files zip" >&2
+    echo " -sha : Add recovery SHA-256 preflight and publish a ZIP checksum (dm3q)" >&2
     echo " -ota, --ota : Build a fresh full release and block-delta OTA from the latest existing release" >&2
 }
 # ]
 
 PREPARE_SCRIPT "$@"
+if $UNICA_PACKAGE_SHA; then
+    [[ "$TARGET_CODENAME" == dm3q ]] || { LOGE '-sha currently supports dm3q'; exit 1; }
+    $BUILD_FLASHABLE_ZIP || $BUILD_DIRECT_FLASHABLE_ZIP || { LOGE '-sha requires -r or -z'; exit 1; }
+fi
 
 if $FORCE; then
     BUILD_ROM=true

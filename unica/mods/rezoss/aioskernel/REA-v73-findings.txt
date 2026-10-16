@@ -1,0 +1,164 @@
+AIOSKernelService 1.4.28 / SM8550 V73 investigation, 2026-10-14
+
+CORRECTION from the focused VIT loader investigation:
+  See REA-vit-loader-findings.txt. The earlier VIT 30010 was a probe range error:
+  Samsung's 72-byte SSMT metadata trailer was included in the QNN buffer length.
+  Corrected CPU metadata parsing succeeds with original and modern QNN System.
+  Corrected V73 model loading then fails with 5005 and an explicit ARCH=81
+  unsupported message. probe_qnn_v73.c now handles SSMT automatically without
+  modifying model files. Earlier full-asset results below are historical.
+
+Status: native backend/device compatibility demonstrated; Samsung inference NOT working.
+No APK was installed, no system/vendor libraries replaced, no existing patches or
+customize.sh changed. New native helper is separate from the existing bypass
+experiment, which must NOT be combined with this candidate.
+
+Artifact identity:
+  prebuilts/samsung/m3qxxx/system/priv-app/AIOSKernelService/AIOSKernelService.apk
+  SHA256 fca2f25b65a4db919b162d02decd6dba8b6d4eafc95bc43b36c5a1c606a19112
+  Original libsnap_qnn.so:
+  cf5021fdfa25a5aaa554061acbb98af3adb5aabfc560c458ac1235b981672538
+
+REA observations (JADX and Ghidra 12.1.4; static analysis is not execution):
+  package inspection ev_07003e5ebfd799ffdfcfb4c1b0bbeb59b359aabf59fe259faddf6d476aa60084
+  loadBackendLibSymbols ev_2cf4a3d664f503993d547d1d872241811ad746c337232f35fe90b5b7ef29f364
+  initializeBackend ev_a8efc87dab8b74e06040d581c9191560d601b9a098e87dabfddef40d66f053d4
+  CreateDevice ev_ec26725a8782a2ac0a5b1f53a864eb0182d7fdc48776a5818237ded3375c45df
+  loadSystemLibSymbols ev_9bea502b0f2392fbb73a6a28b6991c7a6e21c0cb3badd3e6a0fbfc82e0958be2
+  SOC literal xrefs ev_449a9b9b9b2930c4dae21fed5aaa716a7fbf16f2a4a249507b39908a058959fc
+  Ghidra image base is 0x100000; patch helper records ELF file offsets.
+
+  Backend provider requires core major 2, minor >= 29; copies 0x230 bytes.
+  System provider requires major 1, minor >= 5.
+  Stock S23 firmware backend identifies as SDK 2.3.1; rejected by this wrapper.
+  APK backend identifies as SDK 2.39.101; bundles V81 stub/skel.
+  initializeBackend previously continued on loader errors other than 2.
+  Both initializeBackend and CreateDevice request ARCH=81.
+  initializeBackend also requests SOC=87 (SM8850).
+
+Candidate changes:
+  patch_qnn_v73_device.py: reject all loader errors, ARCH=73 in both paths,
+  SOC=43 (SM8550), preserving real backend/device/perf callbacks.
+  Uses original native wrapper, not the nullguard or backend/perf bypass scripts.
+  Existing chipset helper retargets SSNeural's SM8650 support gate to SM8550.
+  Existing smali patches 0001-0004 apply with zero fuzz (some line offsets).
+  0004 keeps the existing optional persist.sys.unica.block_llmv property gate.
+  QAIRT 2.44.0.260225 matching HTP/System/V73 stub/skel/extension binaries.
+  Runtime hashes pinned in build_v73_candidate.py.
+
+Current device evidence, isolated /data/local/tmp/aios-rea-v73-20261014:
+  SM-S918B, SM8550. No installed com.samsung.android.aioskernelservice.
+  Samsung initializeBackend=0 initialized=1.
+  Backend/device/log handles non-null; contextCreate=0, contextFree=0.
+  Separate Samsung CreateDevice path returned a non-null handle.
+  deviceFree=0, backendFree=0. Negative controls libm and stock QNN return failure
+  before callbacks, without crashing. This is shell-process evidence, not APK
+  linker-namespace or SELinux proof.
+  Qualcomm platform validator: Hexagon V73, DSP calculator unit test Passed.
+  Its FastRPC library-version query is unimplemented; reported Not Found.
+
+Model loading (no inference):
+  Downloaded com.samsung.android.offline.languagemodel/base.apk is about 2.9 GiB.
+  modelConfig.json names qc_sm8850; executor_config.json chipset_type is 8850.
+  Eaglet eaglet_v3.8_0312_qnn_2_39_101.serialized.bin.so:
+    contextCreateFromBinary=5005, null handle.
+    Fresh QNN log: Request feature arch with value 81 unsupported.
+    Therefore this context cannot load as supplied on the tested V73 backend.
+  Main e4h4w4_2502rel_qnn_2_38_0_exp_2502.serialized.bin.so:
+    contextCreateFromBinary=30010, null handle.
+    Log: Serializer failed to get context blob.
+    Cause not established: may require Samsung-specific preprocessing/config.
+  Do not bypass these model errors or claim changing a model header recompiles
+  architecture-specific DSP code. A compatible V73 context/recompilation is
+  needed for the failing V81 context, followed by real graph execution tests.
+
+Offline validation:
+  Native patch idempotent, rejects unknown/bypass-modified input, same ELF size.
+  APK rebuilt successfully with project Apktool; ZIP CRC and runtime hashes pass.
+  Candidate is unsigned and deliberately not wired into customize.sh while
+  Samsung model loading fails.
+  Host scratch/evidence: /tmp/aios-rea-5n11ogji
+  Candidate: /tmp/aios-rea-5n11ogji/candidate/AIOSKernelService-v73-unsigned.apk
+  Fresh model log: /tmp/aios-rea-5n11ogji/model-logcat.txt
+
+Rebuild commands (SDK path contains include/ and lib/):
+  source buildenv.sh dm3q
+  python3 unica/mods/rezoss/aioskernel/build_v73_candidate.py \
+    --sdk /tmp/aios-rea-5n11ogji/sdk --output /tmp/aios-v73-new-candidate
+  unzip -tq /tmp/aios-v73-new-candidate/AIOSKernelService-v73-unsigned.apk
+  git diff --check
+
+Compile probe:
+  /home/rezoss79/Android/Sdk/ndk/28.2.13676358/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android33-clang \
+    -Wall -Wextra -Werror -I /tmp/aios-rea-5n11ogji/sdk/include/QNN \
+    unica/mods/rezoss/aioskernel/probe_qnn_v73.c -ldl -o /tmp/aios-v73-probe
+  Probe usage: probe WRAPPER BACKEND [RAW_QNN_MODEL_CONTEXT_BINARY]
+  Use an isolated Android directory with matching V73 stub/skel, and both
+  LD_LIBRARY_PATH and ADSP_LIBRARY_PATH pointing there. Does not install APKs.
+
+Official SDK archive used:
+  https://softwarecenter.qualcomm.com/api/download/software/sdks/Qualcomm_AI_Runtime_Community/All/2.44.0.260225/v2.44.0.260225.zip
+
+All-feature follow-up, 2026-10-14:
+  User requests validation of all features and reports no Samsung model on device.
+  Fresh package check: AIOSKernelService is absent; OfflineLanguageModel remains
+  installed at /data/app/.../base.apk. Its model assets are a distinct provider
+  payload, not a provisioned/validated AIOS model installation. The selected
+  AIOS APK itself has only config, baseline profiles and a DSP skel as assets;
+  it does not carry inference model weights.
+
+  REA ConstructAdapter inspection:
+    ev_5468b63817da18cdc71efab84a8247662443791ba17fbfe28f330ab96ba3bcae
+  REA NativeSSNeuralCore JNI surface:
+    ev_08e30ece644b6ce362b89b9c8193da46b68206ecfad8fb8010962ede89054060
+  Adapter dispatcher (15 routes; JADX warns of string-switch reconstruction;
+  route names cross-checked against the decoded DEX smali):
+    ev_32608bdd030d95157b18f531fcdb273c5bd38ce96f33684af82d953dc45897bb
+  VIT config:
+    ev_962b9daff8e091a0f717c737a3079df58516dc903df07f388d9ffbb7c015978d
+  Semantic config:
+    ev_c642a3639198d043576f9f8414b44650dd3456ac442eb6a2681f69af890870c8
+  MT5 config:
+    ev_dcfb1abfea7454175558426d7299a754472b62ba1fdb0091143b402b8d000981
+
+  Coverage matrix (static routing is not feature execution):
+    LLM / SS_SR_LLM_3B_LORAV1:
+      Config/JNI route present. Eaglet and main Gauss load attempts fail as above.
+      Tokenization, LoRA update, generation, streaming/cancel and stats NOT tested.
+    LLMV / screen VIT / SS_SR_SCREEN_AI_SR_VIT_ADAPTER:
+      Config and image JNI routes present. The OfflineLanguageModel VIT context
+      vit_model.serialized.bin.so (505471048 bytes) was extracted to scratch and
+      tried with the same successful Samsung backend/device path.
+      contextCreateFromBinary=30010, null handle; no image inference performed.
+      This generic restore error does not establish an architecture diagnosis.
+    LVM (10 routes):
+      SS_SR_PET_STUDIO_KOALA_LORA_ADAPTER
+      SS_SR_WALLPAPER_KOALA_LORA_ADAPTER
+      SS_SR_IMAGE_TO_IMAGE_KOALA_LORA_ADAPTER
+      SS_SR_STICKER_GENERATION_KOALA_LORA_ADAPTER
+      SS_SR_AI_HMZ_LORA_ADAPTER
+      SS_SR_AI_ERASER_LORA_ADAPTER
+      SS_SRIB_TEXT_TO_IMAGE_LORA_ADAPTER
+      SS_SR_INOUTPAINT_KOALA_LORA_ADAPTER
+      SS_SR_PORTRAIT_STUDIO_KOALA_LORA_ADAPTER
+      SS_SR_SKETCH_TO_IMAGE_KOALA_LORA_ADAPTER
+      Shared config builder and LVM JNI entries present. Builder requires real
+      VAE encoder/decoder, UNet, embeddings, tokenizer, LoRA and other payloads.
+      No supplied/provisioned model set for these routes; runtime NOT tested.
+    MT5 / SS_SR_MT5:
+      Config builder present; needs its model, embeddings, tokenizer, positional
+      biases and executor configuration. Runtime NOT tested without payload.
+    Semantic / SS_T2T:
+      Config/JNI route present; needs model, embeddings, quantization parameters,
+      positional embeddings and LoRA configuration. Runtime NOT tested.
+    SS_LLM_3B_LSI_NPU_LORAV1:
+      Exynos-specific LSI path; not a QNN V73/SM8550 validation target. Static
+      dispatch exists; this does not establish a Qualcomm-compatible model.
+
+  No family is certified end-to-end. Native QNN backend/device/context and DSP
+  calculator results remain the only successful device execution evidence.
+  The new VIT failure adds to the existing text-model blocker. All feature
+  inference testing requires corresponding compatible payloads and the app's
+  actual provider/Binder environment. No model was downloaded or provisioned.
+  Only generated scratch copies of extracted model binaries were deleted;
+  installed APK/model assets were untouched.

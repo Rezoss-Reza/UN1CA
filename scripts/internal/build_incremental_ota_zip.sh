@@ -590,6 +590,15 @@ if [ "${UNICA_OTA_RELEASE_INSTALLER:-}" ]; then
         "$TMP_DIR" "$SOURCE_ZIP" "$TARGET_ZIP" || exit 1
 fi
 
+if [ "${UNICA_PACKAGE_SHA:-false}" = true ]; then
+    LOG "- Adding recovery SHA-256 preflight"
+    python3 "$SRC_DIR/scripts/internal/package_sha.py" prepare "$TMP_DIR" || exit 1
+    # Refresh the signed OTA entry list to include the integrity manifest.
+    if [ "${UNICA_OTA_RELEASE_INSTALLER:-}" ]; then
+        python3 "$SRC_DIR/scripts/internal/ota_metadata.py" package "$TMP_DIR" "$SOURCE_ZIP" "$TARGET_ZIP" || exit 1
+    fi
+fi
+
 LOG "- Creating zip"
 EVAL "rm -f \"$TMP_DIR/rom.zip\"" || exit 1
 # https://android.googlesource.com/platform/build/+/refs/tags/android-15.0.0_r1/tools/releasetools/common.py#3601
@@ -605,6 +614,10 @@ if ! $DEBUG || $ROM_IS_OFFICIAL; then
     rm -f "$TMP_DIR/rom.zip"
 else
     mv -f "$TMP_DIR/rom.zip" "$OUTPUT_FILE"
+fi
+
+if [ "${UNICA_PACKAGE_SHA:-false}" = true ]; then
+    python3 "$SRC_DIR/scripts/internal/package_sha.py" finish "$OUTPUT_FILE" || exit 1
 fi
 
 exit 0

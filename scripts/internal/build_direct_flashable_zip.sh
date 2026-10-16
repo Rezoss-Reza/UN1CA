@@ -174,23 +174,12 @@ GENERATE_OTA_METADATA()
 
 GENERATE_OUTPUT_FILE()
 {
-    local FILE
-    local SUFFIX
+    local VERSION DEVICE SUFFIX
 
-    FILE="$OUT_DIR/UN1CA_"
-    FILE+="$(grep "^version" <<< "$BUILD_INFO" | cut -d "=" -f 2 -s)"
-    FILE+="_"
-    FILE+="$(date +%d%m%y-%H%M%S)"
-    FILE+="_"
-    FILE+="$(grep "^device" <<< "$BUILD_INFO" | cut -d "=" -f 2 -s)"
-    if ! $DEBUG || $ROM_IS_OFFICIAL; then
-        FILE+="-sign"
-    fi
+    VERSION="$(grep "^version=" <<< "$BUILD_INFO" | cut -d "=" -f 2 -s)"
+    DEVICE="$(grep "^device=" <<< "$BUILD_INFO" | cut -d "=" -f 2 -s)"
     SUFFIX="$(GET_PROP "system" "ro.build.PDA")"
-    SUFFIX="${SUFFIX: -4}"
-    FILE+="_${SUFFIX}.zip"
-
-    echo "$FILE"
+    echo "$OUT_DIR/$(GET_RELEASE_ZIP_NAME "$VERSION" "$DEVICE" "${SUFFIX: -4}")"
 }
 
 GENERATE_UPDATER_SCRIPT()
@@ -394,6 +383,11 @@ if [ -f "$SRC_DIR/target/$TARGET_CODENAME/installer/customize.sh" ]; then
     LOG_STEP_OUT
 fi
 
+if [ "${UNICA_PACKAGE_SHA:-false}" = true ]; then
+    LOG "- Adding recovery SHA-256 preflight"
+    python3 "$SRC_DIR/scripts/internal/package_sha.py" prepare "$TMP_DIR" || exit 1
+fi
+
 LOG "- Creating zip"
 EVAL "rm -f \"$TMP_DIR/rom.zip\"" || exit 1
 # For S23U TWRP compatible
@@ -405,6 +399,10 @@ if ! $DEBUG || $ROM_IS_OFFICIAL; then
     rm -f "$TMP_DIR/rom.zip"
 else
     mv -f "$TMP_DIR/rom.zip" "$OUTPUT_FILE"
+fi
+
+if [ "${UNICA_PACKAGE_SHA:-false}" = true ]; then
+    python3 "$SRC_DIR/scripts/internal/package_sha.py" finish "$OUTPUT_FILE" || exit 1
 fi
 
 exit 0

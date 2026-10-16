@@ -1,0 +1,32 @@
+2026-10-15: flashed-ROM reply failure diagnosis
+
+Device: SM-S918B. AIOS 142801205 loaded from /system/priv-app, language update
+4.0.01.24 active, native backend/route globals and ROM mode property all 1.
+Active SmartSuggestions data APK matched tested POC5 SHA 97a4aa9a9f9ec0999d1a4e8d248d2ead8f622568b6142b0437fb1a187cf3120c.
+
+AIOS preload failed before a child process started. Private runner.txt files
+were zero length. A temporary in-process diagnostic captured:
+  Cannot run program /system/priv-app/AIOSKernelService/lib/arm64/libnudge_runner.so:
+  error=13, Permission denied
+Kernel audit confirmed:
+  denied { execute_no_trans }
+  scontext=u:r:platform_app_36:s0:c512,c768
+  tcontext=u:object_r:system_lib_file:s0 tclass=file permissive=0
+
+Controlled test: copy only the identical runner into the app cache with mode
+0755 and system_file context; temporarily redirect ProcessBuilder's runner
+path to that copy. All other libraries and model files remained the ROM files.
+V73 preload succeeded. Original Samsung Now Nudge handler -> SCS/language
+frontend -> system AIOS -> generated text_reply passed, 6642 ms:
+  I'm free for dinner!
+This was a synthetic handler request, not a real messaging-app UI test.
+
+Fix: integrate_rom.sh sets only libnudge_runner.so to system_file and 0755.
+Shared libraries retain system_lib_file. No policy allow rule, permissive mode
+or signature bypass was added. validate_rom_packaging.sh asserts this exact
+runner label and passed with the corrected metadata.
+
+The test redirect is temporary; a rebuilt/flashed image is still required for
+normal operation to use the corrected system-file inode label. No read-only
+system partition or boot image was modified during diagnosis. Temporary
+instrumentation must be detached and the diagnostic copy removed afterwards.

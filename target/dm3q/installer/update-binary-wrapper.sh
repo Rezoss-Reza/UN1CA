@@ -7,6 +7,9 @@ API="$1"
 OUTFD="$2"
 ZIPFILE="$3"
 
+# Filled at packaging time only for make_rom -sha.
+INTEGRITY_SHA256=""
+
 TMPDIR="/tmp/unica-installer"
 ORIGINAL="$TMPDIR/META-INF/com/google/android/update-binary.unica"
 DFE_SCRIPT="$TMPDIR/unica/dfe/dfe-maintain.sh"
@@ -22,6 +25,50 @@ ui_print() {
 
 rm -rf "$TMPDIR"
 mkdir -p "$TMPDIR" || exit 1
+
+# Verify all installation payloads before executing the updater or OTA hooks.
+if [ -n "$INTEGRITY_SHA256" ]; then
+    ui_print "Checking ROM SHA-256 integrity. Please wait..."
+    command -v sha256sum >/dev/null 2>&1 || {
+        ui_print "E: Recovery lacks sha256sum. Installation stopped."
+        exit 1
+    }
+    MANIFEST="$TMPDIR/sha256.list"
+    unzip -p "$ZIPFILE" unica/integrity/sha256.list > "$MANIFEST" || {
+        ui_print "E: Missing or corrupt integrity manifest. Installation stopped."
+        exit 1
+    }
+    ACTUAL="$(sha256sum "$MANIFEST")" || exit 1
+    [ "${ACTUAL%% *}" = "$INTEGRITY_SHA256" ] || {
+        ui_print "E: Integrity manifest checksum failed. Download the ZIP again."
+        exit 1
+    }
+    FIFO="$TMPDIR/integrity-stream"
+    mkfifo "$FIFO" || exit 1
+    COUNT=0
+    while IFS= read -r ROW; do
+        EXPECTED="${ROW%% *}"
+        ENTRY="${ROW#*  }"
+        case "$EXPECTED" in *[!0-9a-f]*|'') exit 1;; esac
+        [ "${#EXPECTED}" = 64 ] || exit 1
+        [ "$ENTRY" != "$ROW" ] && [ -n "$ENTRY" ] || exit 1
+        unzip -p "$ZIPFILE" "$ENTRY" > "$FIFO" &
+        EXTRACT_PID=$!
+        ACTUAL="$(sha256sum < "$FIFO")"
+        HASH_STATUS=$?
+        wait "$EXTRACT_PID"
+        EXTRACT_STATUS=$?
+        if [ "$HASH_STATUS" != 0 ] || [ "$EXTRACT_STATUS" != 0 ] || [ "${ACTUAL%% *}" != "$EXPECTED" ]; then
+            ui_print "E: ZIP integrity failed: $ENTRY"
+            ui_print "E: Download the ZIP again. No partition writes performed."
+            exit 1
+        fi
+        COUNT=$((COUNT + 1))
+    done < "$MANIFEST"
+    [ "$COUNT" -gt 0 ] || exit 1
+    rm -f "$FIFO"
+    ui_print "ROM integrity verified."
+fi
 
 unzip -oq "$ZIPFILE" "META-INF/com/google/android/update-binary.unica" -d "$TMPDIR" || {
     ui_print "E: Missing wrapped UN1CA updater"

@@ -282,6 +282,11 @@ if [ -f "$SRC_DIR/target/$TARGET_CODENAME/installer/customize.sh" ]; then
     LOG_STEP_OUT
 fi
 
+if [ "${UNICA_PACKAGE_SHA:-false}" = true ]; then
+    LOG "- Adding recovery SHA-256 preflight"
+    python3 "$SRC_DIR/scripts/internal/package_sha.py" prepare "$TMP_DIR" || exit 1
+fi
+
 LOG "- Creating zip"
 EVAL "rm -f \"$TMP_DIR/rom.zip\"" || exit 1
 # https://android.googlesource.com/platform/build/+/refs/tags/android-15.0.0_r1/tools/releasetools/common.py#3601
@@ -299,6 +304,10 @@ if ! $DEBUG || $ROM_IS_OFFICIAL; then
     rm -f "$TMP_DIR/rom.zip"
 else
     mv -f "$TMP_DIR/rom.zip" "$OUTPUT_FILE"
+fi
+
+if [ "${UNICA_PACKAGE_SHA:-false}" = true ]; then
+    python3 "$SRC_DIR/scripts/internal/package_sha.py" finish "$OUTPUT_FILE" || exit 1
 fi
 
 exit 0

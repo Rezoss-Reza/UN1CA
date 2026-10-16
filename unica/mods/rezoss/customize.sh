@@ -2,6 +2,14 @@ SKIPUNZIP=1
 
 LOG_STEP_IN "- Rezoss experimental mods"
 
+# This POC is restricted to the tested S23U target and retains Qwen fallback.
+source "$MODPATH/aioskernel/native-now-nudge/config.sh" || return 1
+if [[ "$UNICA_ENABLE_NATIVE_NOW_NUDGE" == "true" ]]; then
+    [[ "$TARGET_CODENAME" == "dm3q" ]] || ABORT "Native Now Nudge is tested only on dm3q"
+    [[ "${UNICA_ENABLE_SAMSUNG_AICORE:-true}" == "true" ]] || ABORT "Native Now Nudge requires SamsungAiCore"
+    [[ "${UNICA_ENABLE_UNSAFE_S26U_QNN_EXPERIMENT:-false}" != "true" ]] || ABORT "Do not combine native Now Nudge with the donor QNN experiment"
+fi
+
 # =============================================================================
 # Base Overlay
 # =============================================================================
@@ -89,6 +97,14 @@ APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSugges
     "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0020-Route-Now-Nudge-replies-through-UN1CA-Qwen-provider.patch"
 APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
     "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0026-Connect-in-app-and-notification-replies-to-RezossAI.patch"
+if [[ "$UNICA_ENABLE_NATIVE_NOW_NUDGE" == "true" ]]; then
+    LOG "- Integrating native V73 Now Nudge after Rezoss patch 0026"
+    for REZOSS_NUDGE_PATCH in "$MODPATH/aioskernel/native-now-nudge/"000[123456]-*.patch; do
+        APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" "$REZOSS_NUDGE_PATCH"
+    done
+    EVAL "bash \"$MODPATH/aioskernel/native-now-nudge/build_client_helper.sh\" \"$APKTOOL_DIR/system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk\"" || return 1
+    unset REZOSS_NUDGE_PATCH
+fi
 # Temporarily disabled for CHN SmartSuggestions testing.
 # LOG "- Patching SmartSuggestions China custom-card feature gates"
 # SMALI_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
@@ -1012,7 +1028,9 @@ else
 fi
 DELETE_FROM_WORK_DIR "system" "system/app/AIOSKernelService"
 DELETE_FROM_WORK_DIR "system" "system/priv-app/AIOSKernelService"
-if [[ "${UNICA_ENABLE_AIOSKERNELSERVICE:-false}" == "true" ]]; then
+if [[ "$UNICA_ENABLE_NATIVE_NOW_NUDGE" == "true" ]]; then
+    source "$MODPATH/aioskernel/native-now-nudge/integrate_rom.sh" || return 1
+elif [[ "${UNICA_ENABLE_AIOSKERNELSERVICE:-false}" == "true" ]]; then
     ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/AIOSKernelService/AIOSKernelService.apk" 0 0 644 "u:object_r:system_file:s0"
     ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/permissions/privapp-permissions-com.samsung.android.aioskernelservice.xml" 0 0 644 "u:object_r:system_file:s0"
     ADD_TO_WORK_DIR "pa2qxxx" "system" "system/etc/sysconfig/aioskernelservice.xml" 0 0 644 "u:object_r:system_file:s0"
@@ -1020,6 +1038,7 @@ else
     LOG "- Disabling AIOSKernelService; UN1CA Qwen provider handles notification AI replies"
 fi
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/permissions/signature-permissions-com.samsung.android.offline.languagemodel.xml" 0 0 644 "u:object_r:system_file:s0"
+# Keep the stub; the full OfflineLanguageModel is installed later as an update.
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/priv-app/OfflineLanguageModel_stub/OfflineLanguageModel_stub.apk" 0 0 644 "u:object_r:system_file:s0"
 
 LOG "- Adding S26U NMT languagepack preload metadata"

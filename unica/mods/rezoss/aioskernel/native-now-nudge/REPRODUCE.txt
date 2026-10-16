@@ -1,0 +1,125 @@
+V73 Now Nudge replacement proof of concept
+
+The standalone APK trial is opt-in. The ROM integration below is now enabled
+for dm3q through native-now-nudge/config.sh; existing patch 0026 is preserved.
+The new SmartSuggestions patches follow the existing 0026 patch. They
+retain Samsung's callers, SCS, AI Core, Offline Language Model, prompt builder,
+result parser and callbacks. The AIOS candidate delegates only while global
+rezoss_aios_v73_backend is 1. The route flag is rezoss_now_nudge_native.
+
+Pinned host source: ExecuTorch d874339b8438c4bb7e3e185159e5714e5e04cdc8
+Model: https://huggingface.co/K9FxNa/Qwen3-0.6B-SM8550-Hybrid
+Revision: 6d18ba73eaca25df59f54211a950a9d869ae3391
+Original PTE SHA256: 075b732e5e908e9e3ed86e2e14961aac3f2f11fefba31f0b89fc22f1b8472e30
+Normalized PTE SHA256: 59e727d3174d84cd198a9707c2e52e9866e1c9fe0db63039474f32c71cdb009e
+Tokenizer SHA256: aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4
+Runtime: QAIRT 2.37.1; use matching HTP, System, V73 Stub and V73 Skel.
+
+Build the existing smolvlm scratch foundation, then additionally apply:
+  qwen-runner.patch
+  legacy-split-heads.patch
+  bounded-generation.patch
+Build target qnn_llama_runner in build-examples. The three smolvlm legacy
+context/mask/float-IO compatibility patches are prerequisites. Float IO is
+explicitly gated by REZOSS_LEGACY_FLOAT_IO=1.
+
+Use normalize_qwen_spec.py with the pinned original Qwen PTE and pinned
+SmolVLM decoder PTE. Only backend runtime-option vectors change; compiled
+model graphs and weights are preserved. The script verifies whole-file hashes.
+
+Source buildenv.sh dm3q, then run build_backend.sh with the runner workspace,
+original AIOS decode, and a new APK output path. build_candidate.sh takes the
+exact installed SmartSuggestions APK, its decode, and a new output APK path.
+Both scripts use temporary copies, zero-fuzz patch application, DEX 039,
+platform signing, ZIP checks and 16 KiB ZIP alignment.
+
+Keep the service versionName strictly numeric: Samsung's SDK parses it and
+falls back to its embedded V81 engine if parsing fails. Candidate identity is
+in the application label and versionCode. Do not use a versionName suffix.
+
+OfflineLanguageModel on this phone embeds SDK 1.4.46. It automatically selects
+the external service after numeric version comparison. Its initialization
+profile must load/validate the replacement engine before contextual_reply can
+be selected. Inference is rejected while only initialization is selected.
+Samsung safety_check, VIT, LLMV, LVM, MT5 and semantic requests are not supported.
+Do not advertise a Samsung Gauss model or Samsung adapter as loaded.
+
+Probe: build_probe.sh emits an optional local instrumentation APK. Its Binder
+mode validates real Samsung Proxy/Parcelable serialization across processes,
+preload, token counting, completion, cancellation and unload. SCS testing must
+run inside the real Samsung client because its service requires the Samsung
+signature permission. The Probe.runInApp diagnostic is suitable for a temporary
+REA/Frida call. No credentials are copied; original getAppInfo creates AppInfo.
+
+Current scratch work/evidence: /tmp/qwen3-v73-nudge/
+The native runner is one bounded subprocess per request, not a persistent HTTP
+server. It exits on completion, cancellation, client death or timeout. Battery
+improvement is not established without a controlled comparison. This model has
+1024 total tokens and uneven multilingual/three-reply quality.
+
+Final candidate: backend POC6, frontend POC5. Apply frontend patches 0001,
+0002 and 0003 in order; build_candidate.sh compiles NativeReplyBridge into
+an additional DEX. The helper returns actual parsed replies to notification
+callbacks and strips list markers/quotes. Existing user and conversation gates
+remain in Samsung code. PromptAdapter translates the known contextual-reply
+template while preserving dialogue, language and recall records.
+
+Device prerequisite: this ROM already has Samsung AI Core/SCS and the full
+OfflineLanguageModel 4.0.01.24 (400124010). Its package/assets are still needed
+by Samsung's frontend, although its donor weights are not executed by this
+backend. The bundle does not contain that package. APK signatures must match
+the tested ROM. This minimal AIOS APK is not a stock replacement with its
+backend flag disabled. Do not enable it by default in ROM customize scripts.
+
+This is a data-APK install bundle, not a recovery-flashable ZIP. It has not been
+validated as a clean full-ROM build or after an intentional reboot. The local
+handler diagnostic exercises genuine Samsung code and callbacks but does not
+prove a real messaging-app keyboard notification interaction. Reply quality,
+multilingual behavior and safety-check support remain incomplete.
+
+ROM integration (2026-10-15)
+----------------------------
+Native Now Nudge is enabled for dm3q in native-now-nudge/config.sh. Existing
+customize.sh applies patches 0001-0004 after patch 0026 and generates the Java
+helper into a new DEX. The project apktool currently caps smali API at 29;
+validation also assembled all changed buckets with API 28, producing DEX 039.
+
+build_rom_backend.sh preserves the hash-pinned POC6 native runtime/stub and
+recompiles the maintained backend Java. It uses the selected ROM platform key,
+versionCode 142801205 (newer than data POC6) and numeric versionName 1.4.28.
+The original native build remains reproducible with the earlier steps/patches.
+Prebuilt seed SHA: aef3822a21d4c8821bbfd0b8db2630d8db7b3a1f86bd3d3e9c5e2a0f7fbd5a8c.
+
+The ROM contains the PTE/tokenizer under /system/etc/unica/now-nudge-v73; the
+backend reads them directly. No first-boot private-data copy or root model
+provisioning is needed. Numeric chunks are reconstructed by ADD_TO_WORK_DIR;
+verify_payload.py verifies the complete PTE/tokenizer before packaging.
+The system APK also has an explicit lib/arm64 directory with executable runner.
+
+The ROM retains OfflineLanguageModel_stub. Install the full Samsung language
+package afterwards, as before. Tested full version is 4.0.01.24 / 400124010,
+SHA256 7a010f7518b9911f0c820a9e74efe2fa76eec340c05ae6899fc7bbe00b9942ea.
+Do not substitute the older repaired-v5 archive: it has different code.
+The current full package needs no new gate patch for the proven text-reply
+path. The stock Gauss weights inside it remain incompatible with V73.
+
+Boot integration enables AIOS on this ROM mode and initializes absent backend
+and routing settings. Explicit existing 0 values remain disabled. Existing
+Qwen/RezossAI packaging remains for other features and fallback.
+
+Build: source buildenv.sh dm3q; make_rom -f -r
+Validate without a ROM build/device: bash native-now-nudge/validate_rom_packaging.sh
+(the script path above is relative to unica/mods/rezoss/aioskernel).
+Set the config.sh dm3q default false to restore previous build behavior.
+
+Host packaging/patch/DEX checks do not prove image fit, boot, SELinux execution
+or actual messaging-app UI delivery. Rebuild and flash verification remain.
+
+2026-10-15 follow-up: the corrected system runner now generates successfully,
+but a real 53-token request took 20.3 s end to end. SmartReplyResolver released
+SmartReplyer at its separate stock 10 s latch wait, before the successful SCS
+callback arrived. Patch 0004 extends the inner wait to 45 s and the opt-in
+outer notification wait to 55 s. Stock-route waits remain unchanged. This
+fixes premature release; it does not speed up generation or prove UI delivery.
+The safety_check error in this trace fell back to Samsung's rule-based filter
+and the language service reported Success, so it was not the blocking error.
