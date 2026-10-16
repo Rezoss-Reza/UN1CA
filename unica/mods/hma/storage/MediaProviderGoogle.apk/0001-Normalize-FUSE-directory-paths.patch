@@ -1,0 +1,17 @@
+From: UN1CA contributors
+Subject: [PATCH] Normalize paths when classifying protected FUSE directories
+
+diff --git a/smali/com/android/providers/media/util/FileUtils.smali b/smali/com/android/providers/media/util/FileUtils.smali
+--- a/smali/com/android/providers/media/util/FileUtils.smali
++++ b/smali/com/android/providers/media/util/FileUtils.smali
+@@ -3007,6 +3007,10 @@
+ .method public static isDataOrObbPath(Ljava/lang/String;)Z
+     .locals 1
+
++    invoke-static {p0}, Lcom/android/providers/media/util/FileUtils;->normalizeAndFilterDefaultIgnorableCodepoints(Ljava/lang/String;)Ljava/lang/String;
++
++    move-result-object p0
++
+     if-nez p0, :cond_0
+
+     const/4 p0, 0x0

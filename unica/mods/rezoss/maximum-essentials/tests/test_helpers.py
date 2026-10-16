@@ -67,7 +67,7 @@ STUBS = {
             public interface OnClickListener { void onClick(View v); }
             public View(android.content.Context c){context=c;}
             public android.content.Context getContext(){return context;}
-            public void setOnClickListener(OnClickListener l){listener=l;clickable=l!=null;}
+            public void setOnClickListener(OnClickListener l){listener=l;clickable=true;}
             public void setVisibility(int v){visibility=v;} public void setClickable(boolean v){clickable=v;}
         }''',
     "android/widget/CompoundButton.java": '''package android.widget;
@@ -77,6 +77,7 @@ STUBS = {
             public void setOnCheckedChangeListener(Object o){} public void setEnabled(boolean v){enabled=v;}
             public void setChecked(boolean v){checked=v;} public void setContentDescription(String s){}
             public void jumpDrawablesToCurrentState(){}
+            public void performClick(){checked=!checked;if(listener!=null)listener.onClick(this);}
         }''',
     "android/widget/Toast.java": "package android.widget; public class Toast { public static final int LENGTH_LONG=1; public static int shown; public static Toast makeText(android.content.Context c,String s,int l){shown++;return new Toast();} public void show(){} }",
     "android/app/AlertDialog.java": '''package android.app;
@@ -120,6 +121,13 @@ public class HelperTest {
         check(read(MaximumPolicy.KNOWN+pkg)==1,"original essential recorded");
         check(!click(data).checked&&!data.e&&read(off)==1,"inactive OFF persists");
         check(IPackageManager.suspended.isEmpty(),"inactive change does not suspend");
+        View directRow=new View(c);CompoundButton directButton=new CompoundButton(c);
+        EssentialApps.bind(directRow,directButton,data);
+        check(directButton.listener!=null,"switch itself has the save handler");
+        directButton.performClick();
+        check(data.e&&directButton.checked&&read(off)==0,"direct switch tap saves ON");
+        directButton.performClick();
+        check(!data.e&&!directButton.checked&&read(off)==1,"direct switch tap confirms and saves OFF");
         EbsAppData alternative=app("com.google.android.dialer",true);EssentialApps.adjust(c,alternative);
         check(alternative.d,"nonessential alternative stays in All apps");
         data=app(pkg,true);EssentialApps.adjust(c,data);

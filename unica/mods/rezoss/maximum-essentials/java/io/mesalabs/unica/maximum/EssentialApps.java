@@ -43,7 +43,6 @@ public final class EssentialApps {
         if (data.d) return; // Ordinary All apps rows retain the stock listeners.
         row.setOnClickListener(null); // Clear listeners left by RecyclerView reuse.
         button.setOnCheckedChangeListener(null);
-        button.setOnClickListener(null);
         button.setVisibility(View.GONE);
         row.setClickable(false);
         try {
@@ -67,6 +66,7 @@ public final class EssentialApps {
                     change(context, button, data, true);
                 }
             };
+            button.setOnClickListener(click);
             row.setOnClickListener(click);
         } catch (Exception error) {
             Log.w("UnicaMaximum", "Cannot bind essential switch", error);
