@@ -20,6 +20,7 @@ public final class NativeReplyBridge {
   String text=value.trim().replaceFirst("^(?:[-*•]|[0-9]+[.)])\\s+", "").trim();
   if(text.startsWith("\""))text=text.substring(1).trim();
   if(text.endsWith("\""))text=text.substring(0,text.length()-1).trim();
+  for(int i=0;i<3;i++)text=text.replaceFirst("(?i)^me\\s*:\\s*", "").replaceFirst("(?i)(?:^|\\s+)me\\s*:\\s*$", "").trim();
   return text;
  }
  public static void record(Context context,Object param,List<?> generated){
@@ -39,9 +40,10 @@ public final class NativeReplyBridge {
  public static void addReplyActions(Context context,List<ConversationAction> actions,Object result){
   try{if(!enabled(context))return;int count=0;
    for(Object value:(List<?>)get(result,"getSuggestedReplies")){
-    if(!(value instanceof String)||((String)value).trim().isEmpty())continue;
+    if(!(value instanceof String))continue;
+    String reply=clean((String)value);if(reply.isEmpty())continue;
     Bundle extras=new Bundle();extras.putBoolean("now_nudge",true);extras.putString("source","suggested_replies");
-    actions.add(new ConversationAction.Builder(ConversationAction.TYPE_TEXT_REPLY).setTextReply((String)value).setConfidenceScore(.5f).setExtras(extras).build());
+    actions.add(new ConversationAction.Builder(ConversationAction.TYPE_TEXT_REPLY).setTextReply(reply).setConfidenceScore(.5f).setExtras(extras).build());
     if(++count==3)break;
    }
   }catch(Exception e){Log.e("RezossNudgeClient","Reply action conversion failed",e);}

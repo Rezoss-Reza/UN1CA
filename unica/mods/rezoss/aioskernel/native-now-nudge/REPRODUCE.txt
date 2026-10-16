@@ -1,3 +1,6 @@
+CURRENT PACKAGING (2026-10-16): see MODEL-PACK-MIGRATION.txt. The earlier
+ROM-bundled model and GGUF fallback descriptions below are historical.
+
 V73 Now Nudge replacement proof of concept
 
 The standalone APK trial is opt-in. The ROM integration below is now enabled

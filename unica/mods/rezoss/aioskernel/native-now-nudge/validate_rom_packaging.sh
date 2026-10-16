@@ -13,6 +13,9 @@ mkdir -p "$WORK_DIR/system/system" "$WORK_DIR/configs" "$TMP_DIR"
 mkdir -p "$WORK_DIR/system/system/etc/selinux"
 cp "$FW_DIR/SM-S918B_EUX/system/system/etc/selinux/plat_file_contexts" "$WORK_DIR/system/system/etc/selinux/plat_file_contexts"
 touch "$WORK_DIR/system/system/build.prop" "$WORK_DIR/configs/fs_config-system" "$WORK_DIR/configs/file_context-system"
+# Simulate stale weights from a previous incremental build.
+mkdir -p "$WORK_DIR/system/system/etc/unica/now-nudge-v73"
+touch "$WORK_DIR/system/system/etc/unica/now-nudge-v73/hybrid_llama_qnn.pte"
 source "$MODPATH/aioskernel/native-now-nudge/config.sh"
 [[ $UNICA_ENABLE_NATIVE_NOW_NUDGE == true ]]
 source "$MODPATH/aioskernel/native-now-nudge/integrate_rom.sh"
@@ -31,7 +34,6 @@ assert 'system/priv-app/AIOSKernelService/lib/arm64/libnudge_runner.so 0 0 755' 
 assert 'libnudge_runner\\.so u:object_r:system_file:s0' in fc
 assert not (s/'priv-app/OfflineLanguageModel').exists()
 assert 'ro.unica.now_nudge_v73=1' in (s/'build.prop').read_text()
-for name,expected in [('hybrid_llama_qnn.pte','59e727d3174d84cd198a9707c2e52e9866e1c9fe0db63039474f32c71cdb009e'),('tokenizer.json','aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4')]:
- assert hashlib.file_digest((s/'etc/unica/now-nudge-v73'/name).open('rb'),'sha256').hexdigest()==expected
+assert not (s/'etc/unica/now-nudge-v73').exists()
 print('ROM packaging fixture passed:',w)
 PY

@@ -5,4 +5,7 @@
     <allow-association target="io.mesalabs.unica.localsummary" allowed="android" />
     <allow-association target="io.mesalabs.rezoss.qwen" allowed="io.mesalabs.unica.localsummary" />
     <allow-association target="io.mesalabs.unica.localsummary" allowed="io.mesalabs.rezoss.qwen" />
+    <!-- Keep existing peers; permit the shared V73 service/model-provider path. -->
+    <allow-association target="io.mesalabs.unica.localsummary" allowed="com.samsung.android.aioskernelservice" />
+    <allow-association target="io.mesalabs.rezoss.qwen.v73" allowed="com.samsung.android.aioskernelservice" />
 </config>

@@ -9,7 +9,7 @@ public final class PromptAdapter {
    StringBuilder prompt=new StringBuilder("Suggest three short text messages I can send back, in ").append(language.group(1).trim()).append(".\nConversation:\n");
    prompt.append(dialogue.trim().replace("Others:","Friend:").replace("User:","Me:"));
    if(records!=null&&!records.trim().isEmpty()&&!records.trim().equals("[]"))prompt.append("\nRelevant context:\n").append(records.trim());
-   prompt.append("\nWrite one positive reply, one uncertain reply, and one negative reply appropriate to the conversation. Do not repeat the question. Output only the three replies on separate lines.\n/no_think");
+   prompt.append("\nWrite one positive reply, one uncertain reply, and one negative reply appropriate to the conversation. Do not repeat the question. Output only the three replies on separate lines, without speaker labels such as Me:.\n/no_think");
    return prompt.toString();
   }
   return raw.replace("<|begin_of_text|>","").replace("<|turn_start|>System","")

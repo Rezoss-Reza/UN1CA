@@ -4,9 +4,10 @@ import android.content.*;
 import android.content.pm.PackageManager;
 import android.os.*;
 import android.util.Log;
+import android.provider.Settings;
 import java.util.concurrent.*;
 
-/** System-side adapter only. Model, process, and inference live in the optional user app. */
+/** System-side adapter; V73 builds use AIOS, other builds retain the legacy optional engine. */
 public final class QwenEngine {
     private static final String ENGINE = "io.mesalabs.rezoss.qwen";
     private static Context app;
@@ -22,8 +23,11 @@ public final class QwenEngine {
     public static String generate(String input, boolean summary, int budgetMs, boolean foreground) {
         if (app == null || Looper.myLooper() == Looper.getMainLooper()) return null;
         Context context = app;
+        boolean nativeV73 = Settings.Global.getInt(context.getContentResolver(), "rezoss_aios_v73_backend", 0) == 1;
+        final String enginePackage = nativeV73 ? "com.samsung.android.aioskernelservice" : ENGINE;
+        final String engineService = nativeV73 ? "io.mesalabs.rezoss.nudge.LocalInferenceService" : ENGINE + ".EngineService";
         try {
-            if (!trustedEngine(context)) {
+            if (!trustedEngine(context, enginePackage)) {
                 Log.i("RezossAI", "engine status=missing_or_untrusted");
                 return null;
             }
@@ -71,7 +75,7 @@ public final class QwenEngine {
         boolean bound = false;
         long identity = Binder.clearCallingIdentity();
         try {
-            bound = context.bindService(new Intent().setClassName(ENGINE, ENGINE + ".EngineService"),
+            bound = context.bindService(new Intent().setClassName(enginePackage, engineService),
                     connection, Context.BIND_AUTO_CREATE);
             if (!bound) {
                 Log.i("RezossAI", "engine status=not_installed_or_disabled");
@@ -105,14 +109,14 @@ public final class QwenEngine {
         }
     }
 
-    private static boolean trustedEngine(Context context) {
+    private static boolean trustedEngine(Context context, String enginePackage) {
         PackageManager pm = context.getPackageManager();
-        if (pm.checkSignatures(context.getPackageName(), ENGINE) == PackageManager.SIGNATURE_MATCH) return true;
+        if (pm.checkSignatures(context.getPackageName(), enginePackage) == PackageManager.SIGNATURE_MATCH) return true;
         // The ROM records Samsung's identity for preloads; pin the optional engine's real signer.
         String hash = "c8a2e9bccf597c2fb6dc66bee293fc13f2fc47ec77bc6b2b0d52c11f51192ab8";
         byte[] expected = new byte[32];
         for (int i = 0; i < expected.length; i++) expected[i] = (byte) Integer.parseInt(hash.substring(i * 2, i * 2 + 2), 16);
-        return pm.hasSigningCertificate(ENGINE, expected, PackageManager.CERT_INPUT_SHA256);
+        return pm.hasSigningCertificate(enginePackage, expected, PackageManager.CERT_INPUT_SHA256);
     }
 
     public static String summary(String input) {

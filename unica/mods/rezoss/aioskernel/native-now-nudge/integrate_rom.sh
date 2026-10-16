@@ -2,9 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Sourced by Rezoss customize.sh only for the opt-in dm3q configuration.
 NUDGE_ROOT="$MODPATH/aioskernel/native-now-nudge"
-NUDGE_PAYLOAD="$NUDGE_ROOT/payload"
-LOG "- Verify native Now Nudge payloads"
-python3 "$NUDGE_ROOT/verify_payload.py" "$NUDGE_PAYLOAD" || ABORT "Missing or changed native Now Nudge payloads"
+LOG "- Build AIOS V73 runtime; model is supplied by the optional data APK"
 NUDGE_BUILD=$(mktemp -d "$TMP_DIR/native-nudge.XXXXXX") || return 1
 EVAL "bash \"$NUDGE_ROOT/build_rom_backend.sh\" \"$NUDGE_BUILD/AIOSKernelService.apk\"" || return 1
 mkdir -p "$NUDGE_BUILD/system/priv-app/AIOSKernelService" || return 1
@@ -28,10 +26,9 @@ ADD_TO_WORK_DIR "m3qxxx" "system" "system/etc/permissions/privapp-permissions-co
 ADD_TO_WORK_DIR "pa2qxxx" "system" "system/etc/sysconfig/aioskernelservice.xml" 0 0 644 "u:object_r:system_file:s0" || return 1
 # Preserve the ROM stub. The full Samsung language package is updated later.
 LOG "- Native Now Nudge requires the later OfflineLanguageModel 4.0.01.24 update"
-for NUDGE_FILE in hybrid_llama_qnn.pte tokenizer.json; do
-    ADD_TO_WORK_DIR "$NUDGE_PAYLOAD" "system" "system/etc/unica/now-nudge-v73/$NUDGE_FILE" 0 0 644 "u:object_r:system_file:s0" || return 1
-done
-SET_METADATA "system" "system/etc/unica/now-nudge-v73" 0 0 755 "u:object_r:system_file:s0" || return 1
+# Remove the previous bundled weights when rebuilding an existing work tree.
+DELETE_FROM_WORK_DIR "system" "system/etc/unica/now-nudge-v73" || return 1
+LOG "- Install QWEN_LLM_rezoss.apk (io.mesalabs.rezoss.qwen.v73) for model-backed inference"
 SET_PROP "system" "ro.unica.now_nudge_v73" "1" || return 1
 SET_PROP "system" "persist.sys.unica.enable_aioskernelservice" "1" || return 1
-unset NUDGE_ROOT NUDGE_PAYLOAD NUDGE_BUILD NUDGE_FILE NUDGE_LIB NUDGE_DIR
+unset NUDGE_ROOT NUDGE_BUILD NUDGE_LIB NUDGE_DIR

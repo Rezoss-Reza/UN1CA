@@ -154,3 +154,38 @@ Still untested: reboot persistence, XML import/toggle timing, both EC-only and
 dual-keybox inputs, biometric-bound keys, banking apps, Play Integrity, and
 keybox rotation on the rebuilt ROM. Host tests and one detector's bootloader
 result do not establish these behaviors.
+
+Retiring the temporary runtime module
+------------------------------------
+Duck Detector can observe the manually installed hotfix bind mount from an
+isolated process, even when its normal process sees a different mount view.
+The durable fix is a ROM containing the corrected injector/JAR and CIL rules,
+followed by disabling/removing unica_teesim_runtime_fix and rebooting. Do not
+remove it from the old ROM before the replacement is flashed: that restores
+the broken injector and removes the hotfix policy rules on reboot.
+
+The dm3q installer now packages the verified payload hashes and, after a
+successful ROM/DFE installation, runs a guarded recovery cleanup. It checks the
+newly installed injector/JAR/library hashes, init service, and three runtime
+repair policy rules before adding a disable marker to the exact
+unica_teesim_runtime_fix module in modules/ and modules_update/. It does not delete
+modules, signer state, imported XML, or other user data. Read-only system mounts
+opened for verification are released before the installer returns.
+
+An old ROM, missing policy/service, unavailable data, or unexpected module layout
+keeps the hotfix enabled. If recovery reports a skipped cleanup, disable the
+module manually in KernelSU only after the corrected ROM is flashed. Reboot to
+clear the old temporary mounts and use the built-in files. Check that
+sys.unica.teesim.ready is fresh, SELinux is Enforcing, and a fresh Duck scan still
+verifies attestation. Review the isolated-process mount evidence again; other
+modules may produce additional findings. No unmount-only workaround is used.
+
+Host-only migration checks (no ROM build and no device access):
+  PYTHONDONTWRITEBYTECODE=1 python3 -B unica/mods/tee-simulator/tests/test_hotfix_retirement.py
+Recovery execution, the next flash, and the resulting mount view remain untested.
+
+On 2026-10-16 Duck was removed only from the owner's HMA protected targets.
+All other HMA settings were preserved. Its fresh Dangerous Apps result changed
+from HMA-style concealment/Danger to Warning for two visible risky packages.
+The HMA policy is user data and survives a normal ROM update without a wipe;
+reimporting an older HMA policy can reintroduce the protected target.

@@ -1,0 +1,87 @@
+Qwen3 V73 model pack / AIOS migration, 2026-10-16
+================================================
+
+The dm3q build keeps Samsung's Now Nudge routing and uses Qwen3-0.6B V73
+in AIOSKernelService. RezossAI's existing notification-summary and three-tone
+reply clients now share that backend. Other device configurations retain the
+legacy GGUF builder. Vision, MT5, semantic embeddings and image generation
+are not implemented by this text backend.
+
+The optional file remains QWEN_LLM_rezoss.apk, but its package identity is
+io.mesalabs.rezoss.qwen.v73. It contains uncompressed model/tokenizer assets
+and a read-only provider, without a CPU inference service, GGUF, native libs
+or Internet permission. Do NOT preload a stub for this new package: Samsung's
+platform identity rewrite interferes with updating the old preloaded package.
+The small old QWEN stub remains solely to define the existing IPC permission.
+The native-mode boot script disables the old io.mesalabs.rezoss.qwen engine,
+including a previously installed full GGUF update. It does not delete its data.
+
+Build from the repository root:
+    source buildenv.sh dm3q
+    bash unica/mods/rezoss/qwen-llm/build.sh
+    make_rom -f -r
+
+Optional model APK output:
+    out/archived/QWEN_LLM/QWEN_LLM_rezoss.apk
+The builder backs up an existing APK and .version file before publishing.
+Install after flashing the new ROM:
+    /mnt/c/platform-tools/adb.exe install --no-incremental --no-streaming -r \
+        "$(wslpath -w out/archived/QWEN_LLM/QWEN_LLM_rezoss.apk)"
+Use the same signing key and increment both manifest versionCode and builder
+metadata for subsequent releases. New weights must match the model contract;
+V81 Samsung context files cannot replace the V73 PTE in this package.
+
+The APK is approximately 690 MiB. On first use, AIOS imports and SHA256 checks
+its assets into its own files/v73-models directory. This needs approximately
+another 690 MiB of /data space, plus temporary space while replacing weights.
+Changed package versions are rechecked, compatible changed weights are imported
+atomically, and older private revisions are removed after a successful import.
+The existing weights are reused for a same-weight APK update. Disabling or
+uninstalling the model pack causes subsequent requests to return unavailable;
+there is no fallback to the old /system model or CPU engine. Its private copy
+may remain until a new model import or AIOS app-data cleanup. A request already
+in flight may finish using its opened model when the pack is removed.
+
+ROM integration removes system/etc/unica/now-nudge-v73, including stale files
+from an incremental build, and retains the APK and executable native runtime.
+This moves about 690 MiB out of the ROM. The full Samsung OfflineLanguageModel
+update is still required for Samsung's client/session flow; its Gauss weights
+are not used for this replacement model. Photo/calendar extraction is unchanged.
+
+Source changes are under backend/, client-java/, local-summary-service/,
+qwen-llm/modelpack/, integrate_rom.sh and the Rezoss sysconfig/boot script.
+No PackageManager/framework signature or persistent-update bypass was added.
+The current RezossAI APK is persistent, so adb cannot replace it. Rebuild/flash
+the ROM for its direct AIOS routing and boot policy to become permanent.
+
+Device validation so far:
+- AIOS + model pack installed as data APKs; a same-package model APK update
+  succeeded without disabling signature checks.
+- New production client compiled into a diagnostic APK and invoked inside the
+  existing RezossAI UID: summary generated in 6297 ms; three-tone reply JSON
+  generated in 9413 ms after revising the initial unsuccessful prompt.
+- These timings are controlled synthetic requests, not a WhatsApp UI test.
+- Disabled model pack: explicit model_missing response in 15 ms even though
+  the previous ROM's system model and private imported copy still existed.
+- Imported PTE SHA256 matches the source model.
+- Caller cancellation returned in 2004 ms; no orphan inference runner remained.
+- Final Samsung NowNudgeConversationActionsHandler delivered a text_reply in
+  9371 ms: "I'm free for dinner tonight!", without a Me: label. This is a
+  synthetic handler test, not a fresh incoming WhatsApp UI validation.
+- Reply cleanup removes leading/trailing Me: labels without altering normal
+  uses of 'me'; 11 boundary regression cases pass.
+- ROM packaging fixture removes stale system weights and checks native labels,
+  executable modes, DEX versions and extracted library contents.
+
+The installed persistent bridge remains the old ROM version until flashing.
+The diagnostic bridge-to-AIOS association was allowed temporarily in RAM for
+these tests, then restored to its original state; the updated ROM sysconfig
+makes this permanent after boot. Tests
+of the new client are not proof that all existing UI requests already use it.
+
+Current timeouts: Samsung inner reply wait 45 s, outer wait 55 s. The V73
+runner uses a 1024-token context; adapters reject prompts over 850 tokens.
+Thermal/power guards, cancellation and a serialized queue can reject or delay
+requests. Reply quality/language coverage and background battery impact need
+real-message testing after flashing. A full ROM build, boot and UI validation
+have not been performed as part of this migration.

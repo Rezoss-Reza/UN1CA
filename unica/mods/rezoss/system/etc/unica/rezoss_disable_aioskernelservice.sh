@@ -19,6 +19,9 @@ enable_pkg()
 
 if [ "$(getprop ro.unica.now_nudge_v73 2>/dev/null)" = "1" ]; then
     enable_pkg "com.samsung.android.aioskernelservice"
+    # The old GGUF update may remain in /data after flashing. The new model
+    # package has a separate identity and AIOS owns all V73 inference.
+    disable_pkg "io.mesalabs.rezoss.qwen"
     # Initialize only absent settings; preserve explicit user opt-out on reboot.
     for key in rezoss_aios_v73_backend rezoss_now_nudge_native; do
         if [ "$(settings get global "$key" 2>/dev/null)" = "null" ]; then

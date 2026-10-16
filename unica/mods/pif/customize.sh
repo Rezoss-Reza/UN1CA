@@ -1,5 +1,7 @@
 APPLY_PATCH "system" "system/framework/framework.jar" \
     "$MODPATH/framework.jar/0001-Introduce-PlayIntegrityHooks.patch"
+APPLY_PATCH "system" "system/framework/framework.jar" \
+    "$MODPATH/framework.jar/0002-Spoof-PIF-system-properties.patch"
 SMALI_PATCH "system" "system/framework/framework.jar" \
     "smali/android/app/Instrumentation.smali" "replace" \
     'newApplication(Ljava/lang/Class;Landroid/content/Context;)Landroid/app/Application;' \

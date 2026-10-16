@@ -1,6 +1,7 @@
 package io.mesalabs.rezoss.nudge;
 
 import android.app.Service;
+import android.content.Context;
 import android.os.*;
 import android.provider.Settings;
 import android.util.Log;
@@ -15,24 +16,30 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class TextBackend {
     private static final String TAG="RezossNudgeV73", PREFIX="com.samsung.android.aioskernelservice.";
     private static final Map<Service,TextBackend> INSTANCES=new HashMap<>();
-    private final Service context;
-    private final ExecutorService worker=new ThreadPoolExecutor(1,1,0,TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(1));
+    private static TextBackend shared;
+    private final Context context;
+    private final ModelStore store;
+    private File modelDirectory;
+    private final java.util.concurrent.locks.ReentrantLock runnerLock=new java.util.concurrent.locks.ReentrantLock(true);
+    private final ThreadPoolExecutor worker=new ThreadPoolExecutor(1,1,0,TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(1));
     private final Map<Integer,String> profiles=new ConcurrentHashMap<>();
     private final Set<Task> tasks=Collections.synchronizedSet(new HashSet<Task>());
     private volatile boolean validated;
     private volatile Process auxiliary;
-    private TextBackend(Service service) { context=service; }
+    private TextBackend(Service service) { context=service.getApplicationContext(); store=new ModelStore(context); }
     public static synchronized boolean create(Service service) {
-        int defaultMode=new File("/system/etc/unica/now-nudge-v73").isDirectory()?1:0;
-        if(Settings.Global.getInt(service.getContentResolver(),"rezoss_aios_v73_backend",defaultMode)!=1) return false;
-        INSTANCES.put(service,new TextBackend(service));
+        if(Settings.Global.getInt(service.getContentResolver(),"rezoss_aios_v73_backend",1)!=1) return false;
+        if(shared==null)shared=new TextBackend(service);
+        INSTANCES.put(service,shared);
         Log.i(TAG,"Replacement Qwen3 V73 profile enabled; Samsung weights are not used"); return true;
     }
     public static synchronized IBinder bind(Service service) { TextBackend b=INSTANCES.get(service); return b==null?null:b.endpoint; }
+    static synchronized TextBackend local(Service service) { return INSTANCES.get(service); }
     public static synchronized boolean close(Service service) {
         TextBackend b=INSTANCES.remove(service); if(b==null)return false;
+        if(!INSTANCES.isEmpty())return true;
         synchronized(b.tasks) { for(Task task:new ArrayList<Task>(b.tasks))task.binderDied(); }
-        if(b.auxiliary!=null)b.auxiliary.destroyForcibly(); b.worker.shutdownNow(); b.profiles.clear();return true;
+        if(b.auxiliary!=null)b.auxiliary.destroyForcibly(); b.worker.shutdownNow(); b.profiles.clear();shared=null;return true;
     }
     static Object get(Object value,String name)throws Exception{return value.getClass().getMethod(name).invoke(value);}
     static Object read(Parcel p,String name)throws Exception {
@@ -44,12 +51,16 @@ public final class TextBackend {
             .newInstance(ids,Collections.singletonList(prompt),Collections.emptyList(),Collections.emptyList());
     }
     private File models(){
-        // ROM payload is immutable and hash-checked by the build. Keep the
-        // private directory fallback for separately installed data-APK trials.
-        File rom=new File("/system/etc/unica/now-nudge-v73");
-        return rom.isDirectory()?rom:new File(context.getFilesDir(),"models");
+        if(modelDirectory==null)throw new IllegalStateException("Model package not imported");
+        return modelDirectory;
     }
-    private boolean filesPresent(){return new File(models(),"hybrid_llama_qnn.pte").length()>100000000 && new File(models(),"tokenizer.json").length()>1000000;}
+    boolean filesPresent(){return store.info()!=null;}
+    private void prepareModel(long deadline)throws Exception {
+        File next=store.ensure(deadline);
+        if(!next.equals(modelDirectory)){validated=false;modelDirectory=next;}
+    }
+    void submit(Runnable job){worker.execute(job);}
+    void remove(Runnable job){worker.remove(job);}
     private List<String> command(File job,String prompt,String mode)throws Exception {
         File input=new File(job,"prompt.txt");Files.write(input.toPath(),prompt.getBytes("UTF-8"));
         String libs=context.getApplicationInfo().nativeLibraryDir;
@@ -65,39 +76,45 @@ public final class TextBackend {
         pb.environment().put("LD_LIBRARY_PATH",libs+":/vendor/lib64");pb.environment().put("ADSP_LIBRARY_PATH",libs);
         pb.environment().put("REZOSS_LEGACY_FLOAT_IO","1");return pb.start();
     }
-    private synchronized boolean validate() {
-        if(validated)return true;if(!filesPresent())return false;
+    private boolean validate() {
+        if(!filesPresent())return false;
+        runnerLock.lock();
         try {
+            prepareModel(SystemClock.elapsedRealtime()+45000);
+            if(validated)return true;
             File job=Files.createTempDirectory(context.getCacheDir().toPath(),"load-").toFile();
             auxiliary=launch(job,"test","--load_only");
             if(!auxiliary.waitFor(45,TimeUnit.SECONDS)){auxiliary.destroyForcibly();return false;}
             validated=auxiliary.exitValue()==0;auxiliary=null;Log.i(TAG,"V73 model validation="+validated);return validated;
         }catch(Exception e){Log.e(TAG,"Model validation failed",e);return false;}
+        finally{if(auxiliary!=null){auxiliary.destroyForcibly();auxiliary=null;}runnerLock.unlock();}
     }
-    private synchronized int count(String prompt)throws Exception {
+    private int count(String prompt)throws Exception {
         File job=Files.createTempDirectory(context.getCacheDir().toPath(),"count-").toFile();
-        auxiliary=launch(job,prompt,"--count_only");
+        try{auxiliary=launch(job,prompt,"--count_only");
         if(!auxiliary.waitFor(10,TimeUnit.SECONDS)){auxiliary.destroyForcibly();throw new IOException("Tokenizer timeout");}
         if(auxiliary.exitValue()!=0)throw new IOException("Tokenizer failure");auxiliary=null;
         int n=Integer.parseInt(new String(Files.readAllBytes(new File(job,"output.txt").toPath()),"UTF-8").trim());
-        for(File f:job.listFiles())f.delete();job.delete();return n;
+        return n;
+        }finally{if(auxiliary!=null){auxiliary.destroyForcibly();auxiliary=null;}for(File f:job.listFiles())f.delete();job.delete();}
     }
     private final Binder endpoint=new Binder(){
         public String getInterfaceDescriptor(){return PREFIX+"IAIOSKernelService";}
         protected boolean onTransact(int code,Parcel in,Parcel out,int flags)throws RemoteException {
             if(code==INTERFACE_TRANSACTION){out.writeString(getInterfaceDescriptor());return true;}
             in.enforceInterface(getInterfaceDescriptor()); int uid=Binder.getCallingUid();byte status=3;
+            long identity=Binder.clearCallingIdentity();
             try {
                 switch(code){
                     case 1: status=(byte)(filesPresent()?0:3);break;
                     case 11:in.readTypedObject(Bundle.CREATOR);status=(byte)(filesPresent()?0:3);break;
                     case 2:{String prompt=in.readString();int length=in.readInt();if(length<1||length>16)throw new IllegalArgumentException("Invalid token count array");
-                        int[] values=new int[length];values[0]=count(prompt);out.writeNoException();out.writeByte((byte)0);out.writeIntArray(values);return true;}
+                        int[] values=new int[length];runnerLock.lock();try{prepareModel(SystemClock.elapsedRealtime()+15000);values[0]=count(prompt);}finally{runnerLock.unlock();}out.writeNoException();out.writeByte((byte)0);out.writeIntArray(values);return true;}
                     case 4:case 5:profiles.remove(uid);for(Task task:snapshot())if(task.owner==uid){task.stop();task.finish(4,null);}status=0;break;
                     case 6:{Object model=read(in,"ModelInfo"),adapter=read(in,"AdapterInfo");status=select(uid,adapter);break;}
                     case 7:status=select(uid,read(in,"AdapterInfo"));break;
                     case 8:{Object input=read(in,"TaskIOTensor");read(in,"TaskPriority");IBinder callback=in.readStrongBinder();in.enforceNoDataAvail();
-                        if(!validated||!profiles.containsKey(uid)||"initialization".equals(profiles.get(uid)))throw new IllegalStateException("Prepare contextual_reply replacement profile first");
+                        if(!filesPresent()||!validated||!profiles.containsKey(uid)||"initialization".equals(profiles.get(uid)))throw new IllegalStateException("Prepare contextual_reply replacement profile first");
                         Task task=new Task(uid,input,callback);tasks.add(task);callback.linkToDeath(task,0);
                         try{worker.execute(task);}catch(RejectedExecutionException ex){task.finish(3,null);}
                         out.writeNoException();out.writeStrongBinder(task);return true;}
@@ -105,6 +122,7 @@ public final class TextBackend {
                 }
                 in.enforceNoDataAvail();out.writeNoException();out.writeByte(status);
             }catch(Exception ex){Log.e(TAG,"Rejected transaction="+code,ex);out.writeException(new IllegalArgumentException(ex.getMessage()));}
+            finally{Binder.restoreCallingIdentity(identity);}
             return true;
         }
     };
@@ -139,17 +157,40 @@ public final class TextBackend {
             }catch(Exception ex){Log.e(TAG,"Callback failed",ex);}finally{data.recycle();reply.recycle();}
         }
         public void run(){
-            File job=null;try{if(done.get())return;job=Files.createTempDirectory(context.getCacheDir().toPath(),"reply-").toFile();
+            File job=null;boolean locked=false;try{runnerLock.lockInterruptibly();locked=true;if(done.get())return;
+                prepareModel(SystemClock.elapsedRealtime()+45000);job=Files.createTempDirectory(context.getCacheDir().toPath(),"reply-").toFile();
                 if(count(prompt)>850)throw new IllegalArgumentException("Prompt exceeds replacement 1024-token context budget");
                 synchronized(this){if(done.get())return;process=launch(job,prompt,null);if(done.get()){stop();return;}}
                 if(!process.waitFor(45,TimeUnit.SECONDS)){stop();throw new IOException("Reply timeout");}if(done.get())return;
                 if(process.exitValue()!=0)throw new IOException("Runner exit="+process.exitValue()+" job="+job);
                 String text=new String(Files.readAllBytes(new File(job,"output.txt").toPath()),"UTF-8").replace("<|im_end|>","").trim();
                 int think=text.lastIndexOf("</think>");if(think>=0)text=text.substring(think+8).trim();
+                text=ReplyText.lines(text);
                 if(text.isEmpty()||text.contains("<think>"))throw new IOException("Empty/incomplete response");
                 Log.i(TAG,"COMPLETE uid="+owner+" chars="+text.length());finish(1,result(ids,name,text));
-            }catch(Exception ex){Log.e(TAG,"Task failed job="+job,ex);finish(3,null);}finally{if(job!=null)new File(job,"prompt.txt").delete();}
+            }catch(Exception ex){Log.e(TAG,"Task failed job="+job,ex);finish(3,null);}finally{if(job!=null)new File(job,"prompt.txt").delete();if(locked)runnerLock.unlock();}
         }
+    }
+    interface Control { boolean cancelled(); long deadline(); void process(Process process); }
+    String generateLocal(String input,boolean summary,Control control)throws Exception {
+        runnerLock.lockInterruptibly(); File job=null;
+        try{
+            if(control.cancelled())throw new InterruptedIOException();
+            prepareModel(control.deadline());
+            String prompt=LocalFormat.prompt(input,summary);
+            if(count(prompt)>850)throw new IllegalArgumentException("context_limit");
+            if(control.cancelled()||SystemClock.elapsedRealtime()>=control.deadline())throw new InterruptedIOException();
+            job=Files.createTempDirectory(context.getCacheDir().toPath(),"local-").toFile();
+            Process process=launch(job,prompt,null);control.process(process);
+            try{
+                if(control.cancelled()){process.destroyForcibly();throw new InterruptedIOException();}
+                if(!process.waitFor(Math.max(1,control.deadline()-SystemClock.elapsedRealtime()),TimeUnit.MILLISECONDS))throw new IOException("deadline");
+                if(control.cancelled())throw new InterruptedIOException();
+                if(process.exitValue()!=0)throw new IOException("runner_failed");
+                String raw=new String(Files.readAllBytes(new File(job,"output.txt").toPath()),"UTF-8");
+                return LocalFormat.output(raw,summary);
+            }finally{process.destroyForcibly();control.process(null);}
+        }finally{if(job!=null){File[] files=job.listFiles();if(files!=null)for(File f:files)f.delete();job.delete();}runnerLock.unlock();}
     }
     static String adapt(String raw){return PromptAdapter.adapt(raw);}
 }
