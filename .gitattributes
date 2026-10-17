@@ -1,5 +1,7 @@
 # Set the default behavior, in case people don't have core.autocrlf set.
 * text eol=lf
+unica/mods/settings/system/bin/unica-gpu binary
+unica/mods/settings/system/etc/unica/gpu/restore binary
 
 # Denote all files that are truly binary and should not be modified.
 

@@ -12,6 +12,9 @@
     <io.mesalabs.unica.settings.preference.IconPreference android:icon="@drawable/ic_unica_settings_battery" android:title="@string/unica_battery_title" android:key="unica_battery" android:summary="@string/unica_battery_summary">
         <intent android:targetPackage="com.android.settings" android:targetClass="io.mesalabs.unica.battery.BatteryActivity"/>
     </io.mesalabs.unica.settings.preference.IconPreference>
+    <io.mesalabs.unica.settings.preference.IconPreference android:icon="@drawable/ic_unica_settings_battery" android:title="@string/unica_gpu_title" android:key="unica_gpu" android:summary="@string/unica_gpu_summary">
+        <intent android:targetPackage="com.android.settings" android:targetClass="io.mesalabs.unica.gpu.GpuActivity"/>
+    </io.mesalabs.unica.settings.preference.IconPreference>
     <com.samsung.android.settings.widget.SecInsetCategoryPreference />
     <io.mesalabs.unica.settings.preference.IconPreference android:icon="@drawable/ic_unica_settings_spoof" android:title="@string/unica_spoof_settings_title" android:key="unica_spoof_settings" android:fragment="io.mesalabs.unica.settings.spoof.SpoofSettingsFragment" settings:controller="io.mesalabs.unica.settings.spoof.SpoofSettingsPreferenceController" />
     <io.mesalabs.unica.settings.preference.IconPreference android:icon="@drawable/ic_unica_settings_extra" android:title="@string/unica_extra_settings_title" android:key="unica_extra_settings" android:fragment="io.mesalabs.unica.settings.extra.ExtraSettingsFragment" settings:controller="io.mesalabs.unica.settings.extra.ExtraSettingsPreferenceController" />

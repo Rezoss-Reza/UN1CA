@@ -2,6 +2,8 @@ SKIPUNZIP=1
 
 LOG_STEP_IN "- Rezoss experimental mods"
 
+source "$MODPATH/scheduled-power-on/integrate.sh" || return 1
+
 # This POC is restricted to the tested S23U target and retains Qwen fallback.
 source "$MODPATH/aioskernel/native-now-nudge/config.sh" || return 1
 if [[ "$UNICA_ENABLE_NATIVE_NOW_NUDGE" == "true" ]]; then
@@ -97,9 +99,11 @@ APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSugges
     "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0020-Route-Now-Nudge-replies-through-UN1CA-Qwen-provider.patch"
 APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
     "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0026-Connect-in-app-and-notification-replies-to-RezossAI.patch"
+APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" \
+    "$MODPATH/smartsuggestions/SamsungSmartSuggestions.apk/0027-Preserve-WhatsApp-conversation-nudge-on-unknown-autofill.patch"
 if [[ "$UNICA_ENABLE_NATIVE_NOW_NUDGE" == "true" ]]; then
     LOG "- Integrating native V73 Now Nudge after Rezoss patch 0026"
-    for REZOSS_NUDGE_PATCH in "$MODPATH/aioskernel/native-now-nudge/"000[123456]-*.patch; do
+    for REZOSS_NUDGE_PATCH in "$MODPATH/aioskernel/native-now-nudge/"000[1234567]-*.patch; do
         APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" "$REZOSS_NUDGE_PATCH"
     done
     EVAL "bash \"$MODPATH/aioskernel/native-now-nudge/build_client_helper.sh\" \"$APKTOOL_DIR/system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk\"" || return 1
@@ -1410,9 +1414,9 @@ PY_CACHE
   chmod +x "$TMP_DIR/magiskboot" || return 1
   unzip -p "$KERNEL_ZIP" Image.gz > "$TMP_DIR/replacement-kernel" || return 1
   KSU_KSUD="$TMP_DIR/ksud"
-  KSU_MODULE="$TMP_DIR/android13-5.15_kernelsu.ko"
+  KSU_MODULE="$TMP_DIR/android13-5.15_susfs_guard_lkm.ko"
   unzip -p "$CACHE_DIR/ksud-x86_64-unknown-linux-musl.zip" x86_64-unknown-linux-musl/release/ksud > "$KSU_KSUD" || return 1
-  unzip -p "$CACHE_DIR/aarch64-android13-5.15-lkm.zip" android13-5.15_kernelsu.ko > "$KSU_MODULE" || return 1
+  unzip -p "$CACHE_DIR/aarch64-android13-5.15-susfs-lkm.zip" android13-5.15_susfs_guard_lkm.ko > "$KSU_MODULE" || return 1
   chmod +x "$KSU_KSUD" || return 1
   "$KSU_KSUD" --help >/dev/null || return 1
 

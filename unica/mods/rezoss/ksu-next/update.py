@@ -13,7 +13,7 @@ import zipfile
 
 KERNEL_REPO = 'Rezoss-Reza/s23-ksu-next'
 CI_REPO = 'KernelSU-Next/KernelSU-Next'
-ARTIFACTS = {'aarch64-android13-5.15-lkm': 'android13-5.15_kernelsu.ko',
+ARTIFACTS = {'aarch64-android13-5.15-susfs-lkm': 'android13-5.15_susfs_guard_lkm.ko',
              'ksud-x86_64-unknown-linux-musl': 'x86_64-unknown-linux-musl/release/ksud'}
 
 
@@ -140,7 +140,8 @@ def refresh(cache):
             if not runs:
                 raise ValueError('No successful CI run')
             run = runs[0]
-            if run['run_number'] <= int(ci[1]):
+            if (run['run_number'] <= int(ci[1])
+                    and all((cache / (name + '.zip')).is_file() for name in ARTIFACTS)):
                 print('Cached KSU-Next CI is current: #' + ci[1])
                 return
             assets = api(CI_REPO + '/actions/runs/' + str(run['id']) + '/artifacts?per_page=100', scratch)['artifacts']
