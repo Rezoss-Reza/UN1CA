@@ -1,4 +1,0 @@
-# SettingsProvider shellCommand output pipe and native SCM_RIGHTS delivery.
-allow system_server unica_teesim fd use
-allow system_server unica_teesim fifo_file { read write getattr ioctl }
-allow unica_teesim keystore unix_dgram_socket sendto

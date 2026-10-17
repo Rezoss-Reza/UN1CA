@@ -295,3 +295,12 @@ Rebuild and compile tests:
   source buildenv.sh dm3q
   bash unica/mods/settings/battery/build.sh
   bash unica/mods/settings/battery/tests/build.sh
+
+App selector search (2026-10-17)
+-------------------------------
+All four app selectors have a search field above the list. Matching is
+case-insensitive across displayed app names and package names. Clearing the
+query shows all rows again. Check states belong to the original entries, so
+filtering and saving retains selections hidden by the query. Cancel discards
+selection edits. Exempted App recovery protections remain enforced after filtering.
+The dialog shows a no-matches message when the query has no results.

@@ -75,8 +75,12 @@ perform a clean ROM rebuild. Neither rollback path migrates keys between backend
 Build and verify
 ----------------
 Checked-in ARM64 payload is in payload/; payload.sha256 verifies the binaries.
-source.sha256 binds the payload to its source snapshot. customize.sh refuses
-modified/missing payload, changed sources, or decoded old Java hooks.
+source.sha256 binds the payload to its source snapshot. customize.sh automatically
+rebuilds changed sources in a fresh /tmp directory, then verifies the payload.
+Unchanged sources reuse the existing payload. Modified/missing payload with
+unchanged sources and decoded old Java hooks are rejected.
+Automatic rebuilds require the backend toolchain listed below; failure stops
+the ROM build before installation. Added and deleted source files also trigger a rebuild.
 Use a CLEAN ROM build after switching backend; existing out/target was not edited.
 
 Prerequisites for rebuilding: JDK 21; Android SDK 37; build-tools 37.0.0; NDK
@@ -128,8 +132,8 @@ permissions are in policy/unica-teesim.cil.
 
 The corrected payload was built, eight host tests passed, and boot-mode CIL
 compilation passed. A removable KernelSU hotfix was installed for the current
-ROM: module id unica_teesim_runtime_fix, source scripts in runtime-hotfix/.
-Use package_hotfix.py OUTPUT.zip to package the verified payload for this use.
+ROM: module id unica_teesim_runtime_fix. Its temporary packaging scripts were retired
+on 2026-10-17 after live verification of the built-in ROM backend without the module.
 Remove this temporary module after flashing a ROM with the source repair.
 
 For the live test the simulator service was stopped, replacement files were
@@ -189,3 +193,9 @@ All other HMA settings were preserved. Its fresh Dangerous Apps result changed
 from HMA-style concealment/Danger to Warning for two visible risky packages.
 The HMA policy is user data and survives a normal ROM update without a wipe;
 reimporting an older HMA policy can reintroduce the protected target.
+
+2026-10-17 live verification: temporary module absent from modules/ and
+modules_update/, all three installed backend hashes match payload/, service
+running with fresh readiness heartbeat, SELinux Enforcing, native library
+mapped in keystore2, and successful patch-mode attestations in current-boot logs.
+This does not establish every banking app, keybox rotation, or biometric flow.

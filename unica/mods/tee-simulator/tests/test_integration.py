@@ -118,6 +118,31 @@ source "$MODPATH/customize.sh"
         self.assertIn('clean ROM build', result.stderr)
         self.assertFalse((self.work / 'system').exists())
 
+    def test_changed_sources_rebuild_once_then_reuse_payload(self):
+        mod = self.root / 'mod'
+        shutil.copytree(MOD, mod, ignore=shutil.ignore_patterns('*.bak*', '__pycache__'))
+        builder = mod / 'build_backend.py'
+        builder.write_text('''from pathlib import Path
+import check_sources
+root = Path(__file__).resolve().parent
+with (root / "build-count").open("a") as out:
+    out.write("built\\n")
+(root / "source.sha256").write_text(check_sources.current(root))
+''')
+        added = mod / 'source/new-input.txt'
+        added.write_text('new source')
+        for expected in (1, 1):
+            result = self.customize(mod)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(len((mod / 'build-count').read_text().splitlines()), expected)
+            # The next invocation uses a fresh temporary ROM output.
+            shutil.rmtree(self.framework)
+            self.framework.mkdir()
+        added.unlink()
+        result = self.customize(mod)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(len((mod / 'build-count').read_text().splitlines()), 2)
+
     def test_payload_has_dex_and_rom_entrypoint(self):
         with zipfile.ZipFile(MOD / 'payload/system/framework/unica-teesim.jar') as z:
             self.assertIsNone(z.testzip())

@@ -76,3 +76,14 @@ security/unica_platform.pk8
 !.gitignore
 !.gitmodules
 /prebuilts/samsung/m3qxxx/system/priv-app/SamsungIntelliVoiceServices/SamsungIntelliVoiceServices.apk
+
+# Local research, validation records and retired hotfix reference files
+/unica/mods/rezoss/aioskernel/REA-v73-findings.txt
+/unica/mods/rezoss/aioskernel/REA-vit-loader-findings.txt
+/unica/mods/rezoss/aioskernel/build_v73_candidate.py
+/unica/mods/rezoss/aioskernel/gauss-feasibility/
+/unica/mods/rezoss/aioskernel/native-now-nudge/REA-native-now-nudge-findings.txt
+/unica/mods/rezoss/aioskernel/native-now-nudge/UI-VALIDATION-20261015.txt
+/unica/mods/rezoss/tmp/
+/unica/mods/tee-simulator/package_hotfix.py
+/unica/mods/tee-simulator/runtime-hotfix/

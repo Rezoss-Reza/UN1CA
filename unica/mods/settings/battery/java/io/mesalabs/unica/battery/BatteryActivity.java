@@ -185,6 +185,47 @@ public final class BatteryActivity extends Activity {
         if(!found)text("Saved value "+selections.optString(id)+" is unavailable here. Choose a supported value before applying.",13);
         discrete("Value",values,labels,selections.optString(id,"__original"),value->{try{if(value.equals("__original"))selections.remove(id);else selections.put(id,value);custom();}catch(Exception e){error(e);}});
     }
+    private void searchableApps(String title,String[] labels,boolean[] checked,
+            java.util.function.IntPredicate protectedRow,Runnable saveSelection){
+        LinearLayout body=new LinearLayout(this);body.setOrientation(LinearLayout.VERTICAL);
+        body.setPadding(dp(16),0,dp(16),0);
+        EditText search=new EditText(this);search.setSingleLine(true);
+        search.setHint("Search app name or package");search.setContentDescription("Search apps");
+        search.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        body.addView(search,new LinearLayout.LayoutParams(-1,-2));
+        TextView summary=new TextView(this);body.addView(summary);
+        ListView list=new ListView(this);list.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+        body.addView(list,new LinearLayout.LayoutParams(-1,Math.min(dp(360),getResources().getDisplayMetrics().heightPixels/2)));
+        List<Integer> visible=new ArrayList<>();
+        ArrayAdapter<String> adapter=new ArrayAdapter<>(this,android.R.layout.simple_list_item_multiple_choice,new ArrayList<>());
+        list.setAdapter(adapter);
+        Runnable refresh=()->{
+            String query=search.getText().toString().trim().toLowerCase(Locale.ROOT);
+            visible.clear();adapter.clear();list.clearChoices();
+            for(int i=0;i<labels.length;i++)if(labels[i].toLowerCase(Locale.ROOT).contains(query)){
+                visible.add(i);adapter.add(labels[i]);
+            }
+            for(int row=0;row<visible.size();row++)list.setItemChecked(row,checked[visible.get(row)]);
+            summary.setText(visible.isEmpty()?"No matching apps":visible.size()+" apps");
+        };
+        list.setOnItemClickListener((parent,view,row,id)->{
+            int original=visible.get(row);boolean on=list.isItemChecked(row);
+            if(on && protectedRow.test(original)){
+                list.setItemChecked(row,false);checked[original]=false;
+                Toast.makeText(this,"This app or its shared UID is protected for recovery",Toast.LENGTH_LONG).show();
+            }else checked[original]=on;
+        });
+        search.addTextChangedListener(new android.text.TextWatcher(){
+            public void beforeTextChanged(CharSequence text,int start,int count,int after){}
+            public void onTextChanged(CharSequence text,int start,int before,int count){refresh.run();}
+            public void afterTextChanged(android.text.Editable text){}
+        });
+        refresh.run();
+        AlertDialog dialog=new AlertDialog.Builder(this).setTitle(title).setView(body)
+                .setNegativeButton("Cancel",null).setPositiveButton("Save selection",(d,w)->saveSelection.run()).create();
+        dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        dialog.show();
+    }
     private void appButton(String field,String title){
         JSONArray selected=profile.optJSONArray(field);text(selected==null||selected.length()==0?"No apps selected":selected.toString(),12);
         button(title,ready,v->{
@@ -198,7 +239,7 @@ public final class BatteryActivity extends Activity {
                 apps.sort(Comparator.comparing(a->a.loadLabel(getPackageManager()).toString(),String.CASE_INSENSITIVE_ORDER));
                 runOnUiThread(()->{if(isDestroyed())return;busy=false;draw();String[] names=new String[apps.size()];boolean[] checked=new boolean[apps.size()];Set<String> current=new HashSet<>();JSONArray old=profile.optJSONArray(field);if(old==null)old=new JSONArray();for(int i=0;i<old.length();i++)current.add(old.optString(i));
                     for(int i=0;i<apps.size();i++){ApplicationInfo a=apps.get(i);names[i]=a.loadLabel(getPackageManager())+"\n"+a.packageName;checked[i]=current.contains(a.packageName);}
-                    new AlertDialog.Builder(this).setTitle(title).setMultiChoiceItems(names,checked,(dlg,which,on)->checked[which]=on).setNegativeButton("Cancel",null).setPositiveButton("Save selection",(dlg,which)->{try{JSONArray chosen=new JSONArray();for(int i=0;i<apps.size();i++)if(checked[i])chosen.put(apps.get(i).packageName);if(chosen.length()>100)throw new IOException("Select at most 100 apps");profile.put(field,chosen);custom();status="Selection saved. Use Save and apply.";draw();}catch(Exception e){error(e);}}).show();
+                    searchableApps(title,names,checked,index->false,()->{try{JSONArray chosen=new JSONArray();for(int i=0;i<apps.size();i++)if(checked[i])chosen.put(apps.get(i).packageName);if(chosen.length()>100)throw new IOException("Select at most 100 apps");profile.put(field,chosen);custom();status="Selection saved. Use Save and apply.";draw();}catch(Exception e){error(e);}});
                 });
             });
         });
@@ -227,17 +268,12 @@ public final class BatteryActivity extends Activity {
                 }
                 runOnUiThread(()->{if(isDestroyed())return;busy=false;draw();
                     boolean[] checked=new boolean[packages.size()];for(int i=0;i<checked.length;i++)checked[i]=chosen.contains(packages.get(i));
-                    new AlertDialog.Builder(this).setTitle("Exempted App — disable completely")
-                        .setMultiChoiceItems(labels.toArray(new String[0]),checked,(dialog,which,on)->{
-                            if(on && protectedRows.get(which)){
-                                ((AlertDialog)dialog).getListView().setItemChecked(which,false);checked[which]=false;
-                                Toast.makeText(this,"This app or its shared UID is protected for recovery",Toast.LENGTH_LONG).show();
-                            }else checked[which]=on;
-                        }).setNegativeButton("Cancel",null).setPositiveButton("Save selection",(dialog,which)->{try{
+                    searchableApps("Exempted App — disable completely",labels.toArray(new String[0]),checked,
+                        index->protectedRows.get(index),()->{try{
                             JSONArray result=new JSONArray();for(int i=0;i<checked.length;i++)if(checked[i])result.put(packages.get(i));
                             if(result.length()>100)throw new IOException("Select at most 100 apps");
                             profile.put("disabled_packages",result);custom();status="Selection saved. Save and apply will confirm app disabling and restart.";draw();
-                        }catch(Exception e){error(e);}}).show();
+                        }catch(Exception e){error(e);}});
                 });
             }catch(Exception e){runOnUiThread(()->{if(isDestroyed())return;busy=false;error(e);});}});
         });
