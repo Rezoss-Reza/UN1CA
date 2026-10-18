@@ -26,12 +26,32 @@ int main(int argc,char** argv){try{
  denied([&]{Bytes c=b;c[0]^=1;table(c);});
  denied([&]{Bytes c=b;c[t.dtb+200]^=1;table(c);});
  denied([&]{auto c=f;c[1]=c[0];edit(b,c,l);});
- denied([&]{auto c=f;c[0]=900000000;edit(b,c,l);});
- denied([&]{auto c=f;c[9]=124799999;edit(b,c,l);});
- denied([&]{auto c=l;c[0]=193;edit(b,f,c);});
- denied([&]{auto c=l;c[8]=224;edit(b,f,c);});
+ denied([&]{auto c=f;c[0]=0;edit(b,c,l);});
+ {auto c=f;c[9]=124799999;check(table(edit(b,c,l)).frequencies[9]==124799999);}
+ denied([&]{auto c=l;c[0]=481;edit(b,f,c);});
+ {auto c=l;c[8]=224;check(table(edit(b,f,c)).levels[8]==224);}
  denied([&]{Bytes c=b;c[footerOffset]='X';edit(c,f,l);});
  denied([&]{Bytes c=b;put64(c,footerOffset+20,UINT64_MAX);edit(c,f,l);});
+ // Both bins, exact Hz, experimental corners and structural edits use the same encoder.
+ check(renderBins(t.bins,t.reference)==STOCK_BINS);
+ for(uint32_t value:{1u,16u,48u,72u,96u,193u,480u}){auto bins=t.bins;bins[0].rows[0].voltage=value;auto image=editBins(b,bins);check(table(image).bins[0].rows[0].voltage==value);}
+ auto bins=t.bins;bins[0].rows[0].frequency=730999999;bins[1].rows[8].voltage=56;auto full=editBins(b,bins);auto fullTable=table(full);check(fullTable.bins[0].rows[0].frequency==730999999);check(fullTable.bins[1].rows[8].voltage==56);check(!stockTables(full));
+ bins[0].rows.pop_back();bins[0].rows.back().acd=0x12345678;bins[0].rows.back().hasAcd=true;auto reduced=editBins(b,bins);auto reducedTable=table(reduced);check(reducedTable.bins[0].rows.size()==9);check(reducedTable.bins[0].rows[8].acd==0x12345678);
+ {auto raw=t.bins;raw[0].rows[0].bus=15;raw[0].rows[0].minimum=14;raw[0].rows[0].maximum=16;auto restored=table(editBins(b,raw));check(restored.bins[0].rows[0].bus==15);check(restored.bins[0].rows[0].maximum==16);}
+ // FDT_NOP padding keeps every byte outside the bin region and AVB metadata unchanged.
+ for(size_t pos=0;pos<b.size();pos++)if(b[pos]!=reduced[pos]){bool allowed=(pos>=t.dtb+BINS_OFFSET&&pos<t.dtb+BINS_OFFSET+BINS_SIZE)||(pos>=vbmeta&&pos<vbmeta+std::max<size_t>(oldSize,512))||(pos>=footerOffset+28&&pos<footerOffset+36);check(allowed);}
+ check(stockTables(editBins(reduced,t.bins)));
+ denied([&]{auto v=t.bins;v[0].initial=10;editBins(b,v);});
+ denied([&]{auto v=t.bins;v[0].rows.back().maximum=10;editBins(b,v);});
+ denied([&]{auto v=t.bins;v[0].rows[0].minimum=10;editBins(b,v);});
+ denied([&]{auto v=t.bins;v[0].rows[0].voltage=0;editBins(b,v);});
+ denied([&]{auto v=t.bins;v[0].rows[0].voltage=481;editBins(b,v);});
+ denied([&]{auto v=t.bins;v[1].rows[0].frequency=0;editBins(b,v);});
+ denied([&]{auto v=t.bins;v[1].rows.push_back(v[1].rows.back());v[1].rows.back().frequency/=2;editBins(b,v);});
+ denied([&]{auto v=t.bins;v[0].rows.resize(16);editBins(b,v);});
+ denied([&]{Bytes v=b;put(v,t.dtb+BINS_OFFSET,4);table(v);});
+ // Known SKU cells are immutable even though the editable zone is normalized.
+ denied([&]{Bytes v=b;size_t p=0;auto n=parseNode(STOCK_BINS,p,b,t.dtb+be(b,t.dtb+12),t.dtb+be(b,t.dtb+12)+be(b,t.dtb+32));put(v,t.dtb+BINS_OFFSET+property(n.children[0],"qcom,sku-codes")->offset,0);table(v);});
  std::ofstream out(argv[2],std::ios::binary);out.write(reinterpret_cast<const char*>(edited.data()),edited.size());require(out.good(),"Cannot save test artifact");
  std::cout<<"PASS "<<checks<<" image, bounds, compatibility and preservation assertions\n";return 0;
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

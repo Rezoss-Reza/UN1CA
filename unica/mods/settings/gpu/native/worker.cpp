@@ -60,7 +60,7 @@ void flash(const Bytes& b){
 }
 std::string quote(const std::string& s){std::string r="\"";for(unsigned char c:s){if(c=='"'||c=='\\'){r+='\\';r+=c;}else if(c>=32&&c<127)r+=c;else r+=' ';}return r+'"';}
 bool hashString(const std::string& s){return s.size()==64&&s.find_first_not_of("0123456789abcdef")==std::string::npos;}
-void stock(const Bytes& b){auto t=table(b);require(t.frequencies==STOCK_FREQ&&t.levels==STOCK_LEVEL,"Rollback baseline must have the original GPU table");}
+void stock(const Bytes& b){require(stockTables(b),"Rollback baseline must have the original GPU table");}
 void recover(){
  const std::string dir="/tmp/unica-gpu-rollback/";auto b=read(dir+"original.img",IMAGE_SIZE);auto expected=text(dir+"original.sha256",64);require(hashString(expected)&&sha(b)==expected,"Rollback image checksum mismatch");stock(b);
  // A recovery restore is an explicit user action, never an init/boot action.
@@ -181,10 +181,12 @@ std::string status(const Bytes& live){
  Table t;try{t=table(live);}catch(...){auto b=original();require(exists(BASE+"writing")&&restorable(live,b),"Unsupported image; recovery restoration may be required");t=table(b);}
  std::string r="{\"ok\":true,\"currentHash\":"+quote(sha(live))+",\"frequencies\":[";
  for(int i=0;i<10;i++){if(i)r+=',';r+=std::to_string(t.frequencies[i]);}r+="],\"levels\":[";for(int i=0;i<10;i++){if(i)r+=',';r+=std::to_string(t.levels[i]);}r+="]";
+ r+=",\"tables\":[";for(int id=0;id<2;id++){if(id)r+=',';auto& bin=t.bins[id];r+="{\"id\":"+std::to_string(id)+",\"initial_level\":"+std::to_string(bin.initial)+",\"minimum_level\":"+std::to_string(bin.minimum)+",\"power_levels\":[";
+ for(size_t i=0;i<bin.rows.size();i++){if(i)r+=',';auto& row=bin.rows[i];r+="{\"index\":"+std::to_string(i)+",\"frequency_hz\":"+std::to_string(row.frequency)+",\"rpmh_level\":"+std::to_string(row.voltage)+",\"bus_frequency\":"+std::to_string(row.bus)+",\"bus_minimum\":"+std::to_string(row.minimum)+",\"bus_maximum\":"+std::to_string(row.maximum)+",\"acd_level\":"+(row.hasAcd?std::to_string(row.acd):"null")+"}";}r+="]}";}r+="]";
  bool renewing=exists(BASE+"renewing"),interrupted=exists(BASE+"writing"),has=!renewing&&exists(BASE+"original.sha256")&&exists(BASE+"original.img"),can=false,exported=false,isOriginal=false,stale=false,canRenew=false;
  std::string zipHash,baselineHash,backupState="missing",blockReason;
- if(renewing){auto pending=renewal();baselineHash=pending.oldHash;stale=true;canRenew=sha(live)==pending.newHash&&!interrupted&&t.frequencies==STOCK_FREQ&&t.levels==STOCK_LEVEL;backupState="refreshing";}
- else if(has){auto b=original();baselineHash=sha(b);can=restorable(live,b);isOriginal=sha(live)==baselineHash;stale=!can;if(exists(BASE+"rollback.sha256"))zipHash=text(BASE+"rollback.sha256",64);exported=hashString(zipHash)&&exists(BASE+"rollback.zip")&&exists(BASE+"exported")&&text(BASE+"exported",64)==zipHash;canRenew=stale&&!interrupted&&hashString(zipHash)&&exists(BASE+"rollback.zip")&&t.frequencies==STOCK_FREQ&&t.levels==STOCK_LEVEL;backupState=stale?"stale":"ready";}
+ if(renewing){auto pending=renewal();baselineHash=pending.oldHash;stale=true;canRenew=sha(live)==pending.newHash&&!interrupted&&stockTables(live);backupState="refreshing";}
+ else if(has){auto b=original();baselineHash=sha(b);can=restorable(live,b);isOriginal=sha(live)==baselineHash;stale=!can;if(exists(BASE+"rollback.sha256"))zipHash=text(BASE+"rollback.sha256",64);exported=hashString(zipHash)&&exists(BASE+"rollback.zip")&&exists(BASE+"exported")&&text(BASE+"exported",64)==zipHash;canRenew=stale&&!interrupted&&hashString(zipHash)&&exists(BASE+"rollback.zip")&&stockTables(live);backupState=stale?"stale":"ready";}
  bool complete=has&&hashString(zipHash)&&exists(BASE+"rollback.zip");
  if(interrupted)blockReason="Interrupted partition write: restore the original before rebooting";
  else if(renewing)blockReason=canRenew?"Backup refresh interrupted. Resume creating the backup for this ROM":"Image changed during backup refresh. Preserve archived backups and use matching firmware";
@@ -206,7 +208,7 @@ void respond(const std::string& id,const std::string& result){atomic(IPC+"respon
 int service(){
  FD lock(open((BASE+"lock").c_str(),O_RDWR|O_CREAT|O_CLOEXEC|O_NOFOLLOW,0600));if(flock(lock,LOCK_EX|LOCK_NB)!=0)return 0;
  std::string id;try{
-  std::istringstream in(text(IPC+"requests/request",4096));std::vector<std::string> args;std::string a;while(in>>a)args.push_back(a);
+  std::istringstream in(text(IPC+"requests/request",8192));std::vector<std::string> args;std::string a;while(in>>a)args.push_back(a);
   require(args.size()>=2,"Incomplete request");id=args[0];require(id.size()==36&&id.find_first_not_of("0123456789abcdef-")==std::string::npos,"Invalid request identifier");
   // Retriggering a timed-out request must never repeat a partition write.
   if(exists(IPC+"responses/response.json")&&text(IPC+"responses/response.json").find("\"id\":"+quote(id))!=std::string::npos)return 0;
@@ -219,8 +221,14 @@ int service(){
   else if(op=="apply"){
    require(!exists(BASE+"renewing"),"Finish backup refresh and export the new rollback ZIP before Apply");require(args.size()==23,"Expected ten frequency/level pairs");auto b=original();require(restorable(live,b)&&!exists(BASE+"writing"),"Restore interrupted or unrelated image before applying");
    require(exists(BASE+"exported")&&text(BASE+"exported",64)==text(BASE+"rollback.sha256",64)&&sha(read(BASE+"rollback.zip",IMAGE_SIZE+10*1024*1024))==text(BASE+"rollback.sha256",64),"Save and verify the rollback ZIP first");
-   Values f{},l{};for(int i=0;i<10;i++){for(int j=0;j<2;j++){auto s=args[3+i*2+j];require(!s.empty()&&s.size()<=9&&s.find_first_not_of("0123456789")==std::string::npos,"Bad numeric GPU value");(j?l:f)[i]=std::stoul(s);}}
+   Values f{},l{};for(int i=0;i<10;i++){for(int j=0;j<2;j++){auto s=args[3+i*2+j];require(!s.empty()&&s.size()<=10&&s.find_first_not_of("0123456789")==std::string::npos,"Bad numeric GPU value");auto value=std::stoull(s);require(value<=UINT32_MAX,"GPU value overflows u32");(j?l:f)[i]=uint32_t(value);}}
    auto t=table(live);require(f!=t.frequencies||l!=t.levels,"No GPU changes selected");auto target=edit(live,f,l);transact(live,target);
+  }else if(op=="apply2"){
+   require(!exists(BASE+"renewing")&&!exists(BASE+"writing"),"Finish recovery or backup refresh before Apply");auto baseline=original();require(restorable(live,baseline),"Backup does not match current image");
+   require(exists(BASE+"exported")&&text(BASE+"exported",64)==text(BASE+"rollback.sha256",64)&&sha(read(BASE+"rollback.zip",IMAGE_SIZE+10*1024*1024))==text(BASE+"rollback.sha256",64),"Save and verify the rollback ZIP first");
+   size_t cursor=3;auto number=[&](){require(cursor<args.size(),"Incomplete GPU table request");auto value=args[cursor++];require(!value.empty()&&value.size()<=10&&value.find_first_not_of("0123456789")==std::string::npos,"Bad GPU cell");uint64_t n=std::stoull(value);require(n<=UINT32_MAX,"GPU cell overflows u32");return uint32_t(n);};GpuBins bins;
+   for(auto& bin:bins){auto count=number();require(count>=2&&count<=15,"Expected 2–15 power levels");bin.initial=number();bin.minimum=number();for(uint32_t i=0;i<count;i++){GpuRow row;row.frequency=number();row.voltage=number();row.bus=number();row.minimum=number();row.maximum=number();auto acd=number();require(acd<=1,"Bad ACD presence flag");row.hasAcd=acd;row.acd=number();require(row.hasAcd||row.acd==0,"Absent ACD must have value zero");bin.rows.push_back(row);}}
+   require(cursor==args.size(),"Unexpected GPU request fields");auto target=editBins(live,bins);require(sha(target)!=sha(live),"No GPU changes selected");transact(live,target);
   }else if(op=="restore"){require(!exists(BASE+"renewing"),"Finish backup refresh before Restore");require(args.size()==3,"Bad restore request");auto b=original();require(restorable(live,b),"Backup does not match this image; restore matching firmware manually");if(sha(live)!=sha(b))transact(live,b);else if(exists(BASE+"writing"))removefile(BASE+"writing");}
   else throw std::runtime_error("Unknown GPU operation");
   respond(id,status(current()));return 0;

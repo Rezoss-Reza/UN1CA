@@ -1,0 +1,153 @@
+S23 Ultra / KonaBess capability inspection - 2026-10-18
+=====================================================
+
+Artifacts inspected (read-only)
+------------------------------
+Firmware: out/fw/SM-S918B_EUX/kernel/vendor_boot.img, S918BXXUAZZI8.
+Driver: out/fw/SM-S918B_EUX/vendor_dlkm/lib/modules/msm_kgsl.ko.
+SHA256: 16cb910e20983d9ff90c8eb11eb075310af50411d45853e7925282ac240f3ecc.
+The out/target driver copy has the same SHA256; neither copy was modified.
+REA/Ghidra 12.1.4 was used against the exact shipped ELF. Findings below are
+static binary observations, not a successful modified-image boot or a voltage
+measurement. ELF symbol values are section-relative (relocatable kernel module).
+
+1. adreno_device_probe, .text+0x403f0, 3160 bytes:
+   Reads qcom,gpu-pwrlevel-bins. Obtains feature code and, for applicable feature
+   codes, pcode. Tries qcom,speed-bin, otherwise qcom,sku-codes, accepting an exact
+   composite SKU or the zero wildcard. Parses the first matching table.
+   Initial level must be inside the table; invalid values fall back to index 1.
+   Initial minimum outside the table or below the initial/default index falls
+   back to the last entry. The UI table selector does not force hardware SKU.
+   REA evidence ev_fe43851503daa1b0a51397b6e5cbbe4c10ef49df710c4d2ed0e8ad7e96d0f718.
+
+2. adreno_of_parse_pwrlevels, .text+0x4110c, 712 bytes:
+   Reads reg, qcom,gpu-freq, qcom,level and DDR-type bus fields as u32 properties.
+   Zero frequency is skipped. Indices >=16 are skipped/rejected by bounds checks.
+   Stores voltage request at row offset 0x598, frequency at 0x580, using a 28-byte
+   row stride. Reads optional qcom,acd-level and qcom,cx-level. Builds OPP entries
+   from the frequency array if the OPP table is not already populated.
+   The UI retains the inspected firmware's absence of cx-level editing. Unknown
+   device-tree properties, changed SKU selectors and unrelated nodes are refused.
+
+3. gen7_build_rpmh_tables, .text+0x9c6f8, 3012 bytes:
+   Gets gfx.lvl, cx.lvl and mx.lvl auxiliary data from command DB.
+   Adds an off-state slot and rejects a total DCVS count >16: at most 15 usable
+   GPU levels per selected table. Converts frequency to kHz with integer /1000.
+   Copies each voltage request into a u16 array. For GFX, scans the command-DB
+   levels for the first entry >= the request; a request above the available range
+   fails table construction. CX/MX votes are constructed separately.
+   This is the reason raw requests 1, 16, 48, 72 and 96 can be represented without
+   requiring them to occur in the stock GPU table. They are not direct mV values.
+   A request 1 is not a standard named KonaBess corner. It will only work if the
+   lookup finds an available corner, and need not yield a lower physical voltage
+   than another request. Actual corner values are firmware/command-DB dependent.
+   REA evidence ev_5aa34ed82cda3b8ac3669fc168254a2131022f9148660d5f7e3e0f6e26bd5a2b.
+
+4. Exact source DTB:
+   First DTB length 454042, DTB-set length 1808679.
+   GPU-bin subtree offset within first DTB 160824, length 2988.
+   Table 0 has 10 rows, initial/minimum 8/8; table 1 has 9 rows, 7/7.
+   qcom,bus-table-ddr has 10 cells: indices 0..9. Active-row raw requests can
+   exceed this range because the exact driver clamps them (see item 5). The
+   final row bypasses that loop, so it must retain valid 0..9 bus indices.
+   Table 0 default voltage requests: 224,192,144,128,80,64,60,56,52,52.
+   The normalized entire DTB-set SHA256 remains
+   99066fde3eede3bd5e17ba0a07182ebf06fda2fbf775003890c938af4e8fe23b.
+
+5. kgsl_bus_init, .text+0x10660, 896 bytes:
+   Loads the DDR-specific qcom,bus-table-ddrN if present, otherwise the default
+   DDR table. For indices 0 through num_pwrlevels-2, frequency/max/min requests
+   >= num_bus_levels are logged and replaced with num_bus_levels-1; min above
+   max is repaired to max. The final power-level row is excluded from this loop.
+   The editor therefore retains raw u32 requests on non-final rows with red
+   warnings explaining the clamp, but requires 0..9 on the final row. Raw
+   min<=frequency<=max remains a parser guard. This is observed behavior of the
+   pinned driver, not a claim that other firmware safely clamps the same way.
+   REA evidence ev_ec96141c882175919d1aa9a881336da0e5a635841a1663062b30b4b699adad49.
+
+Upstream comparison
+-------------------
+KonaBess commit ff387dc7f630d7460c7a6561f83f71846217ee27:
+https://github.com/libxzr/KonaBess/blob/ff387dc7f630d7460c7a6561f83f71846217ee27/app/src/main/java/xzr/konabess/ChipInfo.java
+Kalama's named requests include 16,48,52,56,60,64,72,80,96,128,144,192,224,
+256,288,320,336,384,400,416,432,448,464,480. These are UI definitions, not proof
+that every corner is available on this Samsung command DB. The new editor shows
+these choices plus raw 1, and accepts custom integer requests in 1..480.
+ChipInfo.getMaxTableLevels returns a generic UI count of 16 for kalama; the
+inspected Samsung Gen7 builder's extra off-state slot makes its usable bound 15.
+ChipInfo.shouldIgnoreVoltTable returns true for kalama: this platform uses RPMh
+requests in the frequency tables, not the app's separate OPP microvolt editor.
+Non-stock values are RED; custom/raw values are experimental. The upper bound
+480 is an editor guard based on upstream's named range, not a hardware promise.
+
+GpuTableEditor.java edits headers and rows for multiple bins, can add/remove
+levels and emits each row's property lines. TableIO.java exports chip/desc/freq
+as konabess:// + Base64 + gzip JSON and imports the entire table text.
+Our implementation does not execute imported DTS, invoke a shell, or run dtc.
+It parses only the known Samsung table/header/row schema and fixed SKU lists.
+
+What is implemented
+-------------------
+- Both inspected tables, 2..15 contiguous rows per table.
+- Full positive u32 Hz frequency values; no forced 0.1 MHz rounding.
+- RPMh requests 1..480, including 96/72/48/16/1; non-monotonic requests are
+  representable, with warnings. No direct millivolt control is claimed.
+- Existing initial/minimum selectors and bus fields; optional u32 ACD cells.
+- Original KonaBess kalama exports and UN1CA profile v2, reviewed before loading.
+- Stock/experimental warnings, red values and full before/after Apply review.
+- Exact firmware, partition, driver, backup/export, journal and readback gates.
+
+Intentional limits relative to upstream
+--------------------------------------
+The bins must fit the original 2988-byte subtree. Unused space is filled with
+FDT_NOP, preserving every byte outside that region (except required AVB data).
+This permits removal/replacement and additions when space is available; it does
+not grow the DTB, repack the ramdisk, enlarge the image, or alter SKU selection.
+The UI does not offer arbitrary properties, cx-level edits, extra bins, arbitrary
+DTS includes/commands, other SoCs, or a separate OPP microvolt-table editor.
+Header/driver/layout changes after an OTA still require compatibility review.
+
+Profiles supplied by the user
+----------------------------
+konabess_xda2_-0613151032.txt: exact frequencies, voltages, initial selectors,
+bus and ACD data in both tables pass current validation. It actually requests
+730 MHz maximum even though its author description says OC930_UV_all.
+konabess_xda-0327122223.txt: accepted intact, including active-row bus requests
+15. The kernel clamps those requests to 9; the editor warns and does not silently
+rewrite the stored profile.
+konabess-0221050129.txt: still refused because its FINAL table-0 row requests
+bus maximum 16, which bypasses the proven driver clamp. Active-row 10..16 values
+are now supported; the remaining refusal is specifically about the final row.
+It is not due to the old voltage whitelist. No values are substituted.
+Missing initial-min-pwrlevel properties in upstream exports are materialized as
+the final row index, matching this driver's documented fallback behavior.
+
+Runtime observations and remaining unknowns
+------------------------------------------
+Read-only ADB on 2026-10-18 reported S918BXXUAZZI8 vendor fingerprint,
+Adreno740v2, feature code AC and pcode 0x1. Available frequencies were
+719,680,615,550,475,401,348,295,220,124.8 MHz, consistent with stock table 0.
+Shell access to the installed driver hash and command-DB debug files was denied
+or unavailable. The installed driver's fresh checksum is therefore unverified;
+the production worker still requires the exact pinned module hash before writes.
+No experimental profile was applied to the phone. Clock synthesis, actual GFX
+corners/millivolts, per-chip stability, thermals, battery savings, boot success,
+recovery execution and new UI rendering need device testing after installation.
+
+Offline validation completed
+----------------------------
+4059 image/structure/bounds/preservation assertions and independent AOSP AVB
+verification passed. 226 transaction assertions passed, including the version-2
+wire protocol, malformed input, partial writes, failed immediate rollback,
+manual restore and all four interrupted archive/refresh phases. 85 profile
+assertions passed on the Android-derived JSON implementation and host org.json;
+the exact second XDA input adds three real-file assertions (88 total).
+Both supplied XDA exports were decoded by the production Java parser, sent via
+the actual IPC payload encoder to the test-isolated native worker, written to
+regular temporary image files and restored to their original checksums. Every
+native field in both bins equalled the imported model, and AOSP avbtool verified
+both resulting images. Independent dtc parsing confirmed a shortened table and
+its FDT_NOP padding. The final generated patch applied with zero fuzz and a
+complete SecSettings APK rebuilt with valid DEX/ZIP contents. Combined runtime
+SELinux compilation and installer idempotence passed. Production static ARM64
+worker and recovery payloads were rebuilt. Device trial remains pending.

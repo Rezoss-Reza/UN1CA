@@ -25,7 +25,7 @@ int main(int argc,char** argv){try{
  check(request("exported",h+" "+std::string(64,'0'))!=0);
  auto zh=text(BASE+"rollback.sha256",64);check(request("exported",h+" "+zh)==0);
  check(request("apply",profile(std::string(64,'0')))!=0);check(sha(current())==h);
- check(request("apply",profile(h,900000000))!=0);check(sha(current())==h);
+ check(request("apply",profile(h,0))!=0);check(sha(current())==h);
  check(request("apply",profile(h))==0);auto tuned=current();check(sha(tuned)!=h);check(table(tuned).frequencies[0]==700000000);check(sha(original())==h);check(!exists(BASE+"writing"));
  // Duplicate delivery of the identical UUID cannot replay the completed write.
  auto done=sha(tuned);check(service()==0);check(sha(current())==done);
@@ -38,6 +38,14 @@ int main(int argc,char** argv){try{
  check(request("status")==0);auto reply=text(IPC+"responses/response.json");check(reply.find("\"interrupted\":true")!=std::string::npos);check(reply.find("\"canRestore\":true")!=std::string::npos);
  auto partial=sha(current());check(request("apply",profile(partial))!=0);check(sha(current())==partial);
  check(request("restore",partial)==0);check(sha(current())==h);check(!exists(BASE+"writing"));
+ // Version-2 requests edit both bins and retain the same journal/rollback gates.
+ auto bins=table(b).bins;bins[0].rows[0].frequency=730999999;bins[0].rows[0].voltage=1;bins[0].rows.pop_back();bins[1].rows[8].voltage=56;
+ auto wire=[&](const std::string& hash){std::string value=hash;for(auto& bin:bins){value+=" "+std::to_string(bin.rows.size())+" "+std::to_string(bin.initial)+" "+std::to_string(bin.minimum);for(auto& row:bin.rows)value+=" "+std::to_string(row.frequency)+" "+std::to_string(row.voltage)+" "+std::to_string(row.bus)+" "+std::to_string(row.minimum)+" "+std::to_string(row.maximum)+" "+std::to_string(row.hasAcd?1:0)+" "+std::to_string(row.hasAcd?row.acd:0);}return value;};
+ check(request("apply2",wire(std::string(64,'0')))!=0);check(sha(current())==h);
+ check(request("apply2",wire(h)+" 0")!=0);check(sha(current())==h);
+ bins[0].rows.back().maximum=10;check(request("apply2",wire(h))!=0);check(sha(current())==h);bins[0].rows.back().maximum=3;
+ check(request("apply2",wire(h))==0);auto v2=current();check(table(v2).bins[0].rows.size()==9);check(table(v2).bins[0].rows[0].voltage==1);check(table(v2).bins[1].rows[8].voltage==56);check(request("restore",sha(v2))==0);check(sha(current())==h);
+ failWrites=2;check(request("apply2",wire(h))!=0);check(exists(BASE+"writing"));check(request("apply2",wire(sha(current())))!=0);check(request("restore",sha(current()))==0);check(sha(current())==h);
  // A new/externally modified image must not be overwritten by a stale backup.
  auto other=b;other[8192]^=1;atomic(BASE+"partition.img",other);auto foreign=sha(other);check(request("status")==0);check(text(IPC+"responses/response.json").find("\"canRestore\":false")!=std::string::npos);
  check(request("restore",foreign)!=0);check(request("apply",profile(foreign))!=0);check(sha(current())==foreign);check(sha(original())==h);

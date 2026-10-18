@@ -1,202 +1,201 @@
-Advanced GPU Tuning (Konabess) - dm3q trial
-========================================
+Advanced GPU Tuning (Konabess) - dm3q
+===================================
 
 Entry: UN1CA Settings, below Battery Saving in the power settings group.
-This is a ROM-native implementation inspired by libxzr/KonaBess, not a bundled
-KonaBess APK. It does not require Magisk, KernelSU or an external root manager.
-It edits the existing ten GPU frequency/RPMh pairs and preserves all other
-device-tree properties. It does not add/remove power levels or modify ACD/bus
-configuration. No tuning or partition writing runs automatically during boot.
+ROM-native Settings page and on-demand static root worker. No Magisk/KernelSU
+root manager, shell commands, networking or automatic boot-time tuning.
+Concept: libxzr/KonaBess. This is an independent implementation, not its APK.
+The page keeps One UI 9 grouped cards, theme colors and UN1CA transparency.
 
-Compatibility gate
-------------------
-dm3q, vendor_boot header v4 / SRPVH05C010, 96 MiB partition, source DTB set
-SHA256 99066fde3eede3bd5e17ba0a07182ebf06fda2fbf775003890c938af4e8fe23b.
-Only the ten frequency/level properties in Kalama v2 table0 may differ from
-that known DTB set. The complete driver module must match SHA256
+Exact compatibility
+-------------------
+Target inspected: S23 Ultra / dm3q, vendor firmware S918BXXUAZZI8, Adreno740v2.
+Vendor_boot: header v4, board SRPVH05C010, page size 4096, 96 MiB partition.
+Normalized entire DTB-set SHA256:
+99066fde3eede3bd5e17ba0a07182ebf06fda2fbf775003890c938af4e8fe23b.
+msm_kgsl.ko SHA256:
 16cb910e20983d9ff90c8eb11eb075310af50411d45853e7925282ac240f3ecc.
-Studied vendor firmware: S918BXXUAZZI8; driver and DTBs also matched the
-connected phone. These are exact content gates, not an Android-version claim.
-
-The worker checks the actual top-level vbmeta header for verification-disabled
-bit 2. It never changes top-level vbmeta. Spoofable Android locked/green
-properties are not used as evidence. Fixed dm3q mappings are checked:
+Only the inspected GPU-bin subtree can differ; SKU selection and all other DTB
+content remain pinned. Actual driver and fixed partition mappings are checked:
 vendor_boot -> /dev/block/sda28; vbmeta -> /dev/block/sde20.
-An unfamiliar firmware, layout, driver or partition mapping refuses writes.
-After a firmware update, compatibility must be reviewed before extending gates.
+The worker requires top-level raw vbmeta verification-disabled bit 2 already
+set; it never changes that partition. Unknown firmware/layout/driver refuses
+writes. Profiles remain available when the current firmware is unsupported.
+See compatibility.txt for exact shipped-driver findings and remaining unknowns.
 
-Image editing
--------------
-The existing fixed-width u32 DTB values are changed in a copy of the CURRENT
-image. The ramdisk, header, other DTBs, SKU selectors, ACD/bus properties and
-partition size remain intact. The now-invalid embedded Samsung AVB signature
-is replaced with an unsigned, SHA256-verified hash footer using the existing
-salt and rollback index. This requires verification to already be disabled.
-AOSP avbtool checks the produced footer/hash in host tests. This is not a
-Samsung signature and is not intended for a locked/verified stock device.
+Editor capabilities
+-------------------
+Table selector: table 0 (SKU-specific), table 1 (zero-SKU fallback). The driver
+selects the active table; the selector only chooses which saved draft to edit.
+Both tables are reviewed and written together on explicit Apply.
 
-Input limits are 124.8-850 MHz, in 0.1 MHz steps, descending frequencies, and
-non-increasing RPMh requests drawn from the stock set of known level numbers.
-These are validation limits, NOT safe overclock/undervolt recommendations.
-The driver can round corner requests up. RPMh level numbers are not millivolts.
-Voltage stability, clock synthesis, GMU/ACD interaction and power savings must
-be measured on the actual silicon. Unsuitable values can prevent booting.
+Power levels: add/remove contiguous entries, with 2..15 rows per table and
+initial/minimum indices inside the table. Removal renumbers rows and adjusts
+references. Both tables must fit the original 2988-byte FDT subtree; additions
+require available space. Added defaults are draft values, not recommendations.
+The GMU has 16 DCVS slots including its separate off state, hence 15 usable rows.
+The driver can clamp initial minimum below initial/default to the final row.
 
-First trial
------------
-1. Install a ROM build containing this integration. Confirm OrangeFox recovery
-   is accessible and keep a matching full ROM available.
-2. Open the page and create/verify the original backup. About 320 MiB free on
-   /cache is required. The original image is never replaced by a tuned image.
-3. Save rollback ZIP to storage accessible from recovery, preferably PC/USB.
-   The page reopens the saved file and verifies its complete SHA256 before
-   enabling Apply. Retain it independently of encrypted Android user storage.
-4. Make one small change, review the exact changes and confirm Apply. Wait for
-   partition readback verification. Nothing reboots automatically.
-5. Reboot manually only after success. Test stability before further changes.
+Frequency: full positive u32 Hz, entered as MHz with up to six decimal places.
+No forced 0.1 MHz rounding. Frequencies strictly descend. The u32 bound is a
+storage limit, not a supported clock range. Gen7 converts Hz to kHz by integer
+division, and actual clock synthesis/support still needs runtime testing.
 
-Profiles and ROM updates
-------------------------
-The ten edited values are saved automatically in Settings device-protected
-SharedPreferences (unica_gpu_profile). Closing the page or installing a ROM
-update that preserves Settings data does not reset them. Wiping data, clearing
-Settings data or removing its profile storage can remove the saved draft.
-Use Back up profile to export a JSON copy; the page reads it back to verify it.
-Use Import profile to select a UN1CA JSON profile, validate and review all ten
-values, then explicitly Load profile. Loading changes only the saved draft.
-Apply remains a separate confirmed operation with the native compatibility and
-rollback checks. Nothing imports or reapplies tuning at boot or during an OTA.
-Import/export remains available even when the current firmware is unsupported.
+Voltage request: named KonaBess Kalama levels plus raw 1, and custom integers
+1..480. This includes 96,72,48,16,1. Requests outside the stock set
+52,56,60,64,80,128,144,192,224 appear in RED with warnings in selectors, preference
+rows and import/Apply reviews. Requests need not be monotonic to be represented.
+The driver looks up the first command-DB GFX level >= the requested value;
+multiple requests can map to the same corner, and values above its available
+range fail table construction. They are NOT millivolts. Raw 1 is experimental,
+not a named standard corner. Neither red nor stock values guarantee stability
+at a selected frequency. The bound 480 is an editor guard, not hardware proof.
 
-Profiles contain values and metadata only, never partition images, paths or
-commands. Format unica-konabess-profile version 1 targets dm3q, Adreno740v2,
-kalama-v2-table0 and exactly ten indexed frequency_hz/rpmh_level entries.
-Unknown fields, wrong types/targets, invalid UTF-8, oversized files (>32 KiB),
-unsupported voltage corners and invalid range/order are rejected. Source ROM
-fingerprint is informative, not a firmware whitelist. The native driver/DTB
-checks still decide whether the current image can be edited. This JSON format
-is specific to the UN1CA integration; upstream KonaBess exports are not claimed
-to be compatible. A community profile is not proof of stability on another chip.
+Bus/ACD: raw u32 bus requests must satisfy min <= frequency <= max. This firmware
+has ten DDR bus entries (0..9). The exact Samsung driver clamps out-of-range bus
+requests to 9 on every row except the final row. Requests such as 15/16 are kept
+and shown in red with that explanation; the final row must use valid 0..9 values
+because it bypasses the clamp. Optional ACD is a raw u32 bitfield
+(decimal or 0x hex, or none). Modified bus/ACD values are highlighted. These can
+freeze the GPU or prevent booting. No arbitrary properties or SKU changes.
 
-If the current vendor_boot changes, the page explains why Apply is disabled and
-asks to Create backup for current ROM. Refresh is allowed only for a compatible
-clean stock GPU table, an intact old backup and no pending partition write.
-It archives the old original image and rollback ZIP using durable hard links,
-creates and verifies a new full backup/ZIP in a staging directory, rechecks the
-live image hash and activates the fresh files under a durable renewal journal.
-Old files are never flashed to enable Apply. No partition is written by refresh.
-The old export acknowledgement is cleared. Save and verify the NEW rollback ZIP
-before Apply becomes available again; the saved tuning values stay unchanged.
-A tuned or unfamiliar table is never silently recaptured as a clean original.
-
-Interrupted backup refresh blocks Apply/Restore until explicitly resumed against
-the same new image. Archives remain under /cache/unica-gpu/archives/, named by
-old-image SHA256 and old-ZIP SHA256; archives are not automatically pruned.
-Do not flash those archived rollback ZIPs on a different ROM. Cache must have
-at least 320 MiB free to stage another backup; retained archives consume space.
-If the driver/DTBs are unsupported, profiles remain saved but writes stay blocked
-until compatibility is reviewed. Reusing values across updates is supported;
-automatic compatibility with every future firmware cannot be guaranteed.
-
-Rollback
+Profiles
 --------
+Back up profile exports a shareable UN1CA JSON v2 file and reads it back to
+verify it. Import profile accepts UN1CA JSON or original konabess:// exports.
+The upstream format is Base64 + gzip + UTF-8 JSON, not encryption. Import is a
+bounded typed parser: 32 KiB input/expanded data, bounded JSON/tree depth and
+node counts, known Kalama chip, exact Samsung SKU selectors, exactly two bins,
+valid indexed rows and known header/property names. No imported commands,
+paths, DTS includes, shell/dtc execution or automatic flashing are supported.
+A separate OPP/microvolt-table export is refused for this target.
+
+Import shows both complete tables and red warnings before Load profile. Loading
+only saves the draft. Apply independently checks compatibility, backup/export,
+current-image hash and all native bounds before writing anything.
+Original XDA export OC930_UV_all actually stores 730 MHz; the description is not
+proof of the stored values. It passes without substituting its 96/72 requests.
+The first XDA export is also supported intact, including its raw bus request 15
+(the driver clamps it; the editor displays a warning). The earlier generic
+konabess-0221050129.txt still fails: its final table-0 row requests bus maximum
+16, and that row bypasses the driver clamp. No requests are silently replaced.
+Missing initial-min-pwrlevel in an upstream header becomes the final row index,
+matching the kernel's default when that property is absent.
+
+Existing UN1CA v1 profiles migrate to v2. They supply only table 0; table 1 is
+initialized from the pinned stock defaults. Review both tables before Apply,
+especially if table 1 was already tuned. New exports retain both complete bins.
+
+Edits save automatically to device-protected SharedPreferences
+unica_gpu_profile in Settings. They persist across closing the page and ROM
+updates that preserve Settings data. Wipes/clearing Settings data can remove
+them, so export a profile copy. No profile is applied at boot or during an OTA.
+
+ROM updates and rollback
+------------------------
+1. Open the page after updating. Saved draft values stay available.
+2. If vendor_boot changed, Create backup for current ROM archives the old clean
+   image/ZIP by durable hard links, stages and verifies the current clean image
+   and fresh ZIP, rechecks its live hash, then activates the files under a
+   durable renewal journal. It never flashes the older image to enable Apply.
+3. Save the NEW rollback ZIP to recovery-accessible storage, preferably USB/PC.
+   The page reads it back and verifies its complete SHA256. Old export approval
+   is cleared. Apply remains blocked until the fresh export is verified.
+4. Review the saved/imported values, confirm Apply and wait for complete image
+   readback verification. Reboot manually only after success.
+
+Backup refresh requires intact old backup files, a compatible completely stock
+GPU subtree in the new image and no pending partition write. Tuned/unknown
+subtrees are never silently recaptured as clean baselines. Interrupted refresh
+can resume only against the same new image. Apply/Restore stay blocked until
+it completes. Archives are not automatically pruned; retain matching firmware
+and keep at least 320 MiB free on /cache to stage a fresh baseline/ZIP.
+
 While Android works: Restore original vendor_boot, wait for verification, then
-reboot. Stale images from an unrelated update are rejected. A write failure
-attempts immediate restoration of the original. If both writes fail, the
-durable transaction journal/candidate permit an explicit restore retry; Apply
-and the page's Reboot button remain disabled while a transaction is incomplete.
+reboot manually. Stale unrelated images are rejected. Failed writes attempt
+immediate original restoration; if that also fails, the journal and candidate
+remain for an explicit retry. The page blocks Apply/Reboot during a pending
+partition write. No automatic boot-success watchdog is claimed.
 
-If Android cannot start: boot OrangeFox, mount Cache, and flash
-/cache/unica-gpu/rollback.zip. Alternatively flash the exported rollback ZIP.
-Do NOT wipe Cache before using its copy. The ZIP contains the full original
-image, SHA256, a static ARM64 restore helper and an update-binary script. It
-checks image compatibility, checksum, partition size/mapping and the original
-image header before writing. It reads back the entire partition and verifies
-the result. It never reboots automatically. If the restore fails, stay in
-recovery and restore the matching firmware/ROM manually.
+If Android cannot start: boot OrangeFox, mount Cache and flash
+/cache/unica-gpu/rollback.zip, or flash the saved matching rollback ZIP from
+USB/PC storage. Do not wipe Cache first. The ZIP contains the full clean image,
+checksum, static ARM64 helper and update-binary. It verifies the image, mapping,
+partition size/header, then writes and reads back the entire partition. It
+never reboots automatically. Stay in recovery if restoration fails and restore
+matching firmware manually. Never use an archived old ZIP on a different ROM.
 
-No boot-success watchdog is claimed: Android cannot automatically restore an
-image if the modified GPU configuration prevents the kernel/Android from
-starting. Recovery is the independent rollback path. No software can guarantee
-recovery from every power loss, failed storage device or unavailable recovery.
-Do not reuse this rollback ZIP after changing firmware; it contains the complete
-pre-trial vendor_boot image, including that build's ramdisk/DFE modifications.
+Image handling
+--------------
+The worker parses/renders only the known GPU-bin subtree. Removing entries uses
+standard FDT_NOP padding, so DTB/partition size, ramdisk, header, unrelated nodes
+and other DTBs remain intact. The known stock subtree template and normalized
+whole-DTB-set hash protect everything outside the editable region. Initial/SKU
+header shapes are checked, and SKU values are immutable. Both bins must fit the
+original space; the worker does not grow/repack the DTB or change the ramdisk.
 
-Protected files
----------------
-/data/misc/unica_gpu/requests/request  - bounded Settings request
+The invalidated embedded Samsung AVB signature is replaced by an unsigned,
+SHA256-verified footer preserving the existing salt and rollback index. AOSP
+avbtool verifies the result offline. This requires verification already disabled
+and is not a Samsung signature or a locked-stock-device feature.
+
+Protected files and permissions
+-------------------------------
+/data/misc/unica_gpu/requests/request       bounded Settings IPC
 /data/misc/unica_gpu/responses/response.json
-/cache/unica-gpu/original.img         - active clean original for current trial
+/cache/unica-gpu/original.img              active clean current-trial baseline
 /cache/unica-gpu/original.sha256
-/cache/unica-gpu/rollback.zip          - recovery-flashable independent backup
+/cache/unica-gpu/rollback.zip
 /cache/unica-gpu/rollback.sha256
-/cache/unica-gpu/exported              - verified export acknowledgement
-/cache/unica-gpu/applied.sha256        - last transaction target
-/cache/unica-gpu/writing               - durable in-progress journal
-/cache/unica-gpu/candidate.img         - verified staged transaction image
-/cache/unica-gpu/renewing              - durable backup refresh journal
-/cache/unica-gpu/pending/<new-hash>/   - freshly verified backup staging set
-/cache/unica-gpu/archives/<old-hash>-<zip-hash>/ - retained old baseline/ZIP
+/cache/unica-gpu/exported                  verified export acknowledgement
+/cache/unica-gpu/applied.sha256            last transaction target
+/cache/unica-gpu/writing                   durable partition-write journal
+/cache/unica-gpu/candidate.img
+/cache/unica-gpu/renewing                  durable backup refresh journal
+/cache/unica-gpu/pending/<new-hash>/
+/cache/unica-gpu/archives/<old-hash>-<zip-hash>/
 
-Only the root init worker writes the backup/partition. Settings writes requests
-and reads responses/rollback ZIP. It has no new block write permission. The
-worker has specific vendor_boot read/write and vbmeta read-only labels; legacy
-block consumers retain their previous permissions when these two nodes are
-relabelled. No shell, Binder, networking or Linux capabilities are granted.
+Only the root init worker writes backups/partitions. Settings only exchanges
+bounded IPC and reads the rollback ZIP. Dedicated SELinux labels grant specific
+vendor_boot read/write, vbmeta read-only and backup-file operations. Existing
+block consumers retain their previous permissions. No new shell, networking,
+Binder or capabilities; this extension requires no extra SELinux permissions.
 Other targets remove the GPU native payload/service and receive no new policy.
 
-Build and verification (from repository root)
---------------------------------------------
+Build and verification (repository root)
+----------------------------------------
+source buildenv.sh dm3q
 unica/mods/settings/gpu/build.sh
-JSON_JAR=/path/to/host-json.jar unica/mods/settings/gpu/tests/run.sh
+JSON_JAR=/path/to/host-json.jar SECILC=/path/to/compatible-secilc \
+    unica/mods/settings/gpu/tests/run.sh
 
-The build needs the existing Android SDK/NDK, javac, D8, baksmali and smali.
-Tests use a source vendor_boot image, regular temporary files and a compatible
-SELinux compiler. Set SECILC=/path/to/secilc if it is not on PATH. The tests
-copy current out/target policies into /tmp; they never modify generated output.
-Optional first argument to tests/run.sh selects another temporary image copy.
-All testing artifacts are retained under /tmp/unica-gpu-*.
-Profile host tests require an org.json implementation. One reproducible test
-fixture is the Android-derived Maven artifact:
+Optional first test argument selects an exact original vendor_boot copy.
+The existing SDK/NDK, javac, D8, baksmali and smali build an additive GPU-only
+SecSettings patch and static ARM64 worker/recovery helper. The Settings mod
+includes these in the next ROM build. No full ROM build is needed to validate
+them. Policy tests copy generated policy into /tmp and compile like init (-N).
+Tests retain artifacts under /tmp/unica-gpu-* and never write real partitions.
+
+Host JSON test dependency (Android-derived implementation):
 https://repo.maven.apache.org/maven2/com/vaadin/external/google/android-json/0.0.20131108.vaadin1/android-json-0.0.20131108.vaadin1.jar
-SHA256 dfb7bae2f404cfe0b72b4d23944698cb716b7665171812a0a4d0f5926c0fac79
-Download it to /tmp, verify the checksum and set JSON_JAR to that file. It is a
-test-only dependency; Android supplies org.json in the shipped Settings app.
-
-gpu/build.sh emits an additive SecSettings smali patch, the static native worker
-and the static recovery helper. The Settings mod's standard overlay, metadata
-and customize.sh policy installer include them in the next ROM build. Existing
-customize.sh, overlays and metadata were backed up before changing them.
-
-Runtime UI/SELinux/OrangeFox operation and a real modified-image boot remain
-unverified until the updated ROM is installed and a controlled trial is run.
-No full ROM build, flash, reboot or GPU mutation was performed during development.
-Offline validation on 2026-10-17 passed image/AVB checks against both the stock
-image and the exact image copied from the phone; 49 transaction assertions
-covered missing/exported backups, replay, stale images, corrupted originals,
-failed writes, failed immediate rollback and manual restoration. The generated
-ZIP passed CRC/content/SHA256 checks. The combined policy compiled using init's
-runtime -N mode, and its installer was idempotent. The additive patch applied
-with --fuzz=0; Java/D8, combined Settings DEX assembly, static ARM64 payloads and
-a complete temporary SecSettings APK rebuild/ZIP integrity check passed using
-out/tools/bin/apktool and the S918BXXUAZZI8-tagged framework cache. Unrelated
-existing non-positional resource-format warnings remain unchanged.
-
-Offline validation on 2026-10-18 additionally passed 209 transaction assertions,
-including all four injected backup-refresh interruption phases, archive retention,
-mid-refresh image changes, rejection of unknown tuned baselines and mandatory
-fresh rollback export before Apply. The image/AVB suite passed 1705 assertions.
-The profile suite passed 48 assertions against both host org.json and an Android-
-derived implementation. The final additive patch applied with zero fuzz; the
-complete temporary Settings APK rebuilt with valid DEX/ZIP contents. Combined
-runtime SELinux compilation and policy installer idempotence passed. The new
-flow has not yet been installed or exercised on the device.
+SHA256 dfb7bae2f404cfe0b72b4d23944698cb716b7665171812a0a4d0f5926c0fac79.
+Android supplies org.json at runtime; this JAR is not shipped in Settings.
+The profile tests also run against org.json 20240303. They cover old-profile
+migration, exact upstream round-trip, compression bombs, nested/unknown input,
+u32 overflow, experimental requests, changed bins and FDT-space constraints.
+Native tests cover two-bin edits, structural padding, all requested voltage
+values, image/AVB preservation, IPC, export gates, failed writes, manual recovery
+and interrupted archive/refresh transactions. Latest validation: 4059 image,
+226 transaction and 85 profile assertions passed, alongside AVB, independent
+dtc parsing, zero-fuzz patch application, full temporary SecSettings APK rebuild
+and combined SELinux checks. Both XDA exports passed the actual Java-to-native
+IPC pipeline with all fields preserved and original-image restoration verified
+using regular temporary files. No full ROM build, flash, reboot or runtime GPU
+mutation was performed. UI rendering and a device trial remain pending.
 
 Attribution
 -----------
-Concept and platform investigation: https://github.com/libxzr/KonaBess
-Upstream studied: ff387dc7f630d7460c7a6561f83f71846217ee27.
-This worker implements fixed binary edits independently; it does not copy the
-upstream app's shell commands or Java table editor. SHA256 uses the existing
-AOSP libavb implementation under external/android-tools/vendor/avb/libavb.
-Its copyright/license are reproduced in NOTICE.txt alongside this source.
+https://github.com/libxzr/KonaBess
+Upstream inspected: ff387dc7f630d7460c7a6561f83f71846217ee27.
+The bounded native editor and upstream-profile parser are independently written.
+AOSP libavb supplies SHA256; its copyright/license is in NOTICE.txt.
