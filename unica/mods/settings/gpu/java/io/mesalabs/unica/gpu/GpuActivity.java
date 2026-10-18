@@ -16,13 +16,14 @@ import org.json.*;
 
 /** ROM-native image editor. No root manager, automatic profile or boot writes. */
 public final class GpuActivity extends Activity {
-    private static final int EXPORT=51;
+    private static final int EXPORT=51,PROFILE_EXPORT=52,PROFILE_IMPORT=53;
     private static final int[] LEVELS={52,56,60,64,80,128,144,192,224};
     private static final String[] LABELS={"52 · LOW_SVS_D2","56 · LOW_SVS_D1","60 · LOW_SVS_D0","64 · LOW_SVS","80 · LOW_SVS_L1","128 · SVS","144 · SVS_L0","192 · SVS_L1","224 · SVS_L2"};
     private final ExecutorService worker=Executors.newSingleThreadExecutor();
     private final long[] draftFrequency=new long[10];
     private final int[] draftLevel=new int[10];
-    private String draftHash="";
+    private boolean hasDraft,invalidSavedProfile;
+    private String profileName="My GPU profile",promptedImage="";
     private final java.util.List<LinearLayout> cards=new java.util.ArrayList<>();
     private LinearLayout page;
     private ScrollView scroller;
@@ -31,7 +32,7 @@ public final class GpuActivity extends Activity {
     private String message="Checking firmware compatibility…";
     private LinearLayout content;
     private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
-    @Override public void onCreate(Bundle b){super.onCreate(b);setTitle("Advanced GPU Tuning (Konabess)");if(getActionBar()!=null)getActionBar().hide();draw();run("status","");}
+    @Override public void onCreate(Bundle b){super.onCreate(b);setTitle("Advanced GPU Tuning (Konabess)");if(getActionBar()!=null)getActionBar().hide();loadSavedProfile();draw();run("status","");}
     @Override public boolean onOptionsItemSelected(MenuItem item){if(item.getItemId()==android.R.id.home){onBackPressed();return true;}return super.onOptionsItemSelected(item);}
     @Override public void onBackPressed(){if(busy){Toast.makeText(this,"Wait for the GPU operation to finish",Toast.LENGTH_SHORT).show();return;}super.onBackPressed();}
     @Override protected void onDestroy(){worker.shutdown();super.onDestroy();}
@@ -87,10 +88,59 @@ public final class GpuActivity extends Activity {
     private String hash(){return state==null?"":state.optString("currentHash");}
     private String mhz(long hz){return BigDecimal.valueOf(hz).movePointLeft(6).stripTrailingZeros().toPlainString();}
     private String levelName(int value){for(int i=0;i<LEVELS.length;i++)if(LEVELS[i]==value)return LABELS[i];return Integer.toString(value);}
+    private SharedPreferences profileStore(){return createDeviceProtectedStorageContext().getSharedPreferences("unica_gpu_profile",MODE_PRIVATE);}
+    private GpuProfile profile()throws Exception {return GpuProfile.create(profileName,android.os.Build.FINGERPRINT,draftFrequency,draftLevel);}
+    private void setProfile(GpuProfile p,boolean persist)throws Exception {
+        if(persist&&!profileStore().edit().putString("profile",new String(p.encode(),java.nio.charset.StandardCharsets.UTF_8)).commit())throw new IOException("Cannot save tuning profile");
+        System.arraycopy(p.frequencies,0,draftFrequency,0,10);System.arraycopy(p.levels,0,draftLevel,0,10);profileName=p.name;hasDraft=true;invalidSavedProfile=false;
+    }
+    private void loadSavedProfile(){
+        String saved=profileStore().getString("profile",null);if(saved==null)return;
+        try{setProfile(GpuProfile.parse(saved.getBytes(java.nio.charset.StandardCharsets.UTF_8)),false);}catch(Exception e){invalidSavedProfile=true;alert("Saved profile unavailable","The saved data was kept for recovery. "+e.getMessage());}
+    }
     private void syncDraft(){
-        if(state==null)return;String image=hash();if(image.equals(draftHash))return;
-        JSONArray f=state.optJSONArray("frequencies"),l=state.optJSONArray("levels");
-        for(int i=0;i<10;i++){draftFrequency[i]=f.optLong(i);draftLevel[i]=l.optInt(i);}draftHash=image;
+        if(state==null||hasDraft||invalidSavedProfile)return;
+        try{setProfile(imageProfile(),true);}catch(Exception e){message="Cannot initialize tuning profile: "+e.getMessage();}
+    }
+    private GpuProfile imageProfile()throws Exception {
+        long[] f=new long[10];int[] l=new int[10];JSONArray fs=state.getJSONArray("frequencies"),ls=state.getJSONArray("levels");for(int i=0;i<10;i++){f[i]=fs.getLong(i);l[i]=ls.getInt(i);}return GpuProfile.create("My GPU profile",android.os.Build.FINGERPRINT,f,l);
+    }
+    private void saveDraft(long[] f,int[] l)throws Exception {setProfile(GpuProfile.create(profileName,android.os.Build.FINGERPRINT,f,l),true);}
+    private void chooseProfile(int request){
+        Intent i=new Intent(request==PROFILE_EXPORT?Intent.ACTION_CREATE_DOCUMENT:Intent.ACTION_OPEN_DOCUMENT);i.addCategory(Intent.CATEGORY_OPENABLE);i.setType(request==PROFILE_EXPORT?"application/json":"*/*");
+        if(request==PROFILE_EXPORT)i.putExtra(Intent.EXTRA_TITLE,"UN1CA-dm3q-GPU-profile.json");
+        try{startActivityForResult(i,request);}catch(ActivityNotFoundException e){alert("File picker unavailable",e.getMessage());}
+    }
+    private void createBackup(){
+        if(!ready())return;
+        if(state.optBoolean("canRenew")){
+            String current=hash(),baseline=state.optString("baselineHash");
+            new AlertDialog.Builder(this).setTitle(state.optBoolean("renewing")?"Resume backup refresh?":"Create backup for current ROM?").setMessage("The current image differs from the saved original. Keep the old rollback archived, back up this ROM's clean vendor_boot, then save the new rollback ZIP. Your tuning profile stays saved. This does not flash either image.").setPositiveButton("Create backup",(d,w)->run("renew",current+" "+baseline)).setNegativeButton("Cancel",null).show();
+        }else run("backup",hash());
+    }
+    private void promptBackup(){
+        if(!ready()||!state.optBoolean("canRenew")||hash().equals(promptedImage))return;promptedImage=hash();createBackup();
+    }
+    private void profileDocument(int request,Uri uri){
+        if(busy)return;final byte[] outgoing;
+        try{outgoing=request==PROFILE_EXPORT?profile().encode():null;}catch(Exception e){alert("Profile unavailable",e.getMessage());return;}
+        busy=true;message=request==PROFILE_EXPORT?"Saving tuning profile…":"Reading tuning profile…";draw();
+        worker.execute(()->{GpuProfile imported=null;String error=null;try{
+            if(outgoing!=null){
+                try(OutputStream out=getContentResolver().openOutputStream(uri,"wt")){if(out==null)throw new IOException("Cannot open destination");out.write(outgoing);}
+                try(InputStream in=getContentResolver().openInputStream(uri)){if(!java.util.Arrays.equals(outgoing,readProfile(in)))throw new IOException("Saved profile verification failed");}
+            }else try(InputStream in=getContentResolver().openInputStream(uri)){imported=GpuProfile.parse(readProfile(in));}
+        }catch(Exception e){error=e.getMessage();}final GpuProfile loaded=imported;final String fail=error;
+        runOnUiThread(()->{if(isDestroyed())return;busy=false;if(fail!=null){message="Profile operation failed: "+fail;alert("Profile operation failed",message);}else if(loaded!=null){message="Profile validated. Review before loading.";reviewProfile(loaded);}else message="Tuning profile saved and verified. Share this JSON file; keep your recovery rollback ZIP separately.";draw();});});
+    }
+    private static byte[] readProfile(InputStream in)throws Exception {
+        if(in==null)throw new IOException("Cannot read profile");ByteArrayOutputStream out=new ByteArrayOutputStream();byte[] bytes=new byte[4096];int n;while((n=in.read(bytes))!=-1){if(out.size()+n>GpuProfile.MAX_BYTES)throw new IOException("Profile exceeds 32 KiB");out.write(bytes,0,n);}return out.toByteArray();
+    }
+    private void reviewProfile(GpuProfile p){
+        StringBuilder review=new StringBuilder(p.name).append("\nS23 Ultra · Adreno 740 v2\n\n");
+        for(int i=0;i<10;i++){review.append("Level ").append(i).append(": ");if(hasDraft)review.append(mhz(draftFrequency[i])).append(" → ");review.append(mhz(p.frequencies[i])).append(" MHz; RPMh ");if(hasDraft)review.append(draftLevel[i]).append(" → ");review.append(p.levels[i]).append('\n');}
+        review.append("\nLoading saves these values only. Apply still requires compatible firmware, a freshly exported rollback and your confirmation. A shared profile may be unstable on your individual chip.");
+        new AlertDialog.Builder(this).setTitle("Load imported tuning profile?").setMessage(review).setPositiveButton("Load profile",(d,w)->{try{setProfile(p,true);message="Imported profile saved. Review the values before Apply.";draw();}catch(Exception e){alert("Cannot save profile",e.getMessage());}}).setNegativeButton("Cancel",null).show();
     }
     private void editFrequency(int index){
         if(!ready()||state.optBoolean("interrupted"))return;
@@ -102,7 +152,7 @@ public final class GpuActivity extends Activity {
         dialog.setOnShowListener(d->{dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{try{
             long value=new BigDecimal(input.getText().toString()).movePointRight(6).longValueExact();
             if(value<124800000||value>850000000||value%100000!=0||(index>0&&value>=draftFrequency[index-1])||(index<9&&value<=draftFrequency[index+1]))throw new IllegalArgumentException("Use a value between adjacent levels, in 0.1 MHz steps.");
-            draftFrequency[index]=value;dialog.dismiss();draw();
+            long[] f=draftFrequency.clone();f[index]=value;saveDraft(f,draftLevel);dialog.dismiss();draw();
         }catch(Exception e){input.setError(e.getMessage()==null?"Enter a valid frequency":e.getMessage());}});input.requestFocus();});
         dialog.show();dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
     }
@@ -110,7 +160,7 @@ public final class GpuActivity extends Activity {
         if(!ready()||state.optBoolean("interrupted"))return;int selected=0;for(int i=0;i<LEVELS.length;i++)if(LEVELS[i]==draftLevel[index])selected=i;
         new AlertDialog.Builder(this).setTitle("Power level "+index+" · Voltage level").setSingleChoiceItems(LABELS,selected,(d,which)->{
             int value=LEVELS[which];if((index>0&&value>draftLevel[index-1])||(index<9&&value<draftLevel[index+1])){Toast.makeText(this,"Voltage levels must stay unchanged or descend down the table",Toast.LENGTH_LONG).show();return;}
-            draftLevel[index]=value;d.dismiss();draw();
+            try{int[] l=draftLevel.clone();l[index]=value;saveDraft(draftFrequency,l);d.dismiss();draw();}catch(Exception e){alert("Cannot save profile",e.getMessage());}
         }).setNegativeButton("Cancel",null).show();
     }
     private void draw(){
@@ -126,22 +176,27 @@ public final class GpuActivity extends Activity {
         description("Trial changes", "Changes take effect after reboot. Unsuitable values can cause freezes or prevent booting. Keep your recovery rollback available.");
         section("Device status");card();description(busy?"Working…":"GPU image",message);
         button("Refresh image and compatibility",true,v->run("status",""));
+        section("Tuning profile");card();
+        description(hasDraft?profileName:"No saved profile","Values are saved automatically and retained across ROM updates that preserve Settings data. Imported values are never applied automatically.");
+        row("Back up profile","Export a shareable JSON file with frequencies and voltage levels",hasDraft,false,v->chooseProfile(PROFILE_EXPORT));
+        row("Import profile","Validate and review a UN1CA GPU profile before loading",true,false,v->chooseProfile(PROFILE_IMPORT));
+        row("Load current image values","Replace the saved draft with the current image's table",ready(),false,v->new AlertDialog.Builder(this).setTitle("Replace saved profile values?").setMessage("This replaces the saved draft. Back up your profile first if you want to keep it.").setPositiveButton("Load values",(d,w)->{try{setProfile(imageProfile(),true);draw();}catch(Exception e){alert("Cannot load values",e.getMessage());}}).setNegativeButton("Cancel",null).show());
         section("Recovery rollback");card();
-        row("Create or verify original backup",state!=null&&state.optBoolean("backup")?"Original image saved":"Save the original before making changes",ready()&&(!state.optBoolean("backup")||state.optBoolean("original")),false,v->run("backup",hash()));
-        row("Save rollback ZIP",state!=null&&state.optBoolean("exported")?"Saved copy verified":"Required before Apply · choose PC or USB storage",ready()&&state.optBoolean("backup"),false,v->{Intent i=new Intent(Intent.ACTION_CREATE_DOCUMENT);i.addCategory(Intent.CATEGORY_OPENABLE);i.setType("application/zip");i.putExtra(Intent.EXTRA_TITLE,"UN1CA-dm3q-GPU-rollback.zip");try{startActivityForResult(i,EXPORT);}catch(ActivityNotFoundException e){alert("File picker unavailable",e.getMessage());}});
+        row(state!=null&&state.optBoolean("renewing")?"Resume backup refresh":state!=null&&state.optBoolean("staleBackup")?"Create backup for current ROM":"Create or verify original backup",state!=null&&state.optBoolean("staleBackup")?"Archive old rollback and back up this ROM; profile stays saved":state!=null&&state.optBoolean("backup")?"Original image saved":"Save the original before making changes",ready()&&(state.optBoolean("canRenew")||(!state.optBoolean("staleBackup")&&!state.optBoolean("renewing")&&!state.optBoolean("interrupted")&&(!state.optBoolean("backup")||state.optBoolean("original")))),false,v->createBackup());
+        row("Save rollback ZIP",state!=null&&state.optBoolean("exported")?"Saved copy verified":"Required before Apply · choose PC or USB storage",ready()&&state.optBoolean("backup")&&state.optBoolean("canRestore")&&!state.optBoolean("interrupted")&&!state.optBoolean("renewing"),false,v->{Intent i=new Intent(Intent.ACTION_CREATE_DOCUMENT);i.addCategory(Intent.CATEGORY_OPENABLE);i.setType("application/zip");i.putExtra(Intent.EXTRA_TITLE,"UN1CA-dm3q-GPU-rollback.zip");try{startActivityForResult(i,EXPORT);}catch(ActivityNotFoundException e){alert("File picker unavailable",e.getMessage());}});
         row("Recovery instructions","Restore through OrangeFox if Android cannot start",true,false,v->alert("If Android cannot start","Boot into OrangeFox using the device's recovery procedure. Mount Cache. Flash /cache/unica-gpu/rollback.zip, or flash the saved rollback ZIP from USB/PC storage. It verifies and restores the exact pre-trial vendor_boot image. Reboot manually after success. Keep a matching full ROM available if recovery restoration fails. Never use this ZIP after changing firmware."));
         section("GPU power levels");card();
         row("About GPU tuning","MHz frequencies · Qualcomm RPMh voltage requests",true,false,v->alert("GPU power levels","Frequency is MHz (0.1 MHz steps, 124.8–850). This range is an input limit, not a promise of hardware stability. Levels are Qualcomm RPMh requests, not millivolts; the platform may round them up. Keep frequencies descending and levels unchanged or descending down the table. Start with one small change."));
-        if(state!=null){
+        if(hasDraft){
             for(int index=0;index<10;index++){final int row=index;section("Power level "+row);card();
-                row("GPU frequency",mhz(draftFrequency[row])+" MHz",ready()&&!state.optBoolean("interrupted"),false,v->editFrequency(row));
-                row("Voltage level",levelName(draftLevel[row]),ready()&&!state.optBoolean("interrupted"),false,v->editLevel(row));
+                row("GPU frequency",mhz(draftFrequency[row])+" MHz",ready()&&!state.optBoolean("interrupted")&&!state.optBoolean("renewing"),false,v->editFrequency(row));
+                row("Voltage level",levelName(draftLevel[row]),ready()&&!state.optBoolean("interrupted")&&!state.optBoolean("renewing"),false,v->editLevel(row));
             }
         }
         card();button("Apply GPU table",ready()&&state.optBoolean("exported")&&state.optBoolean("canRestore")&&!state.optBoolean("interrupted"),v->apply());
         section("Restore and restart");card();
         row("Restore original vendor_boot","Restore the pre-trial image, then reboot",ready()&&state.optBoolean("canRestore"),false,v->new AlertDialog.Builder(this).setTitle("Restore original GPU image?").setMessage("This restores the full vendor_boot image captured before this trial, including its original GPU table. Reboot after restoration succeeds.").setPositiveButton("Restore",(d,w)->run("restore",hash())).setNegativeButton("Cancel",null).show());
-        row("Reboot now","Only after Apply or Restore reports success",ready()&&!state.optBoolean("interrupted"),false,v->new AlertDialog.Builder(this).setTitle("Reboot device?").setMessage("Keep the rollback ZIP and recovery available. Only reboot after Apply or Restore reports success.").setPositiveButton("Reboot",(d,w)->((android.os.PowerManager)getSystemService(POWER_SERVICE)).reboot(null)).setNegativeButton("Cancel",null).show());
+        row("Reboot now","Only after Apply or Restore reports success",ready()&&!state.optBoolean("interrupted")&&!state.optBoolean("renewing"),false,v->new AlertDialog.Builder(this).setTitle("Reboot device?").setMessage("Keep the rollback ZIP and recovery available. Only reboot after Apply or Restore reports success.").setPositiveButton("Reboot",(d,w)->((android.os.PowerManager)getSystemService(POWER_SERVICE)).reboot(null)).setNegativeButton("Cancel",null).show());
         TextView footer=label("Inspired by libxzr/KonaBess. Edits the existing ten power levels. Nothing reboots automatically.",12,true);footer.setPadding(dp(24),dp(8),dp(24),dp(8));content.addView(footer);
         applyBackground();scroll.post(()->scroll.scrollTo(0,previousScroll));
     }
@@ -155,11 +210,12 @@ public final class GpuActivity extends Activity {
     }
     private void run(String operation,String payload){if(busy)return;busy=true;message="Working: "+operation+". Keep the device powered…";draw();
         worker.execute(()->{JSONObject result=null;String error=null;try{result=GpuTransport.request(operation,payload);}catch(Exception e){error=e.getMessage();}final JSONObject reply=result;final String fail=error;
-            runOnUiThread(()->{if(isDestroyed())return;busy=false;if(reply!=null){state=reply;message=(operation.equals("apply")?"GPU table written and verified. Reboot when ready.":operation.equals("restore")?"Original vendor_boot restored and verified. Reboot when ready.":"Compatible firmware. Backup: "+(reply.optBoolean("backup")?"saved":"not created")+". Rollback export: "+(reply.optBoolean("exported")?"verified":"required before Apply")+".");if(reply.optBoolean("interrupted"))message="Interrupted write detected. Restore the original before rebooting.";}else{state=null;message="Operation failed: "+fail+". Refresh status before any further action.";alert("GPU operation failed",message);}draw();});
+            runOnUiThread(()->{if(isDestroyed())return;busy=false;if(reply!=null){state=reply;message=(operation.equals("apply")?"GPU table written and verified. Reboot when ready.":operation.equals("restore")?"Original vendor_boot restored and verified. Reboot when ready.":"Compatible firmware. Backup: "+(reply.optBoolean("backup")?"saved":"not created")+". Rollback export: "+(reply.optBoolean("exported")?"verified":"required before Apply")+".");if(!reply.optString("blockReason").isEmpty())message=reply.optString("blockReason")+". Your tuning profile stays saved.";}else{state=null;message="Operation failed: "+fail+". Refresh status before any further action.";alert("GPU operation failed",message);}draw();if(reply!=null&&operation.equals("status"))promptBackup();});
         });
     }
     private static String hex(byte[] b){StringBuilder out=new StringBuilder();for(byte v:b)out.append(String.format(java.util.Locale.US,"%02x",v&255));return out.toString();}
-    @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request!=EXPORT||result!=RESULT_OK||data==null||data.getData()==null)return;
+    @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(result!=RESULT_OK||data==null||data.getData()==null)return;
+        if(request==PROFILE_EXPORT||request==PROFILE_IMPORT){profileDocument(request,data.getData());return;}if(request!=EXPORT)return;
         if(!ready())return;Uri uri=data.getData();String expected=state.optString("rollbackHash"),current=hash();busy=true;message="Saving and verifying recovery rollback ZIP…";draw();
         worker.execute(()->{JSONObject reply=null;String error=null;try{
             MessageDigest digest=MessageDigest.getInstance("SHA-256");long total=0;try(InputStream in=new FileInputStream(GpuTransport.ROLLBACK);OutputStream out=getContentResolver().openOutputStream(uri,"wt")){if(out==null)throw new IOException("Cannot open destination");byte[] b=new byte[65536];int n;while((n=in.read(b))!=-1){total+=n;if(total>120*1024*1024)throw new IOException("Oversized rollback ZIP");out.write(b,0,n);digest.update(b,0,n);}}

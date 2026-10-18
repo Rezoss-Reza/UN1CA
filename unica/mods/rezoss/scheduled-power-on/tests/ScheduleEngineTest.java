@@ -72,7 +72,36 @@ final class ScheduleEngineTest {
         rejects(()->ScheduleRules.validate(now+600,now+660,now));
         rejects(()->ScheduleRules.validate(now+ScheduleRules.WEEK+60,0,now));
         rejects(()->ScheduleRules.validate(Long.MIN_VALUE,0,now));
-        ScheduleRules.validate(now+600,now+120,now);checks++;
+        ScheduleRules.validate(now+600,now+300,now);checks++;
+        rejects(()->ScheduleRules.validate(now-60,0,now));
+        rejects(()->ScheduleRules.validate(now,0,now));
+        rejects(()->ScheduleRules.validate(now+240,0,now));
+        rejects(()->ScheduleRules.validate(now+300,0,now+1)); // 4m59s remaining.
+        ScheduleRules.validate(now+300,0,now);checks++;
+        rejects(()->ScheduleRules.validate(now+600,now+240,now));
+        rejects(()->ScheduleRules.validate(now+600,now+300,now+1));
+        rejects(()->ScheduleRules.validate(now+420,now+300,now));
+        ScheduleRules.validate(now+480,now+300,now);checks++;
+        check(ScheduleRules.pickerMinimum(true,false,0,now)==now+300);
+        check(ScheduleRules.pickerMinimum(false,true,0,now+1)==now+360);
+        check(ScheduleRules.pickerMinimum(true,true,now+600,now)==now+780);
+        check(ScheduleRules.pickerMinimum(true,false,0,now+86399)==now+86700);
+        rejects(()->ScheduleRules.validateSelection(now-60,true,false,0,now));
+        rejects(()->ScheduleRules.validateSelection(now+240,true,false,0,now));
+        rejects(()->ScheduleRules.validateSelection(now+240,false,true,0,now));
+        rejects(()->ScheduleRules.validateSelection(now+300,true,false,0,now+1));
+        rejects(()->ScheduleRules.validateSelection(now+720,true,true,now+600,now));
+        ScheduleRules.validateSelection(now+780,true,true,now+600,now);checks++;
+        // Invalid NEW saves must not cancel or overwrite an existing schedule.
+        f=new Fake();f.pair();final Fake tooSoon=f;before=f.programs;String previous=f.state.token;
+        rejects(()->tooSoon.engine.save(tooSoon.time+240,0,true));
+        check(f.programs==before&&f.shutdowns==0&&f.state.token.equals(previous));
+        f=new Fake();f.engine.save(f.time+480,f.time+300,false);f.due();f.engine.fire(f.state.token);
+        check(f.shutdowns==1); // 3-minute off/on gap must still execute normally.
+        f=new Fake();f.pair();f.time+=360;long upcoming=f.state.off;f.engine.restore();
+        check(f.state.off==upcoming&&f.shutdowns==0); // Existing off now 4 minutes away.
+        f=new Fake();f.engine.save(f.time+600,0,false);f.time+=360;on=f.state.on;f.engine.restore();
+        check(f.state.on==on&&!f.state.uncertain); // Existing on now 4 minutes away.
         System.out.println("PASS: "+checks+" schedule checks; all shutdown/hardware actions used fakes");
     }
 }

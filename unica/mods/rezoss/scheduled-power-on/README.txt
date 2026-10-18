@@ -18,12 +18,24 @@ request durably, and invokes Android's normal shutdown API. Any failure before
 that point prevents the shutdown request. No root-manager or shell is used.
 
 Enable Separate power-off and power-on times to select two dates/times and
-Save schedule. Power off must be at least 2 minutes ahead; power on must be
+Save schedule. Power off must be at least 5 minutes ahead; power on must be
 at least 3 minutes after power off and no more than 7 days from saving.
 All schedules are ONE-TIME. The confirmation shows both selected times.
 Cancel automatic power off keeps the power-on alarm. Cancel entire schedule
 also sends Samsung's cancellation command. Opening the page or changing a
 picker never arms an alarm until the user chooses a save action.
+
+Manual power-on times also require at least 5 minutes from the current clock.
+Past dates cannot be selected. Time pickers start at the current time plus
+5 minutes, rounded UP to a whole minute; separate power on starts no earlier
+than 3 minutes after its power-off time. The picker displays the current clock
+and earliest allowed time, disables OK for invalid selections, and checks again
+when OK is pressed. Saving revalidates against the current clock before changing
+any saved schedule or hardware alarm. Editing power off moves an earlier draft
+power-on time forward to maintain the 3-minute gap; this does not change the
+active schedule until Save. Existing saved events retain their original
+two-minute restoration/driver margin, so an upcoming working schedule is not
+discarded merely because it is now less than 5 minutes away.
 
 The screen uses rounded cards, larger row labels, day/night colors and the
 same UN1CA Settings wallpaper/transparency keys as Battery Saving. The design

@@ -20,6 +20,7 @@ import java.util.concurrent.Executors;
 public final class PowerOnActivity extends Activity {
     private final ExecutorService worker=Executors.newSingleThreadExecutor();
     private LinearLayout content;
+    private AlertDialog timeDialog;
     private long draftOn,draftOff;
     private boolean separate,busy;
     private String message="";
@@ -33,9 +34,10 @@ public final class PowerOnActivity extends Activity {
         catch (Exception error) { message=error.getMessage(); }
         ScheduleEngine.State state=PowerScheduler.state(this);
         long now=System.currentTimeMillis()/1000;
-        draftOn=state.on>now+120?state.on:rounded(now+8*3600);
-        draftOff=state.off>now+120?state.off:rounded(now+5*60);
+        draftOff=state.off>=now+ScheduleRules.MIN_LEAD?state.off:rounded(now+ScheduleRules.MIN_LEAD);
+        draftOn=state.on>=now+ScheduleRules.MIN_LEAD?state.on:rounded(now+ScheduleRules.MIN_LEAD);
         separate=state.off>0;
+        if(separate) draftOn=Math.max(draftOn,draftOff+ScheduleRules.MIN_GAP);
         if (saved!=null) {
             draftOn=saved.getLong("on",draftOn); draftOff=saved.getLong("off",draftOff);
             separate=saved.getBoolean("separate",separate);
@@ -46,7 +48,10 @@ public final class PowerOnActivity extends Activity {
         state.putLong("on",draftOn); state.putLong("off",draftOff); state.putBoolean("separate",separate);
         super.onSaveInstanceState(state);
     }
-    @Override protected void onDestroy() { worker.shutdown(); super.onDestroy(); }
+    @Override protected void onDestroy() {
+        if(timeDialog!=null)timeDialog.dismiss();
+        worker.shutdown();super.onDestroy();
+    }
     @Override public void onBackPressed() {
         if (busy) { Toast.makeText(this,"Saving your schedule…",Toast.LENGTH_SHORT).show(); return; }
         super.onBackPressed();
@@ -137,12 +142,20 @@ public final class PowerOnActivity extends Activity {
         TextView hint=text("Turn off automatically at one time and start again later.",14,secondary);hint.setPadding(0,dp(6),dp(12),0);labels.addView(hint);
         toggleRow.addView(labels,new LinearLayout.LayoutParams(0,-2,1));
         Switch toggle=new Switch(this);toggle.setContentDescription("Separate power-off and power-on times");toggle.setChecked(separate);toggle.setEnabled(!busy);
-        toggle.setOnCheckedChangeListener((view,checked)->{separate=checked;message="";draw();});toggleRow.addView(toggle);mode.addView(toggleRow);
+        toggle.setOnCheckedChangeListener((view,checked)->{
+            separate=checked;
+            if(checked) {
+                long minimum=ScheduleRules.pickerMinimum(false,true,draftOff,System.currentTimeMillis()/1000);
+                draftOff=Math.max(draftOff,minimum);
+                draftOn=Math.max(draftOn,draftOff+ScheduleRules.MIN_GAP);
+            }
+            message="";draw();
+        });toggleRow.addView(toggle);mode.addView(toggleRow);
         LinearLayout times=card();
         if(separate) {row(times,"Power off",date(draftOff),()->pick(false));divider(times);}
         row(times,"Power on",date(draftOn),()->pick(true));
-        TextView note=text(separate?"One-time schedule. Allow at least 3 minutes between power off and power on.":
-                "Select a power-on time, then choose to shut down now or later.",14,secondary);
+        TextView note=text(separate?"Power off must be at least 5 minutes ahead. Power on must be at least 3 minutes after power off.":
+                "Power on must be at least 5 minutes ahead. Choose to shut down now or later.",14,secondary);
         note.setPadding(dp(18),0,dp(18),dp(20));content.addView(note);
         if(separate) action("Save power-off and power-on schedule",()->confirmPair());
         else action("Save power-on time",()->saveChoices());
@@ -163,17 +176,81 @@ public final class PowerOnActivity extends Activity {
         setContentView(scroll);
     }
     private void pick(boolean powerOn) {
-        Calendar value=Calendar.getInstance();value.setTimeInMillis((powerOn?draftOn:draftOff)*1000);
-        new DatePickerDialog(this,(view,y,m,d)->{
+        long now=System.currentTimeMillis()/1000;
+        long minimum=ScheduleRules.pickerMinimum(powerOn,separate,draftOff,now);
+        long maximum=now+ScheduleRules.WEEK-(powerOn?0:ScheduleRules.MIN_GAP);
+        if(minimum>maximum) {
+            new AlertDialog.Builder(this).setTitle("Choose an earlier power-off time")
+                    .setMessage("Keep both times within the next 7 days.").setPositiveButton("OK",null).show();return;
+        }
+        Calendar value=Calendar.getInstance();value.setTimeInMillis(minimum*1000);
+        DatePickerDialog dateDialog=new DatePickerDialog(this,(view,y,m,d)->{
             value.set(y,m,d);
-            new TimePickerDialog(this,(picker,h,min)->{
-                value.set(Calendar.HOUR_OF_DAY,h);value.set(Calendar.MINUTE,min);value.set(Calendar.SECOND,0);value.set(Calendar.MILLISECOND,0);
-                if(powerOn) draftOn=value.getTimeInMillis()/1000;else draftOff=value.getTimeInMillis()/1000;
-                message="";draw();if(powerOn&&!separate)saveChoices();
-            },value.get(Calendar.HOUR_OF_DAY),value.get(Calendar.MINUTE),android.text.format.DateFormat.is24HourFormat(this)).show();
-        },value.get(Calendar.YEAR),value.get(Calendar.MONTH),value.get(Calendar.DAY_OF_MONTH)).show();
+            pickTime(powerOn,value);
+        },value.get(Calendar.YEAR),value.get(Calendar.MONTH),value.get(Calendar.DAY_OF_MONTH));
+        dateDialog.getDatePicker().setMinDate(minimum*1000);
+        dateDialog.getDatePicker().setMaxDate(maximum*1000);
+        dateDialog.show();
+    }
+    private long selectedTime(Calendar day,TimePicker picker) {
+        Calendar selected=(Calendar)day.clone();selected.setLenient(false);
+        selected.set(Calendar.HOUR_OF_DAY,picker.getHour());selected.set(Calendar.MINUTE,picker.getMinute());
+        selected.set(Calendar.SECOND,0);selected.set(Calendar.MILLISECOND,0);
+        return selected.getTimeInMillis()/1000;
+    }
+    private void pickTime(boolean powerOn,Calendar day) {
+        TimePicker picker=new TimePicker(this);
+        picker.setIs24HourView(android.text.format.DateFormat.is24HourFormat(this));
+        picker.setHour(day.get(Calendar.HOUR_OF_DAY));picker.setMinute(day.get(Calendar.MINUTE));
+        AlertDialog dialog=new AlertDialog.Builder(this).setTitle(powerOn?"Power-on time":"Power-off time")
+                .setMessage("Choose a time at least 5 minutes ahead.").setView(picker)
+                .setPositiveButton("OK",null).setNegativeButton("Cancel",null).create();
+        timeDialog=dialog;
+        Handler handler=new Handler(Looper.getMainLooper());
+        Runnable update=new Runnable() {
+            public void run() {
+                if(!dialog.isShowing())return;
+                long now=System.currentTimeMillis()/1000;
+                long minimum=ScheduleRules.pickerMinimum(powerOn,separate,draftOff,now);
+                String hint="Current time: "+date(now)+"\nEarliest time: "+date(minimum);
+                boolean valid=true;
+                try {ScheduleRules.validateSelection(selectedTime(day,picker),powerOn,separate,draftOff,now);}
+                catch(IllegalArgumentException error) {valid=false;hint+="\nChoose a time within the allowed range.";}
+                dialog.setMessage(hint);
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(valid);
+            }
+        };
+        Runnable tick=new Runnable() {
+            public void run() {update.run();if(dialog.isShowing())handler.postDelayed(this,1000);}
+        };
+        dialog.setOnShowListener(shown->{
+            picker.setOnTimeChangedListener((view,h,m)->update.run());
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(button->{
+                try {
+                    picker.clearFocus();
+                    long selected=selectedTime(day,picker);
+                    ScheduleRules.validateSelection(selected,powerOn,separate,draftOff,System.currentTimeMillis()/1000);
+                    if(powerOn)draftOn=selected;
+                    else {draftOff=selected;if(separate)draftOn=Math.max(draftOn,draftOff+ScheduleRules.MIN_GAP);}
+                    dialog.dismiss();message="";draw();if(powerOn&&!separate)saveChoices();
+                }catch(IllegalArgumentException invalid){update.run();}
+            });
+            tick.run();
+        });
+        dialog.setOnDismissListener(closed->{
+            handler.removeCallbacks(tick);if(timeDialog==dialog)timeDialog=null;
+        });
+        dialog.show();
+    }
+    private boolean validDraft() {
+        try {ScheduleRules.validate(draftOn,separate?draftOff:0,System.currentTimeMillis()/1000);return true;}
+        catch(IllegalArgumentException invalid) {
+            new AlertDialog.Builder(this).setTitle("Choose a later time").setMessage(invalid.getMessage())
+                    .setPositiveButton("OK",null).show();return false;
+        }
     }
     private void saveChoices() {
+        if(!validDraft())return;
         new AlertDialog.Builder(this).setTitle("Power on: "+date(draftOn))
                 .setItems(new String[]{"Save and Shutdown Now","Save and I'll shutdown manually"},(dialog,which)->{
                     if(which==0) new AlertDialog.Builder(this).setTitle("Shut down now?")
@@ -183,6 +260,7 @@ public final class PowerOnActivity extends Activity {
                 }).setNegativeButton("Cancel",null).show();
     }
     private void confirmPair() {
+        if(!validDraft())return;
         new AlertDialog.Builder(this).setTitle("Save power schedule?")
                 .setMessage("Power off: "+date(draftOff)+"\nPower on: "+date(draftOn)+
                         "\n\nYour phone will shut down automatically at the selected power-off time.")

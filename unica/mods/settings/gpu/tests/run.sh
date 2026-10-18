@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
 set -euo pipefail
+: "${JSON_JAR:?Set JSON_JAR to a host org.json implementation; see ../README.txt}"
+[[ -r "$JSON_JAR" ]] || { echo "Cannot read JSON_JAR: $JSON_JAR" >&2; exit 1; }
 HERE=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 ROOT=$(cd "$HERE/../../../../.." && pwd)
 AVB="$ROOT/external/android-tools/vendor/avb/libavb"
@@ -22,6 +24,7 @@ with zipfile.ZipFile(sys.argv[1]) as z:
     assert b'/tmp/unica-gpu-rollback/restore' in z.read('META-INF/com/google/android/update-binary')
 print('PASS recovery ZIP integrity, original-image checksum and updater entry')
 PY
+"$HERE/profile-test.sh"
 python3 "$HERE/policy_test.py" "$ROOT" "$WORK"
 bash -n "$HERE/../build.sh" "$ROOT/unica/mods/settings/customize.sh"
 echo "GPU test artifacts retained at $WORK"

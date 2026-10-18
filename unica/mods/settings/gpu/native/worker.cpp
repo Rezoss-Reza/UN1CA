@@ -22,6 +22,7 @@ namespace {
 #ifdef GPU_TEST
 std::string BASE,IPC;
 int failWrites=0;
+int failRenewPhase=0;
 #else
 const std::string BASE="/cache/unica-gpu/",IPC="/data/misc/unica_gpu/";
 #endif
@@ -79,7 +80,7 @@ void verifyEnvironment(){
 // Standard ZIP32, STORE entries. Recovery unzip verifies each CRC before use.
 void zip16(Bytes& b,uint16_t v){b.push_back(v&255);b.push_back(v>>8);}
 void zip32(Bytes& b,uint32_t v){zip16(b,v&65535);zip16(b,v>>16);}
-void rollbackZip(const Bytes& image){
+void rollbackZip(const Bytes& image,const std::string& directory=BASE){
  const std::string script=R"(#!/sbin/sh
 # SPDX-License-Identifier: GPL-3.0-or-later
 OUTFD="$2"
@@ -101,23 +102,24 @@ exit 0
  entries.emplace_back("restore",read("/system/etc/unica/gpu/restore",8*1024*1024));
 #endif
  entries.emplace_back("original.img",image);
- const std::string dst=BASE+"rollback.zip",tmp=dst+".tmp";Bytes central;uint32_t pos=0;uint16_t count=0;AvbSHA256Ctx expected;avb_sha256_init(&expected);
+ const std::string dst=directory+"rollback.zip",tmp=dst+".tmp";Bytes central;uint32_t pos=0;uint16_t count=0;AvbSHA256Ctx expected;avb_sha256_init(&expected);
  auto emit=[&](int fd,const Bytes& b){writeall(fd,b.data(),b.size());avb_sha256_update(&expected,b.data(),b.size());};
  {FD f(open(tmp.c_str(),O_WRONLY|O_CREAT|O_TRUNC|O_CLOEXEC|O_NOFOLLOW,0640));require(fchmod(f,0640)==0,"Cannot protect rollback ZIP");
  for(auto& e:entries){Bytes h;auto name=bytes(e.first);uint32_t crc=crc32(e.second),size=e.second.size();zip32(h,0x04034b50);zip16(h,20);zip16(h,0);zip16(h,0);zip16(h,0);zip16(h,0);zip32(h,crc);zip32(h,size);zip32(h,size);zip16(h,name.size());zip16(h,0);h.insert(h.end(),name.begin(),name.end());emit(f,h);emit(f,e.second);
   zip32(central,0x02014b50);zip16(central,20);zip16(central,20);for(int i=0;i<4;i++)zip16(central,0);zip32(central,crc);zip32(central,size);zip32(central,size);zip16(central,name.size());for(int i=0;i<4;i++)zip16(central,0);zip32(central,0);zip32(central,pos);central.insert(central.end(),name.begin(),name.end());pos+=h.size()+size;count++;
  }
  emit(f,central);Bytes end;zip32(end,0x06054b50);zip16(end,0);zip16(end,0);zip16(end,count);zip16(end,count);zip32(end,central.size());zip32(end,pos);zip16(end,0);emit(f,end);require(fsync(f)==0,"Rollback ZIP sync failed");}
- require(rename(tmp.c_str(),dst.c_str())==0,"Cannot commit rollback ZIP");syncdir(BASE);auto z=read(dst,IMAGE_SIZE+10*1024*1024);auto d=digest(z);require(std::equal(d.begin(),d.end(),avb_sha256_final(&expected)),"Rollback ZIP readback failed");atomic(BASE+"rollback.sha256",sha(z));
+ require(rename(tmp.c_str(),dst.c_str())==0,"Cannot commit rollback ZIP");syncdir(directory);auto z=read(dst,IMAGE_SIZE+10*1024*1024);auto d=digest(z);require(std::equal(d.begin(),d.end(),avb_sha256_final(&expected)),"Rollback ZIP readback failed");atomic(directory+"rollback.sha256",sha(z));
 }
-void backup(const Bytes& live){
+void backup(const Bytes& live,const std::string& directory=BASE){
  struct statvfs fs;require(statvfs(BASE.c_str(),&fs)==0,"Backup storage unavailable");
  require(uint64_t(fs.f_bavail)*fs.f_frsize>uint64_t(IMAGE_SIZE)*3+32*1024*1024,"At least 320 MiB free on /cache is required");
- if(!exists(BASE+"original.img")){stock(live);atomic(BASE+"original.img",live);}
- auto original=read(BASE+"original.img",IMAGE_SIZE);stock(original);require(sha(original)==sha(live),"An earlier backup exists. Restore it before another trial; never overwrite it");
- if(exists(BASE+"original.sha256"))require(text(BASE+"original.sha256",64)==sha(original),"Original backup checksum mismatch");
- atomic(BASE+"original.sha256",sha(original));rollbackZip(original);
- require(sha(read(BASE+"original.img",IMAGE_SIZE))==sha(original),"Backup readback failed");
+ if(directory==BASE)require(!exists(BASE+"writing")&&!exists(BASE+"renewing"),"Finish the interrupted operation before creating a backup");
+ if(!exists(directory+"original.img")){stock(live);atomic(directory+"original.img",live);}
+ auto original=read(directory+"original.img",IMAGE_SIZE);stock(original);require(sha(original)==sha(live),"Saved backup belongs to another image. Use Create backup for current ROM");
+ if(exists(directory+"original.sha256"))require(text(directory+"original.sha256",64)==sha(original),"Original backup checksum mismatch");
+ atomic(directory+"original.sha256",sha(original));rollbackZip(original,directory);
+ require(sha(read(directory+"original.img",IMAGE_SIZE))==sha(original),"Backup readback failed");
 }
 Bytes original(){auto b=read(BASE+"original.img",IMAGE_SIZE);require(text(BASE+"original.sha256",64)==sha(b),"Original backup checksum mismatch");stock(b);return b;}
 bool restorable(const Bytes& live,const Bytes& b){
@@ -127,14 +129,69 @@ bool restorable(const Bytes& live,const Bytes& b){
  // restore if its transaction journal and the original image header still match.
  if(exists(BASE+"writing")){std::istringstream in(text(BASE+"writing"));std::string from,to;in>>from>>to;return hashString(from)&&hashString(to)&&exists(BASE+"candidate.img")&&to==sha(read(BASE+"candidate.img",IMAGE_SIZE))&&std::equal(b.begin(),b.begin()+4096,live.begin());}return false;
 }
+void directory(const std::string& p){
+ if(mkdir(p.c_str(),0750)!=0)require(errno==EEXIST,"Cannot create protected backup directory");
+ struct stat s;require(lstat(p.c_str(),&s)==0&&S_ISDIR(s.st_mode),"Backup directory is not a real directory");
+ syncdir(p.substr(0,p.find_last_of('/',p.size()-2)));
+}
+struct Renewal {std::string oldHash,newHash,archive;};
+Renewal renewal(){
+ std::istringstream in(text(BASE+"renewing"));Renewal r;std::string extra;in>>r.oldHash>>r.newHash>>r.archive;
+ require(hashString(r.oldHash)&&hashString(r.newHash)&&r.oldHash!=r.newHash&&r.archive.size()==129&&r.archive.substr(0,64)==r.oldHash&&r.archive[64]=='-'&&hashString(r.archive.substr(65))&&!(in>>extra),"Invalid backup refresh journal; preserve files for recovery");return r;
+}
+void verifyArchived(const std::string& dir,const Renewal& r){
+ auto b=read(dir+"original.img",IMAGE_SIZE);stock(b);require(sha(b)==r.oldHash&&text(dir+"original.sha256",64)==r.oldHash,"Archived original checksum mismatch");
+ auto zh=r.archive.substr(65);require(text(dir+"rollback.sha256",64)==zh&&sha(read(dir+"rollback.zip",IMAGE_SIZE+10*1024*1024))==zh,"Archived rollback ZIP checksum mismatch");
+}
+void renewPoint(int phase){
+#ifdef GPU_TEST
+ if(failRenewPhase==phase){failRenewPhase=0;throw std::runtime_error("Injected interrupted backup refresh");}
+#else
+ (void)phase;
+#endif
+}
+void renewBackup(const Bytes& live,const std::string& expectedOld){
+ require(!exists(BASE+"writing"),"Restore the interrupted partition write before refreshing backups");stock(live);const auto liveHash=sha(live);Renewal r;
+ if(exists(BASE+"renewing")){
+  r=renewal();require(r.oldHash==expectedOld&&r.newHash==liveHash,"Image changed during backup refresh; keep archived files and restore matching firmware manually");
+ }else{
+  auto old=original();require(sha(old)==expectedOld&&!restorable(live,old),"Backup already matches this image, or the confirmed old backup changed");
+  auto zh=text(BASE+"rollback.sha256",64);require(hashString(zh)&&sha(read(BASE+"rollback.zip",IMAGE_SIZE+10*1024*1024))==zh,"Old rollback ZIP is damaged; preserve it before manual recovery");
+  r={expectedOld,liveHash,expectedOld+"-"+zh};directory(BASE+"archives/");directory(BASE+"archives/"+r.archive+"/");
+  const auto archive=BASE+"archives/"+r.archive+"/";
+  // Hard links retain immutable original inodes without doubling cache usage.
+  // Active files are replaced by atomic rename, never modified in place.
+  for(const auto& name:{"original.img","original.sha256","rollback.zip","rollback.sha256"})
+   if(link((BASE+name).c_str(),(archive+name).c_str())!=0)require(errno==EEXIST,"Cannot archive old backup; no active backup replaced");
+  syncdir(archive);verifyArchived(archive,r);
+  atomic(BASE+"renewing",r.oldHash+" "+r.newHash+" "+r.archive);renewPoint(1);
+ }
+ verifyArchived(BASE+"archives/"+r.archive+"/",r);directory(BASE+"pending/");directory(BASE+"pending/"+r.newHash+"/");
+ const auto staged=BASE+"pending/"+r.newHash+"/";backup(live,staged);renewPoint(2);
+ require(sha(current())==r.newHash,"Partition changed during backup refresh; archived original retained, no partition writes made");
+ // The journal blocks Apply/Restore until all fresh files are durable. Retrying
+ // reconstructs the same staging set, including after a partially committed set.
+ removefile(BASE+"exported");removefile(BASE+"applied.sha256");
+ int phase=0;for(const auto& name:{"original.img","original.sha256","rollback.zip","rollback.sha256"}){
+  require(rename((staged+name).c_str(),(BASE+name).c_str())==0,"Backup activation interrupted; resume backup refresh");syncdir(BASE);syncdir(staged);if(++phase==1)renewPoint(3);
+ }
+ renewPoint(4);removefile(BASE+"candidate.img");removefile(BASE+"renewing");
+}
 std::string status(const Bytes& live){
  Table t;try{t=table(live);}catch(...){auto b=original();require(exists(BASE+"writing")&&restorable(live,b),"Unsupported image; recovery restoration may be required");t=table(b);}
  std::string r="{\"ok\":true,\"currentHash\":"+quote(sha(live))+",\"frequencies\":[";
  for(int i=0;i<10;i++){if(i)r+=',';r+=std::to_string(t.frequencies[i]);}r+="],\"levels\":[";for(int i=0;i<10;i++){if(i)r+=',';r+=std::to_string(t.levels[i]);}r+="]";
- bool has=exists(BASE+"original.sha256")&&exists(BASE+"original.img"),can=false,exported=false,isOriginal=false;
- std::string zipHash;if(has){auto b=original();can=restorable(live,b);isOriginal=sha(live)==sha(b);if(exists(BASE+"rollback.sha256"))zipHash=text(BASE+"rollback.sha256",64);exported=hashString(zipHash)&&exists(BASE+"rollback.zip")&&exists(BASE+"exported")&&text(BASE+"exported",64)==zipHash;}
+ bool renewing=exists(BASE+"renewing"),interrupted=exists(BASE+"writing"),has=!renewing&&exists(BASE+"original.sha256")&&exists(BASE+"original.img"),can=false,exported=false,isOriginal=false,stale=false,canRenew=false;
+ std::string zipHash,baselineHash,backupState="missing",blockReason;
+ if(renewing){auto pending=renewal();baselineHash=pending.oldHash;stale=true;canRenew=sha(live)==pending.newHash&&!interrupted&&t.frequencies==STOCK_FREQ&&t.levels==STOCK_LEVEL;backupState="refreshing";}
+ else if(has){auto b=original();baselineHash=sha(b);can=restorable(live,b);isOriginal=sha(live)==baselineHash;stale=!can;if(exists(BASE+"rollback.sha256"))zipHash=text(BASE+"rollback.sha256",64);exported=hashString(zipHash)&&exists(BASE+"rollback.zip")&&exists(BASE+"exported")&&text(BASE+"exported",64)==zipHash;canRenew=stale&&!interrupted&&hashString(zipHash)&&exists(BASE+"rollback.zip")&&t.frequencies==STOCK_FREQ&&t.levels==STOCK_LEVEL;backupState=stale?"stale":"ready";}
  bool complete=has&&hashString(zipHash)&&exists(BASE+"rollback.zip");
- r+=",\"backup\":"+std::string(complete?"true":"false")+",\"original\":"+(isOriginal?"true":"false")+",\"canRestore\":"+(can?"true":"false")+",\"exported\":"+(exported?"true":"false")+",\"rollbackHash\":"+quote(zipHash)+",\"interrupted\":"+(exists(BASE+"writing")?"true":"false")+"}";return r;
+ if(interrupted)blockReason="Interrupted partition write: restore the original before rebooting";
+ else if(renewing)blockReason=canRenew?"Backup refresh interrupted. Resume creating the backup for this ROM":"Image changed during backup refresh. Preserve archived backups and use matching firmware";
+ else if(stale)blockReason=canRenew?"Saved rollback belongs to a different image. Create backup for current ROM":"Current image is not a clean supported baseline, or old rollback is incomplete. Backup refresh is blocked";
+ else if(!complete)blockReason="Create and verify the original backup first";
+ else if(!exported)blockReason="Save and verify the rollback ZIP for this image before Apply";
+ r+=",\"backup\":"+std::string(complete?"true":"false")+",\"original\":"+(isOriginal?"true":"false")+",\"canRestore\":"+(can&&!renewing?"true":"false")+",\"exported\":"+(exported&&!stale&&!renewing?"true":"false")+",\"rollbackHash\":"+quote(zipHash)+",\"interrupted\":"+(interrupted?"true":"false")+",\"backupState\":"+quote(backupState)+",\"baselineHash\":"+quote(baselineHash)+",\"staleBackup\":"+(stale?"true":"false")+",\"canRenew\":"+(canRenew?"true":"false")+",\"renewing\":"+(renewing?"true":"false")+",\"blockReason\":"+quote(blockReason)+"}";return r;
 }
 void transact(const Bytes& live,const Bytes& target){
  atomic(BASE+"candidate.img",target);require(sha(read(BASE+"candidate.img",IMAGE_SIZE))==sha(target),"Candidate readback failed");
@@ -157,13 +214,14 @@ int service(){
   if(op=="status"){require(args.size()==2,"Bad status request");respond(id,status(live));return 0;}
   require(args.size()>=3&&hashString(args[2])&&sha(live)==args[2],"Device image changed. Refresh before continuing");
   if(op=="backup"){require(args.size()==3,"Bad backup request");backup(live);}
-  else if(op=="exported"){require(args.size()==4&&hashString(args[3]),"Bad export acknowledgement");require(args[3]==text(BASE+"rollback.sha256",64)&&sha(read(BASE+"rollback.zip",IMAGE_SIZE+10*1024*1024))==args[3],"Rollback ZIP checksum mismatch");atomic(BASE+"exported",args[3]);}
+  else if(op=="renew"){require(args.size()==4&&hashString(args[3]),"Bad backup refresh request");renewBackup(live,args[3]);}
+  else if(op=="exported"){require(!exists(BASE+"renewing"),"Finish backup refresh before export");auto b=original();require(restorable(live,b)&&!exists(BASE+"writing"),"Export a fresh backup for the current image first");require(args.size()==4&&hashString(args[3]),"Bad export acknowledgement");require(args[3]==text(BASE+"rollback.sha256",64)&&sha(read(BASE+"rollback.zip",IMAGE_SIZE+10*1024*1024))==args[3],"Rollback ZIP checksum mismatch");atomic(BASE+"exported",args[3]);}
   else if(op=="apply"){
-   require(args.size()==23,"Expected ten frequency/level pairs");auto b=original();require(restorable(live,b)&&!exists(BASE+"writing"),"Restore interrupted or unrelated image before applying");
+   require(!exists(BASE+"renewing"),"Finish backup refresh and export the new rollback ZIP before Apply");require(args.size()==23,"Expected ten frequency/level pairs");auto b=original();require(restorable(live,b)&&!exists(BASE+"writing"),"Restore interrupted or unrelated image before applying");
    require(exists(BASE+"exported")&&text(BASE+"exported",64)==text(BASE+"rollback.sha256",64)&&sha(read(BASE+"rollback.zip",IMAGE_SIZE+10*1024*1024))==text(BASE+"rollback.sha256",64),"Save and verify the rollback ZIP first");
    Values f{},l{};for(int i=0;i<10;i++){for(int j=0;j<2;j++){auto s=args[3+i*2+j];require(!s.empty()&&s.size()<=9&&s.find_first_not_of("0123456789")==std::string::npos,"Bad numeric GPU value");(j?l:f)[i]=std::stoul(s);}}
    auto t=table(live);require(f!=t.frequencies||l!=t.levels,"No GPU changes selected");auto target=edit(live,f,l);transact(live,target);
-  }else if(op=="restore"){require(args.size()==3,"Bad restore request");auto b=original();require(restorable(live,b),"Backup does not match this image; restore matching firmware manually");if(sha(live)!=sha(b))transact(live,b);else if(exists(BASE+"writing"))removefile(BASE+"writing");}
+  }else if(op=="restore"){require(!exists(BASE+"renewing"),"Finish backup refresh before Restore");require(args.size()==3,"Bad restore request");auto b=original();require(restorable(live,b),"Backup does not match this image; restore matching firmware manually");if(sha(live)!=sha(b))transact(live,b);else if(exists(BASE+"writing"))removefile(BASE+"writing");}
   else throw std::runtime_error("Unknown GPU operation");
   respond(id,status(current()));return 0;
  }catch(const std::exception& e){if(id.size()==36)try{respond(id,"{\"error\":"+quote(e.what())+"}");}catch(...){}return 1;}

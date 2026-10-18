@@ -33,7 +33,11 @@ final class ScheduleEngine {
     ScheduleEngine(Ports io) { this.io=io; }
 
     void save(long on, long off, boolean shutdownNow) throws Exception {
-        ScheduleRules.validate(on,off,io.now());
+        save(on,off,shutdownNow,false);
+    }
+    private void save(long on,long off,boolean shutdownNow,boolean restoring) throws Exception {
+        if (restoring) ScheduleRules.validateRestored(on,off,io.now());
+        else ScheduleRules.validate(on,off,io.now());
         if (shutdownNow && off != 0) throw new IllegalArgumentException("Choose immediate or scheduled shutdown.");
         if (shutdownNow || off != 0) io.checkShutdown();
         if (off != 0) io.checkExactAlarm();
@@ -101,7 +105,7 @@ final class ScheduleEngine {
         boolean missed=off != 0 && off-now < 120;
         if (missed) off=0;
         // Never catch up a missed power-off event during boot or a clock change.
-        save(state.on,off,false);
+        save(state.on,off,false,true);
         if (missed) io.store(io.load().withoutOff("The missed power-off time was skipped. Power on is still saved."));
     }
 }

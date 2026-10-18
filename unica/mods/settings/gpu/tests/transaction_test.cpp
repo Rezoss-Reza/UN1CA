@@ -43,5 +43,27 @@ int main(int argc,char** argv){try{
  check(request("restore",foreign)!=0);check(request("apply",profile(foreign))!=0);check(sha(current())==foreign);check(sha(original())==h);
  // Backup corruption must be detected before touching the partition.
  atomic(BASE+"partition.img",b);auto broken=b;broken[9000]^=1;atomic(BASE+"original.img",broken);check(request("apply",profile(h))!=0);check(request("restore",h)!=0);check(sha(current())==h);atomic(BASE+"original.img",b);
- std::cout<<"PASS "<<checks<<" backup, export, stale-image, replay and interrupted-write assertions\n";return 0;
+ // Refresh is an archive-only transaction: the live partition is never flashed.
+ for(int phase=1;phase<=4;phase++){
+  BASE=std::string(argv[2])+"/renew-"+std::to_string(phase)+"/";std::filesystem::create_directories(BASE);
+  atomic(BASE+"partition.img",b);check(request("backup",h)==0);auto oldZip=text(BASE+"rollback.sha256",64);
+  check(request("exported",h+" "+oldZip)==0);atomic(BASE+"partition.img",other);
+  check(request("status")==0);reply=text(IPC+"responses/response.json");check(reply.find("\"canRenew\":true")!=std::string::npos);check(reply.find("\"exported\":false")!=std::string::npos);
+  check(request("renew",foreign+" "+std::string(64,'0'))!=0);check(sha(original())==h);
+  failRenewPhase=phase;check(request("renew",foreign+" "+h)!=0);check(exists(BASE+"renewing"));check(sha(current())==foreign);
+  auto archive=BASE+"archives/"+h+"-"+oldZip+"/";check(sha(read(archive+"original.img",IMAGE_SIZE))==h);check(sha(read(archive+"rollback.zip",IMAGE_SIZE+10*1024*1024))==oldZip);
+  check(request("status")==0);reply=text(IPC+"responses/response.json");check(reply.find("\"renewing\":true")!=std::string::npos);check(reply.find("\"canRenew\":true")!=std::string::npos);check(reply.find("\"canRestore\":false")!=std::string::npos);
+  check(request("apply",profile(foreign))!=0);check(request("restore",foreign)!=0);check(request("exported",foreign+" "+oldZip)!=0);
+  // A second ROM change cannot silently adopt a different image mid-refresh.
+  auto third=other;third[8193]^=1;atomic(BASE+"partition.img",third);check(request("renew",sha(third)+" "+h)!=0);check(exists(BASE+"renewing"));atomic(BASE+"partition.img",other);
+  check(request("renew",foreign+" "+h)==0);check(!exists(BASE+"renewing"));check(sha(original())==foreign);check(sha(current())==foreign);check(!exists(BASE+"exported"));check(!exists(BASE+"applied.sha256"));
+  check(sha(read(archive+"original.img",IMAGE_SIZE))==h);check(sha(read(archive+"rollback.zip",IMAGE_SIZE+10*1024*1024))==oldZip);
+  check(request("apply",profile(foreign))!=0);auto freshZip=text(BASE+"rollback.sha256",64);check(freshZip!=oldZip);check(request("exported",foreign+" "+oldZip)!=0);check(request("exported",foreign+" "+freshZip)==0);
+  check(request("apply",profile(foreign))==0);auto freshTuned=sha(current());check(request("restore",freshTuned)==0);check(sha(current())==foreign);
+  // Unknown tuned values cannot become a clean rollback baseline.
+  auto unknown=edit(other,STOCK_FREQ,STOCK_LEVEL);Values uf=STOCK_FREQ;uf[0]=710000000;unknown=edit(unknown,uf,STOCK_LEVEL);unknown[8194]^=1;atomic(BASE+"partition.img",unknown);
+  check(request("renew",sha(unknown)+" "+foreign)!=0);check(sha(original())==foreign);
+  atomic(BASE+"partition.img",b);atomic(BASE+"writing",foreign+" "+h);check(request("renew",h+" "+foreign)!=0);check(sha(original())==foreign);removefile(BASE+"writing");
+ }
+ std::cout<<"PASS "<<checks<<" backup, export, stale-image, replay, interrupted-write and four-phase archive/refresh assertions\n";return 0;
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

@@ -1,7 +1,7 @@
 Advanced GPU Tuning (Konabess) - dm3q trial
 ========================================
 
-Entry: UN1CA Settings, immediately below Battery Saving.
+Entry: UN1CA Settings, below Battery Saving in the power settings group.
 This is a ROM-native implementation inspired by libxzr/KonaBess, not a bundled
 KonaBess APK. It does not require Magisk, KernelSU or an external root manager.
 It edits the existing ten GPU frequency/RPMh pairs and preserves all other
@@ -55,6 +55,49 @@ First trial
    partition readback verification. Nothing reboots automatically.
 5. Reboot manually only after success. Test stability before further changes.
 
+Profiles and ROM updates
+------------------------
+The ten edited values are saved automatically in Settings device-protected
+SharedPreferences (unica_gpu_profile). Closing the page or installing a ROM
+update that preserves Settings data does not reset them. Wiping data, clearing
+Settings data or removing its profile storage can remove the saved draft.
+Use Back up profile to export a JSON copy; the page reads it back to verify it.
+Use Import profile to select a UN1CA JSON profile, validate and review all ten
+values, then explicitly Load profile. Loading changes only the saved draft.
+Apply remains a separate confirmed operation with the native compatibility and
+rollback checks. Nothing imports or reapplies tuning at boot or during an OTA.
+Import/export remains available even when the current firmware is unsupported.
+
+Profiles contain values and metadata only, never partition images, paths or
+commands. Format unica-konabess-profile version 1 targets dm3q, Adreno740v2,
+kalama-v2-table0 and exactly ten indexed frequency_hz/rpmh_level entries.
+Unknown fields, wrong types/targets, invalid UTF-8, oversized files (>32 KiB),
+unsupported voltage corners and invalid range/order are rejected. Source ROM
+fingerprint is informative, not a firmware whitelist. The native driver/DTB
+checks still decide whether the current image can be edited. This JSON format
+is specific to the UN1CA integration; upstream KonaBess exports are not claimed
+to be compatible. A community profile is not proof of stability on another chip.
+
+If the current vendor_boot changes, the page explains why Apply is disabled and
+asks to Create backup for current ROM. Refresh is allowed only for a compatible
+clean stock GPU table, an intact old backup and no pending partition write.
+It archives the old original image and rollback ZIP using durable hard links,
+creates and verifies a new full backup/ZIP in a staging directory, rechecks the
+live image hash and activates the fresh files under a durable renewal journal.
+Old files are never flashed to enable Apply. No partition is written by refresh.
+The old export acknowledgement is cleared. Save and verify the NEW rollback ZIP
+before Apply becomes available again; the saved tuning values stay unchanged.
+A tuned or unfamiliar table is never silently recaptured as a clean original.
+
+Interrupted backup refresh blocks Apply/Restore until explicitly resumed against
+the same new image. Archives remain under /cache/unica-gpu/archives/, named by
+old-image SHA256 and old-ZIP SHA256; archives are not automatically pruned.
+Do not flash those archived rollback ZIPs on a different ROM. Cache must have
+at least 320 MiB free to stage another backup; retained archives consume space.
+If the driver/DTBs are unsupported, profiles remain saved but writes stay blocked
+until compatibility is reviewed. Reusing values across updates is supported;
+automatic compatibility with every future firmware cannot be guaranteed.
+
 Rollback
 --------
 While Android works: Restore original vendor_boot, wait for verification, then
@@ -83,7 +126,7 @@ Protected files
 ---------------
 /data/misc/unica_gpu/requests/request  - bounded Settings request
 /data/misc/unica_gpu/responses/response.json
-/cache/unica-gpu/original.img         - immutable original backup
+/cache/unica-gpu/original.img         - active clean original for current trial
 /cache/unica-gpu/original.sha256
 /cache/unica-gpu/rollback.zip          - recovery-flashable independent backup
 /cache/unica-gpu/rollback.sha256
@@ -91,6 +134,9 @@ Protected files
 /cache/unica-gpu/applied.sha256        - last transaction target
 /cache/unica-gpu/writing               - durable in-progress journal
 /cache/unica-gpu/candidate.img         - verified staged transaction image
+/cache/unica-gpu/renewing              - durable backup refresh journal
+/cache/unica-gpu/pending/<new-hash>/   - freshly verified backup staging set
+/cache/unica-gpu/archives/<old-hash>-<zip-hash>/ - retained old baseline/ZIP
 
 Only the root init worker writes the backup/partition. Settings writes requests
 and reads responses/rollback ZIP. It has no new block write permission. The
@@ -102,7 +148,7 @@ Other targets remove the GPU native payload/service and receive no new policy.
 Build and verification (from repository root)
 --------------------------------------------
 unica/mods/settings/gpu/build.sh
-unica/mods/settings/gpu/tests/run.sh
+JSON_JAR=/path/to/host-json.jar unica/mods/settings/gpu/tests/run.sh
 
 The build needs the existing Android SDK/NDK, javac, D8, baksmali and smali.
 Tests use a source vendor_boot image, regular temporary files and a compatible
@@ -110,6 +156,12 @@ SELinux compiler. Set SECILC=/path/to/secilc if it is not on PATH. The tests
 copy current out/target policies into /tmp; they never modify generated output.
 Optional first argument to tests/run.sh selects another temporary image copy.
 All testing artifacts are retained under /tmp/unica-gpu-*.
+Profile host tests require an org.json implementation. One reproducible test
+fixture is the Android-derived Maven artifact:
+https://repo.maven.apache.org/maven2/com/vaadin/external/google/android-json/0.0.20131108.vaadin1/android-json-0.0.20131108.vaadin1.jar
+SHA256 dfb7bae2f404cfe0b72b4d23944698cb716b7665171812a0a4d0f5926c0fac79
+Download it to /tmp, verify the checksum and set JSON_JAR to that file. It is a
+test-only dependency; Android supplies org.json in the shipped Settings app.
 
 gpu/build.sh emits an additive SecSettings smali patch, the static native worker
 and the static recovery helper. The Settings mod's standard overlay, metadata
@@ -129,6 +181,16 @@ with --fuzz=0; Java/D8, combined Settings DEX assembly, static ARM64 payloads an
 a complete temporary SecSettings APK rebuild/ZIP integrity check passed using
 out/tools/bin/apktool and the S918BXXUAZZI8-tagged framework cache. Unrelated
 existing non-positional resource-format warnings remain unchanged.
+
+Offline validation on 2026-10-18 additionally passed 209 transaction assertions,
+including all four injected backup-refresh interruption phases, archive retention,
+mid-refresh image changes, rejection of unknown tuned baselines and mandatory
+fresh rollback export before Apply. The image/AVB suite passed 1705 assertions.
+The profile suite passed 48 assertions against both host org.json and an Android-
+derived implementation. The final additive patch applied with zero fuzz; the
+complete temporary Settings APK rebuilt with valid DEX/ZIP contents. Combined
+runtime SELinux compilation and policy installer idempotence passed. The new
+flow has not yet been installed or exercised on the device.
 
 Attribution
 -----------
