@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 package io.mesalabs.rezoss.poweron;
 
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.DatePickerDialog;
-import android.app.TimePickerDialog;
-import android.content.SharedPreferences;
-import android.os.Build;
-import android.os.Bundle;
+import android.app.*;
+import android.content.*;
+import android.content.res.Resources;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
+import android.os.*;
 import android.provider.Settings;
-import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.TextView;
+import android.view.*;
+import android.widget.*;
 import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -19,124 +18,195 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public final class PowerOnActivity extends Activity {
-    private final ExecutorService worker = Executors.newSingleThreadExecutor();
-    private TextView status;
-    private Button choose, cancel, refresh;
-    private SharedPreferences prefs;
-    private boolean busy;
-    private interface Work { String run() throws Exception; }
-
-    @Override public void onCreate(Bundle state) {
-        super.onCreate(state);
-        prefs = getSharedPreferences("schedule", MODE_PRIVATE);
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        int pad = (int)(24 * getResources().getDisplayMetrics().density);
-        layout.setPadding(pad, pad, pad, pad);
-        TextView title = new TextView(this);
-        title.setText("Scheduled power on"); title.setTextSize(26); layout.addView(title);
-        TextView info = new TextView(this);
-        info.setText("Choose when to start your S23 Ultra after you shut it down. "
-                + "This is a one-time schedule, up to 7 days ahead. Shut down manually after saving.\n\n"
-                + "Experimental: startup from full shutdown still needs device validation. "
-                + "Keep enough battery charge and use another alarm for anything essential. "
-                + "Your PIN will still be required after startup.\n");
-        layout.addView(info);
-        status = new TextView(this); layout.addView(status);
-        choose = button(layout, "Choose date and time", this::pick);
-        cancel = button(layout, "Cancel power-on schedule", () -> new AlertDialog.Builder(this)
-                .setMessage("Clear the Samsung power-on alarm?")
-                .setNegativeButton("Keep", null).setPositiveButton("Clear", (d,w) -> cancel()).show());
-        refresh = button(layout, "Check saved schedule", this::refresh);
-        setContentView(layout);
-        if (!Build.DEVICE.startsWith("dm3q")) {
-            status.setText("This mod supports dm3q (S23 Ultra) only.");
-            choose.setEnabled(false); cancel.setEnabled(false); refresh.setEnabled(false);
-        } else refresh();
+    private final ExecutorService worker=Executors.newSingleThreadExecutor();
+    private LinearLayout content;
+    private long draftOn,draftOff;
+    private boolean separate,busy;
+    private String message="";
+    private int primary,secondary,surface,accent;
+    private interface Work { void run() throws Exception; }
+    private int dp(int value) { return Math.round(value*getResources().getDisplayMetrics().density); }
+    private long rounded(long seconds) { return (seconds+59)/60*60; }
+    @Override public void onCreate(Bundle saved) {
+        super.onCreate(saved);
+        try { PowerScheduler.migrate(this); }
+        catch (Exception error) { message=error.getMessage(); }
+        ScheduleEngine.State state=PowerScheduler.state(this);
+        long now=System.currentTimeMillis()/1000;
+        draftOn=state.on>now+120?state.on:rounded(now+8*3600);
+        draftOff=state.off>now+120?state.off:rounded(now+5*60);
+        separate=state.off>0;
+        if (saved!=null) {
+            draftOn=saved.getLong("on",draftOn); draftOff=saved.getLong("off",draftOff);
+            separate=saved.getBoolean("separate",separate);
+        }
     }
-    private Button button(LinearLayout parent, String text, Runnable action) {
-        Button b = new Button(this); b.setText(text);
-        b.setOnClickListener(v -> { if (!busy) action.run(); }); parent.addView(b); return b;
-    }
-    private void perform(Work work) {
-        if (busy) return;
-        busy = true; choose.setEnabled(false); cancel.setEnabled(false); refresh.setEnabled(false);
-        status.setText("Checking schedule…");
-        worker.execute(() -> {
-            String message;
-            try { message = work.run(); }
-            catch (Exception | LinkageError e) { message = "Unable to confirm schedule: " + e.getMessage(); }
-            final String result = message;
-            runOnUiThread(() -> {
-                busy = false;
-                if (isDestroyed()) return;
-                status.setText(result); choose.setEnabled(true); cancel.setEnabled(true); refresh.setEnabled(true);
-            });
-        });
-    }
-    private String date(long seconds) {
-        return DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(new Date(seconds * 1000));
-    }
-    private String describe() throws Exception {
-        long[] s = AlarmHardware.snapshot();
-        long target = prefs.getLong("target", 0);
-        long offset = prefs.getLong("offset", 0);
-        if (prefs.getBoolean("uncertain", false))
-            return "The last change did not complete. Cancel the schedule before shutting down.";
-        if (target == 0) return "No schedule saved by this app. Existing hardware alarms are left unchanged.";
-        if (target <= s[0]) return "Previous schedule: " + date(target)
-                + ".\nChoose a new time for another startup. Power-on success is not confirmed by this screen.";
-        if (prefs.getInt("boot", -1) != bootCount())
-            return "Saved time: " + date(target) + ".\nThe phone restarted after saving. Save the time again before shutting down.";
-        if (Math.abs((s[0] - s[1]) - offset) > 10)
-            return "The system clock has changed. Choose the date and time again to update the hardware alarm.";
-        return "Saved: " + date(target) + "\nSamsung driver accepted the schedule. "
-                + "It applies the power-on alarm during shutdown. Hardware programming and startup "
-                + "cannot be confirmed while Android is running.";
-    }
-    private void refresh() { perform(this::describe); }
-    private int bootCount() {
-        return Settings.Global.getInt(getContentResolver(), Settings.Global.BOOT_COUNT, -1);
-    }
-    private void pick() {
-        Calendar value = Calendar.getInstance(); value.add(Calendar.MINUTE, 5);
-        new DatePickerDialog(this, (p,y,m,d) -> {
-            value.set(y,m,d);
-            new TimePickerDialog(this, (v,h,min) -> {
-                value.set(Calendar.HOUR_OF_DAY,h); value.set(Calendar.MINUTE,min);
-                value.set(Calendar.SECOND,0); value.set(Calendar.MILLISECOND,0);
-                long target = value.getTimeInMillis()/1000;
-                new AlertDialog.Builder(this).setTitle("Schedule power on")
-                        .setMessage(date(target) + "\n\nThe phone will not shut down automatically.")
-                        .setNegativeButton("Back",null)
-                        .setPositiveButton("Save", (dialog,which) -> save(target)).show();
-            }, value.get(Calendar.HOUR_OF_DAY),value.get(Calendar.MINUTE),
-                    android.text.format.DateFormat.is24HourFormat(this)).show();
-        },value.get(Calendar.YEAR),value.get(Calendar.MONTH),value.get(Calendar.DAY_OF_MONTH)).show();
-    }
-    private void markUncertain() throws Exception {
-        if (!prefs.edit().putBoolean("uncertain",true).commit())
-            throw new Exception("Cannot save schedule state; hardware was not changed.");
-    }
-    private void save(long target) {
-        perform(() -> {
-            markUncertain();
-            long[] before = AlarmHardware.snapshot();
-            AlarmHardware.program(target);
-            if (!prefs.edit().putLong("target",target).putLong("offset",before[0]-before[1])
-                    .putInt("boot",bootCount())
-                    .putBoolean("uncertain",false).commit())
-                throw new Exception("Hardware changed, but state could not be saved. Cancel before shutdown.");
-            return describe();
-        });
-    }
-    private void cancel() {
-        perform(() -> {
-            markUncertain(); AlarmHardware.program(0);
-            if (!prefs.edit().clear().commit()) throw new Exception("Hardware cleared, but app state could not be saved.");
-            return "Samsung driver accepted cancellation. It clears the saved power-on schedule "
-                    + "and applies its reserved alarm date during shutdown. Hardware state cannot be read back here.";
-        });
+    @Override protected void onResume() { super.onResume(); draw(); }
+    @Override protected void onSaveInstanceState(Bundle state) {
+        state.putLong("on",draftOn); state.putLong("off",draftOff); state.putBoolean("separate",separate);
+        super.onSaveInstanceState(state);
     }
     @Override protected void onDestroy() { worker.shutdown(); super.onDestroy(); }
+    @Override public void onBackPressed() {
+        if (busy) { Toast.makeText(this,"Saving your schedule…",Toast.LENGTH_SHORT).show(); return; }
+        super.onBackPressed();
+    }
+    private int settingsColor(String name,int fallback) {
+        try {
+            Resources res=getPackageManager().getResourcesForApplication("com.android.settings");
+            int id=res.getIdentifier(name,"color","com.android.settings");
+            if(id!=0) return res.getColor(id,null);
+        } catch (Exception ignored) {}
+        return fallback;
+    }
+    private GradientDrawable shape(int color,int radius) {
+        GradientDrawable out=new GradientDrawable();out.setColor(color);out.setCornerRadius(dp(radius));return out;
+    }
+    private TextView text(String label,int size,int color) {
+        TextView view=new TextView(this);view.setText(label);view.setTextSize(size);view.setTextColor(color);return view;
+    }
+    private void colors() {
+        boolean dark=(getResources().getConfiguration().uiMode&0x30)==0x20;
+        primary=dark?0xfff4f4f6:0xff161619; secondary=dark?0xffc0c1c7:0xff62636a;
+        accent=dark?0xffacc9ff:0xff365da8;
+        surface=settingsColor("sesl_background_color_"+(dark?"dark":"light"),dark?0xff202125:Color.WHITE);
+        int background=settingsColor("sesl_round_and_bgcolor_"+(dark?"dark":"light"),dark?Color.BLACK:0xfff2f2f5);
+        boolean transparent=Settings.System.getInt(getContentResolver(),"unica_settings_bg_transparency_enabled",0)!=0;
+        if (transparent) {
+            int level=Math.max(70,Math.min(100,Settings.System.getInt(getContentResolver(),"unica_settings_bg_transparency_level",70)));
+            surface=(surface&0xffffff)|((255-level*255/100)<<24); background=Color.TRANSPARENT;
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
+        } else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
+        getWindow().setFormat(transparent?android.graphics.PixelFormat.TRANSLUCENT:android.graphics.PixelFormat.OPAQUE);
+        getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(background));
+        getWindow().getDecorView().setSystemUiVisibility(dark?0:View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR|View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+    }
+    private LinearLayout card() {
+        LinearLayout card=new LinearLayout(this);card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(20),dp(6),dp(20),dp(6));card.setBackground(shape(surface,28));
+        LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-1,-2);params.bottomMargin=dp(18);
+        content.addView(card,params);return card;
+    }
+    private void divider(LinearLayout parent) {
+        View line=new View(this);line.setBackgroundColor((secondary&0xffffff)|0x22000000);
+        parent.addView(line,new LinearLayout.LayoutParams(-1,dp(1)));
+    }
+    private void row(LinearLayout parent,String label,String summary,Runnable action) {
+        LinearLayout row=new LinearLayout(this);row.setOrientation(LinearLayout.VERTICAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(0,dp(17),0,dp(17));row.setMinimumHeight(dp(76));
+        TextView title=text(label,20,primary);row.addView(title);
+        if(summary!=null&&!summary.isEmpty()) {
+            TextView detail=text(summary,14,secondary);detail.setPadding(0,dp(5),0,0);row.addView(detail);
+        }
+        if(action!=null) { row.setEnabled(!busy); row.setAlpha(busy?0.5f:1f);row.setOnClickListener(v->{if(!busy)action.run();}); }
+        parent.addView(row,new LinearLayout.LayoutParams(-1,-2));
+    }
+    private void action(String label,Runnable action) {
+        TextView button=text(label,17,accent);button.setTypeface(null,Typeface.BOLD);button.setGravity(Gravity.CENTER);
+        button.setPadding(dp(12),dp(14),dp(12),dp(14));button.setMinimumHeight(dp(52));
+        button.setBackground(shape(surface,26));button.setEnabled(!busy);button.setAlpha(busy?0.5f:1f);
+        button.setOnClickListener(v->{if(!busy)action.run();});
+        LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-1,-2);params.bottomMargin=dp(12);content.addView(button,params);
+    }
+    private String date(long seconds) {
+        return DateFormat.getDateTimeInstance(DateFormat.MEDIUM,DateFormat.SHORT).format(new Date(seconds*1000));
+    }
+    private void draw() {
+        if(isDestroyed()) return;
+        colors();ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);
+        content=new LinearLayout(this);content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(dp(12),dp(10),dp(12),dp(28));scroll.addView(content);
+        scroll.setOnApplyWindowInsetsListener((v,insets)->{
+            android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars());
+            v.setPadding(bars.left,bars.top,bars.right,bars.bottom);return insets;
+        });
+        TextView back=text("‹",38,primary);back.setGravity(Gravity.CENTER);back.setContentDescription("Back");
+        back.setBackground(shape(surface,25));back.setOnClickListener(v->onBackPressed());
+        LinearLayout.LayoutParams backParams=new LinearLayout.LayoutParams(dp(48),dp(48));backParams.leftMargin=dp(8);content.addView(back,backParams);
+        TextView heading=text("Power schedule",32,primary);heading.setTypeface(null,Typeface.BOLD);
+        heading.setPadding(dp(18),dp(24),dp(18),dp(8));content.addView(heading);
+        TextView intro=text("Choose when your phone turns off and starts again.",15,secondary);
+        intro.setPadding(dp(18),0,dp(18),dp(24));content.addView(intro);
+        if (!Build.DEVICE.startsWith("dm3q")) {
+            row(card(),"Not available","Power scheduling is supported on S23 Ultra (dm3q).",null);setContentView(scroll);return;
+        }
+        LinearLayout mode=card();LinearLayout toggleRow=new LinearLayout(this);toggleRow.setGravity(Gravity.CENTER_VERTICAL);
+        toggleRow.setPadding(0,dp(17),0,dp(17));
+        LinearLayout labels=new LinearLayout(this);labels.setOrientation(LinearLayout.VERTICAL);
+        labels.addView(text("Separate power-off and power-on times",20,primary));
+        TextView hint=text("Turn off automatically at one time and start again later.",14,secondary);hint.setPadding(0,dp(6),dp(12),0);labels.addView(hint);
+        toggleRow.addView(labels,new LinearLayout.LayoutParams(0,-2,1));
+        Switch toggle=new Switch(this);toggle.setContentDescription("Separate power-off and power-on times");toggle.setChecked(separate);toggle.setEnabled(!busy);
+        toggle.setOnCheckedChangeListener((view,checked)->{separate=checked;message="";draw();});toggleRow.addView(toggle);mode.addView(toggleRow);
+        LinearLayout times=card();
+        if(separate) {row(times,"Power off",date(draftOff),()->pick(false));divider(times);}
+        row(times,"Power on",date(draftOn),()->pick(true));
+        TextView note=text(separate?"One-time schedule. Allow at least 3 minutes between power off and power on.":
+                "Select a power-on time, then choose to shut down now or later.",14,secondary);
+        note.setPadding(dp(18),0,dp(18),dp(20));content.addView(note);
+        if(separate) action("Save power-off and power-on schedule",()->confirmPair());
+        else action("Save power-on time",()->saveChoices());
+        ScheduleEngine.State state=PowerScheduler.state(this);
+        if(state.on!=0 || !state.error.isEmpty() || !message.isEmpty()) {
+            LinearLayout status=card();String detail=message.isEmpty()?state.error:message;
+            if(detail.isEmpty()) {
+                if(state.uncertain) detail="The last change did not complete. Save a new schedule before shutting down.";
+                else if(state.on<=System.currentTimeMillis()/1000) detail="The previous one-time schedule has ended.";
+                else detail=(state.off>0?"Power off: "+date(state.off)+"\n":"")+"Power on: "+date(state.on);
+            }
+            row(status,busy?"Saving…":"Saved schedule",detail,null);
+        }
+        if(state.off>0) action("Cancel automatic power off",()->confirmCancel(false));
+        if(state.on>0 || state.uncertain) action("Cancel entire schedule",()->confirmCancel(true));
+        TextView footer=text("Your PIN is required after startup. Keep enough battery charge for the scheduled power on.",14,secondary);
+        footer.setPadding(dp(18),dp(12),dp(18),dp(18));content.addView(footer);
+        setContentView(scroll);
+    }
+    private void pick(boolean powerOn) {
+        Calendar value=Calendar.getInstance();value.setTimeInMillis((powerOn?draftOn:draftOff)*1000);
+        new DatePickerDialog(this,(view,y,m,d)->{
+            value.set(y,m,d);
+            new TimePickerDialog(this,(picker,h,min)->{
+                value.set(Calendar.HOUR_OF_DAY,h);value.set(Calendar.MINUTE,min);value.set(Calendar.SECOND,0);value.set(Calendar.MILLISECOND,0);
+                if(powerOn) draftOn=value.getTimeInMillis()/1000;else draftOff=value.getTimeInMillis()/1000;
+                message="";draw();if(powerOn&&!separate)saveChoices();
+            },value.get(Calendar.HOUR_OF_DAY),value.get(Calendar.MINUTE),android.text.format.DateFormat.is24HourFormat(this)).show();
+        },value.get(Calendar.YEAR),value.get(Calendar.MONTH),value.get(Calendar.DAY_OF_MONTH)).show();
+    }
+    private void saveChoices() {
+        new AlertDialog.Builder(this).setTitle("Power on: "+date(draftOn))
+                .setItems(new String[]{"Save and Shutdown Now","Save and I'll shutdown manually"},(dialog,which)->{
+                    if(which==0) new AlertDialog.Builder(this).setTitle("Shut down now?")
+                            .setMessage("Save power on for "+date(draftOn)+" and shut down this phone now. Save any open work first.")
+                            .setNegativeButton("Cancel",null).setPositiveButton("Save and Shutdown Now",(d,w)->save(true)).show();
+                    else save(false);
+                }).setNegativeButton("Cancel",null).show();
+    }
+    private void confirmPair() {
+        new AlertDialog.Builder(this).setTitle("Save power schedule?")
+                .setMessage("Power off: "+date(draftOff)+"\nPower on: "+date(draftOn)+
+                        "\n\nYour phone will shut down automatically at the selected power-off time.")
+                .setNegativeButton("Cancel",null).setPositiveButton("Save schedule",(dialog,which)->save(false)).show();
+    }
+    private void save(boolean now) {
+        final long on=draftOn,off=separate?draftOff:0;
+        perform(()->PowerScheduler.save(this,on,off,now),now?"Power-on time saved. Shutting down…":
+                off>0?"Power-off and power-on times saved.":"Power-on time saved. Shut down your phone when you're ready.");
+    }
+    private void confirmCancel(boolean all) {
+        new AlertDialog.Builder(this).setTitle(all?"Cancel entire schedule?":"Cancel automatic power off?")
+                .setMessage(all?"Clear both the power-off and power-on schedule?":"Keep the saved power-on time and cancel automatic shutdown?")
+                .setNegativeButton("Keep",null).setPositiveButton("Cancel schedule",(dialog,which)->
+                        perform(()->PowerScheduler.cancel(this,all),all?"Power schedule cancelled.":"Automatic power off cancelled. Power on is still saved.")).show();
+    }
+    private void perform(Work work,String success) {
+        if(busy) return;busy=true;message="";draw();
+        worker.execute(()->{
+            String result;
+            try {work.run();result=success;}
+            catch(Exception error) { result=error.getMessage()==null?"The schedule could not be saved.":error.getMessage(); }
+            final String text=result;
+            runOnUiThread(()->{busy=false;if(isDestroyed())return;message=text;draw();});
+        });
+    }
 }

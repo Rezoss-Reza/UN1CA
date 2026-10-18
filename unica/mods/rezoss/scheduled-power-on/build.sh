@@ -22,8 +22,9 @@ jar cf "$WORK/classes.jar" -C "$WORK/classes" .
     -std=c++17 -Os -Wall -Wextra -Werror -fstack-protector-strong -fPIC -shared \
     -static-libstdc++ -Wl,-z,relro,-z,now,-z,max-page-size=16384,--strip-all \
     "$ROOT/native/poweron.cpp" -o "$WORK/lib/arm64-v8a/librezoss_poweron.so"
+"$TOOLS/aapt2" compile --dir "$ROOT/res" -o "$WORK/resources.zip"
 "$TOOLS/aapt2" link --manifest "$ROOT/AndroidManifest.xml" \
-    -I "$SDK/platforms/android-37.0/android.jar" -o "$WORK/unsigned.apk"
+    -I "$SDK/platforms/android-37.0/android.jar" -o "$WORK/unsigned.apk" "$WORK/resources.zip"
 cp "$WORK/dex/classes.dex" "$WORK/classes.dex"
 (cd "$WORK"; zip -q -0 unsigned.apk classes.dex lib/arm64-v8a/librezoss_poweron.so)
 "$TOOLS/zipalign" -P 16 -f 4 "$WORK/unsigned.apk" "$WORK/aligned.apk"
