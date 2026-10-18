@@ -13,7 +13,7 @@ import zipfile
 
 KERNEL_REPO = 'Rezoss-Reza/s23-ksu-next'
 CI_REPO = 'KernelSU-Next/KernelSU-Next'
-ARTIFACTS = {'aarch64-android13-5.15-susfs-lkm': 'android13-5.15_susfs_guard_lkm.ko',
+ARTIFACTS = {'aarch64-android13-5.15-ksu-lkm': 'android13-5.15_kernelsu.ko',
              'ksud-x86_64-unknown-linux-musl': 'x86_64-unknown-linux-musl/release/ksud'}
 
 

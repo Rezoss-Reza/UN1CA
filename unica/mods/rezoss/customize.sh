@@ -1414,9 +1414,9 @@ PY_CACHE
   chmod +x "$TMP_DIR/magiskboot" || return 1
   unzip -p "$KERNEL_ZIP" Image.gz > "$TMP_DIR/replacement-kernel" || return 1
   KSU_KSUD="$TMP_DIR/ksud"
-  KSU_MODULE="$TMP_DIR/android13-5.15_susfs_guard_lkm.ko"
+  KSU_MODULE="$TMP_DIR/android13-5.15_kernelsu.ko"
   unzip -p "$CACHE_DIR/ksud-x86_64-unknown-linux-musl.zip" x86_64-unknown-linux-musl/release/ksud > "$KSU_KSUD" || return 1
-  unzip -p "$CACHE_DIR/aarch64-android13-5.15-susfs-lkm.zip" android13-5.15_susfs_guard_lkm.ko > "$KSU_MODULE" || return 1
+  unzip -p "$CACHE_DIR/aarch64-android13-5.15-ksu-lkm.zip" android13-5.15_kernelsu.ko > "$KSU_MODULE" || return 1
   chmod +x "$KSU_KSUD" || return 1
   "$KSU_KSUD" --help >/dev/null || return 1
 
