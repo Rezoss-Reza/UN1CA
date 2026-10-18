@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <fcntl.h>
+#include <dirent.h>
 #include <fstream>
 #include <sstream>
 #include <sys/file.h>
@@ -20,11 +21,13 @@ extern "C" void* avb_memcpy(void* a,const void* b,size_t n){return memcpy(a,b,n)
 extern "C" void* avb_memset(void* a,int v,size_t n){return memset(a,v,n);}
 namespace {
 #ifdef GPU_TEST
-std::string BASE,IPC;
+std::string BASE,IPC,ARCHIVES;
+int failArchivePhase=0;
+int64_t testCacheFree=-1,testDataFree=-1;
 int failWrites=0;
 int failRenewPhase=0;
 #else
-const std::string BASE="/cache/unica-gpu/",IPC="/data/misc/unica_gpu/";
+const std::string BASE="/cache/unica-gpu/",IPC="/data/misc/unica_gpu/",ARCHIVES="/data/misc/unica_gpu/archives/";
 #endif
 const char* BLOCK="/dev/block/sda28";
 struct FD {int n;explicit FD(int fd):n(fd){require(n>=0,"Cannot open protected file or partition");}~FD(){close(n);}operator int()const{return n;}};
@@ -39,7 +42,7 @@ void atomic(const std::string& path,const Bytes& b,mode_t mode=0640){
  require(rename(tmp.c_str(),path.c_str())==0,"Atomic rename failed");syncdir(path.substr(0,path.find_last_of('/')));
 }
 void atomic(const std::string& p,const std::string& s){atomic(p,bytes(s));}
-void removefile(const std::string& p){if(unlink(p.c_str())!=0)require(errno==ENOENT,"Cannot clear transaction state");syncdir(BASE);}
+void removefile(const std::string& p){if(unlink(p.c_str())!=0)require(errno==ENOENT,"Cannot clear transaction state");syncdir(p.substr(0,p.find_last_of('/')));}
 std::string resolved(const char* p){char out[4096];require(realpath(p,out)!=nullptr,"Missing partition mapping");return out;}
 void mapping(){require(resolved("/dev/block/bootdevice/by-name/vendor_boot")==BLOCK,"Unsupported vendor_boot partition mapping");}
 Bytes current(){
@@ -111,13 +114,28 @@ exit 0
  emit(f,central);Bytes end;zip32(end,0x06054b50);zip16(end,0);zip16(end,0);zip16(end,count);zip16(end,count);zip32(end,central.size());zip32(end,pos);zip16(end,0);emit(f,end);require(fsync(f)==0,"Rollback ZIP sync failed");}
  require(rename(tmp.c_str(),dst.c_str())==0,"Cannot commit rollback ZIP");syncdir(directory);auto z=read(dst,IMAGE_SIZE+10*1024*1024);auto d=digest(z);require(std::equal(d.begin(),d.end(),avb_sha256_final(&expected)),"Rollback ZIP readback failed");atomic(directory+"rollback.sha256",sha(z));
 }
+uint64_t available(const std::string& path,bool cache){
+#ifdef GPU_TEST
+ auto forced=cache?testCacheFree:testDataFree;if(forced>=0)return uint64_t(forced);
+#else
+ (void)cache;
+#endif
+ struct statvfs fs;require(statvfs(path.c_str(),&fs)==0,"Backup storage unavailable");return uint64_t(fs.f_bavail)*fs.f_frsize;
+}
+void migrateLegacyArchives();
 void backup(const Bytes& live,const std::string& directory=BASE){
- struct statvfs fs;require(statvfs(BASE.c_str(),&fs)==0,"Backup storage unavailable");
- require(uint64_t(fs.f_bavail)*fs.f_frsize>uint64_t(IMAGE_SIZE)*3+32*1024*1024,"At least 320 MiB free on /cache is required");
- if(directory==BASE)require(!exists(BASE+"writing")&&!exists(BASE+"renewing"),"Finish the interrupted operation before creating a backup");
- if(!exists(directory+"original.img")){stock(live);atomic(directory+"original.img",live);}
- auto original=read(directory+"original.img",IMAGE_SIZE);stock(original);require(sha(original)==sha(live),"Saved backup belongs to another image. Use Create backup for current ROM");
+ if(directory==BASE){require(!exists(BASE+"writing")&&!exists(BASE+"renewing"),"Finish the interrupted operation before creating a backup");migrateLegacyArchives();}
+ stock(live);bool missing=!exists(directory+"original.img");
+ auto original=missing?live:read(directory+"original.img",IMAGE_SIZE);stock(original);require(sha(original)==sha(live),"Saved backup belongs to another image. Use Create backup for current ROM");
  if(exists(directory+"original.sha256"))require(text(directory+"original.sha256",64)==sha(original),"Original backup checksum mismatch");
+ // A complete backup is verified without rewriting it or requiring staging space.
+ if(!missing&&exists(directory+"original.sha256")&&exists(directory+"rollback.sha256")&&exists(directory+"rollback.zip")){
+  auto zh=text(directory+"rollback.sha256",64);require(hashString(zh)&&sha(read(directory+"rollback.zip",IMAGE_SIZE+10*1024*1024))==zh,"Rollback ZIP checksum mismatch; preserve files for recovery");return;
+ }
+ // Account for the remaining writes plus a candidate image and safety margin.
+ const uint64_t needed=(missing?IMAGE_SIZE:0)+uint64_t(IMAGE_SIZE)+10*1024*1024+IMAGE_SIZE+32*1024*1024;
+ require(available(BASE,true)>needed,"Insufficient /cache space for backup staging and a GPU transaction; verified old archives are retained in /data");
+ if(missing)atomic(directory+"original.img",live);
  atomic(directory+"original.sha256",sha(original));rollbackZip(original,directory);
  require(sha(read(directory+"original.img",IMAGE_SIZE))==sha(original),"Backup readback failed");
 }
@@ -131,7 +149,8 @@ bool restorable(const Bytes& live,const Bytes& b){
 }
 void directory(const std::string& p){
  if(mkdir(p.c_str(),0750)!=0)require(errno==EEXIST,"Cannot create protected backup directory");
- struct stat s;require(lstat(p.c_str(),&s)==0&&S_ISDIR(s.st_mode),"Backup directory is not a real directory");
+ const auto plain=p.back()=='/'?p.substr(0,p.size()-1):p;
+ struct stat s;require(lstat(plain.c_str(),&s)==0&&S_ISDIR(s.st_mode),"Backup directory is not a real directory");
  syncdir(p.substr(0,p.find_last_of('/',p.size()-2)));
 }
 struct Renewal {std::string oldHash,newHash,archive;};
@@ -143,12 +162,70 @@ void verifyArchived(const std::string& dir,const Renewal& r){
  auto b=read(dir+"original.img",IMAGE_SIZE);stock(b);require(sha(b)==r.oldHash&&text(dir+"original.sha256",64)==r.oldHash,"Archived original checksum mismatch");
  auto zh=r.archive.substr(65);require(text(dir+"rollback.sha256",64)==zh&&sha(read(dir+"rollback.zip",IMAGE_SIZE+10*1024*1024))==zh,"Archived rollback ZIP checksum mismatch");
 }
+void archivePoint(int phase){
+#ifdef GPU_TEST
+ if(failArchivePhase==phase){failArchivePhase=0;throw std::runtime_error("Injected interrupted archive migration");}
+#else
+ (void)phase;
+#endif
+}
+bool archiveName(const std::string& id){return id.size()==129&&id[64]=='-'&&hashString(id.substr(0,64))&&hashString(id.substr(65));}
+// The receipt is the four verified core files themselves. A partially copied
+// destination is resumable; no source file is removed until all four verify.
+void copyArchive(const std::string& source,const Renewal& r){
+ directory(ARCHIVES);const auto dest=ARCHIVES+r.archive+"/";directory(dest);
+ const std::array<std::string,4> names={"original.img","original.sha256","rollback.zip","rollback.sha256"};
+ bool complete=true;for(const auto& name:names)complete=complete&&exists(dest+name);
+ if(complete){verifyArchived(dest,r);return;}
+ verifyArchived(source,r);
+ uint64_t needed=32*1024*1024;
+ for(const auto& name:names)if(!exists(dest+name)){struct stat st;require(lstat((source+name).c_str(),&st)==0&&S_ISREG(st.st_mode),"Archive source is not a regular file");needed+=st.st_size;}
+ require(available(ARCHIVES,false)>needed,"Insufficient /data space to preserve the old rollback; no cache backup removed");
+ for(const auto& name:names){
+  auto value=read(source+name,name=="original.img"?IMAGE_SIZE:IMAGE_SIZE+10*1024*1024);
+  if(exists(dest+name))require(read(dest+name,value.size())==value,"Data archive mismatch; preserve both copies for recovery");
+  else atomic(dest+name,value);
+  archivePoint(1);
+ }
+ verifyArchived(dest,r);syncdir(dest);syncdir(ARCHIVES);archivePoint(2);
+}
+void clearArchivedSource(const std::string& source,const Renewal& r){
+ verifyArchived(ARCHIVES+r.archive+"/",r);
+ // Recheck each retained file before unlinking; accept an already removed file
+ // so a restart can finish a previously interrupted move.
+ for(const auto& name:{"original.img","original.sha256","rollback.zip","rollback.sha256"}){
+  if(exists(source+name)){
+   auto expected=(std::string(name).find("rollback")==0)?r.archive.substr(65):r.oldHash;
+   bool checksum=std::string(name).find("sha256")!=std::string::npos;
+   require(checksum?text(source+name,64)==expected:sha(read(source+name,IMAGE_SIZE+10*1024*1024))==expected,"Cache archive changed; no unverified file removed");
+   removefile(source+name);archivePoint(3);
+  }
+ }
+}
+void migrateLegacyArchives(){
+ const auto root=BASE+"archives/";if(!exists(root))return;directory(root);
+ FD fd(open(root.c_str(),O_RDONLY|O_DIRECTORY|O_CLOEXEC|O_NOFOLLOW));
+ DIR* dir=fdopendir(dup(fd));require(dir!=nullptr,"Cannot inspect legacy archives");std::vector<std::string> ids;
+ errno=0;while(auto* entry=readdir(dir)){std::string id=entry->d_name;if(archiveName(id))ids.push_back(id);}int error=errno;closedir(dir);require(error==0,"Cannot list legacy archives");
+ for(const auto& id:ids){const auto source=root+id+"/";directory(source);Renewal r{id.substr(0,64),"",id};copyArchive(source,r);clearArchivedSource(source,r);
+  if(rmdir(source.c_str())!=0)require(errno==ENOENT||errno==ENOTEMPTY,"Cannot finish legacy archive move");
+  syncdir(root);
+ }
+}
 void renewPoint(int phase){
 #ifdef GPU_TEST
  if(failRenewPhase==phase){failRenewPhase=0;throw std::runtime_error("Injected interrupted backup refresh");}
 #else
  (void)phase;
 #endif
+}
+// Activation can stop between renames. Verify the fresh set across staging
+// and active paths so retry never duplicates already-committed 96 MiB files.
+bool freshBackupReady(const std::string& staged,const Renewal& r){
+ std::array<std::string,4> paths;const std::array<std::string,4> names={"original.img","original.sha256","rollback.zip","rollback.sha256"};
+ for(size_t i=0;i<names.size();i++){paths[i]=exists(staged+names[i])?staged+names[i]:BASE+names[i];if(!exists(paths[i]))return false;}
+ auto image=read(paths[0],IMAGE_SIZE);stock(image);require(sha(image)==r.newHash&&text(paths[1],64)==r.newHash,"Fresh backup image mismatch; preserve archived rollback");
+ auto zh=text(paths[3],64);require(hashString(zh)&&zh!=r.archive.substr(65)&&sha(read(paths[2],IMAGE_SIZE+10*1024*1024))==zh,"Fresh rollback ZIP mismatch; preserve archived rollback");return true;
 }
 void renewBackup(const Bytes& live,const std::string& expectedOld){
  require(!exists(BASE+"writing"),"Restore the interrupted partition write before refreshing backups");stock(live);const auto liveHash=sha(live);Renewal r;
@@ -166,14 +243,30 @@ void renewBackup(const Bytes& live,const std::string& expectedOld){
   syncdir(archive);verifyArchived(archive,r);
   atomic(BASE+"renewing",r.oldHash+" "+r.newHash+" "+r.archive);renewPoint(1);
  }
- verifyArchived(BASE+"archives/"+r.archive+"/",r);directory(BASE+"pending/");directory(BASE+"pending/"+r.newHash+"/");
- const auto staged=BASE+"pending/"+r.newHash+"/";backup(live,staged);renewPoint(2);
+ // Preserve the active old pair on /data before releasing any cache blocks.
+ const auto dataArchive=ARCHIVES+r.archive+"/";
+ bool archived=exists(dataArchive+"original.img")&&exists(dataArchive+"original.sha256")&&exists(dataArchive+"rollback.zip")&&exists(dataArchive+"rollback.sha256");
+ if(archived)verifyArchived(dataArchive,r);
+ else copyArchive(BASE+"archives/"+r.archive+"/",r);
+ migrateLegacyArchives();
+ // During activation some active files can already belong to the new image.
+ // Only unlink old matching content; never remove new or unrelated data.
+ verifyArchived(dataArchive,r);
+ for(const auto& name:{"original.img","original.sha256","rollback.zip","rollback.sha256"})if(exists(BASE+name)){
+  bool checksum=std::string(name).find("sha256")!=std::string::npos;auto expected=std::string(name).find("rollback")==0?r.archive.substr(65):r.oldHash;
+  bool old=checksum?text(BASE+name,64)==expected:sha(read(BASE+name,IMAGE_SIZE+10*1024*1024))==expected;
+  if(old){removefile(BASE+name);archivePoint(4);}
+ }
+ directory(BASE+"pending/");directory(BASE+"pending/"+r.newHash+"/");
+ const auto staged=BASE+"pending/"+r.newHash+"/";if(!freshBackupReady(staged,r))backup(live,staged);
+ require(freshBackupReady(staged,r),"Fresh backup is incomplete; resume backup refresh");renewPoint(2);
  require(sha(current())==r.newHash,"Partition changed during backup refresh; archived original retained, no partition writes made");
  // The journal blocks Apply/Restore until all fresh files are durable. Retrying
- // reconstructs the same staging set, including after a partially committed set.
+ // reuses verified staged/active files, including a partially committed set.
  removefile(BASE+"exported");removefile(BASE+"applied.sha256");
  int phase=0;for(const auto& name:{"original.img","original.sha256","rollback.zip","rollback.sha256"}){
-  require(rename((staged+name).c_str(),(BASE+name).c_str())==0,"Backup activation interrupted; resume backup refresh");syncdir(BASE);syncdir(staged);if(++phase==1)renewPoint(3);
+  if(exists(staged+name)){require(rename((staged+name).c_str(),(BASE+name).c_str())==0,"Backup activation interrupted; resume backup refresh");if(exists(staged+name))removefile(staged+name);}
+  syncdir(BASE);syncdir(staged);if(++phase==1)renewPoint(3);
  }
  renewPoint(4);removefile(BASE+"candidate.img");removefile(BASE+"renewing");
 }

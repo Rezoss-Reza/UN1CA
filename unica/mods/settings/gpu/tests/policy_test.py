@@ -23,8 +23,13 @@ assert first == {p.relative_to(work): p.read_bytes() for p in work.rglob('*') if
 policy = (work / 'system/system/etc/selinux/plat_sepolicy.cil').read_text()
 assert '(allow unica_gpu unica_gpu_block (blk_file (read write open getattr ioctl)))' in policy
 assert '(allow unica_gpu unica_gpu_vbmeta (blk_file (read open getattr)))' in policy
-assert '(allow unica_gpu unica_gpu_backup (dir (create search read open getattr write add_name remove_name)))' in policy
+assert '(allow unica_gpu unica_gpu_backup (dir (create search read open getattr write add_name remove_name rmdir)))' in policy
 assert '(allow unica_gpu unica_gpu_backup (file (create read write open getattr setattr rename unlink lock link)))' in policy
+assert '(allow unica_gpu unica_gpu_archive (dir (create search read open getattr write add_name remove_name)))' in policy
+assert '(allow unica_gpu unica_gpu_archive (file (create read write open getattr setattr rename unlink)))' in policy
+assert '(allow system_app unica_gpu_archive ' not in policy
+assert '/data/misc/unica_gpu/archives(/.*)? u:object_r:unica_gpu_archive:s0' in (work / 'system/system/etc/selinux/plat_file_contexts').read_text()
+assert 'mkdir /data/misc/unica_gpu/archives 0750 root root' in (root / 'unica/mods/settings/system/etc/init/unica_gpu.rc').read_text()
 assert '(allow unica_gpu emmcblk_device ' not in policy
 assert '(allow unica_gpu block_device (blk_file ' not in policy
 assert '(allow system_app unica_gpu_block ' not in policy

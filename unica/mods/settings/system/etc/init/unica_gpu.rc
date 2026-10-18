@@ -13,6 +13,7 @@ on post-fs-data
     restorecon /data/misc/unica_gpu
     mkdir /data/misc/unica_gpu/requests 0770 system system
     mkdir /data/misc/unica_gpu/responses 0750 root system
+    mkdir /data/misc/unica_gpu/archives 0750 root root
     restorecon_recursive /data/misc/unica_gpu
     mkdir /cache/unica-gpu 0750 root system
     restorecon_recursive /cache/unica-gpu

@@ -1,5 +1,6 @@
 # Set the default behavior, in case people don't have core.autocrlf set.
 * text eol=lf
+unica/mods/volumeup-action/payload/system/bin/unica-volumeup binary
 unica/mods/settings/system/bin/unica-gpu binary
 unica/mods/settings/system/etc/unica/gpu/restore binary
 

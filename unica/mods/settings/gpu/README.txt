@@ -95,9 +95,13 @@ ROM updates and rollback
 ------------------------
 1. Open the page after updating. Saved draft values stay available.
 2. If vendor_boot changed, Create backup for current ROM archives the old clean
-   image/ZIP by durable hard links, stages and verifies the current clean image
-   and fresh ZIP, rechecks its live hash, then activates the files under a
-   durable renewal journal. It never flashes the older image to enable Apply.
+   image/ZIP in protected /data/misc/unica_gpu/archives storage. Both complete
+   files and their checksums are copied, synced and read back before removing
+   any old cache copy. Existing cache archives are migrated the same way. A
+   durable renewal journal blocks Apply/Restore while cache space is reclaimed,
+   the current clean image and fresh ZIP are staged and verified, the live hash
+   is rechecked and the fresh files are activated. It never flashes the older
+   image to enable Apply.
 3. Save the NEW rollback ZIP to recovery-accessible storage, preferably USB/PC.
    The page reads it back and verifies its complete SHA256. Old export approval
    is cleared. Apply remains blocked until the fresh export is verified.
@@ -108,8 +112,14 @@ Backup refresh requires intact old backup files, a compatible completely stock
 GPU subtree in the new image and no pending partition write. Tuned/unknown
 subtrees are never silently recaptured as clean baselines. Interrupted refresh
 can resume only against the same new image. Apply/Restore stay blocked until
-it completes. Archives are not automatically pruned; retain matching firmware
-and keep at least 320 MiB free on /cache to stage a fresh baseline/ZIP.
+it completes. Archives are retained in protected /data storage; retain matching
+firmware and export the NEW rollback ZIP to PC/USB before Apply. Archive moves
+resume after interruption, including partial copies and partial cache cleanup.
+Insufficient /data space or any checksum mismatch preserves the cache originals.
+The cache-space check accounts for remaining backup writes, a full GPU candidate
+and a margin (330 MiB for an entirely fresh set). A complete matching backup is
+verified without rewriting it or requiring fresh staging space. Unknown cache
+files are never deleted. Do not wipe /cache during an interrupted operation.
 
 While Android works: Restore original vendor_boot, wait for verification, then
 reboot manually. Stale unrelated images are rejected. Failed writes attempt
@@ -153,7 +163,8 @@ Protected files and permissions
 /cache/unica-gpu/candidate.img
 /cache/unica-gpu/renewing                  durable backup refresh journal
 /cache/unica-gpu/pending/<new-hash>/
-/cache/unica-gpu/archives/<old-hash>-<zip-hash>/
+/data/misc/unica_gpu/archives/<old-hash>-<zip-hash>/
+/cache/unica-gpu/archives/                legacy copies, moved only after verification
 
 Only the root init worker writes backups/partitions. Settings only exchanges
 bounded IPC and reads the rollback ZIP. Dedicated SELinux labels grant specific
@@ -185,7 +196,17 @@ migration, exact upstream round-trip, compression bombs, nested/unknown input,
 u32 overflow, experimental requests, changed bins and FDT-space constraints.
 Native tests cover two-bin edits, structural padding, all requested voltage
 values, image/AVB preservation, IPC, export gates, failed writes, manual recovery
-and interrupted archive/refresh transactions. Latest validation: 4059 image,
+and interrupted archive/refresh transactions. Storage tests additionally cover
+partial /data copies, partial cache cleanup, full /data or /cache, corrupted
+archives, legacy archive migration, unrelated-file preservation and symlink
+rejection. Fresh-backup activation resumes with zero simulated cache space
+after staging, partial activation or complete activation; 30 targeted checks
+passed using production AVB SHA. The full storage regression suite passed
+415 assertions with a host-only OpenSSL SHA adapter; generated image and ZIP
+digests were independently checked using Python hashlib. Four symlink guards
+and unrelated-file preservation also passed. The shipped ARM64 binaries use
+production AVB SHA, not this temporary host adapter. Earlier editor validation:
+4059 image,
 226 transaction and 85 profile assertions passed, alongside AVB, independent
 dtc parsing, zero-fuzz patch application, full temporary SecSettings APK rebuild
 and combined SELinux checks. Both XDA exports passed the actual Java-to-native

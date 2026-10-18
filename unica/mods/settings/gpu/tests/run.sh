@@ -15,6 +15,9 @@ python3 "$ROOT/external/android-tools/vendor/avb/avbtool.py" verify_image --imag
 python3 "$ROOT/external/android-tools/vendor/avb/avbtool.py" info_image --image "$WORK/vendor_boot.img" > "$WORK/avb.txt"
 c++ -std=c++17 -O2 -DAVB_COMPILATION -I"$AVB" -I"$AVB/crypto" -Wall -Wextra -Werror -Wno-unused-function \
     "$HERE/transaction_test.cpp" "$WORK/sha.o" -o "$WORK/transaction-test"
+c++ -std=c++17 -O2 -DAVB_COMPILATION -I"$AVB" -I"$AVB/crypto" -Wall -Wextra -Werror -Wno-unused-function \
+    "$HERE/storage_paths_test.cpp" "$WORK/sha.o" -o "$WORK/storage-paths-test"
+"$WORK/storage-paths-test" "$WORK/path-guards"
 "$WORK/transaction-test" "$INPUT" "$WORK/transactions"
 python3 - "$WORK/transactions/backup/rollback.zip" <<'PY'
 import hashlib,sys,zipfile

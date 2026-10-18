@@ -4588,7 +4588,7 @@ new file mode 100644
 +
 +    move-result-object v2
 +
-+    const-string v3, "The current image differs from the saved original. Keep the old rollback archived, back up this ROM\'s clean vendor_boot, then save the new rollback ZIP. Your tuning profile stays saved. This does not flash either image."
++    const-string v3, "The current image differs from the saved original. Copy and verify the old rollback in protected /data storage before freeing its /cache space. Then back up this ROM\'s clean vendor_boot and save the new rollback ZIP to PC or USB. Your tuning profile stays saved. This does not flash either image."
 +
 +    invoke-virtual {v2, v3}, Landroid/app/AlertDialog$Builder;->setMessage(Ljava/lang/CharSequence;)Landroid/app/AlertDialog$Builder;
 +
@@ -5344,7 +5344,7 @@ new file mode 100644
 +
 +    if-eqz v3, :cond_19a
 +
-+    const-string v3, "Archive old rollback and back up this ROM; profile stays saved"
++    const-string v3, "Verify old rollback in /data, free its cache space and back up this ROM; profile stays saved"
 +
 +    goto :goto_1ab
 +
