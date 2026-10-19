@@ -7,9 +7,12 @@ elif [[ "$TARGET_CODENAME" == "dm3q" ]]; then
     LOG "- Adding experimental Scheduled power on (no schedule enabled by default)"
     REZOSS_POWERON_SOURCE="$FW_DIR/SM-S918B_EUX/vendor_dlkm/lib/modules/sec_pon_alarm.ko"
     [[ -f "$REZOSS_POWERON_SOURCE" ]] || ABORT "Scheduled power on requires the inspected S918B driver"
-    [[ "$(sha256sum "$REZOSS_POWERON_SOURCE" | cut -d ' ' -f 1)" == \
-        "9949d2045d979e8f25d0f84d7bffe2364263195e227155d2364e570bf29a31d6" ]] || \
-        ABORT "Scheduled power-on driver changed; revalidate its ioctl ABI before enabling this mod"
+    # Both drivers were inspected for the same 14-byte Samsung alarm ioctl ABI.
+    case "$(sha256sum "$REZOSS_POWERON_SOURCE" | cut -d ' ' -f 1)" in
+        9949d2045d979e8f25d0f84d7bffe2364263195e227155d2364e570bf29a31d6|\
+        c187518e90a9bddd8d9a87c635970ba5cf35728ad90e47ae72980c2f2360fb10) ;;
+        *) ABORT "Scheduled power-on driver changed; revalidate its ioctl ABI before enabling this mod" ;;
+    esac
     REZOSS_POWERON_STAGE=$(mktemp -d /tmp/rezoss-poweron.XXXXXX) || return 1
     mkdir -p "$REZOSS_POWERON_STAGE/system/system/app/RezossPowerOn" || return 1
     bash "$MODPATH/scheduled-power-on/build.sh" \

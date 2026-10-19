@@ -64,8 +64,9 @@ new Settings screen is first opened. First-unlock PIN requirements are unchanged
 Driver contract
 ---------------
 Native code and the validated Samsung command format are unchanged:
-sec_pon_alarm.ko SHA-256:
+Validated sec_pon_alarm.ko SHA-256 values (both accepted by integrate.sh):
 9949d2045d979e8f25d0f84d7bffe2364263195e227155d2364e570bf29a31d6
+c187518e90a9bddd8d9a87c635970ba5cf35728ad90e47ae72980c2f2360fb10 (S918BXXUAGZIF)
 Command 0x400e6107 (_IOW('a',7,char[14])) accepts ASCII:
   1YYYYMMDDHHMM followed by NUL: enable using a UTC calendar date
   0202002010101 followed by NUL: cancel
@@ -80,7 +81,22 @@ are suppressed by the ioctl; command acceptance is not independent readback
 proof. The original scheduled startup was reported working by the user. The
 new automatic shutdown and boot/clock restoration need device testing.
 
-REA evidence from the exact inspected firmware:
+S918BXXUAGZIF static ABI revalidation (2026-10-19):
+pon_alarm_ioctl at 0x1013e4 accepts (cmd & 0xffffff0f) == 0x400e6107.
+Its specialized _copy_from_user copies 14 bytes; strlcpy uses a 14-byte
+buffer, and ASCII fields remain mode/year/month/day/hour/minute. Mode '1'
+enables the same wall-clock-to-RTC conversion and clears the low two bits;
+mode '0' selects the same reserved cancellation date. The handler still calls
+pmic_rtc_setalarm and sec_param_set(5, ...), suppressing their failures.
+This validates the app-facing ABI, not the downstream RTC shutdown driver
+or physical power-on behavior. No driver or app code changes were required.
+REA evidence (Ghidra 12.1.4, exact c187518e... artifact):
+pon_alarm_ioctl:
+ev_f56f5bb1c13d27390f9f0d4a44eedc5e4686b305657c180b230d019226368ab7
+_copy_from_user:
+ev_783b50152dc023dd6234363e5c814ba565cd1125cc3c02a003030d632fc6cfaa
+
+REA evidence from the originally inspected firmware:
 pon_alarm_ioctl:
 ev_e37c31979e83480f8d05dc29467c9d4f1fc8eb853b678ba99baed76d8708f0aa
 pmic_rtc_setalarm:
