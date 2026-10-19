@@ -122,13 +122,16 @@ public final class GpuActivity extends Activity {
     }
     private void createBackup(){
         if(!ready())return;
-        if(state.optBoolean("canRenew")){
+        if(state.optBoolean("canRestart")){
+            String current=hash(),baseline=state.optString("baselineHash"),previous=state.optString("refreshHash");
+            new AlertDialog.Builder(this).setTitle("Restart backup for this ROM?").setMessage("The previous backup refresh belongs to a different image. Preserve and verify its rollback, journal and staged files in protected /data storage before freeing their cache space. Then create this ROM's clean backup. Save the NEW rollback ZIP to PC or USB before Apply. Your tuning profile stays saved. This does not flash any image.").setPositiveButton("Restart backup",(d,w)->run("restart",current+" "+baseline+" "+previous)).setNegativeButton("Cancel",null).show();
+        }else if(state.optBoolean("canRenew")){
             String current=hash(),baseline=state.optString("baselineHash");
             new AlertDialog.Builder(this).setTitle(state.optBoolean("renewing")?"Resume backup refresh?":"Create backup for current ROM?").setMessage("The current image differs from the saved original. Copy and verify the old rollback in protected /data storage before freeing its /cache space. Then back up this ROM's clean vendor_boot and save the new rollback ZIP to PC or USB. Your tuning profile stays saved. This does not flash either image.").setPositiveButton("Create backup",(d,w)->run("renew",current+" "+baseline)).setNegativeButton("Cancel",null).show();
         }else run("backup",hash());
     }
     private void promptBackup(){
-        if(!ready()||!state.optBoolean("canRenew")||hash().equals(promptedImage))return;promptedImage=hash();createBackup();
+        if(!ready()||(!state.optBoolean("canRenew")&&!state.optBoolean("canRestart"))||hash().equals(promptedImage))return;promptedImage=hash();createBackup();
     }
     private void profileDocument(int request,Uri uri){
         if(busy)return;final byte[] outgoing;
@@ -189,7 +192,7 @@ public final class GpuActivity extends Activity {
         row("Import profile","UN1CA JSON or original konabess:// export · review both tables",true,false,v->chooseProfile(PROFILE_IMPORT));
         row("Load current image values","Replace the saved draft with the current image's table",ready(),false,v->new AlertDialog.Builder(this).setTitle("Replace saved profile values?").setMessage("This replaces the saved draft. Back up your profile first if you want to keep it.").setPositiveButton("Load values",(d,w)->{try{setProfile(imageProfile(),true);draw();}catch(Exception e){alert("Cannot load values",e.getMessage());}}).setNegativeButton("Cancel",null).show());
         section("Recovery rollback");card();
-        row(state!=null&&state.optBoolean("renewing")?"Resume backup refresh":state!=null&&state.optBoolean("staleBackup")?"Create backup for current ROM":"Create or verify original backup",state!=null&&state.optBoolean("staleBackup")?"Verify old rollback in /data, free its cache space and back up this ROM; profile stays saved":state!=null&&state.optBoolean("backup")?"Original image saved":"Save the original before making changes",ready()&&(state.optBoolean("canRenew")||(!state.optBoolean("staleBackup")&&!state.optBoolean("renewing")&&!state.optBoolean("interrupted")&&(!state.optBoolean("backup")||state.optBoolean("original")))),false,v->createBackup());
+        row(state!=null&&state.optBoolean("canRestart")?"Restart backup for current ROM":state!=null&&state.optBoolean("renewing")?"Resume backup refresh":state!=null&&state.optBoolean("staleBackup")?"Create backup for current ROM":"Create or verify original backup",state!=null&&state.optBoolean("staleBackup")?"Verify old rollback in /data, free its cache space and back up this ROM; profile stays saved":state!=null&&state.optBoolean("backup")?"Original image saved":"Save the original before making changes",ready()&&(state.optBoolean("canRestart")||state.optBoolean("canRenew")||(!state.optBoolean("staleBackup")&&!state.optBoolean("renewing")&&!state.optBoolean("interrupted")&&(!state.optBoolean("backup")||state.optBoolean("original")))),false,v->createBackup());
         row("Save rollback ZIP",state!=null&&state.optBoolean("exported")?"Saved copy verified":"Required before Apply · choose PC or USB storage",ready()&&state.optBoolean("backup")&&state.optBoolean("canRestore")&&!state.optBoolean("interrupted")&&!state.optBoolean("renewing"),false,v->{Intent i=new Intent(Intent.ACTION_CREATE_DOCUMENT);i.addCategory(Intent.CATEGORY_OPENABLE);i.setType("application/zip");i.putExtra(Intent.EXTRA_TITLE,"UN1CA-dm3q-GPU-rollback.zip");try{startActivityForResult(i,EXPORT);}catch(ActivityNotFoundException e){alert("File picker unavailable",e.getMessage());}});
         row("Recovery instructions","Restore through OrangeFox if Android cannot start",true,false,v->alert("If Android cannot start","Boot into OrangeFox using the device's recovery procedure. Mount Cache. Flash /cache/unica-gpu/rollback.zip, or flash the saved rollback ZIP from USB/PC storage. It verifies and restores the exact pre-trial vendor_boot image. Reboot manually after success. Keep a matching full ROM available if recovery restoration fails. Never use this ZIP after changing firmware."));
         section("GPU tables");card();

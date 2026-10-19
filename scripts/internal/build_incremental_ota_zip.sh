@@ -556,7 +556,7 @@ if [ "${UNICA_OTA_RELEASE_INSTALLER:-}" ]; then
 else
 if [ -d "$SRC_DIR/target/$TARGET_CODENAME/installer/root" ]; then
     LOG "- Copying target custom install files"
-    EVAL "cp -a \"$SRC_DIR/target/$TARGET_CODENAME/installer/root/\"* \"$TMP_DIR\"" || exit 1
+    rsync -a --exclude='*.bak' --exclude='*.bak.*' --exclude='/unica/tee-simulator' -- "$SRC_DIR/target/$TARGET_CODENAME/installer/root/" "$TMP_DIR/" || exit 1
 fi
 
 if [ -f "$SRC_DIR/target/$TARGET_CODENAME/installer/customize.sh" ]; then
@@ -586,9 +586,12 @@ if [ "${UNICA_OTA_RELEASE_INSTALLER:-}" ]; then
         mkdir -p "$TMP_DIR/META-INF/com/android" || exit 1
         cp "$PUBLIC_KEY_PATH" "$TMP_DIR/META-INF/com/android/otacert" || exit 1
     fi
+    python3 "$SRC_DIR/scripts/internal/rom_payload.py" quarantine "$TMP_DIR" || exit 1
     python3 "$SRC_DIR/scripts/internal/ota_metadata.py" package \
         "$TMP_DIR" "$SOURCE_ZIP" "$TARGET_ZIP" || exit 1
 fi
+
+python3 "$SRC_DIR/scripts/internal/rom_payload.py" quarantine "$TMP_DIR" || exit 1
 
 if [ "${UNICA_PACKAGE_SHA:-false}" = true ]; then
     LOG "- Adding recovery SHA-256 preflight"
@@ -605,8 +608,8 @@ EVAL "rm -f \"$TMP_DIR/rom.zip\"" || exit 1
 # https://android.googlesource.com/platform/build/+/refs/tags/android-15.0.0_r1/tools/releasetools/common.py#3609
 # https://android.googlesource.com/platform/build/+/refs/tags/android-15.0.0_r1/tools/releasetools/ota_utils.py#184
 # https://android.googlesource.com/platform/build/+/refs/tags/android-15.0.0_r1/tools/releasetools/ota_utils.py#186
-EVAL "cd \"$TMP_DIR\" && 7z a -tzip -mx=0 -mmt=$(nproc) $TMP_DIR/rom.zip -r *.patch.dat -ir!META-INF/com/android/* -i!*.new.dat.br" || exit 1
-EVAL "cd \"$TMP_DIR\" && 7z a -tzip -mx=3 -mmt=$(nproc) $TMP_DIR/rom.zip -r * -xr!META-INF/com/android/* -x!*.new.dat.br -x!*.patch.dat -x!rom.zip" || exit 1
+EVAL "cd \"$TMP_DIR\" && 7z a -tzip -mx=0 -mmt=$(nproc) $TMP_DIR/rom.zip -r *.patch.dat -ir!META-INF/com/android/* -i!*.new.dat.br -xr!*.bak -xr!*.bak.*" || exit 1
+EVAL "cd \"$TMP_DIR\" && 7z a -tzip -mx=3 -mmt=$(nproc) $TMP_DIR/rom.zip -r * -xr!META-INF/com/android/* -x!*.new.dat.br -x!*.patch.dat -x!rom.zip -xr!*.bak -xr!*.bak.*" || exit 1
 
 if ! $DEBUG || $ROM_IS_OFFICIAL; then
     LOG "- Signing zip"

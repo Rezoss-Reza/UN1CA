@@ -13,6 +13,11 @@ APPLY_MODULE()
     local MODNAME
     local MODAUTH
 
+    # Backup module trees are local references, never active build inputs.
+    case "${MODPATH##*/}" in
+        *.bak|*.bak.*) return 0 ;;
+    esac
+
     if [ ! -d "$MODPATH" ]; then
         LOGE "Folder not found: ${MODPATH//$SRC_DIR\//}"
         return 1
@@ -61,7 +66,7 @@ APPLY_MODULE()
     if [ -d "$MODPATH/smali" ]; then
         while IFS= read -r f; do
             APPLY_SMALI_PATCHES "$MODPATH/smali" "$f"
-        done < <(find "$MODPATH/smali" -type d \( -name "*.apk" -o -name "*.jar" \) | sed "s|$MODPATH/smali/||")
+        done < <(find "$MODPATH/smali" \( -name "*.bak" -o -name "*.bak.*" \) -prune -o -type d \( -name "*.apk" -o -name "*.jar" \) -print | sed "s|$MODPATH/smali/||")
     fi
 
     LOG_STEP_OUT
@@ -89,7 +94,7 @@ APPLY_SMALI_PATCHES()
         fi
 
         APPLY_PATCH "$PARTITION" "$FILE" "$p"
-    done < <(find "$PATCHES_PATH/$TARGET" -type f -name "*.patch" | sort -n)
+    done < <(find "$PATCHES_PATH/$TARGET" \( -name "*.bak" -o -name "*.bak.*" \) -prune -o -type f -name "*.patch" -print | sort -n)
 
     return 0
 }

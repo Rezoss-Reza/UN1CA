@@ -16,7 +16,7 @@ final class GpuTransport {
     }
     static synchronized JSONObject request(String operation,String payload)throws Exception {
         if(android.os.Process.myUid()!=1000)throw new IOException("Available to the device owner's Settings only");
-        if(!java.util.Arrays.asList("status","backup","renew","exported","apply","apply2","restore").contains(operation))throw new IOException("Invalid operation");
+        if(!java.util.Arrays.asList("status","backup","renew","restart","exported","apply","apply2","restore").contains(operation))throw new IOException("Invalid operation");
         if(!payload.matches("[0-9a-f ]{0,4096}"))throw new IOException("Invalid GPU request");
         File dir=new File(BASE,"requests"),request=new File(dir,"request"),response=new File(BASE,"responses/response.json");
         if(!dir.isDirectory())throw new IOException("GPU service is not installed. Install the updated ROM.");

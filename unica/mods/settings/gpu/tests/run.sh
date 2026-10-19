@@ -19,6 +19,9 @@ c++ -std=c++17 -O2 -DAVB_COMPILATION -I"$AVB" -I"$AVB/crypto" -Wall -Wextra -Wer
     "$HERE/storage_paths_test.cpp" "$WORK/sha.o" -o "$WORK/storage-paths-test"
 "$WORK/storage-paths-test" "$WORK/path-guards"
 "$WORK/transaction-test" "$INPUT" "$WORK/transactions"
+c++ -std=c++17 -O2 -DAVB_COMPILATION -I"$AVB" -I"$AVB/crypto" -Wall -Wextra -Werror -Wno-unused-function \
+    "$HERE/restart_test.cpp" "$WORK/sha.o" -o "$WORK/restart-test"
+"$WORK/restart-test" "$INPUT" "$WORK/restarts"
 python3 - "$WORK/transactions/backup/rollback.zip" <<'PY'
 import hashlib,sys,zipfile
 with zipfile.ZipFile(sys.argv[1]) as z:

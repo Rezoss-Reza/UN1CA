@@ -103,16 +103,6 @@ chmod 0755 "$DFE_SCRIPT"
 sh "$DFE_SCRIPT" "$OUTFD" "$ZIPFILE"
 STATUS="$?"
 
-if [ "$STATUS" = 0 ] && unzip -l "$ZIPFILE" | grep -q 'unica/tee-simulator/retire-runtime-hotfix.sha256$'; then
-    if unzip -oq "$ZIPFILE" 'unica/tee-simulator/retire-runtime-hotfix.sh' \
-        'unica/tee-simulator/retire-runtime-hotfix.sha256' -d "$TMPDIR"; then
-        sh "$TMPDIR/unica/tee-simulator/retire-runtime-hotfix.sh" "$OUTFD" \
-            "$TMPDIR/unica/tee-simulator/retire-runtime-hotfix.sha256"
-    else
-        ui_print "[TEE] Hotfix cleanup missing; disable unica_teesim_runtime_fix manually."
-    fi
-fi
-
 $OTA_ACTIVE && ota_complete
 rm -rf "$TMPDIR"
 exit "$STATUS"

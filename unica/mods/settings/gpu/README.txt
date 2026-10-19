@@ -121,6 +121,31 @@ and a margin (330 MiB for an entirely fresh set). A complete matching backup is
 verified without rewriting it or requiring fresh staging space. Unknown cache
 files are never deleted. Do not wipe /cache during an interrupted operation.
 
+If another ROM changes vendor_boot while an old backup-only refresh is pending,
+Restart backup for current ROM becomes available only for a compatible stock
+image with no partition-write journal. Confirming it verifies the old rollback,
+snapshots the obsolete journal and all managed active/staged/cache-archive files
+into /data/misc/unica_gpu/archives/refreshes/<journal-hash>-<current-hash>/,
+and verifies a SHA256 receipt before any cache cleanup. A separate durable
+restarting journal and cleanup receipt make deletion/staging/activation resumable.
+Unknown root files are preserved. Apply/Restore remain blocked throughout; the
+new rollback ZIP must be exported again. No image is flashed by this operation.
+A further image change during the confirmed restart remains blocked for review.
+Obsolete-refresh validation passed 392 assertions covering seven interruption
+points, a full data partition, corrupted preserved files, incorrect confirmation
+hashes, partition-write exclusion, zero-space activation retries and returning
+to the original ROM. The existing 415 transaction assertions also passed. These
+host fault suites used the temporary OpenSSL SHA adapter; a separate production
+AVB SHA run verified the preserved 13-file receipt, old rollback and fresh
+baseline. Independent hashlib/ZIP CRC checks verified both new-ROM and original-
+ROM cases. No live partition writes or automatic restart is part of this path.
+
+Local *.bak and *.bak.* files/directories stay in source checkouts. Module copy
+and installer ZIP writers exclude them. Filesystem image builders use a filtered
+temporary copy if an old work tree still contains backups, leaving the original
+work tree untouched. Installer staging backups are quarantined before checksum
+and signed OTA entry lists are generated. See scripts/tests/rom_payload_test.py.
+
 While Android works: Restore original vendor_boot, wait for verification, then
 reboot manually. Stale unrelated images are rejected. Failed writes attempt
 immediate original restoration; if that also fails, the journal and candidate

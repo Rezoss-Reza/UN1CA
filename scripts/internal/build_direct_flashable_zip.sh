@@ -372,7 +372,7 @@ GENERATE_OTA_METADATA
 
 if [ -d "$SRC_DIR/target/$TARGET_CODENAME/installer/root" ]; then
     LOG "- Copying target custom install files"
-    EVAL "cp -a \"$SRC_DIR/target/$TARGET_CODENAME/installer/root/\"* \"$TMP_DIR\"" || exit 1
+    rsync -a --exclude='*.bak' --exclude='*.bak.*' --exclude='/unica/tee-simulator' -- "$SRC_DIR/target/$TARGET_CODENAME/installer/root/" "$TMP_DIR/" || exit 1
 fi
 
 if [ -f "$SRC_DIR/target/$TARGET_CODENAME/installer/customize.sh" ]; then
@@ -383,6 +383,8 @@ if [ -f "$SRC_DIR/target/$TARGET_CODENAME/installer/customize.sh" ]; then
     LOG_STEP_OUT
 fi
 
+python3 "$SRC_DIR/scripts/internal/rom_payload.py" quarantine "$TMP_DIR" || exit 1
+
 if [ "${UNICA_PACKAGE_SHA:-false}" = true ]; then
     LOG "- Adding recovery SHA-256 preflight"
     python3 "$SRC_DIR/scripts/internal/package_sha.py" prepare "$TMP_DIR" || exit 1
@@ -391,7 +393,7 @@ fi
 LOG "- Creating zip"
 EVAL "rm -f \"$TMP_DIR/rom.zip\"" || exit 1
 # For S23U TWRP compatible
-EVAL "cd \"$TMP_DIR\" && 7z a -tzip -mx=1 -mmt=$(nproc) \"$TMP_DIR/rom.zip\" -r * -x!rom.zip" || exit 1
+EVAL "cd \"$TMP_DIR\" && 7z a -tzip -mx=1 -mmt=$(nproc) \"$TMP_DIR/rom.zip\" -r * -x!rom.zip -xr!*.bak -xr!*.bak.*" || exit 1
 
 if ! $DEBUG || $ROM_IS_OFFICIAL; then
     LOG "- Signing zip"

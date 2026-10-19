@@ -23,6 +23,7 @@ namespace {
 #ifdef GPU_TEST
 std::string BASE,IPC,ARCHIVES;
 int failArchivePhase=0;
+int failRestartPhase=0;
 int64_t testCacheFree=-1,testDataFree=-1;
 int failWrites=0;
 int failRenewPhase=0;
@@ -124,7 +125,7 @@ uint64_t available(const std::string& path,bool cache){
 }
 void migrateLegacyArchives();
 void backup(const Bytes& live,const std::string& directory=BASE){
- if(directory==BASE){require(!exists(BASE+"writing")&&!exists(BASE+"renewing"),"Finish the interrupted operation before creating a backup");migrateLegacyArchives();}
+ if(directory==BASE){require(!exists(BASE+"writing")&&!exists(BASE+"renewing")&&!exists(BASE+"restarting"),"Finish the interrupted operation before creating a backup");migrateLegacyArchives();}
  stock(live);bool missing=!exists(directory+"original.img");
  auto original=missing?live:read(directory+"original.img",IMAGE_SIZE);stock(original);require(sha(original)==sha(live),"Saved backup belongs to another image. Use Create backup for current ROM");
  if(exists(directory+"original.sha256"))require(text(directory+"original.sha256",64)==sha(original),"Original backup checksum mismatch");
@@ -225,10 +226,10 @@ bool freshBackupReady(const std::string& staged,const Renewal& r){
  std::array<std::string,4> paths;const std::array<std::string,4> names={"original.img","original.sha256","rollback.zip","rollback.sha256"};
  for(size_t i=0;i<names.size();i++){paths[i]=exists(staged+names[i])?staged+names[i]:BASE+names[i];if(!exists(paths[i]))return false;}
  auto image=read(paths[0],IMAGE_SIZE);stock(image);require(sha(image)==r.newHash&&text(paths[1],64)==r.newHash,"Fresh backup image mismatch; preserve archived rollback");
- auto zh=text(paths[3],64);require(hashString(zh)&&zh!=r.archive.substr(65)&&sha(read(paths[2],IMAGE_SIZE+10*1024*1024))==zh,"Fresh rollback ZIP mismatch; preserve archived rollback");return true;
+ auto zh=text(paths[3],64);require(hashString(zh)&&sha(read(paths[2],IMAGE_SIZE+10*1024*1024))==zh,"Fresh rollback ZIP mismatch; preserve archived rollback");return true;
 }
 void renewBackup(const Bytes& live,const std::string& expectedOld){
- require(!exists(BASE+"writing"),"Restore the interrupted partition write before refreshing backups");stock(live);const auto liveHash=sha(live);Renewal r;
+ require(!exists(BASE+"writing")&&!exists(BASE+"restarting"),"Finish partition recovery or the confirmed backup restart first");stock(live);const auto liveHash=sha(live);Renewal r;
  if(exists(BASE+"renewing")){
   r=renewal();require(r.oldHash==expectedOld&&r.newHash==liveHash,"Image changed during backup refresh; keep archived files and restore matching firmware manually");
  }else{
@@ -270,23 +271,103 @@ void renewBackup(const Bytes& live,const std::string& expectedOld){
  }
  renewPoint(4);removefile(BASE+"candidate.img");removefile(BASE+"renewing");
 }
+void restartPoint(int phase){
+#ifdef GPU_TEST
+ if(failRestartPhase==phase){failRestartPhase=0;throw std::runtime_error("Injected interrupted backup restart");}
+#else
+ (void)phase;
+#endif
+}
+struct Restart {std::string oldHash,previousHash,currentHash,archive,receipt,manifest;};
+Restart restartState(){
+ Restart r;std::string extra;std::istringstream in(text(BASE+"restarting"));in>>r.oldHash>>r.previousHash>>r.currentHash>>r.archive>>r.receipt>>r.manifest;
+ require(hashString(r.oldHash)&&hashString(r.previousHash)&&hashString(r.currentHash)&&archiveName(r.archive)&&r.archive.substr(0,64)==r.oldHash&&archiveName(r.receipt)&&r.receipt.substr(65)==r.currentHash&&hashString(r.manifest)&&!(in>>extra),"Invalid backup restart journal; preserve files for recovery");return r;
+}
+bool managed(const std::string& p){
+ if(p.empty()||p.size()>512||p.front()=='/'||p.back()=='/'||p.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-/")!=std::string::npos)return false;
+ std::istringstream in(p);std::string part;while(std::getline(in,part,'/'))if(part.empty()||part=="."||part=="..")return false;
+ if(p.compare(0,9,"archives/")==0||p.compare(0,8,"pending/")==0)return true;
+ for(const auto& name:{"original.img","original.sha256","rollback.zip","rollback.sha256","exported","applied.sha256","candidate.img","renewing","original.img.tmp","original.sha256.tmp","rollback.zip.tmp","rollback.sha256.tmp","candidate.img.tmp","exported.tmp","applied.sha256.tmp","renewing.tmp"})if(p==name)return true;
+ return false;
+}
+void collectSnapshot(const std::string& relative,std::vector<std::string>& files,int depth=0){
+ require(depth<8,"Backup staging tree is too deep");const auto path=BASE+relative;struct stat st;require(lstat(path.c_str(),&st)==0,"Cannot inspect backup staging files");
+ if(S_ISREG(st.st_mode)){require(managed(relative)&&st.st_size>=0&&uint64_t(st.st_size)<=IMAGE_SIZE+10*1024*1024&&files.size()<512,"Unexpected backup staging file; preserve files for recovery");files.push_back(relative);return;}
+ require(S_ISDIR(st.st_mode),"Refusing redirected backup staging path");FD fd(open(path.c_str(),O_RDONLY|O_DIRECTORY|O_CLOEXEC|O_NOFOLLOW));DIR* dir=fdopendir(dup(fd));require(dir!=nullptr,"Cannot inspect backup staging tree");
+ std::vector<std::string> names;errno=0;while(auto* e=readdir(dir)){std::string n=e->d_name;if(n!="."&&n!="..")names.push_back(n);}int error=errno;closedir(dir);require(error==0,"Cannot list backup staging files");
+ for(const auto& n:names)collectSnapshot(relative+"/"+n,files,depth+1);
+}
+void snapshotParents(const std::string& root,const std::string& relative){
+ size_t at=0;while((at=relative.find('/',at))!=std::string::npos){directory(root+relative.substr(0,at)+"/");++at;}
+}
+using Receipt=std::vector<std::pair<std::string,std::string>>;
+Receipt readReceipt(const Restart& r){
+ const auto root=ARCHIVES+"refreshes/"+r.receipt+"/";auto manifest=text(root+"manifest",512*1024);require(sha(bytes(manifest))==r.manifest,"Backup restart receipt checksum mismatch");
+ Receipt result;std::istringstream in(manifest);std::string hash,path;while(in>>hash){require(bool(in>>path)&&hashString(hash)&&managed(path)&&result.size()<512,"Invalid backup restart receipt");for(const auto& e:result)require(e.first!=path,"Duplicate backup restart receipt path");require(sha(read(root+"files/"+path,IMAGE_SIZE+10*1024*1024))==hash,"Preserved staging file checksum mismatch; cache retained");result.emplace_back(path,hash);}
+ require(!result.empty(),"Empty backup restart receipt");return result;
+}
+void pruneEmpty(const std::string& relative){
+ auto path=BASE+relative;if(!exists(path))return;const auto plain=path.back()=='/'?path.substr(0,path.size()-1):path;struct stat st;require(lstat(plain.c_str(),&st)==0&&S_ISDIR(st.st_mode),"Unexpected staging directory");
+ FD fd(open(plain.c_str(),O_RDONLY|O_DIRECTORY|O_CLOEXEC|O_NOFOLLOW));DIR* dir=fdopendir(dup(fd));require(dir!=nullptr,"Cannot inspect emptied staging directory");std::vector<std::string> names;
+ errno=0;while(auto* e=readdir(dir)){std::string n=e->d_name;if(n!="."&&n!="..")names.push_back(n);}int error=errno;closedir(dir);require(error==0,"Cannot list emptied staging directory");
+ for(const auto& n:names){auto child=relative+"/"+n;struct stat c;require(lstat((BASE+child).c_str(),&c)==0,"Staging file changed");if(S_ISDIR(c.st_mode))pruneEmpty(child);}
+ if(rmdir(plain.c_str())!=0)require(errno==ENOTEMPTY||errno==ENOENT,"Cannot remove empty staging directory");
+ syncdir(plain.substr(0,plain.find_last_of('/')));
+}
+// Explicitly confirmed recovery of an obsolete backup-only transaction. This
+// path never flashes and never supersedes an outstanding partition-write journal.
+void restartBackup(const Bytes& live,const std::string& expectedOld,const std::string& expectedPrevious){
+ require(!exists(BASE+"writing"),"Restore the interrupted partition write before restarting backups");stock(live);const auto hash=sha(live);Restart r;
+ if(exists(BASE+"restarting")){
+  r=restartState();require(r.oldHash==expectedOld&&r.previousHash==expectedPrevious&&r.currentHash==hash,"Image or confirmed refresh changed during backup restart; preserve recovery files");
+ }else{
+  auto old=renewal();require(old.oldHash==expectedOld&&old.newHash==expectedPrevious&&hash!=old.newHash,"Confirmed obsolete refresh changed; refresh status first");
+  copyArchive(BASE+"archives/"+old.archive+"/",old);
+  r={old.oldHash,old.newHash,hash,old.archive,sha(bytes(text(BASE+"renewing")))+"-"+hash,""};
+  directory(ARCHIVES+"refreshes/");const auto root=ARCHIVES+"refreshes/"+r.receipt+"/";directory(root);directory(root+"files/");
+  std::vector<std::string> files;
+  for(const auto& name:{"original.img","original.sha256","rollback.zip","rollback.sha256","exported","applied.sha256","candidate.img","renewing","original.img.tmp","original.sha256.tmp","rollback.zip.tmp","rollback.sha256.tmp","candidate.img.tmp","exported.tmp","applied.sha256.tmp","renewing.tmp","archives","pending"})if(exists(BASE+name))collectSnapshot(name,files);
+  std::sort(files.begin(),files.end());uint64_t needed=32*1024*1024;for(const auto& f:files)if(!exists(root+"files/"+f)){struct stat st;require(lstat((BASE+f).c_str(),&st)==0,"Backup source changed");needed+=st.st_size;}
+  require(available(ARCHIVES,false)>needed,"Insufficient /data space to preserve obsolete refresh; no cache files removed");std::string manifest;
+  for(const auto& f:files){auto value=read(BASE+f,IMAGE_SIZE+10*1024*1024);auto digest=sha(value);snapshotParents(root+"files/",f);if(exists(root+"files/"+f))require(sha(read(root+"files/"+f,IMAGE_SIZE+10*1024*1024))==digest,"Existing restart snapshot differs; cache retained");else atomic(root+"files/"+f,value);manifest+=digest+" "+f+"\n";}
+  atomic(root+"manifest",manifest);r.manifest=sha(bytes(manifest));readReceipt(r);restartPoint(1);
+  require(sha(current())==hash&&!exists(BASE+"writing")&&sha(bytes(text(BASE+"renewing")))==r.receipt.substr(0,64),"Image or refresh changed while preserving backups; cache retained");
+  atomic(BASE+"restarting",r.oldHash+" "+r.previousHash+" "+r.currentHash+" "+r.archive+" "+r.receipt+" "+r.manifest);restartPoint(2);
+ }
+ auto receipt=readReceipt(r);verifyArchived(ARCHIVES+r.archive+"/",Renewal{r.oldHash,r.currentHash,r.archive});require(sha(current())==r.currentHash,"Image changed before cache cleanup; preserve recovery files");
+ const auto token=r.receipt+" "+r.manifest;
+ if(!exists(BASE+"restart-cleaned")||text(BASE+"restart-cleaned")!=token){
+  for(const auto& e:receipt)if(e.first!="renewing"&&exists(BASE+e.first)){require(sha(read(BASE+e.first,IMAGE_SIZE+10*1024*1024))==e.second,"Staging changed after archival; no unverified file removed");removefile(BASE+e.first);restartPoint(3);}
+  pruneEmpty("archives");pruneEmpty("pending");atomic(BASE+"restart-cleaned",token);restartPoint(4);
+ }
+ directory(BASE+"pending/");const auto staged=BASE+"pending/"+r.currentHash+"/";directory(staged);Renewal next{r.oldHash,r.currentHash,r.archive};
+ if(!freshBackupReady(staged,next))backup(live,staged);
+ require(freshBackupReady(staged,next),"Fresh restarted backup is incomplete");restartPoint(5);
+ require(sha(current())==r.currentHash&&!exists(BASE+"writing"),"Image changed during backup restart; preserve recovery files");
+ int phase=0;for(const auto& name:{"original.img","original.sha256","rollback.zip","rollback.sha256"}){if(exists(staged+name)){require(rename((staged+name).c_str(),(BASE+name).c_str())==0,"Backup activation interrupted; resume restart");if(exists(staged+name))removefile(staged+name);}syncdir(BASE);syncdir(staged);if(++phase==1)restartPoint(6);}
+ removefile(BASE+"exported");removefile(BASE+"applied.sha256");removefile(BASE+"candidate.img");removefile(BASE+"renewing");restartPoint(7);
+ removefile(BASE+"restarting");removefile(BASE+"restart-cleaned");
+}
 std::string status(const Bytes& live){
  Table t;try{t=table(live);}catch(...){auto b=original();require(exists(BASE+"writing")&&restorable(live,b),"Unsupported image; recovery restoration may be required");t=table(b);}
  std::string r="{\"ok\":true,\"currentHash\":"+quote(sha(live))+",\"frequencies\":[";
  for(int i=0;i<10;i++){if(i)r+=',';r+=std::to_string(t.frequencies[i]);}r+="],\"levels\":[";for(int i=0;i<10;i++){if(i)r+=',';r+=std::to_string(t.levels[i]);}r+="]";
  r+=",\"tables\":[";for(int id=0;id<2;id++){if(id)r+=',';auto& bin=t.bins[id];r+="{\"id\":"+std::to_string(id)+",\"initial_level\":"+std::to_string(bin.initial)+",\"minimum_level\":"+std::to_string(bin.minimum)+",\"power_levels\":[";
  for(size_t i=0;i<bin.rows.size();i++){if(i)r+=',';auto& row=bin.rows[i];r+="{\"index\":"+std::to_string(i)+",\"frequency_hz\":"+std::to_string(row.frequency)+",\"rpmh_level\":"+std::to_string(row.voltage)+",\"bus_frequency\":"+std::to_string(row.bus)+",\"bus_minimum\":"+std::to_string(row.minimum)+",\"bus_maximum\":"+std::to_string(row.maximum)+",\"acd_level\":"+(row.hasAcd?std::to_string(row.acd):"null")+"}";}r+="]}";}r+="]";
- bool renewing=exists(BASE+"renewing"),interrupted=exists(BASE+"writing"),has=!renewing&&exists(BASE+"original.sha256")&&exists(BASE+"original.img"),can=false,exported=false,isOriginal=false,stale=false,canRenew=false;
- std::string zipHash,baselineHash,backupState="missing",blockReason;
- if(renewing){auto pending=renewal();baselineHash=pending.oldHash;stale=true;canRenew=sha(live)==pending.newHash&&!interrupted&&stockTables(live);backupState="refreshing";}
+ bool restarting=exists(BASE+"restarting"),renewing=exists(BASE+"renewing")||restarting,interrupted=exists(BASE+"writing"),has=!renewing&&exists(BASE+"original.sha256")&&exists(BASE+"original.img"),can=false,exported=false,isOriginal=false,stale=false,canRenew=false,canRestart=false;
+ std::string zipHash,baselineHash,refreshHash,backupState="missing",blockReason;
+ if(restarting){auto pending=restartState();baselineHash=pending.oldHash;refreshHash=pending.previousHash;stale=true;canRestart=sha(live)==pending.currentHash&&!interrupted&&stockTables(live);backupState="restarting";}
+ else if(renewing){auto pending=renewal();baselineHash=pending.oldHash;refreshHash=pending.newHash;stale=true;canRenew=sha(live)==pending.newHash&&!interrupted&&stockTables(live);canRestart=sha(live)!=pending.newHash&&!interrupted&&stockTables(live);backupState="refreshing";}
  else if(has){auto b=original();baselineHash=sha(b);can=restorable(live,b);isOriginal=sha(live)==baselineHash;stale=!can;if(exists(BASE+"rollback.sha256"))zipHash=text(BASE+"rollback.sha256",64);exported=hashString(zipHash)&&exists(BASE+"rollback.zip")&&exists(BASE+"exported")&&text(BASE+"exported",64)==zipHash;canRenew=stale&&!interrupted&&hashString(zipHash)&&exists(BASE+"rollback.zip")&&stockTables(live);backupState=stale?"stale":"ready";}
  bool complete=has&&hashString(zipHash)&&exists(BASE+"rollback.zip");
  if(interrupted)blockReason="Interrupted partition write: restore the original before rebooting";
+ else if(restarting)blockReason=canRestart?"Backup restart interrupted. Resume creating the backup for this ROM":"Image changed during backup restart. Preserve recovery files and use matching firmware";
+ else if(renewing&&canRestart)blockReason="Previous backup refresh belongs to another ROM. Restart backup for this ROM; old recovery files will be preserved";
  else if(renewing)blockReason=canRenew?"Backup refresh interrupted. Resume creating the backup for this ROM":"Image changed during backup refresh. Preserve archived backups and use matching firmware";
  else if(stale)blockReason=canRenew?"Saved rollback belongs to a different image. Create backup for current ROM":"Current image is not a clean supported baseline, or old rollback is incomplete. Backup refresh is blocked";
  else if(!complete)blockReason="Create and verify the original backup first";
  else if(!exported)blockReason="Save and verify the rollback ZIP for this image before Apply";
- r+=",\"backup\":"+std::string(complete?"true":"false")+",\"original\":"+(isOriginal?"true":"false")+",\"canRestore\":"+(can&&!renewing?"true":"false")+",\"exported\":"+(exported&&!stale&&!renewing?"true":"false")+",\"rollbackHash\":"+quote(zipHash)+",\"interrupted\":"+(interrupted?"true":"false")+",\"backupState\":"+quote(backupState)+",\"baselineHash\":"+quote(baselineHash)+",\"staleBackup\":"+(stale?"true":"false")+",\"canRenew\":"+(canRenew?"true":"false")+",\"renewing\":"+(renewing?"true":"false")+",\"blockReason\":"+quote(blockReason)+"}";return r;
+ r+=",\"canRestart\":"+std::string(canRestart?"true":"false")+",\"refreshHash\":"+quote(refreshHash)+",\"backup\":"+std::string(complete?"true":"false")+",\"original\":"+(isOriginal?"true":"false")+",\"canRestore\":"+(can&&!renewing?"true":"false")+",\"exported\":"+(exported&&!stale&&!renewing?"true":"false")+",\"rollbackHash\":"+quote(zipHash)+",\"interrupted\":"+(interrupted?"true":"false")+",\"backupState\":"+quote(backupState)+",\"baselineHash\":"+quote(baselineHash)+",\"staleBackup\":"+(stale?"true":"false")+",\"canRenew\":"+(canRenew?"true":"false")+",\"renewing\":"+(renewing?"true":"false")+",\"blockReason\":"+quote(blockReason)+"}";return r;
 }
 void transact(const Bytes& live,const Bytes& target){
  atomic(BASE+"candidate.img",target);require(sha(read(BASE+"candidate.img",IMAGE_SIZE))==sha(target),"Candidate readback failed");
@@ -309,20 +390,21 @@ int service(){
   if(op=="status"){require(args.size()==2,"Bad status request");respond(id,status(live));return 0;}
   require(args.size()>=3&&hashString(args[2])&&sha(live)==args[2],"Device image changed. Refresh before continuing");
   if(op=="backup"){require(args.size()==3,"Bad backup request");backup(live);}
+  else if(op=="restart"){require(args.size()==5&&hashString(args[3])&&hashString(args[4]),"Bad confirmed backup restart request");restartBackup(live,args[3],args[4]);}
   else if(op=="renew"){require(args.size()==4&&hashString(args[3]),"Bad backup refresh request");renewBackup(live,args[3]);}
-  else if(op=="exported"){require(!exists(BASE+"renewing"),"Finish backup refresh before export");auto b=original();require(restorable(live,b)&&!exists(BASE+"writing"),"Export a fresh backup for the current image first");require(args.size()==4&&hashString(args[3]),"Bad export acknowledgement");require(args[3]==text(BASE+"rollback.sha256",64)&&sha(read(BASE+"rollback.zip",IMAGE_SIZE+10*1024*1024))==args[3],"Rollback ZIP checksum mismatch");atomic(BASE+"exported",args[3]);}
+  else if(op=="exported"){require(!exists(BASE+"renewing")&&!exists(BASE+"restarting"),"Finish backup refresh before export");auto b=original();require(restorable(live,b)&&!exists(BASE+"writing"),"Export a fresh backup for the current image first");require(args.size()==4&&hashString(args[3]),"Bad export acknowledgement");require(args[3]==text(BASE+"rollback.sha256",64)&&sha(read(BASE+"rollback.zip",IMAGE_SIZE+10*1024*1024))==args[3],"Rollback ZIP checksum mismatch");atomic(BASE+"exported",args[3]);}
   else if(op=="apply"){
-   require(!exists(BASE+"renewing"),"Finish backup refresh and export the new rollback ZIP before Apply");require(args.size()==23,"Expected ten frequency/level pairs");auto b=original();require(restorable(live,b)&&!exists(BASE+"writing"),"Restore interrupted or unrelated image before applying");
+   require(!exists(BASE+"renewing")&&!exists(BASE+"restarting"),"Finish backup refresh and export the new rollback ZIP before Apply");require(args.size()==23,"Expected ten frequency/level pairs");auto b=original();require(restorable(live,b)&&!exists(BASE+"writing"),"Restore interrupted or unrelated image before applying");
    require(exists(BASE+"exported")&&text(BASE+"exported",64)==text(BASE+"rollback.sha256",64)&&sha(read(BASE+"rollback.zip",IMAGE_SIZE+10*1024*1024))==text(BASE+"rollback.sha256",64),"Save and verify the rollback ZIP first");
    Values f{},l{};for(int i=0;i<10;i++){for(int j=0;j<2;j++){auto s=args[3+i*2+j];require(!s.empty()&&s.size()<=10&&s.find_first_not_of("0123456789")==std::string::npos,"Bad numeric GPU value");auto value=std::stoull(s);require(value<=UINT32_MAX,"GPU value overflows u32");(j?l:f)[i]=uint32_t(value);}}
    auto t=table(live);require(f!=t.frequencies||l!=t.levels,"No GPU changes selected");auto target=edit(live,f,l);transact(live,target);
   }else if(op=="apply2"){
-   require(!exists(BASE+"renewing")&&!exists(BASE+"writing"),"Finish recovery or backup refresh before Apply");auto baseline=original();require(restorable(live,baseline),"Backup does not match current image");
+   require(!exists(BASE+"renewing")&&!exists(BASE+"restarting")&&!exists(BASE+"writing"),"Finish recovery or backup refresh before Apply");auto baseline=original();require(restorable(live,baseline),"Backup does not match current image");
    require(exists(BASE+"exported")&&text(BASE+"exported",64)==text(BASE+"rollback.sha256",64)&&sha(read(BASE+"rollback.zip",IMAGE_SIZE+10*1024*1024))==text(BASE+"rollback.sha256",64),"Save and verify the rollback ZIP first");
    size_t cursor=3;auto number=[&](){require(cursor<args.size(),"Incomplete GPU table request");auto value=args[cursor++];require(!value.empty()&&value.size()<=10&&value.find_first_not_of("0123456789")==std::string::npos,"Bad GPU cell");uint64_t n=std::stoull(value);require(n<=UINT32_MAX,"GPU cell overflows u32");return uint32_t(n);};GpuBins bins;
    for(auto& bin:bins){auto count=number();require(count>=2&&count<=15,"Expected 2–15 power levels");bin.initial=number();bin.minimum=number();for(uint32_t i=0;i<count;i++){GpuRow row;row.frequency=number();row.voltage=number();row.bus=number();row.minimum=number();row.maximum=number();auto acd=number();require(acd<=1,"Bad ACD presence flag");row.hasAcd=acd;row.acd=number();require(row.hasAcd||row.acd==0,"Absent ACD must have value zero");bin.rows.push_back(row);}}
    require(cursor==args.size(),"Unexpected GPU request fields");auto target=editBins(live,bins);require(sha(target)!=sha(live),"No GPU changes selected");transact(live,target);
-  }else if(op=="restore"){require(!exists(BASE+"renewing"),"Finish backup refresh before Restore");require(args.size()==3,"Bad restore request");auto b=original();require(restorable(live,b),"Backup does not match this image; restore matching firmware manually");if(sha(live)!=sha(b))transact(live,b);else if(exists(BASE+"writing"))removefile(BASE+"writing");}
+  }else if(op=="restore"){require(!exists(BASE+"renewing")&&!exists(BASE+"restarting"),"Finish backup refresh before Restore");require(args.size()==3,"Bad restore request");auto b=original();require(restorable(live,b),"Backup does not match this image; restore matching firmware manually");if(sha(live)!=sha(b))transact(live,b);else if(exists(BASE+"writing"))removefile(BASE+"writing");}
   else throw std::runtime_error("Unknown GPU operation");
   respond(id,status(current()));return 0;
  }catch(const std::exception& e){if(id.size()==36)try{respond(id,"{\"error\":"+quote(e.what())+"}");}catch(...){}return 1;}

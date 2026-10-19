@@ -203,7 +203,7 @@ _REBUILD_SPLIT_FILES_IN_WORK_DIR()
         LOG "- Rebuilding split file $(sed -e "s|$WORK_DIR||" -e "s|/\.||" <<< "$TARGET_FILE")"
         EVAL "cat \"$TARGET_FILE.\"[0-9][0-9] > \"$TARGET_FILE\"" || return 1
         EVAL "rm -f \"$TARGET_FILE.\"[0-9][0-9]" || return 1
-    done < <(find "$SOURCE_DIR" -type f -name "*.00" 2> /dev/null)
+    done < <(find "$SOURCE_DIR" \( -name "*.bak" -o -name "*.bak.*" \) -prune -o -type f -name "*.00" -print 2> /dev/null)
 }
 
 _FILTER_SPLIT_FILE_ENTRIES()
@@ -309,6 +309,12 @@ ADD_TO_WORK_DIR()
         TARGET_FILE+="/$PARTITION/$FILE"
     fi
 
+    # Local editor backups are never ROM payloads, including explicit adds.
+    if [[ "/$FILE/" =~ /[^/]*\.bak(\.[^/]*)?/ ]]; then
+        LOG "- Skipping local backup: $FILE"
+        return 0
+    fi
+
     if [ ! -e "$SOURCE_FILE" ] && [ ! -L "$SOURCE_FILE" ]; then
         if [ -e "$SOURCE_FILE.00" ]; then
             LOG "- Adding $(sed -e "s|$WORK_DIR||" -e "s|/\.||" <<< "$TARGET_FILE") from ${SOURCE//$SRC_DIR\//}"
@@ -325,7 +331,11 @@ ADD_TO_WORK_DIR()
         else
             mkdir -p "$TARGET_FILE"
         fi
-        EVAL "cp -a -T \"$SOURCE_FILE\" \"$TARGET_FILE\"" || exit 1
+        if [ -d "$SOURCE_FILE" ] && [ ! -L "$SOURCE_FILE" ]; then
+            rsync -aHAX --ignore-times --exclude='*.bak' --exclude='*.bak.*' -- "$SOURCE_FILE/" "$TARGET_FILE/" || return 1
+        else
+            EVAL "cp -a -T \"$SOURCE_FILE\" \"$TARGET_FILE\"" || exit 1
+        fi
         if [ -d "$SOURCE_FILE" ]; then
             _REBUILD_SPLIT_FILES_IN_WORK_DIR "$SOURCE_FILE" "$TARGET_FILE" || exit 1
         fi
@@ -371,7 +381,7 @@ ADD_TO_WORK_DIR()
 
     if [ -d "$TARGET_FILE" ]; then
         local FILES
-        FILES="$(find "${SOURCE_FILE%/.}")"
+        FILES="$(find "${SOURCE_FILE%/.}" \( -name "*.bak" -o -name "*.bak.*" \) -prune -o -print)"
         FILES="${FILES//$SOURCE\//}"
         [[ "$PARTITION" == "system" ]] && FILES="${FILES//system\/system\//system/}"
         $TARGET_OS_BUILD_SYSTEM_EXT_PARTITION || FILES="${FILES//system_ext\//system/system_ext/}"

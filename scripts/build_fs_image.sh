@@ -396,6 +396,15 @@ ROUND_UP_TO_4K()
 
 PREPARE_SCRIPT "$@"
 
+# Build from a filtered temporary view if an older work tree contains backups.
+# Neither firmware inputs nor the existing work tree are deleted or rewritten.
+ORIGINAL_INPUT_DIR="$(realpath -- "$INPUT_DIR")"
+INPUT_DIR="$(python3 "$SRC_DIR/scripts/internal/rom_payload.py" prepare "$INPUT_DIR")" || exit 1
+if [[ "$INPUT_DIR" != "$ORIGINAL_INPUT_DIR" ]]; then
+    LOG "- Excluding local backup files using temporary input: $INPUT_DIR"
+    trap 'python3 "$SRC_DIR/scripts/internal/rom_payload.py" clean "$INPUT_DIR"' EXIT
+fi
+
 if $SPARSE; then
     LOG_STEP_IN "- Starting build_fs_image for $(basename "$OUTPUT_FILE") ($FS_TYPE+sparse)..."
 else
