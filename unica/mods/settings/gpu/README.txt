@@ -7,21 +7,45 @@ root manager, shell commands, networking or automatic boot-time tuning.
 Concept: libxzr/KonaBess. This is an independent implementation, not its APK.
 The page keeps One UI 9 grouped cards, theme colors and UN1CA transparency.
 
-Exact compatibility
--------------------
-Target inspected: S23 Ultra / dm3q, vendor firmware S918BXXUAZZI8, Adreno740v2.
-Vendor_boot: header v4, board SRPVH05C010, page size 4096, 96 MiB partition.
-Normalized entire DTB-set SHA256:
-99066fde3eede3bd5e17ba0a07182ebf06fda2fbf775003890c938af4e8fe23b.
-msm_kgsl.ko SHA256:
-16cb910e20983d9ff90c8eb11eb075310af50411d45853e7925282ac240f3ecc.
-Only the inspected GPU-bin subtree can differ; SKU selection and all other DTB
-content remain pinned. Actual driver and fixed partition mappings are checked:
-vendor_boot -> /dev/block/sda28; vbmeta -> /dev/block/sde20.
-The worker requires top-level raw vbmeta verification-disabled bit 2 already
-set; it never changes that partition. Unknown firmware/layout/driver refuses
-writes. Profiles remain available when the current firmware is unsupported.
-See compatibility.txt for exact shipped-driver findings and remaining unknowns.
+Capability-based compatibility
+------------------------------
+Target: S23 Ultra / dm3q, Kalama v2 / Adreno740v2. Independently inspected on
+S918BXXUAZZI8 and S918BXXUAGZIF; see compatibility.txt for exact audit evidence.
+Compatibility is independent of ROM version, fingerprint, firmware release name,
+whole-module checksum and whole-DTB checksum. No per-release DTB templates.
+
+The worker locates the GPU bins by FDT path and resolves property names through
+the installed image's string table. It checks the Kalama v2 SoC, Gen7-2-1 GPU,
+ten-entry DDR bus tables, the supported two-bin/SKU schema and bounded edit
+capacity. GPU/string-table offsets, total DTB length, board labels and unrelated
+valid DTB content may change. Only the located GPU-bin region and required AVB
+metadata are written. Partition size remains 96 MiB; header v4 and page size
+4096 are required. Fixed mappings: vendor_boot -> /dev/block/sda28,
+vbmeta -> /dev/block/sde20. The raw vbmeta verification-disabled bit 2 must
+already be set; the worker never changes that partition.
+
+Driver validation compares the four audited table-handling functions' code and
+relocation identities (including referenced property strings), independently of
+module metadata/signature or firmware version. Other driver code can change.
+Changed table-handling code still requires review: it may alter RPMh mapping,
+row limits, SKU parsing or bus clamping. This does not prove whole-driver
+identity, actual clock support or stable voltage. The legacy exact audited
+AZZI8 module remains accepted as a compatibility fallback, not a version gate.
+
+A read-only build preflight uses these same production capability checks on
+staged vendor_boot and vendor_dlkm. Footer-stripped build inputs are accepted;
+unknown capabilities, corrupt trees and pre-tuned baselines are refused.
+Run it independently with:
+  unica/mods/settings/gpu/verify-firmware.sh vendor_boot.img msm_kgsl.ko
+Component builds use out/fw/SM-S918B_EUX by default. GPU_VENDOR_BOOT and
+GPU_DRIVER override the paths. Settings customization checks staged dm3q inputs.
+
+This preserves compatibility across updates with the supported GPU contract,
+without automatically approving every possible future Samsung driver change.
+The clean-baseline check still requires the inspected logical stock GPU values;
+it ignores property-name offsets and padding. New stock tables with different
+values need review before becoming rollback baselines. Profiles remain available
+when current capabilities are unsupported. No tuning is applied automatically.
 
 Editor capabilities
 -------------------
@@ -83,7 +107,7 @@ Missing initial-min-pwrlevel in an upstream header becomes the final row index,
 matching the kernel's default when that property is absent.
 
 Existing UN1CA v1 profiles migrate to v2. They supply only table 0; table 1 is
-initialized from the pinned stock defaults. Review both tables before Apply,
+initialized from the inspected logical stock defaults. Review both tables before Apply,
 especially if table 1 was already tuned. New exports retain both complete bins.
 
 Edits save automatically to device-protected SharedPreferences
@@ -164,9 +188,9 @@ Image handling
 --------------
 The worker parses/renders only the known GPU-bin subtree. Removing entries uses
 standard FDT_NOP padding, so DTB/partition size, ramdisk, header, unrelated nodes
-and other DTBs remain intact. The known stock subtree template and normalized
-whole-DTB-set hash protect everything outside the editable region. Initial/SKU
-header shapes are checked, and SKU values are immutable. Both bins must fit the
+and other DTBs remain intact. Runtime discovery resolves the current GPU zone
+and property-name offsets; byte-preservation tests check that no other DTB
+region changes. Initial/SKU header shapes are checked, and SKU values are immutable. Both bins must fit the
 original space; the worker does not grow/repack the DTB or change the ramdisk.
 
 The invalidated embedded Samsung AVB signature is replaced by an unsigned,
@@ -206,6 +230,12 @@ JSON_JAR=/path/to/host-json.jar SECILC=/path/to/compatible-secilc \
     unica/mods/settings/gpu/tests/run.sh
 
 Optional first test argument selects an exact original vendor_boot copy.
+GPU_PREVIOUS_VENDOR_BOOT=/path/to/older-stock-vendor_boot.img additionally runs
+the real cross-firmware update test against that copy and the current input.
+GPU_DRIVER selects its driver input (default out/fw/SM-S918B_EUX module).
+The new test covers changed module metadata/signatures, altered critical code
+and property references, moved FDT GPU/string offsets, old-backup archival,
+zero-free-space refresh resumption, mandatory new ZIP export and profile reuse.
 The existing SDK/NDK, javac, D8, baksmali and smali build an additive GPU-only
 SecSettings patch and static ARM64 worker/recovery helper. The Settings mod
 includes these in the next ROM build. No full ROM build is needed to validate

@@ -255,6 +255,8 @@ python3 "$MODPATH/ota/install-policy.py" "$WORK_DIR" || ABORT "Failed to install
 # dm3q-only GPU image editor and recovery backup policy. Other targets keep no
 # partition access or service; the shared Settings page reports unsupported.
 if [[ "$TARGET_CODENAME" == "dm3q" ]]; then
+    "$MODPATH/gpu/verify-firmware.sh" "$WORK_DIR/kernel/vendor_boot.img" \
+        "$WORK_DIR/vendor_dlkm/lib/modules/msm_kgsl.ko" || ABORT "GPU capability check failed; review the changed table/driver contract before shipping"
     python3 "$MODPATH/gpu/install-policy.py" "$WORK_DIR" || ABORT "Failed to install GPU tuning service policy"
 else
     DELETE_FROM_WORK_DIR "system" "system/bin/unica-gpu"

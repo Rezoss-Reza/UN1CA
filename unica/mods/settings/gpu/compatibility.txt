@@ -1,3 +1,95 @@
+GZIF update compatibility audit - 2026-10-20
+===========================================
+Fresh device evidence: ro.vendor.build.fingerprint identifies S918BXXUAGZIF;
+installed msm_kgsl.ko SHA256 is
+10bf565e8302236d712411bfbcb374335bfa427e270b25f0e497d51f14d4cb8c.
+The exact out/fw/SM-S918B_EUX module matches this live hash. The old worker
+returned "Unsupported GPU driver; firmware update requires compatibility review".
+This is a vendor firmware change, not just a different port ROM version.
+
+REA/Ghidra re-inspection of the GZIF shipped module:
+- adreno_device_probe: .text+0x403f0, 3160 bytes. Same speed-bin/SKU selection,
+  zero wildcard and initial/minimum fallback behavior described below.
+  Evidence ev_02da592c0cefd64f84c05a2f0dbbc1df8fee2d5f8e51d713c28055fa5e1bd20d.
+- adreno_of_parse_pwrlevels: .text+0x4110c, 712 bytes. u32 frequency/request,
+  reg <16, zero frequency skipped, 28-byte rows, optional ACD/CX and OPP loop.
+  Evidence ev_1c960e921cc0ddab4d3acb63e277055af6b28a0f874b436517ce79cba93fc516.
+- gen7_build_rpmh_tables: .text+0x9c6f8, 3012 bytes. Off slot included in the
+  <=16 bound, Hz/1000, u16 voltage requests and first GFX command-DB corner
+  >= request; excess request fails. CX/MX paths remain separate.
+  Evidence ev_b2419d0b76290105f27648b88ff48e1739d4fe161a680709f335baece470c8af.
+- kgsl_bus_init: .text+0x10660, 896 bytes. DDR-specific/default table selection,
+  clamp on all power rows except the final row, min/max repair unchanged.
+  Evidence ev_2d8e33f57415acf81fa8ed76c715b0090e31b24691878976f85faa886f1f4583.
+These are static observations of four functions, not a whole-driver equivalence
+claim, command-DB voltage measurement or proof of boot/stability after tuning.
+Resolved references and decompiler control flow do not resolve every indirect
+call. Ghidra marks stack-check failure calls terminal.
+
+Exact GZIF source vendor_boot SHA256:
+61e2e8381661ce734aef1e0a3cdddd2ab0b8cc021cf56146c41ba88e44ebb5c5.
+DTB set remains 1808679 bytes at image offset 16596992, bins offset 160824,
+2988 bytes. GPU parent properties and both tables' logical properties/values
+match AZZI8, including stock RPMh requests, SKU selectors, bus/ACD and initial
+indices. Property-name offsets differ: reusing the old raw template is wrong.
+42367 bytes differ across the DTB set. The exact GZIF stock/normalized hash is
+fa6676449d7ec56e341a38e324f4c83d6be41f2a04c210739f9dbc74715628b3.
+These hashes record the audited inputs; they do not select runtime compatibility.
+
+Update behavior
+---------------
+Compatibility now follows the GPU capability contract, independently of port
+ROM version, firmware release name, module metadata, whole-driver checksum and
+whole-DTB checksum. The runtime parser finds the GPU subtree by exact FDT path,
+resolves property names from the current string table and checks Kalama v2 /
+Gen7-2-1, ten DDR bus entries and the supported two-bin/SKU/property schema.
+The fixed 2988-byte edit capacity and 96 MiB partition bounds remain unchanged.
+No board label or DTB offset is used as a firmware version gate. FDT sections,
+tokens, depth, duplicate properties, subtree boundaries and NOP padding are
+checked before writing. Valid unrelated DTB changes are accepted and preserved.
+
+native/driver.h compares the four audited functions' exact code plus relocation
+identities, resolving relocated property strings instead of relying on their
+file offsets. This accepts module metadata, signing and unrelated code changes
+while retaining the observed row/SKU/RPMh/bus contract. It is intentionally not
+a whole-driver equivalence claim: called helpers, hardware/command-DB behavior
+and stability can vary. Changed critical code still needs review. The earlier
+exact AZZI8 module is accepted as a legacy fallback; new firmware names do not
+need to be registered. No catalogue of firmware/image pairs is used.
+
+AZZI8 rollback images remain readable and archivable after GZIF. The clean
+baseline check compares the known logical stock tables, independently of string
+offsets/padding. Different future stock values need review; an unknown tuned
+subtree cannot silently become a clean rollback baseline. Every full-image hash,
+archive receipt, restart/renewal journal and mandatory NEW rollback export gate
+remains enforced. Updates never auto-apply a saved profile or flash older
+firmware to enable Apply. Shared logical profiles use the current FDT names.
+
+Read-only build preflight applies the same capability parser to staged images
+and modules, including footer-stripped build inputs. No firmware, target image,
+SELinux rule or device partition was modified during diagnosis or validation.
+
+Current validation - 2026-10-20
+-------------------------------
+Read-only capture of the device's full 96 MiB vendor_boot passes capability
+preflight with the exact live-matching GZIF module. Image/bounds/preservation
+assertions passed for AZZI8 (4059), GZIF source (4055) and the device capture
+(4052). Independent AOSP AVB verification passed for all three edited host
+copies. No edited image was written to the phone.
+
+The real AZZI8-to-GZIF update test passed 41 assertions using production AVB
+SHA, including module metadata/signature tolerance, modified parser/property
+reference refusal, moved GPU/string offsets, old-backup archival, zero-space
+activation resume, fresh export gates, profile reuse and exact current-firmware
+restoration. Python hashlib and ZIP CRC independently verified the resulting
+rollback ZIP. Four storage symlink guards and 85 Java profile assertions passed.
+All 415 transaction/storage and 392 obsolete-refresh/restart regression
+assertions passed with the final capability parser. Static ARM64 worker and recovery helper plus additive Settings
+classes were rebuilt. Preflight passed source, staged footer-stripped and live-captured images.
+Deployment, physical RPMh voltage and tuned-image boot/stability are untested.
+
+Historical AZZI8 audit follows (its runtime notes describe the earlier device).
+
 S23 Ultra / KonaBess capability inspection - 2026-10-18
 =====================================================
 

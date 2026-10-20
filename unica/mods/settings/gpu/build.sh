@@ -10,6 +10,8 @@ NDK="${ANDROID_NDK_HOME:-$SDK/ndk/28.2.13676358}"
 TOOLCHAIN="$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin"
 WORK=$(mktemp -d /tmp/unica-gpu-build.XXXXXX)
 AVB="$ROOT/external/android-tools/vendor/avb/libavb"
+"$HERE/verify-firmware.sh" "${GPU_VENDOR_BOOT:-$ROOT/out/fw/SM-S918B_EUX/kernel/vendor_boot.img}" \
+    "${GPU_DRIVER:-$ROOT/out/fw/SM-S918B_EUX/vendor_dlkm/lib/modules/msm_kgsl.ko}"
 mkdir -p "$WORK/classes" "$WORK/dex" "$HERE/../system/etc/unica/gpu"
 mapfile -t SOURCES < <(find "$HERE/java" -type f -name '*.java' | sort)
 javac -encoding UTF-8 -source 8 -target 8 -Xlint:-options -classpath "$ANDROID_JAR" -d "$WORK/classes" "${SOURCES[@]}"

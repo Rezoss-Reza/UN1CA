@@ -78,7 +78,7 @@ void verifyEnvironment(){
  require(resolved("/dev/block/bootdevice/by-name/vbmeta")=="/dev/block/sde20","Unsupported vbmeta mapping");
  FD fd(open("/dev/block/sde20",O_RDONLY|O_CLOEXEC|O_NOFOLLOW));Bytes header(256);require(pread(fd,header.data(),header.size(),0)==256,"Cannot read raw vbmeta");
  require(std::memcmp(header.data(),"AVB0",4)==0&&(be(header,120)&2),"Raw vbmeta verification must already be disabled; this feature never changes it");
- auto module=read("/vendor_dlkm/lib/modules/msm_kgsl.ko",8*1024*1024);require(sha(module)=="16cb910e20983d9ff90c8eb11eb075310af50411d45853e7925282ac240f3ecc","Unsupported GPU driver; firmware update requires compatibility review");
+ verifyDriver(read("/vendor_dlkm/lib/modules/msm_kgsl.ko",8*1024*1024));
 #endif
 }
 // Standard ZIP32, STORE entries. Recovery unzip verifies each CRC before use.
@@ -350,7 +350,7 @@ void restartBackup(const Bytes& live,const std::string& expectedOld,const std::s
 }
 std::string status(const Bytes& live){
  Table t;try{t=table(live);}catch(...){auto b=original();require(exists(BASE+"writing")&&restorable(live,b),"Unsupported image; recovery restoration may be required");t=table(b);}
- std::string r="{\"ok\":true,\"currentHash\":"+quote(sha(live))+",\"frequencies\":[";
+ std::string r="{\"ok\":true,\"gpuCapability\":"+quote("Kalama v2 / Gen7-2-1")+",\"currentHash\":"+quote(sha(live))+",\"frequencies\":[";
  for(int i=0;i<10;i++){if(i)r+=',';r+=std::to_string(t.frequencies[i]);}r+="],\"levels\":[";for(int i=0;i<10;i++){if(i)r+=',';r+=std::to_string(t.levels[i]);}r+="]";
  r+=",\"tables\":[";for(int id=0;id<2;id++){if(id)r+=',';auto& bin=t.bins[id];r+="{\"id\":"+std::to_string(id)+",\"initial_level\":"+std::to_string(bin.initial)+",\"minimum_level\":"+std::to_string(bin.minimum)+",\"power_levels\":[";
  for(size_t i=0;i<bin.rows.size();i++){if(i)r+=',';auto& row=bin.rows[i];r+="{\"index\":"+std::to_string(i)+",\"frequency_hz\":"+std::to_string(row.frequency)+",\"rpmh_level\":"+std::to_string(row.voltage)+",\"bus_frequency\":"+std::to_string(row.bus)+",\"bus_minimum\":"+std::to_string(row.minimum)+",\"bus_maximum\":"+std::to_string(row.maximum)+",\"acd_level\":"+(row.hasAcd?std::to_string(row.acd):"null")+"}";}r+="]}";}r+="]";

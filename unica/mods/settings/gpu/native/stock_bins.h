@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Exact S918BXXUAZZI8 GPU-bin template; generated from the pinned source DTB.
-inline constexpr size_t BINS_OFFSET=160824,BINS_SIZE=2988;
+// Logical S23U stock reference. Name offsets are relocated at runtime.
+inline constexpr size_t BINS_SIZE=2988;
 inline const Bytes STOCK_BINS={
  0,0,0,1,113,99,111,109,44,103,112,117,45,112,119,114,108,101,118,101,108,45,98,105,
  110,115,0,0,0,0,0,3,0,0,0,4,0,0,0,61,0,0,0,0,0,0,0,3,

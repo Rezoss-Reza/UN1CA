@@ -22,6 +22,11 @@ c++ -std=c++17 -O2 -DAVB_COMPILATION -I"$AVB" -I"$AVB/crypto" -Wall -Wextra -Wer
 c++ -std=c++17 -O2 -DAVB_COMPILATION -I"$AVB" -I"$AVB/crypto" -Wall -Wextra -Werror -Wno-unused-function \
     "$HERE/restart_test.cpp" "$WORK/sha.o" -o "$WORK/restart-test"
 "$WORK/restart-test" "$INPUT" "$WORK/restarts"
+if [[ -n "${GPU_PREVIOUS_VENDOR_BOOT:-}" ]]; then
+    c++ -std=c++17 -O2 -DAVB_COMPILATION -I"$AVB" -I"$AVB/crypto" -Wall -Wextra -Werror -Wno-unused-function \
+        "$HERE/firmware_update_test.cpp" "$WORK/sha.o" -o "$WORK/firmware-update-test"
+    "$WORK/firmware-update-test" "$GPU_PREVIOUS_VENDOR_BOOT" "$INPUT" "${GPU_DRIVER:-$ROOT/out/fw/SM-S918B_EUX/vendor_dlkm/lib/modules/msm_kgsl.ko}" "$WORK/cross-update"
+fi
 python3 - "$WORK/transactions/backup/rollback.zip" <<'PY'
 import hashlib,sys,zipfile
 with zipfile.ZipFile(sys.argv[1]) as z:
