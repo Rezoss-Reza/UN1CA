@@ -17,7 +17,7 @@ public final class QwenSmoke {
         System.out.println("Reply actionCount=" + InAppReplies.parse(reply).size());
         String summary = QwenEngine.summary("The team meeting is tomorrow at 3 PM. Meet at the library. Bring the project notes.");
         System.out.println("SYNTHETIC summary=" + summary);
-        System.out.println("Summary fallback=" + "New messages are waiting.".equals(summary));
-        System.exit(reply == null || "New messages are waiting.".equals(summary) ? 1 : 0);
+        System.out.println("Summary unavailable=" + (summary == null));
+        System.exit(reply == null || summary == null || "New messages are waiting.".equals(summary) ? 1 : 0);
     }
 }

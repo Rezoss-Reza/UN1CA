@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.rezoss.moseygmshook"
+    android:versionCode="7"
+    android:versionName="1.5">
+    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35" />
+    <application android:allowBackup="false" android:extractNativeLibs="false"
+        android:label="Mosey GMS Hook">
+        <meta-data android:name="xposedmodule" android:value="true" />
+        <meta-data android:name="xposeddescription"
+            android:value="Exact-version Mosey provider activation and diagnostic observers; no native Mosey payload" />
+        <meta-data android:name="xposedminversion" android:value="93" />
+        <meta-data android:name="xposedscope"
+            android:value="com.google.android.gms;com.samsung.android.app.sharelive;com.google.android.mosey" />
+    </application>
+</manifest>

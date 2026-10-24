@@ -1456,3 +1456,6 @@ elif ! _REZOSS_KERNEL_FROM_CACHE; then
   LOGW "Cached kernel/KSU patch failed; restoring archived boot.img and init_boot.img"
   _REZOSS_RESTORE_ARCHIVED_KERNEL "true" "true"
 fi
+
+# Experimental Wi-Fi modules must match the final selected kernel.
+source "$MODPATH/wondertap/integrate.sh" || return 1

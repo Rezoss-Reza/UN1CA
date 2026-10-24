@@ -63,6 +63,7 @@ system/priv-app/IntelligentDynamicFpsService
 # Application recommendations
 SYSTEM_DEBLOAT+="
 system/app/MAPSAgent
+system/priv-app/OMCAgent5
 "
 
 # AppUpdateCenter

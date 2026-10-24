@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="unica_portrom_audio_title">PortROM audio by Lindir Music</string>
+    <string name="unica_portrom_audio_off">Original ROM sounds. PortROM By Lindir Music.</string>
+    <string name="unica_portrom_audio_active">PortROM sounds are active. By Lindir Music.</string>
+    <string name="unica_portrom_audio_pending_on">PortROM selected. Restart to apply replacements, extra tones and power sounds. If already restarted, the audio overlay did not load.</string>
+    <string name="unica_portrom_audio_pending_off">Original sounds selected. Restart to restore them and remove the extra tones.</string>
+    <string name="unica_portrom_audio_error">Could not save the PortROM audio selection.</string>
+</resources>

@@ -120,9 +120,10 @@ public final class QwenEngine {
     }
 
     public static String summary(String input) {
-        String result = generate(input, true, 25000);
+        // V73 enforces a 45-second service limit; allow time for its failure callback.
+        String result = generate(input, true, 50000);
         if (result != null) return result;
-        Log.i("RezossAI", "summary status=fallback");
-        return "New messages are waiting.";
+        Log.i("RezossAI", "summary status=unavailable");
+        return null;
     }
 }

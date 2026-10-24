@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Event emitted by init.rc immediately after load_persist_props. A property-only
+# trigger would also run when Settings changes the selection, which is unsafe
+# for MediaProvider and cached sounds. This event runs once per normal boot.
+on load_persist_props_action && property:persist.sys.unica.portrom_audio=true
+    mount none /system/etc/unica/portrom-audio/audio /system/media/audio bind

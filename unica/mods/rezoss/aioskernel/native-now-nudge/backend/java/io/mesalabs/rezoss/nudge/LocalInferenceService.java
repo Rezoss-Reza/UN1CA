@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.*;
 import android.util.Log;
 import java.lang.Process;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -25,9 +26,18 @@ public final class LocalInferenceService extends Service {
         synchronized void cancel(String reason){if(cancellation!=null)return;cancellation=reason;if(process!=null)process.destroyForcibly();if(thread!=null)thread.interrupt();}
         public void binderDied(){main.post(()->cancel("client_died"));}
         public void run(){
-            thread=Thread.currentThread();String value=null,status="unavailable";
+            thread=Thread.currentThread();long started=SystemClock.elapsedRealtime();String value=null,status="unavailable";
             try{if(!cancelled()){value=backend.generateLocal(input,summary,this);status="generated";}}
-            catch(Exception e){status=e instanceof IllegalArgumentException?e.getMessage():"inference_failed";}
+            catch(Exception e){
+                if(SystemClock.elapsedRealtime()>=deadline)status="deadline";
+                else if(e instanceof IOException && "deadline".equals(e.getMessage()))status="deadline";
+                else if(e instanceof IOException && "runner_failed".equals(e.getMessage()))status="runner_failed";
+                else if(e instanceof IllegalArgumentException && e.getMessage()!=null && e.getMessage().matches("[A-Za-z_]{1,48}"))status=e.getMessage();
+                else status="inference_failed";
+                // Never log prompt/output text or exception messages from the runner.
+                Log.i("RezossV73Local","request failure="+status+" exception="+e.getClass().getSimpleName()
+                        +" elapsedMs="+(SystemClock.elapsedRealtime()-started));
+            }
             finally{
                 thread=null;Thread.interrupted();
                 if(cancellation!=null){value=null;status=cancellation;}

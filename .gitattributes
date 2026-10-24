@@ -1,5 +1,8 @@
 # Set the default behavior, in case people don't have core.autocrlf set.
 * text eol=lf
+unica/mods/portrom-audio/assets/**/*.mp3 binary
+unica/mods/rezoss/wondertap/source/driver-source.tar.gz binary
+unica/mods/rezoss/wondertap/vendor_dlkm/lib/modules/*.ko binary
 unica/mods/volumeup-action/payload/system/bin/unica-volumeup binary
 unica/mods/settings/system/bin/unica-gpu binary
 unica/mods/settings/system/etc/unica/gpu/restore binary

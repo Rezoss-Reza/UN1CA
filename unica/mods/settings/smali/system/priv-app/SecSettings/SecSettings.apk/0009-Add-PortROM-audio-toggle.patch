@@ -1,0 +1,366 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: UN1CA <unica@local>
+Subject: [PATCH] Add reboot-selected PortROM audio switch
+
+Generated from portrom-audio/java by portrom-audio/build.sh.
+
+diff --git a/smali_classes4/io/mesalabs/unica/portrom/PortRomAudioPreferenceController.smali b/smali_classes4/io/mesalabs/unica/portrom/PortRomAudioPreferenceController.smali
+new file mode 100644
+--- /dev/null
++++ b/smali_classes4/io/mesalabs/unica/portrom/PortRomAudioPreferenceController.smali
+@@ -0,0 +1,354 @@
++.class public final Lio/mesalabs/unica/portrom/PortRomAudioPreferenceController;
++.super Lcom/android/settings/core/TogglePreferenceController;
++.source "PortRomAudioPreferenceController.java"
++
++
++# static fields
++.field private static final PROPERTY:Ljava/lang/String; = "persist.sys.unica.portrom_audio"
++
++
++# instance fields
++.field private final context:Landroid/content/Context;
++
++.field private preference:Landroidx/preference/Preference;
++
++
++# direct methods
++.method public constructor <init>(Landroid/content/Context;Ljava/lang/String;)V
++    .registers 3
++
++    .line 20
++    invoke-direct {p0, p1, p2}, Lcom/android/settings/core/TogglePreferenceController;-><init>(Landroid/content/Context;Ljava/lang/String;)V
++
++    .line 21
++    iput-object p1, p0, Lio/mesalabs/unica/portrom/PortRomAudioPreferenceController;->context:Landroid/content/Context;
++
++    .line 22
++    return-void
++.end method
++
++.method private text(Ljava/lang/String;)Ljava/lang/String;
++    .registers 5
++
++    .line 69
++    iget-object v0, p0, Lio/mesalabs/unica/portrom/PortRomAudioPreferenceController;->context:Landroid/content/Context;
++
++    invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
++
++    move-result-object v0
++
++    iget-object v1, p0, Lio/mesalabs/unica/portrom/PortRomAudioPreferenceController;->context:Landroid/content/Context;
++
++    invoke-virtual {v1}, Landroid/content/Context;->getPackageName()Ljava/lang/String;
++
++    move-result-object v1
++
++    const-string v2, "string"
++
++    invoke-virtual {v0, p1, v2, v1}, Landroid/content/res/Resources;->getIdentifier(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
++
++    move-result p1
++
++    .line 70
++    if-nez p1, :cond_17
++
++    const-string p1, "PortROM audio: restart to apply"
++
++    goto :goto_1d
++
++    :cond_17
++    iget-object v0, p0, Lio/mesalabs/unica/portrom/PortRomAudioPreferenceController;->context:Landroid/content/Context;
++
++    invoke-virtual {v0, p1}, Landroid/content/Context;->getString(I)Ljava/lang/String;
++
++    move-result-object p1
++
++    :goto_1d
++    return-object p1
++.end method
++
++
++# virtual methods
++.method public displayPreference(Landroidx/preference/PreferenceScreen;)V
++    .registers 3
++
++    .line 36
++    invoke-super {p0, p1}, Lcom/android/settings/core/TogglePreferenceController;->displayPreference(Landroidx/preference/PreferenceScreen;)V
++
++    .line 37
++    const-string v0, "unica_portrom_audio"
++
++    invoke-virtual {p1, v0}, Landroidx/preference/PreferenceScreen;->findPreference(Ljava/lang/CharSequence;)Landroidx/preference/Preference;
++
++    move-result-object p1
++
++    iput-object p1, p0, Lio/mesalabs/unica/portrom/PortRomAudioPreferenceController;->preference:Landroidx/preference/Preference;
++
++    .line 38
++    iget-object p1, p0, Lio/mesalabs/unica/portrom/PortRomAudioPreferenceController;->preference:Landroidx/preference/Preference;
++
++    if-eqz p1, :cond_1a
++
++    .line 39
++    iget-object p1, p0, Lio/mesalabs/unica/portrom/PortRomAudioPreferenceController;->preference:Landroidx/preference/Preference;
++
++    const/4 v0, 0x0
++
++    invoke-virtual {p1, v0}, Landroidx/preference/Preference;->setPersistent(Z)V
++
++    .line 40
++    iget-object p1, p0, Lio/mesalabs/unica/portrom/PortRomAudioPreferenceController;->preference:Landroidx/preference/Preference;
++
++    invoke-virtual {p0, p1}, Lio/mesalabs/unica/portrom/PortRomAudioPreferenceController;->updateState(Landroidx/preference/Preference;)V
++
++    .line 42
++    :cond_1a
++    return-void
++.end method
++
++.method public getAvailabilityStatus()I
++    .registers 3
++
++    .line 26
++    new-instance v0, Ljava/io/File;
++
++    const-string v1, "/system/etc/unica/portrom-audio/audio/.portrom-v1.0.2"
++
++    invoke-direct {v0, v1}, Ljava/io/File;-><init>(Ljava/lang/String;)V
++
++    .line 25
++    invoke-virtual {v0}, Ljava/io/File;->isFile()Z
++
++    move-result v0
++
++    if-eqz v0, :cond_1c
++
++    new-instance v0, Ljava/io/File;
++
++    const-string v1, "/system/etc/init/unica_portrom_audio.rc"
++
++    invoke-direct {v0, v1}, Ljava/io/File;-><init>(Ljava/lang/String;)V
++
++    .line 26
++    invoke-virtual {v0}, Ljava/io/File;->isFile()Z
++
++    move-result v0
++
++    if-eqz v0, :cond_1c
++
++    const/4 v0, 0x0
++
++    goto :goto_1d
++
++    :cond_1c
++    const/4 v0, 0x3
++
++    .line 25
++    :goto_1d
++    return v0
++.end method
++
++.method public getSliceHighlightMenuRes()I
++    .registers 2
++
++    .line 33
++    const/4 v0, 0x0
++
++    return v0
++.end method
++
++.method public isChecked()Z
++    .registers 3
++
++    .line 30
++    const-string v0, "persist.sys.unica.portrom_audio"
++
++    const/4 v1, 0x0
++
++    invoke-static {v0, v1}, Landroid/os/SemSystemProperties;->getBoolean(Ljava/lang/String;Z)Z
++
++    move-result v0
++
++    return v0
++.end method
++
++.method public setChecked(Z)Z
++    .registers 6
++
++    .line 56
++    invoke-virtual {p0}, Lio/mesalabs/unica/portrom/PortRomAudioPreferenceController;->getAvailabilityStatus()I
++
++    move-result v0
++
++    const/4 v1, 0x0
++
++    if-eqz v0, :cond_8
++
++    return v1
++
++    .line 58
++    :cond_8
++    const/4 v0, 0x1
++
++    :try_start_9
++    const-string v2, "persist.sys.unica.portrom_audio"
++
++    invoke-static {p1}, Ljava/lang/Boolean;->toString(Z)Ljava/lang/String;
++
++    move-result-object v3
++
++    invoke-static {v2, v3}, Landroid/os/SemSystemProperties;->set(Ljava/lang/String;Ljava/lang/String;)V
++
++    .line 59
++    invoke-virtual {p0}, Lio/mesalabs/unica/portrom/PortRomAudioPreferenceController;->isChecked()Z
++
++    move-result v2
++    :try_end_16
++    .catch Ljava/lang/RuntimeException; {:try_start_9 .. :try_end_16} :catch_2b
++
++    if-ne v2, p1, :cond_23
++
++    .line 63
++    nop
++
++    .line 64
++    iget-object p1, p0, Lio/mesalabs/unica/portrom/PortRomAudioPreferenceController;->preference:Landroidx/preference/Preference;
++
++    if-eqz p1, :cond_22
++
++    iget-object p1, p0, Lio/mesalabs/unica/portrom/PortRomAudioPreferenceController;->preference:Landroidx/preference/Preference;
++
++    invoke-virtual {p0, p1}, Lio/mesalabs/unica/portrom/PortRomAudioPreferenceController;->updateState(Landroidx/preference/Preference;)V
++
++    .line 65
++    :cond_22
++    return v0
++
++    .line 59
++    :cond_23
++    :try_start_23
++    new-instance p1, Ljava/lang/IllegalStateException;
++
++    const-string v2, "Selection not saved"
++
++    invoke-direct {p1, v2}, Ljava/lang/IllegalStateException;-><init>(Ljava/lang/String;)V
++
++    throw p1
++    :try_end_2b
++    .catch Ljava/lang/RuntimeException; {:try_start_23 .. :try_end_2b} :catch_2b
++
++    .line 60
++    :catch_2b
++    move-exception p1
++
++    .line 61
++    iget-object p1, p0, Lio/mesalabs/unica/portrom/PortRomAudioPreferenceController;->context:Landroid/content/Context;
++
++    const-string v2, "unica_portrom_audio_error"
++
++    invoke-direct {p0, v2}, Lio/mesalabs/unica/portrom/PortRomAudioPreferenceController;->text(Ljava/lang/String;)Ljava/lang/String;
++
++    move-result-object v2
++
++    invoke-static {p1, v2, v0}, Landroid/widget/Toast;->makeText(Landroid/content/Context;Ljava/lang/CharSequence;I)Landroid/widget/Toast;
++
++    move-result-object p1
++
++    invoke-virtual {p1}, Landroid/widget/Toast;->show()V
++
++    .line 62
++    return v1
++.end method
++
++.method public updateState(Landroidx/preference/Preference;)V
++    .registers 5
++
++    .line 45
++    invoke-super {p0, p1}, Lcom/android/settings/core/TogglePreferenceController;->updateState(Landroidx/preference/Preference;)V
++
++    .line 46
++    instance-of v0, p1, Landroidx/preference/TwoStatePreference;
++
++    if-eqz v0, :cond_11
++
++    .line 47
++    move-object v0, p1
++
++    check-cast v0, Landroidx/preference/TwoStatePreference;
++
++    invoke-virtual {p0}, Lio/mesalabs/unica/portrom/PortRomAudioPreferenceController;->isChecked()Z
++
++    move-result v1
++
++    invoke-virtual {v0, v1}, Landroidx/preference/TwoStatePreference;->setChecked(Z)V
++
++    .line 49
++    :cond_11
++    new-instance v0, Ljava/io/File;
++
++    const-string v1, "/system/media/audio/.portrom-v1.0.2"
++
++    invoke-direct {v0, v1}, Ljava/io/File;-><init>(Ljava/lang/String;)V
++
++    invoke-virtual {v0}, Ljava/io/File;->isFile()Z
++
++    move-result v0
++
++    .line 50
++    invoke-virtual {p0}, Lio/mesalabs/unica/portrom/PortRomAudioPreferenceController;->isChecked()Z
++
++    move-result v1
++
++    if-eqz v1, :cond_2a
++
++    if-eqz v0, :cond_27
++
++    const-string v0, "active"
++
++    goto :goto_31
++
++    :cond_27
++    const-string v0, "pending_on"
++
++    goto :goto_31
++
++    .line 51
++    :cond_2a
++    if-eqz v0, :cond_2f
++
++    const-string v0, "pending_off"
++
++    goto :goto_31
++
++    :cond_2f
++    const-string v0, "off"
++
++    .line 52
++    :goto_31
++    new-instance v1, Ljava/lang/StringBuilder;
++
++    invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v2, "unica_portrom_audio_"
++
++    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-virtual {v1, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v0
++
++    invoke-direct {p0, v0}, Lio/mesalabs/unica/portrom/PortRomAudioPreferenceController;->text(Ljava/lang/String;)Ljava/lang/String;
++
++    move-result-object v0
++
++    invoke-virtual {p1, v0}, Landroidx/preference/Preference;->setSummary(Ljava/lang/CharSequence;)V
++
++    .line 53
++    return-void
++.end method
+

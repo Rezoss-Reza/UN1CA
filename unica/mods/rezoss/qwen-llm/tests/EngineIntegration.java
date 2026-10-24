@@ -31,7 +31,14 @@ public final class EngineIntegration extends Instrumentation {
             result.putLong("reply_elapsed_ms", SystemClock.elapsedRealtime() - start);
             if ("missing".equals(options.getString("mode"))) {
                 require(output == null, "missing_engine_no_reply");
-                require("New messages are waiting.".equals(QwenEngine.summary("Synthetic test message.")), "missing_summary_fallback");
+                require(QwenEngine.summary("Synthetic test message.") == null, "missing_summary_no_content");
+                Bundle request = new Bundle();
+                request.putString("input", "Synthetic test message.");
+                Bundle response = getTargetContext().getContentResolver().call(
+                        android.net.Uri.parse("content://io.mesalabs.unica.localsummary"),
+                        "summarize", null, request);
+                require(response != null && response.containsKey("error")
+                        && !response.containsKey("summary"), "missing_summary_provider_error");
             } else {
                 require(ReplyFormat.parse(output).size() == 3, "engine_three_replies");
                 String summary = QwenEngine.summary("The meeting moved from Monday to Tuesday. The location remains the main office.");

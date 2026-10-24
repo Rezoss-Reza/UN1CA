@@ -5,12 +5,17 @@
         <intent android:targetPackage="com.android.settings" android:targetClass="io.mesalabs.unica.quicktiles.ConfigActivity" />
     </io.mesalabs.unica.settings.preference.IconPreference>
     <com.samsung.android.settings.widget.SecInsetCategoryPreference />
-    <SecSwitchPreference android:title="@string/unica_native_blur_title" android:key="unica_native_blur" settings:controller="io.mesalabs.unica.settings.ui.LiveBlurPreferenceController" />
+    <Preference android:title="@string/unica_dynamic_island_title" android:key="unica_dynamic_island" android:summary="@string/unica_dynamic_island_summary" settings:controller="io.mesalabs.unica.island.DynamicIslandPreferenceController">
+        <intent android:targetPackage="com.android.settings" android:targetClass="dev.android.dynamicisland.settings.SettingsActivity" />
+    </Preference>
+    <SecSwitchPreference android:title="@string/unica_native_blur_title" android:key="unica_native_blur" android:summary="@string/unica_native_blur_summary" settings:controller="io.mesalabs.unica.settings.ui.LiveBlurPreferenceController" />
     <SecDropDownPreference android:title="@string/unica_launcher_anim_type_title" android:key="unica_launcher_anim_type" android:summary="%s" settings:controller="io.mesalabs.unica.settings.ui.LauncherAnimationTypePreferenceController" />
     <com.samsung.android.settings.widget.SecInsetCategoryPreference />
     <SecSwitchPreference android:title="@string/unica_vulkan_title" android:key="unica_vulkan" android:summary="@string/unica_vulkan_summary" settings:controller="io.mesalabs.unica.settings.ui.VulkanPreferenceController" />
     <com.samsung.android.settings.widget.SecInsetCategoryPreference />
     <SecSwitchPreference android:title="@string/unica_max_refresh_rate_title" android:key="unica_max_refresh_rate" settings:controller="io.mesalabs.unica.settings.ui.ForceMaxRefreshRatePreferenceController" />
+    <SecSwitchPreference android:title="@string/unica_relax_sdhms_title" android:key="unica_relax_sdhms" android:persistent="false" android:summary="@string/unica_relax_sdhms_checking" settings:controller="io.mesalabs.unica.thermal.RelaxSdhmsPreferenceController" />
     <com.samsung.android.settings.widget.SecInsetCategoryPreference />
     <SecSwitchPreference android:title="@string/unica_boot_sound_title" android:key="unica_boot_sound" settings:controller="io.mesalabs.unica.settings.ui.BootSoundPreferenceController" />
+    <SecSwitchPreference android:title="@string/unica_portrom_audio_title" android:key="unica_portrom_audio" android:persistent="false" android:summary="@string/unica_portrom_audio_off" settings:controller="io.mesalabs.unica.portrom.PortRomAudioPreferenceController" />
 </PreferenceScreen>
