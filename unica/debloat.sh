@@ -137,6 +137,11 @@ system/priv-app/FacAtFunction
 system/priv-app/FactoryTestProvider
 "
 
+# Samsung Text-to-speech engine
+SYSTEM_DEBLOAT+="
+system/app/SamsungTTS
+"
+
 # Language packs
 SYSTEM_DEBLOAT+="$(find "$WORK_DIR/system" -type d -name "*TTSVoice*" | sed "s|$WORK_DIR/system/||g")"
 
