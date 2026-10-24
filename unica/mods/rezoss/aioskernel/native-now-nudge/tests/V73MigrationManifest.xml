@@ -1,5 +1,0 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="io.mesalabs.rezoss.v73test" android:versionCode="1" android:versionName="1">
-    <uses-sdk android:minSdkVersion="30" android:targetSdkVersion="36"/>
-    <application android:label="V73 migration test" android:allowBackup="false"/>
-    <instrumentation android:name="io.mesalabs.rezoss.v73test.V73MigrationTest" android:targetPackage="io.mesalabs.unica.localsummary"/>
-</manifest>

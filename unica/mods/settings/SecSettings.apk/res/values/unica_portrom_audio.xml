@@ -6,4 +6,9 @@
     <string name="unica_portrom_audio_pending_on">PortROM selected. Restart to apply replacements, extra tones and power sounds. If already restarted, the audio overlay did not load.</string>
     <string name="unica_portrom_audio_pending_off">Original sounds selected. Restart to restore them and remove the extra tones.</string>
     <string name="unica_portrom_audio_error">Could not save the PortROM audio selection.</string>
+    <string name="unica_portrom_audio_reboot_title">Restart required</string>
+    <string name="unica_portrom_audio_reboot_message">Restart your phone to apply the selected audio pack.</string>
+    <string name="unica_portrom_audio_reboot_now">Reboot Now</string>
+    <string name="unica_portrom_audio_reboot_later">Later</string>
+    <string name="unica_portrom_audio_reboot_error">Could not restart. Your selection is saved; restart your phone manually.</string>
 </resources>

@@ -1,8 +1,0 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="io.mesalabs.rezoss.nudgeprobe" android:versionCode="1" android:versionName="0.1">
- <uses-sdk android:minSdkVersion="30" android:targetSdkVersion="36"/>
- <uses-permission android:name="com.samsung.android.aioskernelservice.EXECUTE_GENAI"/>
- <uses-permission android:name="com.samsung.android.intellivoiceservice.permission.BIND_SMART_REPLY_SERVICE"/>
- <queries><package android:name="com.samsung.android.aioskernelservice"/><package android:name="com.samsung.android.smartsuggestions"/><package android:name="com.samsung.android.intellivoiceservice"/></queries>
- <application android:label="Local Now Nudge probe" android:allowBackup="false"><activity android:name="io.mesalabs.rezoss.nudgeprobe.KeyboardActivity" android:exported="true" android:permission="android.permission.DUMP"/></application>
- <instrumentation android:name="io.mesalabs.rezoss.nudgeprobe.Probe" android:targetPackage="io.mesalabs.rezoss.nudgeprobe" android:functionalTest="true"/>
-</manifest>
