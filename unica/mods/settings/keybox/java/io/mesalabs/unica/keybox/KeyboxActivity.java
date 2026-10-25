@@ -6,11 +6,13 @@ import android.app.*;
 import android.content.*;
 import android.graphics.Color;
 import android.graphics.drawable.*;
+import android.content.res.ColorStateList;
+import android.graphics.Typeface;
+import android.util.TypedValue;
 import android.net.Uri;
 import android.os.*;
 import android.provider.Settings;
 import android.view.*;
-import android.webkit.*;
 import android.widget.*;
 import java.io.*;
 import java.net.*;
@@ -22,16 +24,13 @@ import org.json.*;
 /** Native Settings owner of all keybox writes. The repository receives no imported data. */
 public final class KeyboxActivity extends Activity {
     private static final String SETTING="unica_keybox_data";
-    private static final String WRAPPER="https://unica-keybox.invalid/";
     private final ExecutorService worker=Executors.newSingleThreadExecutor();
     private final List<View> cards=new ArrayList<>();
     private LinearLayout content,card;
+    private ScrollView scrollView;
     private boolean busy;
     private String status="Check the current keybox against Google's revocation list.";
     private boolean red;
-    private WebView browser;
-    private WebMessagePort channel;
-    private boolean selectionPending;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);setTitle("Hardware attestation · Keybox");
@@ -39,31 +38,55 @@ public final class KeyboxActivity extends Activity {
         if(getActionBar()!=null)getActionBar().setDisplayHomeAsUpEnabled(true);
         draw();checkStatus();
     }
-    @Override protected void onDestroy(){closeBrowser();worker.shutdownNow();super.onDestroy();}
+    @Override protected void onDestroy(){worker.shutdownNow();super.onDestroy();}
     @Override public boolean onOptionsItemSelected(MenuItem item){if(item.getItemId()==android.R.id.home){onBackPressed();return true;}return super.onOptionsItemSelected(item);}
-    @Override public void onBackPressed(){if(browser!=null){closeBrowser();draw();return;}if(busy){Toast.makeText(this,"Wait for the keybox operation to finish",Toast.LENGTH_SHORT).show();return;}super.onBackPressed();}
+    @Override public void onBackPressed(){if(busy){Toast.makeText(this,"Wait for the keybox operation to finish",Toast.LENGTH_SHORT).show();return;}super.onBackPressed();}
     private String current(){return Settings.Secure.getString(getContentResolver(),SETTING);}
     private boolean loaded(){String xml=current();return xml!=null&&!xml.trim().isEmpty();}
     private boolean enabled(){try{return (Boolean)Class.forName("android.os.SemSystemProperties").getMethod("getBoolean",String.class,boolean.class).invoke(null,"persist.sys.unica.keybox",false);}catch(Exception e){return false;}}
     private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
-    private void group(){card=new LinearLayout(this);card.setOrientation(1);card.setPadding(dp(20),dp(16),dp(20),dp(16));LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.bottomMargin=dp(16);content.addView(card,p);cards.add(card);}
-    private TextView text(String value,int size){TextView v=new TextView(this);v.setText(value);v.setTextSize(size);v.setPadding(0,dp(8),0,dp(8));card.addView(v);return v;}
-    private void button(String title,String summary,Runnable action){Button b=new Button(this);b.setText(title+"\n"+summary);b.setAllCaps(false);b.setGravity(Gravity.START|Gravity.CENTER_VERTICAL);b.setMinHeight(dp(64));b.setPadding(dp(12),dp(12),dp(12),dp(12));b.setEnabled(!busy);b.setOnClickListener(v->action.run());card.addView(b,new LinearLayout.LayoutParams(-1,-2));}
+    private int themed(int attribute,int fallback){TypedValue value=new TypedValue();if(!getTheme().resolveAttribute(attribute,value,true))return fallback;return value.resourceId!=0?getColor(value.resourceId):value.data;}
+    private TextView label(String value,int size,boolean secondary){
+        TextView view=new TextView(this);view.setText(value);view.setTextSize(size);
+        view.setTextColor(themed(secondary?android.R.attr.textColorSecondary:android.R.attr.textColorPrimary,secondary?(dark()?0xffbfc1c7:0xff62656b):(dark()?0xfff4f4f6:0xff17181b)));
+        view.setGravity(Gravity.START);return view;
+    }
+    private void group(){card=new LinearLayout(this);card.setOrientation(1);card.setClipToOutline(true);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.bottomMargin=dp(24);content.addView(card,p);cards.add(card);}
+    private TextView text(String value,int size){TextView v=label(value,size,size<20);v.setPaddingRelative(dp(24),size>=20?dp(22):0,dp(24),dp(14));if(size>=20)v.setTypeface(Typeface.create("sans-serif-medium",Typeface.NORMAL));card.addView(v);return v;}
+    private void note(String value){TextView view=label(value,14,true);view.setPaddingRelative(dp(24),0,dp(24),dp(24));content.addView(view);}
+    private void button(String title,String summary,Runnable action){
+        if(card.getChildCount()>0){View divider=new View(this);divider.setBackgroundColor(themed(android.R.attr.textColorSecondary,dark()?0xffbfc1c7:0xff62656b));divider.setAlpha(0.14f);LinearLayout.LayoutParams line=new LinearLayout.LayoutParams(-1,dp(1));line.setMarginStart(dp(24));line.setMarginEnd(dp(24));card.addView(divider,line);}
+        LinearLayout row=new LinearLayout(this);row.setOrientation(LinearLayout.HORIZONTAL);row.setGravity(Gravity.CENTER_VERTICAL);row.setMinimumHeight(dp(88));row.setPaddingRelative(dp(24),dp(18),dp(20),dp(18));
+        LinearLayout labels=new LinearLayout(this);labels.setOrientation(LinearLayout.VERTICAL);
+        TextView heading=label(title,20,false);heading.setTypeface(Typeface.create("sans-serif-medium",Typeface.NORMAL));labels.addView(heading);
+        if(title.equals("Clear imported keybox"))heading.setTextColor(dark()?0xffff8a80:0xffb3261e);
+        TextView detail=label(summary,15,true);detail.setPadding(0,dp(5),0,0);labels.addView(detail);
+        row.addView(labels,new LinearLayout.LayoutParams(0,-2,1));
+        TextView arrow=label(getResources().getConfiguration().getLayoutDirection()==View.LAYOUT_DIRECTION_RTL?"‹":"›",26,true);arrow.setPaddingRelative(dp(16),0,0,0);arrow.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);row.addView(arrow);
+        row.setBackground(new RippleDrawable(ColorStateList.valueOf(themed(android.R.attr.colorControlHighlight,dark()?0x33ffffff:0x18000000)),null,new ColorDrawable(Color.WHITE)));
+        row.setEnabled(!busy);row.setAlpha(busy?0.45f:1f);row.setFocusable(true);row.setContentDescription(title+". "+summary);row.setOnClickListener(v->action.run());
+        labels.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
+        row.setAccessibilityDelegate(new View.AccessibilityDelegate(){@Override public void onInitializeAccessibilityNodeInfo(View host,android.view.accessibility.AccessibilityNodeInfo info){super.onInitializeAccessibilityNodeInfo(host,info);info.setClassName(Button.class.getName());}});
+        card.addView(row,new LinearLayout.LayoutParams(-1,-2));
+    }
     private void draw(){
         if(isFinishing()||isDestroyed())return;
-        setTitle("Hardware attestation · Keybox");
-        cards.clear();ScrollView scroll=new ScrollView(this);content=new LinearLayout(this);content.setOrientation(1);content.setPadding(dp(12),dp(12),dp(12),dp(24));scroll.addView(content);setContentView(scroll);
+        setTitle("Keybox");
+        int previousScroll=scrollView==null?0:scrollView.getScrollY();
+        cards.clear();ScrollView scroll=new ScrollView(this);scrollView=scroll;scroll.setFillViewport(true);scroll.setClipToPadding(false);content=new LinearLayout(this);content.setOrientation(1);content.setPadding(dp(16),dp(20),dp(16),dp(24));scroll.addView(content);setContentView(scroll);
         scroll.setOnApplyWindowInsetsListener((v,insets)->{android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars());v.setPadding(bars.left,bars.top,bars.right,bars.bottom);return insets;});
-        group();text("Current keybox",20);text(loaded()?"Keybox loaded · Spoof hardware attestation "+(enabled()?"on":"off"):"No keybox imported",16);
+        group();text("Current keybox",22);text(loaded()?"Keybox loaded · Spoof hardware attestation "+(enabled()?"on":"off"):"No keybox imported",16);
         TextView state=text(status,16);if(red)state.setTextColor(dark()?0xffff8a80:0xffb3261e);
         button(busy?"Checking…":"Check revocation status","Uses Google's current certificate status list",this::checkStatus);
-        group();text("Install a keybox",20);
+        group();text("Install a keybox",22);
         button("Local","Import keybox.xml from storage",()->{Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*").addCategory(Intent.CATEGORY_OPENABLE);startActivityForResult(intent,41);});
         button("AOSP","Public software test keybox from Android",()->new AlertDialog.Builder(this).setTitle("Apply AOSP keybox?").setMessage("This public software test keybox is not hardware-backed and does not provide Google hardware attestation or guarantee Play Integrity. Its test certificates may be expired. It replaces the current imported keybox.").setNegativeButton("Cancel",null).setPositiveButton("Review",(d,w)->stage(()->asset(),true,"AOSP")).show());
         button("Community repository","Browse Tricky Addon Keybox Repository",this::browse);
-        group();text("Keybox data",20);text("Importing replaces the current keybox. The existing spoofing switch stays unchanged. Keep the original file if you may need to restore it; clearing can affect access to simulator-created keys after a restart.",14);
+        note("Importing replaces the current keybox. The existing spoofing switch stays unchanged. Keep the original file if you may need to restore it; clearing can affect access to simulator-created keys after a restart.");
+        group();text("Keybox data",22);
         button("Clear imported keybox","Remove the XML from Settings",()->new AlertDialog.Builder(this).setTitle("Clear imported keybox?").setMessage("Existing simulator-created keys may require the same keybox after a daemon restart or reboot.").setNegativeButton("Cancel",null).setPositiveButton("Clear",(d,w)->{if(!Settings.Secure.putString(getContentResolver(),SETTING,null)){failure("Could not clear keybox");return;}status="No keybox imported";red=false;draw();}).show());
         style();
+        scroll.post(()->scroll.scrollTo(0,previousScroll));
     }
     private boolean dark(){return (getResources().getConfiguration().uiMode&0x30)==0x20;}
     private int color(String name,int fallback){int id=getResources().getIdentifier(name,"color",getPackageName());return id==0?fallback:getColor(id);}
@@ -74,7 +97,7 @@ public final class KeyboxActivity extends Activity {
         int background=color("sesl_round_and_bgcolor_"+(dark()?"dark":"light"),dark()?0xff000000:0xfff2f2f2);
         if(transparent){surface=(surface&0xffffff)|((255-level*255/100)<<24);background=0;getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);}else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
         getWindow().setFormat(transparent?android.graphics.PixelFormat.TRANSLUCENT:android.graphics.PixelFormat.OPAQUE);getWindow().setBackgroundDrawable(new ColorDrawable(background));
-        for(View v:cards){GradientDrawable shape=new GradientDrawable();shape.setColor(surface);shape.setCornerRadius(dp(28));v.setBackground(shape);}
+        for(View v:cards){GradientDrawable shape=new GradientDrawable();shape.setColor(surface);shape.setCornerRadius(dp(30));v.setBackground(shape);}
     }
     private interface Job<T>{T run()throws Exception;}
     private interface Done<T>{void run(T value)throws Exception;}
@@ -84,7 +107,7 @@ public final class KeyboxActivity extends Activity {
     private void failure(String message){status=message;red=false;draw();}
     private String readAsset(String name)throws Exception{try(InputStream in=getAssets().open("unica-keybox/"+name)){return new String(Keybox.read(in,Keybox.MAX_BYTES),StandardCharsets.UTF_8);}}
     private String asset()throws Exception{return readAsset("aosp-keybox.txt");}
-    @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==41&&result==RESULT_OK&&data!=null&&data.getData()!=null){Uri uri=data.getData();stage(()->{try(InputStream in=getContentResolver().openInputStream(uri)){return new String(Keybox.read(in,Keybox.MAX_BYTES),StandardCharsets.UTF_8).replaceFirst("^\\uFEFF","");}},false,"Local");}}
+    @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==42&&result==RESULT_OK&&data!=null){String address=data.getStringExtra("url");try{URI uri=new URI(address);if(address.length()>4096||!"https".equals(uri.getScheme())||uri.getHost()==null||uri.getUserInfo()!=null)throw new IllegalArgumentException();new AlertDialog.Builder(this).setTitle("Download selected keybox?").setMessage("Source: "+uri.getHost()+"\nThe downloaded keybox will be validated before you can apply it.").setNegativeButton("Cancel",null).setPositiveButton("Download",(d,w)->stage(()->get(address,Keybox.MAX_BYTES),false,"community")).show();}catch(Exception e){failure("Repository selection unavailable");}return;}if(request==41&&result==RESULT_OK&&data!=null&&data.getData()!=null){Uri uri=data.getData();stage(()->{try(InputStream in=getContentResolver().openInputStream(uri)){return new String(Keybox.read(in,Keybox.MAX_BYTES),StandardCharsets.UTF_8).replaceFirst("^\\uFEFF","");}},false,"Local");}}
     private static final class Candidate {String xml,summary;boolean aosp,revoked,unknown;}
     private void stage(Job<String> source,boolean aosp,String label){
         background(()->{
@@ -128,24 +151,11 @@ public final class KeyboxActivity extends Activity {
         }
         throw new IOException("Too many redirects");
     }
-    private void closeBrowser(){selectionPending=false;if(channel!=null){channel.close();channel=null;}if(browser!=null){browser.stopLoading();browser.destroy();browser=null;}}
     private void browse(){
-        if(busy)return;setTitle("Keybox repository");browser=new WebView(this);WebView view=browser;
-        view.setOnApplyWindowInsetsListener((v,insets)->{android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars());v.setPadding(bars.left,bars.top,bars.right,bars.bottom);return insets;});
-        WebSettings settings=view.getSettings();settings.setJavaScriptEnabled(true);settings.setDomStorageEnabled(true);settings.setAllowFileAccess(false);settings.setAllowContentAccess(false);settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);settings.setSupportMultipleWindows(false);
-        view.setWebViewClient(new WebViewClient(){
-            @Override public boolean shouldOverrideUrlLoading(WebView web,WebResourceRequest request){return request.isForMainFrame()||!"https".equals(request.getUrl().getScheme());}
-            @Override public void onPageFinished(WebView web,String url){
-                if(!WRAPPER.equals(url)||channel!=null)return;
-                WebMessagePort[] ports=web.createWebMessageChannel();channel=ports[0];channel.setWebMessageCallback(new WebMessagePort.WebMessageCallback(){@Override public void onMessage(WebMessagePort port,WebMessage message){
-                    try{JSONObject selection=new JSONObject(message.getData());if("error".equals(selection.optString("type"))){Toast.makeText(KeyboxActivity.this,"The repository could not download that keybox",Toast.LENGTH_LONG).show();return;}if(selectionPending||!"download".equals(selection.optString("type")))return;String address=selection.getString("url");URI uri=new URI(address);if(!"https".equals(uri.getScheme())||uri.getHost()==null)return;
-                        selectionPending=true;
-                        AlertDialog prompt=new AlertDialog.Builder(KeyboxActivity.this).setTitle("Download selected keybox?").setMessage("Source: "+uri.getHost()+"\nThe downloaded keybox will be validated before you can apply it.").setNegativeButton("Cancel",null).setPositiveButton("Download",(d,w)->{closeBrowser();stage(()->get(address,Keybox.MAX_BYTES),false,"community");}).create();prompt.setOnDismissListener(d->selectionPending=false);prompt.show();
-                    }catch(Exception e){Toast.makeText(KeyboxActivity.this,"Repository selection unavailable",Toast.LENGTH_SHORT).show();}
-                }});web.postWebMessage(new WebMessage("connect",new WebMessagePort[]{ports[1]}),Uri.parse(WRAPPER));
-            }
-        });
-        // Only the local wrapper owns the message port. Remote frames never get a Java bridge.
-        try{String html=readAsset("repository.html");setContentView(view);view.loadDataWithBaseURL(WRAPPER,html,"text/html","UTF-8",null);}catch(Exception e){closeBrowser();failure("Repository view unavailable");}
+        if(busy)return;
+        // WebView is prohibited in Settings' system UID, including named processes.
+        // Only this normal-UID browser returns a URL; XML validation and writes stay here.
+        try{startActivityForResult(new Intent().setClassName("io.mesalabs.unica.keybox.browser","io.mesalabs.unica.keybox.browser.RepositoryActivity"),42);}
+        catch(ActivityNotFoundException|SecurityException e){failure("Repository browser is unavailable. Install a ROM containing UnicaKeyboxBrowser.");}
     }
 }

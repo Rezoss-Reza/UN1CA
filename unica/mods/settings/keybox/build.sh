@@ -13,6 +13,8 @@ javac -encoding UTF-8 -source 8 -target 8 -Xlint:-options -classpath "$ANDROID_J
 javac -encoding UTF-8 -classpath "$WORK/classes" -d "$WORK/tests" "$SOURCE_DIR/tests/KeyboxTest.java"
 java -classpath "$WORK/tests:$WORK/classes" io.mesalabs.unica.keybox.KeyboxTest "$SOURCE_DIR/../SecSettings.apk/assets/unica-keybox/aosp-keybox.txt"
 node "$SOURCE_DIR/tests/repository-test.js" "$SOURCE_DIR/../SecSettings.apk/assets/unica-keybox/repository.html"
+python3 "$SOURCE_DIR/tests/browser-boundary-test.py"
+bash "$SOURCE_DIR/browser/build.sh"
 jar cf "$WORK/classes.jar" -C "$WORK/classes" .
 "$D8" --min-api 35 --lib "$ANDROID_JAR" --output "$WORK/dex" "$WORK/classes.jar"
 baksmali disassemble --api 35 "$WORK/dex/classes.dex" -o "$WORK/smali"

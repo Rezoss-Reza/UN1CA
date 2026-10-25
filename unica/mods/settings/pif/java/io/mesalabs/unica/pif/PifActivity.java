@@ -58,40 +58,96 @@ public final class PifActivity extends Activity {
     @Override public void onBackPressed(){if(busy){Toast.makeText(this,"Wait for the profile operation to finish",Toast.LENGTH_SHORT).show();return;}super.onBackPressed();}
     private String message(Exception e){Throwable cause=e;while(cause.getCause()!=null)cause=cause.getCause();return cause.getMessage()==null?cause.toString():cause.getMessage();}
     private void error(Exception e){status="Failed: "+message(e);draw();}
-    private void group(){card=new LinearLayout(this);card.setOrientation(1);card.setPadding(dp(20),dp(12),dp(20),dp(16));LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.bottomMargin=dp(16);content.addView(card,p);cards.add(card);}
-    private void text(String value,int size){TextView v=new TextView(this);v.setText(value);v.setTextSize(size);v.setPadding(0,dp(8),0,dp(8));v.setTextIsSelectable(true);card.addView(v);}
-    private void button(String label,Runnable action){Button b=new Button(this);b.setText(label);b.setAllCaps(false);b.setMinHeight(dp(48));b.setEnabled(!busy);b.setOnClickListener(v->action.run());card.addView(b,new LinearLayout.LayoutParams(-1,-2));}
-    private void toggle(String title,String key){Switch v=new Switch(this);v.setText(title);v.setPadding(0,dp(12),0,dp(12));v.setChecked("true".equals(draft.get(key))||"1".equals(draft.get(key)));v.setEnabled(!busy&&supported());v.setOnCheckedChangeListener((b,on)->{draft.put(key,Boolean.toString(on));source="Custom";});card.addView(v);}
-    private void unavailable(String title){Switch v=new Switch(this);v.setText(title+"\nUnavailable in this ROM backend");v.setChecked(false);v.setEnabled(false);v.setPadding(0,dp(12),0,dp(12));card.addView(v);}
+    private int themeColor(int attribute){android.content.res.TypedArray a=obtainStyledAttributes(new int[]{attribute});int color=a.getColor(0,0xff808080);a.recycle();return color;}
+    private TextView label(String value,int size,boolean secondary){
+        TextView v=new TextView(this);v.setText(value);v.setTextSize(size);
+        v.setTextColor(themeColor(secondary?android.R.attr.textColorSecondary:android.R.attr.textColorPrimary));
+        v.setBreakStrategy(android.text.Layout.BREAK_STRATEGY_HIGH_QUALITY);return v;
+    }
+    private void section(String title){
+        TextView heading=label(title,14,true);heading.setPadding(dp(24),dp(8),dp(24),dp(10));content.addView(heading);
+    }
+    private void footnote(String value){
+        TextView v=label(value,14,true);v.setPadding(dp(24),0,dp(24),dp(24));content.addView(v);
+    }
+    private void group(){
+        card=new LinearLayout(this);card.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.bottomMargin=dp(12);
+        content.addView(card,p);cards.add(card);
+    }
+    private void separator(){
+        if(card.getChildCount()==0)return;
+        View divider=new View(this);divider.setBackgroundColor(themeColor(android.R.attr.textColorPrimary));divider.setAlpha(0.09f);
+        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,Math.max(1,dp(1)));p.setMarginStart(dp(24));p.setMarginEnd(dp(24));card.addView(divider,p);
+    }
+    private LinearLayout row(String title,String summary){
+        separator();LinearLayout row=new LinearLayout(this);row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(dp(24),dp(18),dp(24),dp(18));row.setMinimumHeight(dp(76));
+        LinearLayout copy=new LinearLayout(this);copy.setOrientation(LinearLayout.VERTICAL);
+        TextView name=label(title,20,false);copy.addView(name);
+        if(summary!=null&&!summary.isEmpty()){
+            TextView detail=label(summary,14,true);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.topMargin=dp(5);copy.addView(detail,p);
+        }
+        row.addView(copy,new LinearLayout.LayoutParams(0,-2,1));card.addView(row,new LinearLayout.LayoutParams(-1,-2));return row;
+    }
+    private void clickable(LinearLayout row,Runnable action){
+        android.util.TypedValue ripple=new android.util.TypedValue();
+        if(getTheme().resolveAttribute(android.R.attr.selectableItemBackground,ripple,true)&&ripple.resourceId!=0)row.setBackgroundResource(ripple.resourceId);
+        row.setEnabled(!busy);row.setFocusable(true);row.setOnClickListener(v->action.run());if(busy)row.setAlpha(0.45f);
+    }
+    private void action(String title,String summary,Runnable action){
+        LinearLayout row=row(title,summary);TextView arrow=label("›",28,true);arrow.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-2,-2);p.setMarginStart(dp(16));row.addView(arrow,p);clickable(row,action);
+    }
+    private void toggle(String title,String summary,String key){
+        LinearLayout row=row(title,summary);Switch control=new Switch(this);control.setShowText(false);control.setContentDescription(title);
+        control.setChecked("true".equals(draft.get(key))||"1".equals(draft.get(key)));
+        boolean enabled=!busy&&supported();control.setEnabled(enabled);
+        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-2,-2);p.setMarginStart(dp(20));row.addView(control,p);
+        control.setOnCheckedChangeListener((b,on)->{draft.put(key,Boolean.toString(on));source="Custom";});
+        clickable(row,()->control.setChecked(!control.isChecked()));row.setEnabled(enabled);if(!enabled)row.setAlpha(0.45f);
+    }
+    private void unavailable(String title){
+        LinearLayout row=row(title,"Unavailable in this ROM backend");Switch control=new Switch(this);control.setShowText(false);control.setChecked(false);control.setEnabled(false);control.setContentDescription(title);
+        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-2,-2);p.setMarginStart(dp(20));row.addView(control,p);row.setAlpha(0.45f);
+    }
     private void draw(){
         if(isFinishing()||isDestroyed())return;
         cards.clear();ScrollView scroll=new ScrollView(this);content=new LinearLayout(this);content.setOrientation(1);content.setPadding(dp(12),dp(12),dp(12),dp(24));scroll.addView(content);setContentView(scroll);
         scroll.setOnApplyWindowInsetsListener((v,insets)->{android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars());v.setPadding(bars.left,bars.top,bars.right,bars.bottom);return insets;});
-        group();text("Current configured profile",20);
+        TextView heading=label("Play Integrity Fix",32,false);heading.setTypeface(null,android.graphics.Typeface.BOLD);
+        heading.setPadding(dp(24),dp(28),dp(24),dp(28));content.addView(heading);
+        section("Current profile");group();
         try {
             Map<String,String> live=current();
             String[] identity=live.get("FINGERPRINT").split("[/:]",-1);
             String device=live.get("DEVICE"),model=live.get("MODEL");
             if((device.equals("null")||device.isEmpty())&&identity.length==8)device=identity[2]+" (automatic)";
             if(model.equals("null")||model.isEmpty())model=identity.length==8&&identity[2].equals("bluejay")?"Pixel 6a (automatic)":"Not overridden";
-            text("PIF: "+property("persist.sys.unica.pif","true")+"\nProfile: "+property("persist.sys.pif.version","ROM default")+"\nModel: "+model+"\nDevice: "+device+"\nSecurity patch: "+live.get("SECURITY_PATCH"),16);
-            text(live.get("FINGERPRINT"),14);
-        }catch(Exception e){text(message(e),14);}
-        text("These are configured values. A null identity field is derived from the fingerprint by the native backend. Runtime activation and Play Integrity verdicts require device testing.",14);
-        button("View current configuration",()->{try{showText("Current configured properties",Profile.format(current()));}catch(Exception e){error(e);}});
-        group();text("Pixel profile",20);text("Draft: "+source,16);text(status,14);
-        if(!supported())text("Native configuration controls require the dm3q SDK 37 PIF backend.",14);
-        button(busy?"Working…":"Choose / fetch Pixel profile",this::devices);
-        button("Edit / add PIF properties",this::edit);
-        group();text("Spoof configuration",20);
-        toggle("Spoof Build","spoofBuild");toggle("Spoof Build · Play Store","spoofVendingBuild");toggle("Spoof Props","spoofProps");
-        text("Spoof Build also gates the optional Play Store Build override. Play Store is excluded while its switch is off.",14);
+            row(model,"Device: "+device+"\nSecurity patch: "+live.get("SECURITY_PATCH"));
+            row("Play Integrity Fix",("true".equals(property("persist.sys.unica.pif","true"))?"On":"Off")+" · "+property("persist.sys.pif.version","ROM default"));
+        }catch(Exception e){row("Profile unavailable",message(e));}
+        action("View current configuration","Fingerprint and configured properties",()->{try{showText("Current configured properties",Profile.format(current()));}catch(Exception e){error(e);}});
+        footnote("Configured values are shown here. Automatic identity fields follow the fingerprint. Activation and Integrity results require device testing.");
+        section("Pixel profile");group();
+        action(busy?"Working…":"Choose Pixel device",source,this::devices);
+        action("Edit PIF properties","Add or change supported profile values",this::edit);
+        footnote(status);
+        if(!supported())footnote("Native configuration controls require the dm3q SDK 37 PIF backend.");
+        section("Spoof configuration");group();
+        toggle("Spoof Build","Override the device identity used by Play services","spoofBuild");
+        toggle("Spoof Build · Play Store","Also override Play Store identity; requires Spoof Build","spoofVendingBuild");
+        toggle("Spoof Props","Override native properties in Play services","spoofProps");
+        footnote("Play Store is excluded while its switch is off.");
+        section("Additional options");group();
         unavailable("Spoof Provider");unavailable("Spoof Signature");unavailable("Spoof SDK · Play Store");
-        text("Provider, signature and SDK replacement are not implemented by the ROM PIF backend. Existing keybox handling is preserved.",14);
-        group();button("View draft",()->showText("Draft properties",Profile.format(draft)));
-        button("Save and apply",()->{if(!supported()){status="Native PIF backend unavailable";draw();return;}try{Profile.validate(draft);new AlertDialog.Builder(this).setTitle("Apply PIF profile?").setMessage("This replaces the configured profile and restarts Play services and Play Store. A rollback snapshot will be saved. Integrity results are not guaranteed.").setPositiveButton("Apply",(d,w)->apply(draft)).setNegativeButton("Cancel",null).show();}catch(Exception e){error(e);}});
-        button("Restore previous configuration",this::restore);
-        button("Discard draft / refresh",()->{try{draft=current();source="Current configuration";status="Draft refreshed from configured properties.";draw();}catch(Exception e){error(e);}});
+        footnote("These options are unavailable in the ROM PIF backend. Existing keybox handling is preserved.");
+        section("Apply profile");group();
+        action("View draft","Review your changes before applying",()->showText("Draft properties",Profile.format(draft)));
+        action("Save and apply","Restart Play services and Play Store",()->{if(!supported()){status="Native PIF backend unavailable";draw();return;}try{Profile.validate(draft);new AlertDialog.Builder(this).setTitle("Apply PIF profile?").setMessage("This replaces the configured profile and restarts Play services and Play Store. A rollback snapshot will be saved. Integrity results are not guaranteed.").setPositiveButton("Apply",(d,w)->apply(draft)).setNegativeButton("Cancel",null).show();}catch(Exception e){error(e);}});
+        section("Restore and refresh");group();
+        action("Restore previous configuration","Return to the profile saved before the last apply",this::restore);
+        action("Discard draft / refresh","Reload the current configured properties",()->{try{draft=current();source="Current configuration";status="Draft refreshed from configured properties.";draw();}catch(Exception e){error(e);}});
         style();
     }
     private void style(){
@@ -103,12 +159,12 @@ public final class PifActivity extends Activity {
         if(transparent){surface=(surface&0xffffff)|((255-level*255/100)<<24);background=0;getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);}else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
         getWindow().setFormat(transparent?android.graphics.PixelFormat.TRANSLUCENT:android.graphics.PixelFormat.OPAQUE);
         getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(background));
-        for(View v:cards){android.graphics.drawable.GradientDrawable shape=new android.graphics.drawable.GradientDrawable();shape.setColor(surface);shape.setCornerRadius(dp(28));v.setBackground(shape);}
+        for(View v:cards){android.graphics.drawable.GradientDrawable shape=new android.graphics.drawable.GradientDrawable();shape.setColor(surface);shape.setCornerRadius(dp(32));v.setBackground(shape);v.setClipToOutline(true);}
     }
     private int color(String name,int fallback){int id=getResources().getIdentifier(name,"color",getPackageName());return id==0?fallback:getColor(id);}
     private void showText(String title,String text){TextView v=new TextView(this);v.setText(text);v.setTextIsSelectable(true);v.setPadding(dp(20),dp(12),dp(20),dp(12));ScrollView scroll=new ScrollView(this);scroll.addView(v);new AlertDialog.Builder(this).setTitle(title).setView(scroll).setPositiveButton("Close",null).show();}
     private void edit(){
-        EditText editor=new EditText(this);editor.setText(Profile.format(draft));editor.setGravity(Gravity.TOP);editor.setMinLines(8);editor.setInputType(android.text.InputType.TYPE_CLASS_TEXT|android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE|android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        EditText editor=new EditText(this);editor.setPadding(dp(24),dp(16),dp(24),dp(16));editor.setTextSize(15);editor.setTypeface(android.graphics.Typeface.MONOSPACE);editor.setText(Profile.format(draft));editor.setGravity(Gravity.TOP);editor.setMinLines(8);editor.setInputType(android.text.InputType.TYPE_CLASS_TEXT|android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE|android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         ScrollView scroll=new ScrollView(this);scroll.addView(editor);
         AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Edit PIF properties").setMessage("KEY=value, one per line. Supported keys only. Missing identity fields become automatic (null). Unknown keys are rejected.").setView(scroll).setPositiveButton("Save draft",null).setNegativeButton("Cancel",null).create();
         dialog.setOnShowListener(d->dialog.getButton(-1).setOnClickListener(v->{try{draft=Profile.replacement(Profile.parse(editor.getText().toString(),false),draft);source="Custom";status="Draft updated. Review before applying.";dialog.dismiss();draw();}catch(Exception e){editor.setError(message(e));}}));dialog.show();
