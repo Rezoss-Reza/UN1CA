@@ -27,5 +27,15 @@
       "url": "https://boringssl.googlesource.com/boringssl",
       "revision": "423b1aa3b1dc62f01e46bbd51affee5f5e021db0"
     }
+  ],
+  "backports": [
+    {
+      "revision": "2fda3b1c67f3f00f1a1d343cee760eeb26a190bc",
+      "description": "Resolve device identity through the framework property chain, preserving unknown defaults."
+    },
+    {
+      "revision": "159a65cbeaca3f7bcb4d3edddbb699fe77f4eff1",
+      "description": "Keep the real hardware key when no attestation challenge was requested."
+    }
   ]
 }

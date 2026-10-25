@@ -1,4 +1,6 @@
 /application>/i
+        <activity android:name="io.mesalabs.unica.pif.PifActivity" android:exported="false" android:label="@string/unica_pif_title"/>
+        <activity android:name="io.mesalabs.unica.keybox.KeyboxActivity" android:exported="false" android:label="@string/unica_keybox_title"/>
         <activity android:name="io.mesalabs.unica.gpu.GpuActivity" android:exported="false" android:configChanges="keyboardHidden|orientation|screenSize" android:label="@string/unica_gpu_title"/>
         <activity android:name="io.mesalabs.unica.ota.OtaActivity" android:exported="false" android:configChanges="keyboardHidden|orientation|screenSize" android:label="@string/unica_ota_title"/>
         <activity android:name="io.mesalabs.unica.battery.BatteryActivity" android:exported="false" android:label="@string/unica_battery_title"/>
