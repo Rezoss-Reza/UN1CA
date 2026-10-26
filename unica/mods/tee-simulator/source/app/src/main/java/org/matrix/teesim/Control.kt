@@ -72,6 +72,8 @@ object Control {
     var libApi: Int = 0
         private set
 
+    fun isConnected(): Boolean = activeOut != null
+
     fun start() {
         if (running) return
         running = true

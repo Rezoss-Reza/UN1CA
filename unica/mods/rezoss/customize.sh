@@ -107,6 +107,11 @@ if [[ "$UNICA_ENABLE_NATIVE_NOW_NUDGE" == "true" ]]; then
         APPLY_PATCH "system" "system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk" "$REZOSS_NUDGE_PATCH"
     done
     EVAL "bash \"$MODPATH/aioskernel/native-now-nudge/build_client_helper.sh\" \"$APKTOOL_DIR/system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk\"" || return 1
+    # Paradigm applied its incompatible native-model bypass before this mod.
+    # Supply recall-specific inference while keeping Samsung's parser/validators.
+    APPLY_PATCH "system" "system/priv-app/SemanticSearchCore/SemanticSearchCore.apk" \
+        "$MODPATH/aioskernel/native-now-nudge/ssco-patches/0001-Use-compatible-recall-inference.patch"
+    EVAL "bash \"$MODPATH/aioskernel/native-now-nudge/build_ssco_helper.sh\" \"$APKTOOL_DIR/system/priv-app/SemanticSearchCore/SemanticSearchCore.apk\"" || return 1
     unset REZOSS_NUDGE_PATCH
 fi
 # Temporarily disabled for CHN SmartSuggestions testing.

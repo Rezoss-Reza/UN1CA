@@ -18,6 +18,7 @@ import org.xml.sax.InputSource;
 final class Keybox {
     static final int MAX_BYTES = 256 * 1024;
     final List<X509Certificate> certificates = new ArrayList<>();
+    final List<List<X509Certificate>> chains = new ArrayList<>();
     final boolean aosp;
     boolean expired;
     private Keybox(boolean aosp) { this.aosp = aosp; }
@@ -112,6 +113,7 @@ final class Keybox {
             signer.initVerify(parsed.get(0).getPublicKey()); signer.update(challenge);
             if (!signer.verify(signed)) throw new IllegalArgumentException("Private key does not match its certificate");
             result.certificates.addAll(parsed);
+            result.chains.add(parsed);
         }
         return result;
     }

@@ -8,7 +8,7 @@ daa0fb1f32ba7ea85a07ef6302ab3d58c3407d7fd2aa03ec132cb9e38e8d9849  source/app/src
 7f9d4bd5cf47291bdb7b2751b61c1f379ef43cb55ef588cc3905b0e3fa500f2e  source/app/src/main/java/org/matrix/teesim/App.kt
 ffb0b4a53ad5cad52414a2e4bf093ba340dcc805b996c89bad78d53592741609  source/app/src/main/java/org/matrix/teesim/ConfigStore.kt
 ea47c915a737622e1516d4959d7208f3208969743e43a4f2c1dd5be7d04291cf  source/app/src/main/java/org/matrix/teesim/Const.kt
-5657542a6938b6a9e3ee0205f40a3cc196eb998208a0802c3f37ce290b2067c9  source/app/src/main/java/org/matrix/teesim/Control.kt
+cd133b0fb9293fc9f5ed5cd8f85d37a27fe89216103b925fdccb909fc6f7b638  source/app/src/main/java/org/matrix/teesim/Control.kt
 08fd44cbe031659b436bb55738836e4b675050a43b049c927d47d2f02ee813e7  source/app/src/main/java/org/matrix/teesim/DeviceProps.kt
 c59ce9b486fcb0cb57e85b90e82fc3c6f31933ba3b15afdc6d6ea6cafdeeac3d  source/app/src/main/java/org/matrix/teesim/Harvester.kt
 c35faeaf3e1b454fd141624f20110a406c92c94f526c83441850c72ca4573084  source/app/src/main/java/org/matrix/teesim/Injector.kt
@@ -27,7 +27,8 @@ dd1f6229d4a8a39577c29a74ecf1e0411c8391f252685b76bf553bb8fc08ec27  source/app/src
 92858ff3e1449c58d76b750862093f2c0ae760c2b93ebcf0586bf53a56774022  source/app/src/main/java/org/matrix/teesim/Resolver.kt
 6ad0da8a9a18cc1cf4314e802c172ca5feecbd33c8b500e72d61a8e062f86d29  source/app/src/main/java/org/matrix/teesim/RevocationList.kt
 74510a0975bda753fdfb051a60d41b07ad1d9cc88a753af806e55b74aee74c82  source/app/src/main/java/org/matrix/teesim/RkpStore.kt
-f7bd0f3ff63ca01145a76ee008dbab4881a63c7f4efbce4a175ccfcff3debece  source/app/src/main/java/org/matrix/teesim/RomApp.kt
+f3bef6d6af216ff49d35346ad06314a9750eacfb2876cb00e2233c9b685d313a  source/app/src/main/java/org/matrix/teesim/RomApp.kt
+cf85da5088725c42d10c4a83c352d45ea8725110dfd29d108f34473216c5f2ed  source/app/src/main/java/org/matrix/teesim/RomProfiles.kt
 7efea1490cd953ac9d87e97eec83c0099a994a5c3dc9ecc9fb0c63cede81b604  source/app/src/main/java/org/matrix/teesim/RootPublicKey.kt
 9c554401d92c48e338f1a212726ebd50244e4afd51fd3d4403c9766c229c0a4a  source/app/src/main/java/org/matrix/teesim/Scope.kt
 f705236f5f40be7a19be983320755dc891fd594b7f5078054de6ed30e41bd7d4  source/app/src/main/java/org/matrix/teesim/SysProp.kt

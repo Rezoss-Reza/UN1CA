@@ -2,7 +2,7 @@
 <PreferenceScreen android:title="@string/unica_spoof_settings_title" settings:hierarchicalParentFragment="io.mesalabs.unica.settings.UnicaSettingsFragment" settings:topLevelPreferenceKey="unica_spoof_settings"
   xmlns:android="http://schemas.android.com/apk/res/android" xmlns:settings="http://schemas.android.com/apk/res-auto">
     <SecSwitchPreference android:title="@string/unica_keybox_title" android:key="unica_keybox" android:summary="@string/summary_placeholder" settings:controller="io.mesalabs.unica.settings.keybox.KeyboxPreferenceController" />
-    <SecPreference android:title="Keybox sources and status" android:key="unica_keybox_settings" android:summary="Local import, AOSP, community repository and revocation check">
+    <SecPreference android:title="Manage Keybox" android:key="unica_keybox_settings" android:summary="Backend status, keybox details, target apps, diagnostics and profiles">
         <intent android:targetPackage="com.android.settings" android:targetClass="io.mesalabs.unica.keybox.KeyboxActivity" />
     </SecPreference>
     <SecPreference android:title="@string/unica_keybox_load_title" android:key="unica_keybox_load" />

@@ -3,7 +3,7 @@
 
 on post-fs-data
     mkdir /data/misc/unica-teesim 0700 root root
-    restorecon_recursive /data/misc/unica-teesim
+    restorecon_recursive --force /data/misc/unica-teesim
 
 service unica-teesim /system/bin/sh /system/etc/unica/tee-simulator/daemon.sh
     class late_start
@@ -12,6 +12,10 @@ service unica-teesim /system/bin/sh /system/etc/unica/tee-simulator/daemon.sh
     seclabel u:r:unica_teesim:s0
     disabled
     restart_period 30
+    # Repair restored/mislabeled state before init retries a failed daemon.
+    onrestart restorecon_recursive --force /data/misc/unica-teesim
 
 on property:sys.boot_completed=1
+    # Revisit restored state after post-fs-data labeling and bypass cached directory digests.
+    restorecon_recursive --force /data/misc/unica-teesim
     start unica-teesim

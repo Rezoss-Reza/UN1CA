@@ -25,7 +25,8 @@ def install(work, mod):
         raise SystemExit('TEE Simulator requires system_ext CIL, file and property contexts')
     append_unique(policy, (mod / 'policy/unica-teesim.cil').read_text().splitlines())
     append_unique(contexts, [r'/data/misc/unica-teesim(/.*)? u:object_r:unica_teesim_data_file:s0'])
-    append_unique(props, ['sys.unica.teesim.ready u:object_r:unica_teesim_status_prop:s0 exact int'])
+    append_unique(props, [f'sys.unica.teesim.{name} u:object_r:unica_teesim_status_prop:s0 exact int'
+                          for name in ('ready', 'heartbeat', 'connected', 'ack', 'loaded', 'config_error')])
     # Prevent init selecting an old precompiled policy after adding the new domain. Change the
     # platform digest (same method Android uses to invalidate the vendor precompiled cache).
     import hashlib

@@ -10,8 +10,9 @@ TOOLS=$SDK/build-tools/37.0.0
 WORK=$(mktemp -d /tmp/nudge-client-helper.XXXXXX)
 [[ ! -e "$DECODED/smali_classes17" ]] || { echo 'Unexpected classes17; inspect DEX overlap' >&2; exit 1; }
 mkdir -p "$WORK/classes" "$WORK/dex"
+mapfile -t SOURCES < <(find "$ROOT/client-java" -name '*.java' ! -name 'ContextActionParser.java' -type f | sort)
 javac -source 8 -target 8 -Xlint:-options -classpath "$SDK/platforms/android-37.0/android.jar" \
-    -d "$WORK/classes" "$ROOT"/client-java/io/mesalabs/rezoss/ai/*.java
+    -d "$WORK/classes" "${SOURCES[@]}"
 jar cf "$WORK/client.jar" -C "$WORK/classes" .
 "$TOOLS/d8" --min-api 28 --lib "$SDK/platforms/android-37.0/android.jar" --output "$WORK/dex" "$WORK/client.jar"
 java -cp "$SRC_DIR/out/tools/bin/apktool.jar" com.android.tools.smali.baksmali.Main \
