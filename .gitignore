@@ -118,10 +118,6 @@ security/unica_platform.pk8
 /unica/mods/rezoss/aioskernel/native-now-nudge/probe/**
 !/unica/mods/rezoss/aioskernel/native-now-nudge/probe/**/
 /unica/mods/rezoss/aioskernel/native-now-nudge/tests/**
-!/unica/mods/rezoss/aioskernel/native-now-nudge/tests/RecallInferenceTest.java
-!/unica/mods/rezoss/aioskernel/native-now-nudge/tests/run_recall_inference_test.sh
-!/unica/mods/rezoss/aioskernel/native-now-nudge/tests/ReplyTextTest.java
-!/unica/mods/rezoss/aioskernel/native-now-nudge/tests/run_reply_text_test.sh
 !/unica/mods/rezoss/aioskernel/native-now-nudge/tests/**/
 /unica/mods/rezoss/aioskernel/smolvlm/**
 !/unica/mods/rezoss/aioskernel/smolvlm/**/
@@ -234,3 +230,8 @@ security/unica_platform.pk8
 !/unica/mods/rezoss/aioskernel/smolvlm/legacy-float-io.patch
 !/unica/mods/rezoss/aioskernel/smolvlm/legacy-mask-rank.patch
 !/unica/mods/rezoss/aioskernel/smolvlm/text-only-runner.patch
+
+# Standalone keybox management host tests; retained locally for development.
+/unica/mods/settings/keybox/tests/ManageKeyboxTest.java
+/unica/mods/settings/keybox/tests/RomProfilesTest.kt
+/unica/mods/settings/keybox/tests/run_manage_tests.py

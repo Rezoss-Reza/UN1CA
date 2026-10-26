@@ -33,8 +33,9 @@ public final class KeyboxActivity extends Activity {
     private int profileIndex;
     private List<String> logRows=new ArrayList<>();
     private TextView backendView;
+    private String statusChecked="",logsChecked="Not read yet";
     private final Handler refreshHandler=new Handler(Looper.getMainLooper());
-    private final Runnable refreshStatus=new Runnable(){public void run(){if(backendView!=null)backendView.setText(backendSummary());refreshHandler.postDelayed(this,3000);}};
+    private final Runnable refreshStatus=new Runnable(){public void run(){if(backendView!=null)backendView.setText(statusDisplay());refreshHandler.postDelayed(this,3000);}};
     @Override protected void onResume(){super.onResume();refreshHandler.post(refreshStatus);}
     @Override protected void onPause(){refreshHandler.removeCallbacks(refreshStatus);super.onPause();}
     private String status="Check the current keybox against Google's revocation list.";
@@ -91,8 +92,8 @@ public final class KeyboxActivity extends Activity {
             catch(Exception error){group();text("Configuration unavailable",22);text("Restore default routing to recover. Your current imported keybox is retained.",16);button("Restore default routing","Back up existing configuration and use the current keybox",this::restore);}
             style();scroll.post(()->scroll.scrollTo(0,previousScroll));return;
         }
-        group();text("Backend status",22);backendView=text(backendSummary(),16);
-        button("Refresh status","Shows live backend acknowledgement and connection separately",()->draw());
+        group();text("Backend status",22);backendView=text(statusDisplay(),16);
+        button("Refresh status","Read the latest backend acknowledgement and connection",this::refreshBackendStatus);
         if(fresh()&&property("sys.unica.teesim.config_error").equals("1"))text("Configuration rejected. New interception is disabled until the configuration is corrected.",16);
         group();text("Current keybox",22);text(loaded()?"Keybox loaded · Spoof hardware attestation "+(enabled()?"on":"off"):"No keybox imported",16);
         TextView state=text(status,16);if(red)state.setTextColor(dark()?0xffff8a80:0xffb3261e);
@@ -183,6 +184,12 @@ public final class KeyboxActivity extends Activity {
     private String property(String name){try{return (String)Class.forName("android.os.SemSystemProperties").getMethod("get",String.class,String.class).invoke(null,name,"");}catch(Exception e){return "";}}
     private boolean fresh(){try{long age=SystemClock.elapsedRealtime()-Long.parseLong(property("sys.unica.teesim.heartbeat"));return age>=0&&age<12000;}catch(Exception e){return false;}}
     private String backend(String name){return fresh()?(property("sys.unica.teesim."+name).equals("1")?"Yes":"No"):"Unavailable — backend not reporting";}
+    private String checkedTime(){return java.text.DateFormat.getTimeInstance(java.text.DateFormat.MEDIUM).format(new Date());}
+    private String statusDisplay(){statusChecked=checkedTime();return backendSummary()+"\nLast checked: "+statusChecked;}
+    private void refreshBackendStatus(){
+        if(backendView!=null)backendView.setText(statusDisplay());
+        Toast.makeText(this,fresh()?"Backend status refreshed":"Backend is not reporting fresh status",Toast.LENGTH_SHORT).show();
+    }
     private String backendSummary(){return "Enabled: "+(enabled()?"Yes":"No")+"\nKeybox loaded by interceptor: "+backend("loaded")+"\nConfiguration acknowledged: "+backend("ack")+"\nInterceptor connected: "+backend("connected");}
     private JSONObject config()throws JSONException{return Profiles.load(Settings.Secure.getString(getContentResolver(),Profiles.SETTING));}
     private JSONObject selected(JSONObject root)throws JSONException{return root.getJSONArray("profiles").getJSONObject(profileIndex);}
@@ -304,16 +311,17 @@ public final class KeyboxActivity extends Activity {
                 try{JSONObject old=Profiles.load(raw);root.put("keyboxes",old.getJSONObject("keyboxes"));}catch(JSONException invalid){/* Keep the raw configuration in the private backup for recovery. */}
                 if(raw!=null&&!Settings.Secure.putString(getContentResolver(),"unica_keybox_profiles_backup",raw))throw new IOException("Could not back up profiles");save(root);page="main";profileIndex=0;draw();}catch(Exception e){message("Restore defaults","Could not restore configuration");}}).show();}
     private void restoreBackup(){try{String raw=Settings.Secure.getString(getContentResolver(),"unica_keybox_profiles_backup");if(raw==null){message("Restore previous profiles","No previous profile configuration saved.");return;}JSONObject root=Profiles.load(raw);new AlertDialog.Builder(this).setTitle("Restore previous profiles?").setMessage("Reapply the configuration saved before restoring defaults.").setNegativeButton("Cancel",null).setPositiveButton("Restore",(d,w)->changed(root)).show();}catch(Exception e){message("Restore previous profiles","Saved backup is unavailable or invalid.");}}
-    private void diagnostics(){if(!page.equals("logs"))scrollView=null;page="logs";background(()->{try{return Diagnostics.read();}catch(Exception e){return Collections.singletonList("W · Backend · Logs unavailable; access denied or log reader failed");}},rows->{logRows=rows;draw();});}
+    private void diagnostics(){if(!page.equals("logs"))scrollView=null;page="logs";background(()->{try{return Diagnostics.read();}catch(Exception e){return Collections.singletonList("W · Backend · Logs unavailable; access denied or log reader failed");}},rows->{logRows=rows;logsChecked=checkedTime();draw();});}
     private String diagnosticText(){return "UN1CA keybox diagnostics\n"+backendSummary()+"\nConfiguration error: "+backend("config_error")+"\n\n"+Diagnostics.filter(logRows,logSeverity,logArea,logQuery);}
     private void drawDiagnostics(){
         group();text("Diagnostics",22);text("Event summaries omit key material, certificate contents, app names, aliases and device identifiers.",16);
-        button("Refresh logs","Read recent TEESimulator events",this::diagnostics);
+        text("Last read: "+logsChecked+" · "+logRows.size()+" event summaries",15);
+        button("Refresh logs","Read the latest 400 available TEESimulator events",this::diagnostics);
         button("Minimum severity",logSeverity,()->new AlertDialog.Builder(this).setTitle("Minimum severity").setItems(new String[]{"V","D","I","W","E","F"},(d,n)->{logSeverity=new String[]{"V","D","I","W","E","F"}[n];draw();}).show());
         button("Subsystem",logArea,()->{String[] areas={"All","Backend","Configuration","Connection","Injector","Harvest","Attestation"};new AlertDialog.Builder(this).setTitle("Subsystem").setItems(areas,(d,n)->{logArea=areas[n];draw();}).show();});
         button("Search events",logQuery.isEmpty()?"All summaries":logQuery,()->edit("Search events",logQuery,"Summary text",value->{logQuery=value;draw();}));
         button("Export redacted diagnostics","Save the displayed status and filtered event summaries",()->{Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT).setType("text/plain").addCategory(Intent.CATEGORY_OPENABLE).putExtra(Intent.EXTRA_TITLE,"unica-keybox-diagnostics.txt");exportSnapshot=diagnosticText();startActivityForResult(intent,44);});
-        group();TextView logs=text(Diagnostics.filter(logRows,logSeverity,logArea,logQuery),15);logs.setTextIsSelectable(true);
+        group();TextView logs=text(logRows.isEmpty()?"No TEESimulator events remain in the device log buffer. Refresh after an attestation request.":Diagnostics.filter(logRows,logSeverity,logArea,logQuery),15);logs.setTextIsSelectable(true);
     }
 
     private void browse(){

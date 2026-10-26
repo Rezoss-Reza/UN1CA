@@ -12,19 +12,35 @@ import java.util.regex.*;
 final class Diagnostics {
     private static final Pattern HEADER=Pattern.compile("^([VDIWEF])/TEESimulator\\s*\\(\\s*\\d+\\):\\s*(.*)$");
     static List<String> read()throws Exception {
-        Process process=new ProcessBuilder("/system/bin/logcat","-d","-t","400","-v","brief","TEESimulator:V","*:S").redirectErrorStream(true).start();
+        // -t limits the global buffer BEFORE the tag filter; busy Settings activity can
+        // otherwise hide every backend event. Drain the tagged snapshot, retaining only
+        // the final 400 redacted summaries in memory.
+        Process process=new ProcessBuilder("/system/bin/logcat","-d","-v","brief","-s","TEESimulator:V","*:S").redirectErrorStream(true).start();
         java.util.concurrent.ExecutorService executor=java.util.concurrent.Executors.newSingleThreadExecutor();
         try{
-            java.util.concurrent.Future<byte[]> result=executor.submit(()->Keybox.read(process.getInputStream(),512*1024));
-            byte[] bytes=result.get(8,TimeUnit.SECONDS);
+            java.util.concurrent.Future<List<String>> result=executor.submit(()->collect(process.getInputStream()));
+            List<String> rows=result.get(8,TimeUnit.SECONDS);
             if(!process.waitFor(2,TimeUnit.SECONDS)||process.exitValue()!=0)throw new IOException("Logs unavailable");
-            List<String> rows=new ArrayList<>();
-            for(String line:new String(bytes,StandardCharsets.UTF_8).split("\\n")){String safe=sanitize(line);if(safe!=null)rows.add(safe);}
             return rows;
         }finally{process.destroyForcibly();executor.shutdownNow();}
     }
+    static List<String> collect(InputStream input)throws IOException {
+        ArrayDeque<String> rows=new ArrayDeque<>();
+        // Bound individual lines as well as retained history. Oversized raw lines are
+        // discarded without ever entering the exportable event list.
+        Reader reader=new BufferedReader(new InputStreamReader(input,StandardCharsets.UTF_8));
+        StringBuilder line=new StringBuilder();boolean oversized=false;int ch;
+        while((ch=reader.read())!=-1){
+            if(ch=='\n'){
+                if(!oversized){String safe=sanitize(line.toString());if(safe!=null){if(rows.size()==400)rows.removeFirst();rows.addLast(safe);}}
+                line.setLength(0);oversized=false;
+            }else if(!oversized){if(line.length()<16384)line.append((char)ch);else{line.setLength(0);oversized=true;}}
+        }
+        if(!oversized&&line.length()>0){String safe=sanitize(line.toString());if(safe!=null){if(rows.size()==400)rows.removeFirst();rows.addLast(safe);}}
+        return new ArrayList<>(rows);
+    }
     static String sanitize(String line){
-        Matcher m=HEADER.matcher(line);if(!m.matches())return null;
+        Matcher m=HEADER.matcher(line.endsWith("\r")?line.substring(0,line.length()-1):line);if(!m.matches())return null;
         String raw=m.group(2),event="Backend event (details redacted)";
         String area="Backend";
         if(raw.startsWith("dmn RomApp:")){area="Configuration";
