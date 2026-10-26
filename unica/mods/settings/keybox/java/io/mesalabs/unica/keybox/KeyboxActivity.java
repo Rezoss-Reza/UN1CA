@@ -156,6 +156,10 @@ public final class KeyboxActivity extends Activity {
         // WebView is prohibited in Settings' system UID, including named processes.
         // Only this normal-UID browser returns a URL; XML validation and writes stay here.
         try{startActivityForResult(new Intent().setClassName("io.mesalabs.unica.keybox.browser","io.mesalabs.unica.keybox.browser.RepositoryActivity"),42);}
-        catch(ActivityNotFoundException|SecurityException e){failure("Repository browser is unavailable. Install a ROM containing UnicaKeyboxBrowser.");}
+        catch(ActivityNotFoundException|SecurityException e){
+            // A copied APK may not be registered by PackageManager. Keep browsing usable.
+            try{startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse("https://keybox.kowx712.cc/")).addCategory(Intent.CATEGORY_BROWSABLE));Toast.makeText(this,"Download a keybox from the repository, then import it with Local.",Toast.LENGTH_LONG).show();}
+            catch(ActivityNotFoundException|SecurityException unavailable){failure("No web browser is available to open https://keybox.kowx712.cc/");}
+        }
     }
 }

@@ -10,6 +10,8 @@ settings = (root / 'java/io/mesalabs/unica/keybox/KeyboxActivity.java').read_tex
 assert 'new WebView(' not in settings
 assert 'android.webkit.' not in settings
 assert 'startActivityForResult(new Intent().setClassName(' in settings
+assert 'Intent.ACTION_VIEW,Uri.parse("https://keybox.kowx712.cc/")' in settings
+assert 'Intent.CATEGORY_BROWSABLE' in settings
 assert 'Settings.Secure.putString' in settings
 
 android = '{http://schemas.android.com/apk/res/android}'

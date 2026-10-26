@@ -1,8 +1,7 @@
 id=island
 name=Dynamic Island (native ROM)
-author=The Cipher Project
+author=sampple-korea
 description=Native SystemUI status-bar island with a dedicated UN1CA Settings menu.
-telegram=https://t.me/thecipherproject
 upstreamAuthor=sampple-korea
 source=https://github.com/sampple-korea/dynamicisland
 sourceRevision=551787fc84aadb669d274ebd6baf92237fca5524

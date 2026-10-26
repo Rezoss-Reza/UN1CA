@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const html = fs.readFileSync(process.argv[2], 'utf8');
+assert(html.includes('src="https://keybox.kowx712.cc/"'));
 const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 const deliveries = [], handshakes = [];
 let listener, tick;

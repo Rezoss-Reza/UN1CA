@@ -2894,7 +2894,7 @@ diff --git a/smali_classes4/io/mesalabs/unica/keybox/KeyboxActivity.smali b/smal
 new file mode 100644
 --- /dev/null
 +++ b/smali_classes4/io/mesalabs/unica/keybox/KeyboxActivity.smali
-@@ -0,0 +1,3406 @@
+@@ -0,0 +1,3448 @@
 +.class public final Lio/mesalabs/unica/keybox/KeyboxActivity;
 +.super Landroid/app/Activity;
 +.source "KeyboxActivity.java"
@@ -3075,18 +3075,60 @@ new file mode 100644
 +    .catch Landroid/content/ActivityNotFoundException; {:try_start_5 .. :try_end_17} :catch_18
 +    .catch Ljava/lang/SecurityException; {:try_start_5 .. :try_end_17} :catch_18
 +
-+    .line 159
-+    goto :goto_1e
++    .line 163
++    goto :goto_40
 +
++    .line 159
 +    :catch_18
 +    move-exception v0
 +
-+    const-string v0, "Repository browser is unavailable. Install a ROM containing UnicaKeyboxBrowser."
++    .line 161
++    :try_start_19
++    new-instance v0, Landroid/content/Intent;
++
++    const-string v1, "android.intent.action.VIEW"
++
++    const-string v2, "https://keybox.kowx712.cc/"
++
++    invoke-static {v2}, Landroid/net/Uri;->parse(Ljava/lang/String;)Landroid/net/Uri;
++
++    move-result-object v2
++
++    invoke-direct {v0, v1, v2}, Landroid/content/Intent;-><init>(Ljava/lang/String;Landroid/net/Uri;)V
++
++    const-string v1, "android.intent.category.BROWSABLE"
++
++    invoke-virtual {v0, v1}, Landroid/content/Intent;->addCategory(Ljava/lang/String;)Landroid/content/Intent;
++
++    move-result-object v0
++
++    invoke-virtual {p0, v0}, Lio/mesalabs/unica/keybox/KeyboxActivity;->startActivity(Landroid/content/Intent;)V
++
++    const-string v0, "Download a keybox from the repository, then import it with Local."
++
++    const/4 v1, 0x1
++
++    invoke-static {p0, v0, v1}, Landroid/widget/Toast;->makeText(Landroid/content/Context;Ljava/lang/CharSequence;I)Landroid/widget/Toast;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Landroid/widget/Toast;->show()V
++    :try_end_39
++    .catch Landroid/content/ActivityNotFoundException; {:try_start_19 .. :try_end_39} :catch_3a
++    .catch Ljava/lang/SecurityException; {:try_start_19 .. :try_end_39} :catch_3a
++
++    .line 162
++    goto :goto_40
++
++    :catch_3a
++    move-exception v0
++
++    const-string v0, "No web browser is available to open https://keybox.kowx712.cc/"
 +
 +    invoke-direct {p0, v0}, Lio/mesalabs/unica/keybox/KeyboxActivity;->failure(Ljava/lang/String;)V
 +
-+    .line 160
-+    :goto_1e
++    .line 164
++    :goto_40
 +    return-void
 +.end method
 +

@@ -1,4 +1,4 @@
-# Native source port: sampple-korea/dynamicisland; module credits: The Cipher Project.
+# Native source port: sampple-korea/dynamicisland; module credits: sampple-korea.
 # Integration copyright (c) 2026 UN1CA contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 SKIPUNZIP=1
