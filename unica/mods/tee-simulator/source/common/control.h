@@ -73,6 +73,7 @@ typedef struct {
 // --- staging API, implemented by each router ---------------------------------
 
 // Start a new staging generation with the device-wide boot info (copied).
+void teesim_cfg_suspend(void);
 void teesim_cfg_begin(const TsBootInfo *boot);
 // Build one profile's TA and stage its routing. Returns false if the profile
 // failed to build (e.g. a bad keybox); such a profile is skipped, its apps fall

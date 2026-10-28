@@ -15,7 +15,20 @@ service unica-teesim /system/bin/sh /system/etc/unica/tee-simulator/daemon.sh
     # Repair restored/mislabeled state before init retries a failed daemon.
     onrestart restorecon_recursive --force /data/misc/unica-teesim
 
-on property:sys.boot_completed=1
+on property:sys.boot_completed=1 && property:persist.sys.unica.keybox=true
     # Revisit restored state after post-fs-data labeling and bypass cached directory digests.
+    restorecon_recursive --force /data/misc/unica-teesim
+    start unica-teesim
+
+# Closing the daemon connection suspends new routing without restarting keystore.
+on property:persist.sys.unica.keybox=false
+    stop unica-teesim
+    setprop sys.unica.teesim.ready 0
+    setprop sys.unica.teesim.connected 0
+    setprop sys.unica.teesim.ack 0
+    setprop sys.unica.teesim.loaded 0
+    setprop sys.unica.teesim.heartbeat 0
+
+on property:persist.sys.unica.keybox=true && property:sys.boot_completed=1
     restorecon_recursive --force /data/misc/unica-teesim
     start unica-teesim

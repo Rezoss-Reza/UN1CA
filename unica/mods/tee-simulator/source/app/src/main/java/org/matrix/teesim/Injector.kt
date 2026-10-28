@@ -121,6 +121,10 @@ class Injector(private val moduleDir: File) {
 
     private fun inject(pid: Int): Boolean {
         return try {
+            StartupGuard.check()
+            val maps = File("/proc/$pid/maps").readText()
+            require(!maps.contains("libteesim_keymint.so") &&
+                !maps.contains("libunica_teesim.so")) { "TEE interceptor already loaded" }
             val proc =
                 ProcessBuilder(
                         injectBin.absolutePath,

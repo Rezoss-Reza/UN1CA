@@ -2,11 +2,9 @@
 <PreferenceScreen android:title="@string/unica_spoof_settings_title" settings:hierarchicalParentFragment="io.mesalabs.unica.settings.UnicaSettingsFragment" settings:topLevelPreferenceKey="unica_spoof_settings"
   xmlns:android="http://schemas.android.com/apk/res/android" xmlns:settings="http://schemas.android.com/apk/res-auto">
     <SecSwitchPreference android:title="@string/unica_keybox_title" android:key="unica_keybox" android:summary="@string/summary_placeholder" settings:controller="io.mesalabs.unica.settings.keybox.KeyboxPreferenceController" />
-    <SecPreference android:title="Manage Keybox" android:key="unica_keybox_settings" android:summary="Backend status, keybox details, target apps, diagnostics and profiles">
+    <SecPreference android:title="Manage Keybox" android:key="unica_keybox_settings" android:summary="Keyboxes, app profiles and backend status">
         <intent android:targetPackage="com.android.settings" android:targetClass="io.mesalabs.unica.keybox.KeyboxActivity" />
     </SecPreference>
-    <SecPreference android:title="@string/unica_keybox_load_title" android:key="unica_keybox_load" />
-    <SecPreference android:title="@string/unica_keybox_clear_title" android:key="unica_keybox_clear" settings:controller="io.mesalabs.unica.settings.keybox.KeyboxClearPreferenceController" />
     <com.samsung.android.settings.widget.SecInsetCategoryPreference />
     <SecSwitchPreference android:title="@string/unica_pif_title" android:key="unica_pif" android:summary="@string/summary_placeholder" settings:controller="io.mesalabs.unica.settings.pif.PIFPreferenceController" />
     <SecPreference android:title="@string/unica_pif_update_title" android:key="unica_pif_update" settings:controller="io.mesalabs.unica.settings.pif.PIFUpdatePreferenceController" />
@@ -16,4 +14,10 @@
     </SecPreference>
     <com.samsung.android.settings.widget.SecInsetCategoryPreference />
     <SecPreference android:title="@string/unica_hma_privacy_title" android:key="unica_hma_privacy" android:summary="@string/unica_hma_privacy_summary" android:fragment="io.mesalabs.unica.settings.spoof.HideDeveloperStatusFragment" />
+    <com.samsung.android.settings.widget.SecInsetCategoryPreference />
+    <SecPreferenceCategory android:title="@string/unica_movecert_title" android:key="unica_movecert_group">
+        <SecPreference android:title="@string/unica_movecert_manage" android:key="unica_movecert" android:summary="@string/unica_movecert_summary">
+            <intent android:targetPackage="com.android.settings" android:targetClass="io.mesalabs.unica.movecertificate.MoveCertificateActivity" />
+        </SecPreference>
+    </SecPreferenceCategory>
 </PreferenceScreen>

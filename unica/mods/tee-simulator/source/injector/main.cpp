@@ -864,6 +864,14 @@ bool inject_library(int pid, const char *lib_path, const char *entry_name) {
         std::vector<lsplt::MapInfo> remote_map = lsplt::MapInfo::Scan(std::to_string(pid));
         std::vector<lsplt::MapInfo> local_map = lsplt::MapInfo::Scan();
         LOGD("inject_library: maps remote=%zu local=%zu", remote_map.size(), local_map.size());
+        // Re-check while the target is stopped: never initialize a second interceptor.
+        for (const auto &map : remote_map) {
+            if (map.path.find("libteesim_keymint.so") != std::string::npos ||
+                map.path.find("libunica_teesim.so") != std::string::npos) {
+                LOGE("inject_library: existing TEE interceptor; refusing duplicate injection");
+                return false;
+            }
+        }
 
         // 5. Find a suitable return address within libc.so for remote calls.
         // This address is used to ensure remote calls return to a safe and controlled location.

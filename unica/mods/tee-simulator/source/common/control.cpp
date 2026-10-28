@@ -415,6 +415,8 @@ void HandleConnection(int fd) {
     }
     // "hello" and unknown types are ignored (forward-compat).
   }
+  teesim_cfg_suspend();
+  LOGI("HandleConnection: daemon disconnected; new-request routing suspended");
   close(fd);
 }
 

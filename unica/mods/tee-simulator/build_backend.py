@@ -13,6 +13,8 @@ import tempfile
 import urllib.request
 import zipfile
 
+from check_sources import current
+
 ROOT = Path(__file__).resolve().parent
 
 
@@ -25,6 +27,7 @@ def build(args):
     if work == ROOT or ROOT in work.parents:
         raise SystemExit("Build directory must be outside the mod source")
     work.mkdir(parents=True, exist_ok=True)
+    input_snapshot = current(ROOT)
     source = work / "source"
     shutil.copytree(ROOT / "source", source, dirs_exist_ok=True)
     lock = json.loads((ROOT / "upstream.lock.json").read_text())
@@ -129,6 +132,8 @@ def build(args):
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dest)
         run(ndk / "toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip", "--strip-debug", dest)
+    if current(ROOT) != input_snapshot:
+        raise SystemExit("Backend inputs changed during build; refusing to publish stale payload")
     payload = ROOT / "payload"
     if payload.exists():
         backup = Path(tempfile.mkdtemp(prefix="unica-teesim-payload-backup-", dir="/tmp"))
@@ -138,10 +143,7 @@ def build(args):
     manifest = "".join(f"{hashlib.sha256(f.read_bytes()).hexdigest()}  {f.relative_to(payload)}\n"
                        for f in sorted(payload.rglob("*")) if f.is_file())
     (ROOT / "payload.sha256").write_text(manifest)
-    sources = sorted(f for f in (ROOT / "source").rglob("*") if f.is_file())
-    sources += [ROOT / name for name in ("build_backend.py", "upstream.lock.json", "jvm-dependencies.sha256.json")]
-    (ROOT / "source.sha256").write_text("".join(
-        f"{hashlib.sha256(f.read_bytes()).hexdigest()}  {f.relative_to(ROOT)}\n" for f in sources))
+    (ROOT / "source.sha256").write_text(input_snapshot)
     provenance = {
         "upstream": lock["revision"], "abi": "arm64-v8a", "native_api_floor": 35,
         "rom_sdk": 37, "ndk": "28.2.13676358",

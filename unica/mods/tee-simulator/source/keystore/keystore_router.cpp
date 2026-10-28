@@ -197,6 +197,7 @@ std::map<IBinder*, Operation> g_ops;
 
 // The profile TA serving this uid, or null if the uid is not a target.
 TaPtr ProfileForUid(int uid) {
+  if (uid < 10000 || uid > 19999) return nullptr;
   std::lock_guard<std::mutex> lk(g_cfg_mutex);
   for (const auto& prof : g_profiles) {
     if (prof.uids.count(uid)) return prof.ta;
@@ -954,6 +955,12 @@ extern "C" char* teesim_rkp_reassert_json_alloc(void) { return strdup("[]"); }
 
 // Config-staging API (see common/control.h). teesim_cfg_begin/add_profile run on
 // the control thread; only teesim_cfg_commit touches the live routing tables.
+// Retain TAs for existing keys; suspend only new-request selection on OFF/disconnect.
+extern "C" void teesim_cfg_suspend(void) {
+  std::lock_guard<std::mutex> lk(g_cfg_mutex);
+  for (auto& p : g_profiles) p.uids.clear();
+}
+
 extern "C" void teesim_cfg_begin(const TsBootInfo* boot) {
   g_staging.clear();
   g_stage_vb_key.assign(boot->verified_boot_key,
@@ -1043,7 +1050,9 @@ extern "C" bool teesim_ks_handle(uint32_t code, const Parcel& data, Parcel* repl
   }
 
   bool done = false;
-  if (code == tx.generateKey)                done = HandleGenerateKey(uid, r.p, reply);
+  // ROM safety: never create new software operational keys through the legacy API.
+  // Retain handlers for existing simulator keys; all new creation stays in hardware.
+  if (code == tx.generateKey)                return false;
   else if (code == tx.getKeyCharacteristics) done = HandleGetKeyCharacteristics(uid, r.p, reply);
   else if (code == tx.exportKey)             done = HandleExportKey(uid, r.p, reply);
   else if (code == tx.attestKey)             done = HandleAttestKey(uid, r.p, reply);

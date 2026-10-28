@@ -1454,6 +1454,10 @@ object Harvester {
     }
 
     private fun persist(r: Record) {
+        // Re-read before starting a write: reject unknown formats and any seed rotation.
+        loadPersisted()?.let { prior ->
+            StorageContract.preserve(prior.effectiveBootKey(), r.effectiveBootKey())
+        }
         val atomic = android.util.AtomicFile(Const.harvestedFile)
         var stream: java.io.FileOutputStream? = null
         try {
@@ -1489,6 +1493,8 @@ object Harvester {
     fun toJson(r: Record): JSONObject =
         JSONObject().apply {
             put("version", 3)
+            put("storageContract", 1)
+            put("keyDerivation", "kmr-v1")
             put("harvestFailed", r.harvestFailed)
             put("verifiedBootKey", r.verifiedBootKey.toHex())
             put("verifiedBootHash", r.verifiedBootHash.toHex())
@@ -1539,6 +1545,12 @@ object Harvester {
     private fun fromJson(o: JSONObject): Record {
         val bootKey = decodeBytes(o.getString("verifiedBootKey"))
         val bootHash = decodeBytes(o.getString("verifiedBootHash"))
+        StorageContract.validate(
+            if (o.has("version")) o.getInt("version") else 1,
+            if (o.has("storageContract")) o.getInt("storageContract") else 1,
+            if (o.has("keyDerivation")) o.getString("keyDerivation") else "kmr-v1",
+            bootKey, bootHash,
+        )
         return Record(
             harvestFailed = o.optBoolean("harvestFailed", false),
             verifiedBootKey = bootKey,

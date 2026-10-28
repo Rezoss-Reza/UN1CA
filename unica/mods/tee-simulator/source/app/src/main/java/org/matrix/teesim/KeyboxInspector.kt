@@ -26,6 +26,34 @@ import org.w3c.dom.Element
  * linked, unrevoked chain is a genuine live keybox; a revoked or software-rooted one is not.
  */
 object KeyboxInspector {
+    @Volatile private var romIndex: Map<String, String>? = null
+    @Volatile private var romChains: List<Pair<String, Set<String>>>? = null
+    fun setRomSigners(profiles: JSONArray) {
+        val index = HashMap<String, String>()
+        val chains = ArrayList<Pair<String, Set<String>>>()
+        for (i in 0 until profiles.length()) {
+            try {
+            val p = profiles.getJSONObject(i)
+            val xml = String(java.util.Base64.getDecoder().decode(p.getString("keyboxB64")), Charsets.UTF_8)
+            require(!xml.contains("<!DOCTYPE") && !xml.contains("<!ENTITY"))
+            val root = newSafeBuilder().parse(org.xml.sax.InputSource(java.io.StringReader(xml))).documentElement
+            val keys = root.getElementsByTagName("Key")
+            for (j in 0 until keys.length) {
+                val certs = (keys.item(j) as Element).getElementsByTagName("Certificate")
+                val names = HashSet<String>()
+                for (k in 0 until certs.length) parsePem(certs.item(k).textContent)?.let {
+                    val dn = canonicalDn(it.subjectX500Principal)
+                    names.add(dn); index[dn] = p.getString("id")
+                }
+                if (names.isNotEmpty()) chains.add(p.getString("id") to names)
+            }
+            } catch (_: Exception) {
+                SystemLogger.warning("KeyboxInspector: signer metadata unavailable")
+            }
+        }
+        romIndex = index; romChains = chains
+    }
+
 
     private val NAME_RE = Regex("^[A-Za-z0-9._-]+\\.xml$")
 
@@ -76,6 +104,7 @@ object KeyboxInspector {
      * keybox simply contributes nothing.
      */
     fun signerIndex(): Map<String, String> {
+        romIndex?.let { return it }
         val out = HashMap<String, String>()
         val files =
             File(Const.DATA_DIR).listFiles { f -> f.isFile && NAME_RE.matches(f.name) }
@@ -105,6 +134,7 @@ object KeyboxInspector {
      * keybox. Best effort: an unparseable keybox or chain simply contributes nothing.
      */
     fun signerChains(): List<Pair<String, Set<String>>> {
+        romChains?.let { return it }
         val out = ArrayList<Pair<String, Set<String>>>()
         val files =
             File(Const.DATA_DIR).listFiles { f -> f.isFile && NAME_RE.matches(f.name) }

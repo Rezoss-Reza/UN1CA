@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Optional signed V73 asset package. Contains no CPU engine or inference service.
+# Optional signed V73 asset update for the QWEN system stub.
+# Requires the unified ROM/AIOS lookup; remove the old separate qwen.v73 APK
+# before migration because it owns the same V73_MODELS permission.
+# Contains no CPU engine or inference service.
 set -euo pipefail
 : "${SRC_DIR:?Source buildenv.sh dm3q first}"
 ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
@@ -57,11 +60,11 @@ import datetime, hashlib, json, sys
 apk, payload = map(Path, sys.argv[1:])
 contents = json.loads((payload/'CONTENTS.json').read_text())
 model = contents['system/etc/unica/now-nudge-v73/hybrid_llama_qnn.pte']
-fields = {'package':'io.mesalabs.rezoss.qwen.v73','versionCode':'5','versionName':'2.0-v73-modelpack',
+fields = {'package':'io.mesalabs.rezoss.qwen','versionCode':'6','versionName':'2.1-v73-unified',
           'apk':str(apk),'sizeBytes':str(apk.stat().st_size),'sha256':hashlib.file_digest(apk.open('rb'),'sha256').hexdigest(),
           'model':'Qwen3-0.6B-V73','modelSha256':model['sha256'],
           'contract':'qwen3-0.6b-sm8550-v73-1024-v1','builtAtUtc':datetime.datetime.now(datetime.timezone.utc).isoformat()}
 Path(str(apk)+'.version').write_text(''.join(f'{k}={v}\n' for k,v in fields.items()))
 PY
 sha256sum "$OUTPUT"
-echo 'package=io.mesalabs.rezoss.qwen.v73 versionCode=5 model=Qwen3-0.6B-V73 assets-only'
+echo 'package=io.mesalabs.rezoss.qwen versionCode=6 model=Qwen3-0.6B-V73 assets-only'

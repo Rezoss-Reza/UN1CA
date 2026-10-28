@@ -23,17 +23,18 @@ import org.json.*;
 
 /** Native Settings owner of all keybox writes. The repository receives no imported data. */
 public final class KeyboxActivity extends Activity {
-    private static final String SETTING="unica_keybox_data";
+    private static final String SETTING="unica_keybox_data", KEYBOX_METADATA="unica_keybox_metadata";
     private final ExecutorService worker=Executors.newSingleThreadExecutor();
     private final List<View> cards=new ArrayList<>();
     private LinearLayout content,card;
     private ScrollView scrollView;
     private boolean busy;
-    private String page="main",logSeverity="V",logArea="All",logQuery="",exportSnapshot;
+    private String page="main";
+    private final ArrayList<String> backPages=new ArrayList<>();
+    private final ArrayList<Integer> backProfiles=new ArrayList<>(),backScrolls=new ArrayList<>();
     private int profileIndex;
-    private List<String> logRows=new ArrayList<>();
     private TextView backendView;
-    private String statusChecked="",logsChecked="Not read yet";
+    private String statusChecked="";
     private final Handler refreshHandler=new Handler(Looper.getMainLooper());
     private final Runnable refreshStatus=new Runnable(){public void run(){if(backendView!=null)backendView.setText(statusDisplay());refreshHandler.postDelayed(this,3000);}};
     @Override protected void onResume(){super.onResume();refreshHandler.post(refreshStatus);}
@@ -43,16 +44,35 @@ public final class KeyboxActivity extends Activity {
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);setTitle("Manage Keybox");
-        if(state!=null){page=state.getString("page","main");profileIndex=state.getInt("profile",0);}
+        if(state!=null){page=state.getString("page","main");profileIndex=state.getInt("profile",0);
+            ArrayList<String> pages=state.getStringArrayList("backPages");ArrayList<Integer> profiles=state.getIntegerArrayList("backProfiles"),scrolls=state.getIntegerArrayList("backScrolls");
+            if(pages!=null&&profiles!=null&&scrolls!=null&&pages.size()==profiles.size()&&pages.size()==scrolls.size()){backPages.addAll(pages);backProfiles.addAll(profiles);backScrolls.addAll(scrolls);}}
+        if(!Arrays.asList("main","profiles","profile","keys","system","keyboxes").contains(page)){page="main";backPages.clear();backProfiles.clear();backScrolls.clear();}
+        getOnBackInvokedDispatcher().registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,()->{if(!back())finish();});
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
         if(getActionBar()!=null)getActionBar().setDisplayHomeAsUpEnabled(true);
         draw();checkStatus();
     }
-    @Override public void onSaveInstanceState(Bundle state){super.onSaveInstanceState(state);state.putString("page",page);state.putInt("profile",profileIndex);}
+    @Override public void onSaveInstanceState(Bundle state){super.onSaveInstanceState(state);state.putString("page",page);state.putInt("profile",profileIndex);state.putStringArrayList("backPages",backPages);state.putIntegerArrayList("backProfiles",backProfiles);state.putIntegerArrayList("backScrolls",backScrolls);}
     @Override protected void onDestroy(){worker.shutdownNow();super.onDestroy();}
     @Override public boolean onOptionsItemSelected(MenuItem item){if(item.getItemId()==android.R.id.home){onBackPressed();return true;}return super.onOptionsItemSelected(item);}
-    @Override public void onBackPressed(){if(busy){Toast.makeText(this,"Wait for the keybox operation to finish",Toast.LENGTH_SHORT).show();return;}if(!page.equals("main")){page=page.equals("profile")?"profiles":"main";profileIndex=0;scrollView=null;draw();return;}super.onBackPressed();}
+    @Override public void onBackPressed(){if(!back())super.onBackPressed();}
+    private boolean back(){
+        if(busy){Toast.makeText(this,"Wait for the keybox operation to finish",Toast.LENGTH_SHORT).show();return true;}
+        if(page.equals("main"))return false;
+        int scroll=0;
+        if(!backPages.isEmpty()){int last=backPages.size()-1;page=backPages.remove(last);profileIndex=backProfiles.remove(last);scroll=backScrolls.remove(last);}
+        else{page=page.equals("profile")?"profiles":"main";profileIndex=0;}
+        scrollView=null;draw();final int position=scroll;scrollView.post(()->scrollView.scrollTo(0,position));return true;
+    }
     private String current(){return Settings.Secure.getString(getContentResolver(),SETTING);}
+    private String currentName(){return Profiles.keyboxName(Settings.Secure.getString(getContentResolver(),KEYBOX_METADATA),current());}
+    private String importFilename(Uri uri){
+        try(android.database.Cursor cursor=getContentResolver().query(uri,new String[]{android.provider.OpenableColumns.DISPLAY_NAME},null,null,null)){
+            if(cursor!=null&&cursor.moveToFirst()){String name=cursor.getString(0);if(name!=null&&Profiles.validKeyboxName(name))return name;}
+        }catch(Exception ignored){}
+        String name=uri.getLastPathSegment();return name!=null&&Profiles.validKeyboxName(name)&&name.toLowerCase(Locale.ROOT).endsWith(".xml")?name:"keybox.xml";
+    }
     private boolean loaded(){String xml=current();return xml!=null&&!xml.trim().isEmpty();}
     private boolean enabled(){try{return (Boolean)Class.forName("android.os.SemSystemProperties").getMethod("getBoolean",String.class,boolean.class).invoke(null,"persist.sys.unica.keybox",false);}catch(Exception e){return false;}}
     private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
@@ -82,35 +102,26 @@ public final class KeyboxActivity extends Activity {
     }
     private void draw(){
         if(isFinishing()||isDestroyed())return;
-        setTitle(page.equals("main")?"Manage Keybox":page.equals("profiles")?"Advanced profiles":page.equals("profile")?"Profile settings":"Diagnostics");
+        setTitle(page.equals("main")?"Manage Keybox":page.equals("profiles")?"Profiles":page.equals("profile")?"Profile settings":page.equals("keys")?"Stored keys":page.equals("system")?"System":"Keyboxes");
         backendView=null;
         int previousScroll=scrollView==null?0:scrollView.getScrollY();
         cards.clear();ScrollView scroll=new ScrollView(this);scrollView=scroll;scroll.setFillViewport(true);scroll.setClipToPadding(false);content=new LinearLayout(this);content.setOrientation(1);content.setPadding(dp(16),dp(20),dp(16),dp(24));scroll.addView(content);setContentView(scroll);
         scroll.setOnApplyWindowInsetsListener((v,insets)->{android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars());v.setPadding(bars.left,bars.top,bars.right,bars.bottom);return insets;});
         if(!page.equals("main")){
-            try{if(page.equals("profiles"))drawProfiles();else if(page.equals("profile"))drawProfile();else drawDiagnostics();}
+            try{if(page.equals("profiles"))drawProfiles();else if(page.equals("profile"))drawProfile();else if(page.equals("keys"))drawKeys();else if(page.equals("system"))drawSystem();else if(page.equals("keyboxes"))drawKeyboxes();}
             catch(Exception error){group();text("Configuration unavailable",22);text("Restore default routing to recover. Your current imported keybox is retained.",16);button("Restore default routing","Back up existing configuration and use the current keybox",this::restore);}
             style();scroll.post(()->scroll.scrollTo(0,previousScroll));return;
         }
-        group();text("Backend status",22);backendView=text(statusDisplay(),16);
-        button("Refresh status","Read the latest backend acknowledgement and connection",this::refreshBackendStatus);
-        if(fresh()&&property("sys.unica.teesim.config_error").equals("1"))text("Configuration rejected. New interception is disabled until the configuration is corrected.",16);
-        group();text("Current keybox",22);text(loaded()?"Keybox loaded · Spoof hardware attestation "+(enabled()?"on":"off"):"No keybox imported",16);
-        TextView state=text(status,16);if(red)state.setTextColor(dark()?0xffff8a80:0xffb3261e);
-        button(busy?"Checking…":"Check revocation status","Uses Google's current certificate status list",this::checkStatus);
-        button("Keybox details","Algorithms, chains, validity, signatures, root authority and revocation",()->{String xml=current();if(xml==null||xml.trim().isEmpty())message("Keybox details","No keybox imported.");else showDetailsXml(xml);});
-        group();text("Attestation routing",22);
-        button("Target apps","Choose apps for the first profile · shared UIDs stay together",()->{profileIndex=0;targets();});
-        button("Advanced profiles","Multiple keyboxes and per-profile attestation settings",this::profiles);
-        button("Diagnostics","Filter backend events and export redacted summaries",this::diagnostics);
-        group();text("Install a keybox",22);
-        button("Local","Import keybox.xml from storage",()->{Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*").addCategory(Intent.CATEGORY_OPENABLE);startActivityForResult(intent,41);});
-        button("AOSP","Public software test keybox from Android",()->new AlertDialog.Builder(this).setTitle("Apply AOSP keybox?").setMessage("This public software test keybox is not hardware-backed and does not provide Google hardware attestation or guarantee Play Integrity. Its test certificates may be expired. It replaces the current imported keybox.").setNegativeButton("Cancel",null).setPositiveButton("Review",(d,w)->stage(()->asset(),true,"AOSP")).show());
-        button("Community repository","Browse Tricky Addon Keybox Repository",this::browse);
-        note("Importing replaces the current keybox. The existing spoofing switch stays unchanged. Keep the original file if you may need to restore it; clearing can affect access to simulator-created keys after a restart.");
-        group();text("Keybox data",22);
-        button("Clear imported keybox","Remove the XML from Settings",()->new AlertDialog.Builder(this).setTitle("Clear imported keybox?").setMessage("Existing simulator-created keys may require the same keybox after a daemon restart or reboot.").setNegativeButton("Cancel",null).setPositiveButton("Clear",(d,w)->{if(!Settings.Secure.putString(getContentResolver(),SETTING,null)){failure("Could not clear keybox");return;}status="No keybox imported";red=false;draw();}).show());
-        button("Restore default routing","Back up profiles; use the current keybox for owner-user apps",this::restore);
+        group();text("Manage Keybox",26);backendView=text(statusDisplay(),16);
+        button("Refresh status","Read current state and show confirmation",this::refreshBackendStatus);
+        group();text("TEESimulator",22);
+        button("Profiles","Keybox selection, attestation settings and target apps",this::profiles);
+        button("Keyboxes","Import, inspect, rename and remove signing keyboxes",()->navigate("keyboxes"));
+        button("Stored keys","Inspect and manage target-app keys",this::loadKeys);
+        button("System","Daemon, interceptor and captured hardware state",this::loadSystem);
+        note("Turning spoof hardware attestation OFF stops the control daemon and disables new spoofed requests. The injected library remains dormant for existing simulator keys until keystore exits. After rebooting while OFF, apps may need the backend enabled again to use those keys.");
+        group();text("Recovery",22);
+        button("Restore default routing","Back up profiles and use the current keybox",this::restore);
         button("Restore previous profiles","Undo the last restore of default routing",this::restoreBackup);
         style();
         scroll.post(()->scroll.scrollTo(0,previousScroll));
@@ -135,21 +146,21 @@ public final class KeyboxActivity extends Activity {
     private String readAsset(String name)throws Exception{try(InputStream in=getAssets().open("unica-keybox/"+name)){return new String(Keybox.read(in,Keybox.MAX_BYTES),StandardCharsets.UTF_8);}}
     private String asset()throws Exception{return readAsset("aosp-keybox.txt");}
     @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);
-        if(request==44){if(result==RESULT_OK&&data!=null&&data.getData()!=null&&exportSnapshot!=null){String snapshot=exportSnapshot;exportSnapshot=null;background(()->{try(OutputStream out=getContentResolver().openOutputStream(data.getData(),"wt")){if(out==null)throw new IOException();out.write(snapshot.getBytes(StandardCharsets.UTF_8));}return true;},ok->{draw();Toast.makeText(this,"Redacted diagnostics saved",Toast.LENGTH_SHORT).show();});}else exportSnapshot=null;return;}
         if(request==43){if(result==RESULT_OK&&data!=null&&data.getData()!=null)additional(data.getData());return;}
-        if(request==42&&result==RESULT_OK&&data!=null){String address=data.getStringExtra("url");try{URI uri=new URI(address);if(address.length()>4096||!"https".equals(uri.getScheme())||uri.getHost()==null||uri.getUserInfo()!=null)throw new IllegalArgumentException();new AlertDialog.Builder(this).setTitle("Download selected keybox?").setMessage("Source: "+uri.getHost()+"\nThe downloaded keybox will be validated before you can apply it.").setNegativeButton("Cancel",null).setPositiveButton("Download",(d,w)->stage(()->get(address,Keybox.MAX_BYTES),false,"community")).show();}catch(Exception e){failure("Repository selection unavailable");}return;}if(request==41&&result==RESULT_OK&&data!=null&&data.getData()!=null){Uri uri=data.getData();stage(()->{try(InputStream in=getContentResolver().openInputStream(uri)){return new String(Keybox.read(in,Keybox.MAX_BYTES),StandardCharsets.UTF_8).replaceFirst("^\\uFEFF","");}},false,"Local");}}
-    private static final class Candidate {String xml,summary;boolean aosp,revoked,unknown;}
+        if(request==42&&result==RESULT_OK&&data!=null){String address=data.getStringExtra("url");try{URI uri=new URI(address);if(address.length()>4096||!"https".equals(uri.getScheme())||uri.getHost()==null||uri.getUserInfo()!=null)throw new IllegalArgumentException();new AlertDialog.Builder(this).setTitle("Download selected keybox?").setMessage("Source: "+uri.getHost()+"\nThe downloaded keybox will be validated before you can apply it.").setNegativeButton("Cancel",null).setPositiveButton("Download",(d,w)->stage(()->get(address,Keybox.MAX_BYTES),false,importFilename(Uri.parse(address)))).show();}catch(Exception e){failure("Repository selection unavailable");}return;}if(request==41&&result==RESULT_OK&&data!=null&&data.getData()!=null){Uri uri=data.getData();stage(()->{try(InputStream in=getContentResolver().openInputStream(uri)){return new String(Keybox.read(in,Keybox.MAX_BYTES),StandardCharsets.UTF_8).replaceFirst("^\\uFEFF","");}},false,importFilename(uri));}}
+    private static final class Candidate {String xml,summary,metadata;boolean aosp,revoked,unknown;}
     private void stage(Job<String> source,boolean aosp,String label){
         background(()->{
-            Candidate c=new Candidate();c.xml=source.run().replaceFirst("^\\uFEFF","");c.aosp=aosp;Keybox parsed=Keybox.parse(c.xml,aosp);
+            Candidate c=new Candidate();c.xml=source.run().replaceFirst("^\\uFEFF","");c.metadata=Profiles.keyboxMetadata(label,c.xml).toString();c.aosp=aosp;Keybox parsed=Keybox.parse(c.xml,aosp);
             if(parsed.expired&&!aosp)throw new IllegalArgumentException("Expired certificate");
             try{c.revoked=parsed.revoked(revocations());}catch(Exception e){c.unknown=true;}
             c.summary=aosp?"AOSP software test keybox"+(parsed.expired?" · expired test certificate":""):c.revoked?"Revoked — listed by Google":c.unknown?"Revocation status unknown — could not fetch Google's list":"Not listed as revoked by Google";
             return c;
         },c->{
-            TextView warning=new TextView(this);warning.setPadding(dp(24),dp(16),dp(24),dp(16));warning.setText(c.summary+"\n\nReplace the current imported keybox with this "+label+" keybox?");if(c.revoked)warning.setTextColor(dark()?0xffff8a80:0xffb3261e);
+            TextView warning=new TextView(this);warning.setPadding(dp(24),dp(16),dp(24),dp(16));warning.setText(c.summary+"\n\nReplace the current imported keybox with "+label+"?");if(c.revoked)warning.setTextColor(dark()?0xffff8a80:0xffb3261e);
             AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Review keybox").setView(warning).setNegativeButton("Cancel",null).setPositiveButton(c.revoked?"Apply revoked keybox":"Apply",(d,w)->{
                 if(!Settings.Secure.putString(getContentResolver(),SETTING,c.xml)){failure("Could not save keybox");return;}
+                if(!Settings.Secure.putString(getContentResolver(),KEYBOX_METADATA,c.metadata))Toast.makeText(this,"Keybox imported; filename could not be saved",Toast.LENGTH_LONG).show();
                 status=c.summary;red=c.revoked;draw();
             }).create();dialog.show();
         });
@@ -183,7 +194,7 @@ public final class KeyboxActivity extends Activity {
     }
     private String property(String name){try{return (String)Class.forName("android.os.SemSystemProperties").getMethod("get",String.class,String.class).invoke(null,name,"");}catch(Exception e){return "";}}
     private boolean fresh(){try{long age=SystemClock.elapsedRealtime()-Long.parseLong(property("sys.unica.teesim.heartbeat"));return age>=0&&age<12000;}catch(Exception e){return false;}}
-    private String backend(String name){return fresh()?(property("sys.unica.teesim."+name).equals("1")?"Yes":"No"):"Unavailable — backend not reporting";}
+    private String backend(String name){if(!enabled()&&property("init.svc.unica-teesim").equals("stopped"))return "No — daemon stopped";return fresh()?(property("sys.unica.teesim."+name).equals("1")?"Yes":"No"):"Unavailable — backend not reporting";}
     private String checkedTime(){return java.text.DateFormat.getTimeInstance(java.text.DateFormat.MEDIUM).format(new Date());}
     private String statusDisplay(){statusChecked=checkedTime();return backendSummary()+"\nLast checked: "+statusChecked;}
     private void refreshBackendStatus(){
@@ -213,6 +224,15 @@ public final class KeyboxActivity extends Activity {
         EditText input=new EditText(this);input.setSingleLine(true);input.setText(initial);input.setHint(hint);input.setPadding(dp(24),dp(18),dp(24),dp(18));
         AlertDialog dialog=new AlertDialog.Builder(this).setTitle(title).setView(input).setNegativeButton("Cancel",null).setPositiveButton("Save",null).create();
         dialog.setOnShowListener(d->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{try{action.run(input.getText().toString().trim());dialog.dismiss();}catch(Exception e){input.setError(e instanceof JSONException||e instanceof IllegalArgumentException?e.getMessage():"Could not save");}}));dialog.show();
+    }
+    private void dropdown(String title,String current,String[] choices,ValueAction action){
+        LinearLayout row=new LinearLayout(this);row.setOrientation(1);row.setPaddingRelative(dp(24),dp(16),dp(24),dp(12));
+        row.addView(label(title,20,false));Spinner spinner=new Spinner(this,Spinner.MODE_DROPDOWN);
+        List<String> values=new ArrayList<>(Arrays.asList(choices));if(!values.contains(current))values.add(current);
+        ArrayAdapter<String> adapter=new ArrayAdapter<>(this,android.R.layout.simple_spinner_item,values);adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);spinner.setSelection(values.indexOf(current));spinner.setMinimumHeight(dp(48));spinner.setContentDescription(title);spinner.setEnabled(!busy);
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){public void onNothingSelected(AdapterView<?> parent){}public void onItemSelected(AdapterView<?> parent,View view,int position,long id){String value=values.get(position);if(value.equals(current))return;try{action.run(value);}catch(Exception e){message("Setting not saved","Could not save "+title.toLowerCase(Locale.ROOT));spinner.setSelection(values.indexOf(current));}}});
+        row.addView(spinner,new LinearLayout.LayoutParams(-1,-2));card.addView(row);
     }
     private void details(){
         try{JSONObject root=config();String xml=Profiles.xml(root,selected(root),current());
@@ -251,8 +271,8 @@ public final class KeyboxActivity extends Activity {
             },rows->{draw();
                 Set<String> chosen=new HashSet<>();JSONArray apps=p.getJSONArray("apps");for(int i=0;i<apps.length();i++)chosen.add(apps.getString(i));
                 LinearLayout layout=new LinearLayout(this);layout.setOrientation(1);layout.setPadding(dp(16),dp(8),dp(16),0);
-                Switch all=new Switch(this);all.setText("All remaining owner-user apps");all.setPadding(dp(8),dp(12),dp(8),dp(12));all.setChecked(p.getString("scope").equals("all"));layout.addView(all);
-                TextView help=label("Shared-UID packages are selected together. Apps assigned to another profile take priority over ‘all remaining’.",14,true);help.setPadding(dp(8),dp(8),dp(8),dp(12));layout.addView(help);
+                Switch all=new Switch(this);all.setText("All apps (advanced)");all.setPadding(dp(8),dp(12),dp(8),dp(12));all.setChecked(p.getString("scope").equals("all"));layout.addView(all);
+                TextView help=label("Select only apps whose attestation requests you want handled by TEESimulator. Shared-UID packages are selected together. All apps includes remaining main-user application UIDs; other profiles take priority.",14,true);help.setPadding(dp(8),dp(8),dp(8),dp(12));layout.addView(help);
                 EditText search=new EditText(this);search.setSingleLine(true);search.setHint("Search apps or packages");layout.addView(search);
                 ListView list=new ListView(this);list.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);layout.addView(list,new LinearLayout.LayoutParams(-1,dp(300)));
                 List<AppRow> visible=new ArrayList<>();
@@ -265,18 +285,12 @@ public final class KeyboxActivity extends Activity {
             });
         }catch(Exception e){message("Target apps","Saved configuration cannot be read. Restore default configuration to recover.");}
     }
-    private void profiles(){page="profiles";scrollView=null;draw();}
+    private void profiles(){navigate("profiles");}
     private void drawProfiles()throws Exception{
         JSONObject root=config();JSONArray profiles=root.getJSONArray("profiles");
-        group();text("Advanced profiles",22);text("Each profile has its own keybox, target apps and attestation settings.",16);
-        for(int i=0;i<profiles.length();i++){final int index=i;JSONObject p=profiles.getJSONObject(i);button(p.getString("id"),p.getString("keybox")+" · "+p.optString("mode","patch"),()->{profileIndex=index;page="profile";scrollView=null;draw();});}
+        group();text("Profiles",22);text("Each profile has its own keybox, target apps and attestation settings.",16);
+        for(int i=0;i<profiles.length();i++){final int index=i;JSONObject p=profiles.getJSONObject(i);button(p.getString("id"),p.getString("keybox")+" · "+p.optString("mode","patch"),()->{navigate("profile",index);});}
         button("Add profile","Start with no target apps",()->edit("Profile name","","Letters, numbers, dash or underscore",name->{JSONObject next=config();next.getJSONArray("profiles").put(Profiles.profile(name));save(next);}));
-        group();text("Saved keyboxes",22);JSONObject boxes=root.getJSONObject("keyboxes");
-        if(boxes.length()==0)text("No additional keyboxes saved",16);
-        for(Iterator<String> it=boxes.keys();it.hasNext();){String name=it.next();button(name,"Manage this saved keybox",()->manageBox(name));}
-        button("Save current keybox","Keep a named copy for use by profiles",()->edit("Save current keybox","","Unique name",name->{JSONObject next=config();if(current()==null)throw new IllegalArgumentException("Import a keybox first");if(next.getJSONObject("keyboxes").has(name))throw new IllegalArgumentException("Name already exists");next.getJSONObject("keyboxes").put(name,current());save(next);}));
-        button("Import additional keybox","Validate a local XML file without replacing the current keybox",()->{Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*").addCategory(Intent.CATEGORY_OPENABLE);startActivityForResult(intent,43);});
-        note("Keep original keybox files. Removing or replacing a signer can affect simulator-created keys after a restart.");
     }
     private void manageBox(String name){
         new AlertDialog.Builder(this).setTitle(name).setItems(new String[]{"Keybox details","Rename","Delete"},(dialog,which)->{
@@ -291,37 +305,122 @@ public final class KeyboxActivity extends Activity {
         JSONObject root=config();JSONObject p=selected(root);
         group();text(p.getString("id"),22);
         button("Profile name",p.getString("id"),()->edit("Profile name",p.optString("id"),"Unique name",name->{selected(root).put("id",name);save(root);}));
-        button("Keybox",p.getString("keybox").equals("current")?"Current imported keybox":p.getString("keybox"),()->{List<String> names=new ArrayList<>();names.add("current");for(Iterator<String> it=root.optJSONObject("keyboxes").keys();it.hasNext();)names.add(it.next());new AlertDialog.Builder(this).setTitle("Select keybox").setItems(names.toArray(new String[0]),(d,n)->{try{p.put("keybox",names.get(n));changed(root);}catch(Exception e){message("Keybox","Could not select keybox");}}).show();});
+        button("Keybox",p.getString("keybox").equals("current")?currentName():p.getString("keybox"),()->{List<String> names=new ArrayList<>();names.add("current");for(Iterator<String> it=root.optJSONObject("keyboxes").keys();it.hasNext();)names.add(it.next());List<String> labels=new ArrayList<>(names);labels.set(0,"Current · "+currentName());new AlertDialog.Builder(this).setTitle("Select keybox").setItems(labels.toArray(new String[0]),(d,n)->{try{p.put("keybox",names.get(n));changed(root);}catch(Exception e){message("Keybox","Could not select keybox");}}).show();});
         button("Keybox details","Certificates, signatures and revocation",this::details);
-        button("Target apps",p.getString("scope").equals("all")?"All remaining owner-user apps":p.getJSONArray("apps").length()+" selected packages",this::targets);
+        button("Target apps",p.getString("scope").equals("all")?"All apps (advanced)":p.getJSONArray("apps").length()+" selected packages",this::targets);
         button("Operation mode",p.optString("mode","patch"),()->new AlertDialog.Builder(this).setTitle("Operation mode").setItems(new String[]{"Patch · keep hardware keys","Generation · create software keys"},(d,n)->new AlertDialog.Builder(this).setTitle("Change operation mode?").setMessage("This changes how new keys are created and attested. Existing keys are not deleted. App compatibility may change.").setNegativeButton("Cancel",null).setPositiveButton("Apply",(confirm,w)->{try{p.put("mode",n==0?"patch":"generation");changed(root);}catch(Exception e){message("Profile","Could not change operation mode");}}).show()).show());
         group();text("Patch & OS levels",22);
-        button("OS version",p.optString("osVersion","system_property"),()->edit("OS version",p.optString("osVersion","system_property"),"system_property, harvested or Android version",value->{p.put("osVersion",value);save(root);}));
+        dropdown("OS version",p.optString("osVersion","system_property"),new String[]{"system_property"},value->{p.put("osVersion",value);save(root);});
         JSONObject levels=p.optJSONObject("patchLevel");if(levels==null){levels=new JSONObject();p.put("patchLevel",levels);}final JSONObject patch=levels;
-        for(String field:new String[]{"system","vendor","boot"})button(field.substring(0,1).toUpperCase(Locale.ROOT)+field.substring(1)+" patch",patch.optString(field,"system_property"),()->edit("Patch level",patch.optString(field,"system_property"),"YYYY-MM-DD, system_property, harvested or no",value->{patch.put(field,value);save(root);}));
-        note("Defaults use the ROM build properties. An override changes the attested value; it does not install a security update.");
-        group();text("Device identity",22);JSONObject ids=p.optJSONObject("deviceIds");if(ids==null){ids=new JSONObject();p.put("deviceIds",ids);}final JSONObject identity=ids;
-        for(String field:Profiles.IDS)button(field.substring(0,1).toUpperCase(Locale.ROOT)+field.substring(1),identity.optString(field,"").isEmpty()?"Use captured device value":identity.optString(field),()->edit(field,identity.optString(field,""),"Empty uses captured value",value->{identity.put(field,value);save(root);}));
-        group();button("Delete profile","Keep at least one profile",()->new AlertDialog.Builder(this).setTitle("Delete profile?").setMessage("New attestation requests will use the remaining routing rules. Keep the keybox needed by existing simulator keys.").setNegativeButton("Cancel",null).setPositiveButton("Delete",(d,w)->{try{JSONObject next=config();next.getJSONArray("profiles").remove(profileIndex);save(next);profileIndex=0;page="profiles";draw();}catch(Exception e){message("Profile retained","Keep at least one profile.");}}).show());
+        for(String field:new String[]{"system","vendor","boot"})dropdown(friendly(field)+" patch",patch.optString(field,"system_property"),
+            field.equals("system")?new String[]{"system_property","today","no"}:new String[]{"system_property","YYYY-MM-05","today","no"},value->{patch.put(field,value);save(root);});
+        note("system_property uses the ROM build value. today uses the current date; YYYY-MM-05 uses the fifth of the current month. no sets the reported patch value to zero. These settings do not install security updates. Device identity uses captured defaults.");
+        group();button("Delete profile","Keep at least one profile",()->new AlertDialog.Builder(this).setTitle("Delete profile?").setMessage("New attestation requests will use the remaining routing rules. Keep the keybox needed by existing simulator keys.").setNegativeButton("Cancel",null).setPositiveButton("Delete",(d,w)->{try{JSONObject next=config();next.getJSONArray("profiles").remove(profileIndex);save(next);back();}catch(Exception e){message("Profile retained","Keep at least one profile.");}}).show());
     }
     private void additional(Uri uri){
-        background(()->{String xml;try(InputStream in=getContentResolver().openInputStream(uri)){xml=new String(Keybox.read(in,Keybox.MAX_BYTES),StandardCharsets.UTF_8).replaceFirst("^\\uFEFF","");}boolean aosp=xml.equals(asset());Keybox parsed=Keybox.parse(xml,aosp);if(parsed.expired&&!aosp)throw new IllegalArgumentException("Expired certificate");return xml;},xml->{draw();new AlertDialog.Builder(this).setTitle("Save additional keybox?").setMessage("Certificate signatures and private-key matching passed. Check revocation in Keybox details before assigning it to apps. This does not replace your current keybox.").setNegativeButton("Cancel",null).setPositiveButton("Name keybox",(d,w)->edit("Keybox name","","Unique name",name->{JSONObject root=config();if(root.getJSONObject("keyboxes").has(name))throw new IllegalArgumentException("Name already exists");root.getJSONObject("keyboxes").put(name,xml);save(root);})).show();});
+        background(()->{String xml;try(InputStream in=getContentResolver().openInputStream(uri)){xml=new String(Keybox.read(in,Keybox.MAX_BYTES),StandardCharsets.UTF_8).replaceFirst("^\\uFEFF","");}boolean aosp=xml.equals(asset());Keybox parsed=Keybox.parse(xml,aosp);if(parsed.expired&&!aosp)throw new IllegalArgumentException("Expired certificate");return new String[]{importFilename(uri),xml};},result->{
+            draw();new AlertDialog.Builder(this).setTitle("Save "+result[0]+"?").setMessage("Certificate signatures and private-key matching passed. Check revocation in Keybox details before assigning it to apps. The filename is retained as the keybox name.").setNegativeButton("Cancel",null).setPositiveButton("Save",(d,w)->{
+                try{JSONObject root=config();if(root.getJSONObject("keyboxes").has(result[0]))throw new IllegalArgumentException("A keybox with this filename already exists. Rename the saved keybox or the file before importing.");root.getJSONObject("keyboxes").put(result[0],result[1]);save(root);}catch(Exception e){message("Keybox not saved",e instanceof IllegalArgumentException?e.getMessage():"Could not save additional keybox");}
+            }).show();});
     }
-    private void restore(){new AlertDialog.Builder(this).setTitle("Restore default routing?").setMessage("Use the current imported keybox in patch mode for all owner-user application UIDs. Your previous profiles are backed up for restoration. Additional keyboxes stay saved.").setNegativeButton("Cancel",null).setPositiveButton("Restore",(d,w)->{try{String raw=Settings.Secure.getString(getContentResolver(),Profiles.SETTING);JSONObject root=Profiles.defaults();
+    private void restore(){new AlertDialog.Builder(this).setTitle("Restore default routing?").setMessage("Use the current imported keybox in patch mode for Key Attestation, Google Wallet, Google Play services and Play Store. Other apps stay on real hardware. Your previous profiles are backed up for restoration. Additional keyboxes stay saved.").setNegativeButton("Cancel",null).setPositiveButton("Restore",(d,w)->{try{String raw=Settings.Secure.getString(getContentResolver(),Profiles.SETTING);JSONObject root=Profiles.defaults();
                 try{JSONObject old=Profiles.load(raw);root.put("keyboxes",old.getJSONObject("keyboxes"));}catch(JSONException invalid){/* Keep the raw configuration in the private backup for recovery. */}
-                if(raw!=null&&!Settings.Secure.putString(getContentResolver(),"unica_keybox_profiles_backup",raw))throw new IOException("Could not back up profiles");save(root);page="main";profileIndex=0;draw();}catch(Exception e){message("Restore defaults","Could not restore configuration");}}).show();}
+                if(raw!=null&&!Settings.Secure.putString(getContentResolver(),"unica_keybox_profiles_backup",raw))throw new IOException("Could not back up profiles");save(root);page="main";profileIndex=0;backPages.clear();backProfiles.clear();backScrolls.clear();scrollView=null;draw();}catch(Exception e){message("Restore defaults","Could not restore configuration");}}).show();}
     private void restoreBackup(){try{String raw=Settings.Secure.getString(getContentResolver(),"unica_keybox_profiles_backup");if(raw==null){message("Restore previous profiles","No previous profile configuration saved.");return;}JSONObject root=Profiles.load(raw);new AlertDialog.Builder(this).setTitle("Restore previous profiles?").setMessage("Reapply the configuration saved before restoring defaults.").setNegativeButton("Cancel",null).setPositiveButton("Restore",(d,w)->changed(root)).show();}catch(Exception e){message("Restore previous profiles","Saved backup is unavailable or invalid.");}}
-    private void diagnostics(){if(!page.equals("logs"))scrollView=null;page="logs";background(()->{try{return Diagnostics.read();}catch(Exception e){return Collections.singletonList("W · Backend · Logs unavailable; access denied or log reader failed");}},rows->{logRows=rows;logsChecked=checkedTime();draw();});}
-    private String diagnosticText(){return "UN1CA keybox diagnostics\n"+backendSummary()+"\nConfiguration error: "+backend("config_error")+"\n\n"+Diagnostics.filter(logRows,logSeverity,logArea,logQuery);}
-    private void drawDiagnostics(){
-        group();text("Diagnostics",22);text("Event summaries omit key material, certificate contents, app names, aliases and device identifiers.",16);
-        text("Last read: "+logsChecked+" · "+logRows.size()+" event summaries",15);
-        button("Refresh logs","Read the latest 400 available TEESimulator events",this::diagnostics);
-        button("Minimum severity",logSeverity,()->new AlertDialog.Builder(this).setTitle("Minimum severity").setItems(new String[]{"V","D","I","W","E","F"},(d,n)->{logSeverity=new String[]{"V","D","I","W","E","F"}[n];draw();}).show());
-        button("Subsystem",logArea,()->{String[] areas={"All","Backend","Configuration","Connection","Injector","Harvest","Attestation"};new AlertDialog.Builder(this).setTitle("Subsystem").setItems(areas,(d,n)->{logArea=areas[n];draw();}).show();});
-        button("Search events",logQuery.isEmpty()?"All summaries":logQuery,()->edit("Search events",logQuery,"Summary text",value->{logQuery=value;draw();}));
-        button("Export redacted diagnostics","Save the displayed status and filtered event summaries",()->{Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT).setType("text/plain").addCategory(Intent.CATEGORY_OPENABLE).putExtra(Intent.EXTRA_TITLE,"unica-keybox-diagnostics.txt");exportSnapshot=diagnosticText();startActivityForResult(intent,44);});
-        group();TextView logs=text(logRows.isEmpty()?"No TEESimulator events remain in the device log buffer. Refresh after an attestation request.":Diagnostics.filter(logRows,logSeverity,logArea,logQuery),15);logs.setTextIsSelectable(true);
+    private JSONObject systemData=new JSONObject(),keyData=new JSONObject();
+    private String backendError="",keyQuery="";
+    private boolean spoofedKeysOnly=true;
+    private int keyOffset;
+    private final Set<String> selectedKeys=new HashSet<>();
+    private void navigate(String next){navigate(next,profileIndex);}
+    private void navigate(String next,int index){
+        if(!page.equals(next)){backPages.add(page);backProfiles.add(profileIndex);backScrolls.add(scrollView==null?0:scrollView.getScrollY());scrollView=null;}
+        page=next;profileIndex=index;draw();
+    }
+    private void backendQuery(JSONObject request,Done<JSONObject> done){
+        background(()->{try{return Backend.call(request);}catch(Exception e){return new JSONObject().put("ok",false).put("error",e instanceof IllegalStateException?e.getMessage():"Backend unavailable. Enable spoofing and check System status.");}},result->{
+            if(!result.optBoolean("ok")){backendError=result.optString("error");draw();return;}
+            backendError="";done.run(result);
+        });
+    }
+    private void loadSystem(){navigate("system");try{backendQuery(new JSONObject().put("action","system"),result->{systemData=result;draw();});}catch(Exception e){message("System","Could not read backend state");}}
+    private void loadKeys(){navigate("keys");try{backendQuery(new JSONObject().put("action","keys").put("query",keyQuery).put("spoofedOnly",spoofedKeysOnly).put("offset",keyOffset),result->{keyData=result;draw();});}catch(Exception e){message("Stored keys","Could not read keys");}}
+    private String friendly(String name){String s=name.replaceAll("([a-z])([A-Z])","$1 $2").replace('_',' ');return s.isEmpty()?s:s.substring(0,1).toUpperCase(Locale.ROOT)+s.substring(1);}
+    private String describe(JSONObject value){
+        StringBuilder text=new StringBuilder();for(Iterator<String> keys=value.keys();keys.hasNext();){String key=keys.next();Object item=value.opt(key);
+            text.append(friendly(key)).append(": ");
+            if(item instanceof JSONObject)text.append('\n').append(describe((JSONObject)item));else text.append(item==JSONObject.NULL?"Not available":String.valueOf(item));
+            text.append("\n\n");}return text.toString();
+    }
+    private void drawSystem(){
+        group();text("System",22);backendView=text(statusDisplay(),16);
+        button("Refresh system status","Read the backend, hook and captured state",this::loadSystem);
+        if(!backendError.isEmpty())text(backendError,16);
+        if(!enabled())note("TEESimulator is stopped. Enable spoof hardware attestation to inspect its runtime state.");
+        group();text("Interceptor",22);text("Hook: "+systemData.optString("hook","Not available")+"\nAndroid API: "+systemData.optInt("api",0),16);
+        JSONObject harvest=systemData.optJSONObject("harvest");
+        group();text("Harvest & device state",22);
+        if(harvest==null)text("No runtime harvest available",16);else{
+            button("Captured hardware state","Values obtained from the hardware and their effective overrides",()->message("Harvest & device state",describe(harvest)));
+            button("TrustedEnvironment / StrongBox","Inspect security level and attestation versions",()->{
+                StringBuilder s=new StringBuilder();for(String key:new String[]{"harvestFailed","attestationSecurityLevel","keymasterSecurityLevel","attestationVersion","keymasterVersion","strongBoxAvailable","strongBoxAttestationVersion"})s.append(friendly(key)).append(": ").append(harvest.opt(key)).append('\n');
+                message("Security levels",s.toString());});
+        }
+        if(harvest!=null){JSONObject overrides=harvest.optJSONObject("overrides");if(overrides!=null){
+            for(String field:new String[]{"attestationSecurityLevel","keymasterSecurityLevel","attestationVersion","keymasterVersion"}){
+                JSONObject entry=overrides.optJSONObject(field);if(entry==null||!entry.optBoolean("editable"))continue;
+                button(friendly(field),entry.optString("value")+" · "+entry.optString("source"),()->edit(friendly(field),entry.optString("value"),"Empty restores the captured default",value->{
+                    if(!value.isEmpty()){int n=Integer.parseInt(value);boolean level=field.endsWith("SecurityLevel");if((level&&(n<0||n>2))||(!level&&(n<1||n>100000)))throw new IllegalArgumentException("Value out of range");}
+                    String raw=Settings.Secure.getString(getContentResolver(),"unica_teesim_overrides");JSONObject next=raw==null?new JSONObject():new JSONObject(raw);
+                    if(value.isEmpty())next.remove(field);else next.put(field,value);
+                    if(!Settings.Secure.putString(getContentResolver(),"unica_teesim_overrides",next.toString()))throw new IOException("Could not save override");
+                    Toast.makeText(this,"Saved · refresh after the backend applies the change",Toast.LENGTH_SHORT).show();
+                }));
+            }
+        }}
+        note("The frozen boot key and hash protect existing simulator keys and cannot be edited here. Per-profile OS and patch fields are in Profiles. Device identity uses captured defaults.");
+    }
+    private void drawKeys()throws Exception{
+        group();text("Stored keys",22);text("Only keys belonging to configured target apps are listed. Deleting a key can permanently remove access to app data protected by it.",16);
+        if(!backendError.isEmpty())text(backendError,16);
+        button("Refresh keys","Read current target-app key metadata",this::loadKeys);
+        button("Search",keyQuery.isEmpty()?"Alias, app, keybox or class":keyQuery,()->edit("Search keys",keyQuery,"Alias, app, keybox or class",value->{keyQuery=value;keyOffset=0;loadKeys();}));
+        button("Key scope",spoofedKeysOnly?"Spoofed keys":"All target-app keys",()->{spoofedKeysOnly=!spoofedKeysOnly;keyOffset=0;selectedKeys.clear();loadKeys();});
+        JSONArray keys=keyData.optJSONArray("keys");int total=keyData.optInt("total",0);
+        text(total+" keys · "+selectedKeys.size()+" selected",16);
+        if(keys!=null&&keys.length()>0){
+            button("Select displayed keys","Add the current page to the selection",()->{for(int i=0;i<keys.length();i++)selectedKeys.add(keys.optJSONObject(i).optString("id"));draw();});
+            button("Clear selection","Keep all keys",()->{selectedKeys.clear();draw();});
+        }
+        if(!selectedKeys.isEmpty())button("Delete selected keys",selectedKeys.size()+" keys · requires confirmation",this::deleteSelectedKeys);
+        group();text("Target-app keys",22);
+        if(keys==null||keys.length()==0)text("No keys to display. Enable the backend and refresh; use All target-app keys to include untouched keys.",16);
+        else for(int i=0;i<keys.length();i++){
+            JSONObject key=keys.getJSONObject(i);String id=key.getString("id");String alias=key.optString("alias","Unnamed key");
+            button((selectedKeys.contains(id)?"✓ ":"")+alias,key.optString("package")+" · "+key.optString("class","unknown")+" · "+key.optString("keyAlgorithm",""),()->new AlertDialog.Builder(this).setTitle(alias).setItems(new String[]{"Inspect key metadata",selectedKeys.contains(id)?"Unselect":"Select"},(d,n)->{if(n==0)message("Key metadata",describe(key));else{if(!selectedKeys.remove(id))selectedKeys.add(id);draw();}}).show());
+        }
+        group();
+        if(keyOffset>0)button("Previous page","Previous 100 keys",()->{keyOffset=Math.max(0,keyOffset-100);loadKeys();});
+        if(keyOffset+100<total)button("Next page","Next 100 keys",()->{keyOffset+=100;loadKeys();});
+    }
+    private void deleteSelectedKeys(){
+        if(selectedKeys.size()>100){message("Delete keys","Select at most 100 keys per operation.");return;}
+        new AlertDialog.Builder(this).setTitle("Permanently delete selected keys?").setMessage("This cannot be undone. Apps may lose access to encrypted data, saved credentials or registrations. Only the selected keys in target-app namespaces will be requested for deletion; the backend rechecks ownership. No direct database edits are made.").setNegativeButton("Cancel",null).setPositiveButton("Delete",(d,w)->{try{backendQuery(new JSONObject().put("action","deleteKeys").put("confirmed",true).put("ids",new JSONArray(selectedKeys)),r->{selectedKeys.clear();loadKeys();Toast.makeText(this,r.optInt("deleted")+" of "+r.optInt("requested")+" keys deleted",Toast.LENGTH_LONG).show();});}catch(Exception e){message("Delete keys","Could not request deletion");}}).show();
+    }
+    private void drawKeyboxes()throws Exception{
+        group();text("Current keybox",22);text(loaded()?currentName():"No keybox imported",16);
+        text(status,16);button("Inspect current keybox","Algorithms, certificates, signatures, root authority and revocation",()->{String xml=current();if(xml==null)message("Keybox","No keybox imported");else showDetailsXml(xml);});
+        button("Check revocation status","Fetch Google's certificate status list",this::checkStatus);
+        group();text("Import keybox",22);
+        button("Import from file","Validate XML before replacing the current keybox",()->startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*").addCategory(Intent.CATEGORY_OPENABLE),41));
+        button("Import additional keybox","Save a named keybox without replacing the current one",()->startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*").addCategory(Intent.CATEGORY_OPENABLE),43));
+        button("AOSP test keybox","Public software test material",()->new AlertDialog.Builder(this).setTitle("Review AOSP test keybox?").setMessage("This public software keybox does not provide Google hardware attestation or guarantee Play Integrity. Test certificates may be expired.").setNegativeButton("Cancel",null).setPositiveButton("Review",(d,w)->stage(()->asset(),true,"aosp-keybox.xml")).show());
+        button("Community repository","Browse and download a keybox for validation",this::browse);
+        JSONObject root=config();group();text("Saved keyboxes",22);JSONObject boxes=root.getJSONObject("keyboxes");
+        for(Iterator<String> names=boxes.keys();names.hasNext();){String name=names.next();button(name,"Inspect, rename or delete",()->manageBox(name));}
+        button("Save current keybox","Keep a named copy for profiles",()->edit("Keybox name",loaded()?currentName():"keybox.xml","Unique filename or name",name->{JSONObject next=config();if(!loaded())throw new IllegalArgumentException("Import a keybox first");if(next.getJSONObject("keyboxes").has(name))throw new IllegalArgumentException("Name already exists");next.getJSONObject("keyboxes").put(name,current());save(next);}));
+        group();button("Clear imported keybox","Remove the current XML; named keyboxes remain",()->new AlertDialog.Builder(this).setTitle("Clear current keybox?").setMessage("Existing simulator keys may need the same signer after a restart. Keep the original XML file. Profiles using the current keybox will have no signer.").setNegativeButton("Cancel",null).setPositiveButton("Clear",(d,w)->{if(Settings.Secure.putString(getContentResolver(),SETTING,null)){Settings.Secure.putString(getContentResolver(),KEYBOX_METADATA,null);status="No keybox imported";draw();}else message("Keybox","Could not clear current keybox");}).show());
+        note("Keep original XML files. Renaming a saved keybox updates its profile references. A saved keybox cannot be deleted while a profile uses it.");
     }
 
     private void browse(){

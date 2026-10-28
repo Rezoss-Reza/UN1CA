@@ -35,8 +35,8 @@ object Redact {
     @Volatile private var salt: ByteArray? = null
 
     /**
-     * The salt, created on first use. A failure to persist it is not fatal: an in-memory salt still
-     * redacts correctly for this boot, it merely stops tokens comparing across restarts.
+     * Created atomically on first use. Existing secrets are never replaced, even when damaged.
+     * Unreadable or incompatible state stops startup instead of silently rotating the secret.
      */
     private fun salt(): ByteArray {
         salt?.let {
@@ -46,31 +46,30 @@ object Redact {
             salt?.let {
                 return it
             }
-            val existing = runCatching {
-                if (keyFile.isFile) keyFile.readBytes() else null
-            }
-                .getOrNull()
-            val value =
-                if (existing != null && existing.size == SALT_BYTES) existing
-                else
-                    ByteArray(SALT_BYTES).also { fresh ->
-                        SecureRandom().nextBytes(fresh)
-                        runCatching {
-                            keyFile.parentFile?.mkdirs()
-                            keyFile.writeBytes(fresh)
-                            keyFile.setReadable(false, false)
-                            keyFile.setReadable(true, true)
-                            keyFile.setWritable(false, false)
-                            keyFile.setWritable(true, true)
-                        }
-                            .onFailure {
-                                SystemLogger.warning(
-                                    "Redact: cannot persist the salt; tokens will not " +
-                                        "compare across restarts",
-                                    it,
-                                )
-                            }
+            val atomic = android.util.AtomicFile(keyFile)
+            val exists = keyFile.exists() || File(keyFile.path + ".bak").exists()
+            val value = if (exists) {
+                atomic.openRead().use { it.readBytes() }.also {
+                    require(it.size == SALT_BYTES) { "Invalid existing redaction secret" }
+                }
+            } else {
+                ByteArray(SALT_BYTES).also { fresh ->
+                    SecureRandom().nextBytes(fresh)
+                    keyFile.parentFile?.mkdirs()
+                    val stream = atomic.startWrite()
+                    try {
+                        stream.write(fresh)
+                        atomic.finishWrite(stream)
+                        keyFile.setReadable(false, false)
+                        keyFile.setReadable(true, true)
+                        keyFile.setWritable(false, false)
+                        keyFile.setWritable(true, true)
+                    } catch (e: Exception) {
+                        atomic.failWrite(stream)
+                        throw IllegalStateException("Cannot persist redaction secret", e)
                     }
+                }
+            }
             salt = value
             return value
         }

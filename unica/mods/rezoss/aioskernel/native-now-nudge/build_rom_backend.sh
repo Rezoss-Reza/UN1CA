@@ -15,7 +15,7 @@ mapfile -t SOURCES < <(find "$ROOT/backend/java" -name '*.java' -type f | sort)
 javac -source 8 -target 8 -Xlint:-options -classpath "$SDK/platforms/android-37.0/android.jar" -d "$WORK/classes" "${SOURCES[@]}"
 jar cf "$WORK/backend.jar" -C "$WORK/classes" .
 "$TOOLS/d8" --min-api 30 --lib "$SDK/platforms/android-37.0/android.jar" --output "$WORK/dex" "$WORK/backend.jar"
-"$TOOLS/aapt2" link --replace-version --version-code 142801208 --manifest "$ROOT/backend/AndroidManifest.xml" -I "$SDK/platforms/android-37.0/android.jar" -o "$WORK/manifest.apk"
+"$TOOLS/aapt2" link --replace-version --version-code 142801209 --manifest "$ROOT/backend/AndroidManifest.xml" -I "$SDK/platforms/android-37.0/android.jar" -o "$WORK/manifest.apk"
 python3 - "$BASE" "$WORK" <<'PY'
 from pathlib import Path
 import sys, zipfile

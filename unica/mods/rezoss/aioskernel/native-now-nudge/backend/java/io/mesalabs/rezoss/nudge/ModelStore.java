@@ -11,8 +11,8 @@ import java.security.MessageDigest;
 
 /** Imports signed, compatible model-pack assets into AIOS-owned storage atomically. */
 final class ModelStore {
-    static final String PACKAGE = "io.mesalabs.rezoss.qwen.v73";
-    private static final Uri URI = Uri.parse("content://io.mesalabs.rezoss.qwen.v73.models");
+    static final String PACKAGE = "io.mesalabs.rezoss.qwen";
+    private static final Uri URI = Uri.parse("content://io.mesalabs.rezoss.qwen.models");
     private static final String CONTRACT = "qwen3-0.6b-sm8550-v73-1024-v1";
     private final Context context;
     private Info cached;

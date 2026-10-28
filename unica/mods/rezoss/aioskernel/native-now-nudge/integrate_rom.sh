@@ -28,7 +28,7 @@ ADD_TO_WORK_DIR "pa2qxxx" "system" "system/etc/sysconfig/aioskernelservice.xml" 
 LOG "- Native Now Nudge requires the later OfflineLanguageModel 4.0.01.24 update"
 # Remove the previous bundled weights when rebuilding an existing work tree.
 DELETE_FROM_WORK_DIR "system" "system/etc/unica/now-nudge-v73" || return 1
-LOG "- Install QWEN_LLM_rezoss.apk (io.mesalabs.rezoss.qwen.v73) for model-backed inference"
+LOG "- Install QWEN_LLM_rezoss.apk (io.mesalabs.rezoss.qwen) for model-backed inference"
 SET_PROP "system" "ro.unica.now_nudge_v73" "1" || return 1
 SET_PROP "system" "persist.sys.unica.enable_aioskernelservice" "1" || return 1
 unset NUDGE_ROOT NUDGE_BUILD NUDGE_LIB NUDGE_DIR

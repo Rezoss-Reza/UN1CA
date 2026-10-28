@@ -57,6 +57,25 @@ final class Diagnostics {
         else if(raw.startsWith("km")||raw.startsWith("ta/")){area="Attestation";event="Attestation event (details redacted)";}
         return m.group(1)+" · "+area+" · "+event;
     }
+    interface Listener {void event(String summary);}
+    static final class Stream implements AutoCloseable {
+        private volatile boolean closed;
+        private volatile Process process;
+        Stream(Listener listener){new Thread(()->{
+            try{
+                process=new ProcessBuilder("/system/bin/logcat","-v","brief","-T","1","-s","TEESimulator:V","*:S").redirectErrorStream(true).start();
+                if(closed){process.destroyForcibly();return;}
+                Reader reader=new BufferedReader(new InputStreamReader(process.getInputStream(),StandardCharsets.UTF_8));
+                StringBuilder line=new StringBuilder();boolean oversized=false;int ch;
+                while(!closed&&(ch=reader.read())!=-1){
+                    if(ch=='\n'){if(!oversized){String safe=sanitize(line.toString());if(safe!=null)listener.event(safe);}line.setLength(0);oversized=false;}
+                    else if(!oversized){if(line.length()<16384)line.append((char)ch);else{line.setLength(0);oversized=true;}}
+                }
+            }catch(Exception error){if(!closed)listener.event("W · Backend · Live log reader unavailable");}
+            finally{if(process!=null)process.destroyForcibly();}
+        },"keybox-live-logs").start();}
+        public void close(){closed=true;if(process!=null)process.destroyForcibly();}
+    }
     static String filter(List<String> rows,String severity,String area,String query){
         StringBuilder result=new StringBuilder();String ranks="VDIWEF";
         for(String row:rows)if(ranks.indexOf(row.charAt(0))>=ranks.indexOf(severity)&&

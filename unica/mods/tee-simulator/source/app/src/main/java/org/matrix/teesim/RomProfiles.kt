@@ -12,12 +12,17 @@ object RomProfiles {
     const val LIMIT = 256 * 1024
     private val idPattern = Regex("[A-Za-z0-9_-]{1,40}")
     private val pkgPattern = Regex("[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)+")
-    val identityFields = listOf("brand", "device", "product", "manufacturer", "model")
+    val identityFields = listOf("brand", "device", "product", "manufacturer", "model", "serial", "imei", "meid", "imei2")
+
+    val defaultApps = listOf("io.github.vvb2060.keyattestation", "com.google.android.apps.walletnfcrel",
+        "com.google.android.gms", "com.android.vending")
+    private fun validKeyboxName(name: String) = name !in setOf("current", ".", "..") &&
+        name.isNotBlank() && name.length <= 255 && name.none { it.code < 32 || it.code == 127 || it == '/' || it == '\\' }
 
     fun defaults(): JSONObject = JSONObject().put("version", 1)
         .put("keyboxes", JSONObject()).put("profiles", JSONArray().put(
-            JSONObject().put("id", "unica").put("keybox", "current").put("scope", "all")
-                .put("apps", JSONArray()).put("mode", "patch")))
+            JSONObject().put("id", "unica").put("keybox", "current").put("scope", "selected")
+                .put("apps", JSONArray(defaultApps)).put("mode", "patch")))
 
     /** Reject the entire edit on ambiguity. 'all' is a fallback for unclaimed owner-user UIDs. */
     fun resolve(raw: String?, current: String?, apps: Map<Int, List<String>>,
@@ -28,7 +33,7 @@ object RomProfiles {
         val boxes = root.getJSONObject("keyboxes")
         require(boxes.length() <= 8)
         for (name in boxes.keys()) {
-            require(name != "current" && idPattern.matches(name))
+            require(validKeyboxName(name))
             require(boxes.getString(name).toByteArray().size <= LIMIT)
         }
         val profiles = root.getJSONArray("profiles")
@@ -76,9 +81,9 @@ object RomProfiles {
             if (xml.isNullOrBlank()) continue
             require(xml.toByteArray().size <= LIMIT)
             val idsObject = JSONObject()
-            val overrides = p.optJSONObject("deviceIds") ?: JSONObject()
+            // ROM profiles use captured identity defaults; retired UI overrides are ignored.
             for (name in identityFields) {
-                val value = overrides.optString(name, "").ifBlank { h.effective(name) }
+                val value = if (name in listOf("brand", "device", "product", "manufacturer", "model")) h.effective(name) else ""
                 require(value.length <= 128 && value.none { it.code < 32 })
                 if (value.isNotBlank()) idsObject.put(name, value)
             }
@@ -90,7 +95,7 @@ object RomProfiles {
             val out = JSONObject().put("id", p.getString("id"))
                 .put("keyboxB64", Base64.getEncoder().encodeToString(xml.toByteArray(Charsets.UTF_8)))
                 .put("mode", p.optString("mode", "patch"))
-                .put("securityLevel", Harvester.effectiveAttestation(h).first)
+                .put("securityLevel", h.effectiveInt("attestationSecurityLevel", Harvester.effectiveAttestation(h).first))
                 .put("deviceIds", idsObject).put("packages", packages).put("packageUsers", users)
                 .put("uids", uids).put("uidPackages", uidPackages)
             val os = p.optString("osVersion", "system_property")
@@ -106,7 +111,7 @@ object RomProfiles {
                 Triple("vendorPatchLevel", "vendor", h.vendorPatchLevel),
                 Triple("bootPatchLevel", "boot", h.bootPatchLevel))) {
                 val value = patch.optString(kind, "system_property")
-                require(value in setOf("system_property", "harvested", "", "no") ||
+                require(value in setOf("system_property", "harvested", "", "no", "today", "YYYY-MM-05") ||
                     Regex("[0-9]{4}-[0-9]{2}(-[0-9]{2})?").matches(value))
                 if (value.matches(Regex("[0-9].*"))) java.time.LocalDate.parse(if (value.length == 7) "$value-01" else value)
                 DeviceProps.resolvePatch(if (value == "harvested") "" else value, kind, captured)?.let { out.put(field, it) }

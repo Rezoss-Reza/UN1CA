@@ -1,5 +1,6 @@
 # Set the default behavior, in case people don't have core.autocrlf set.
 * text eol=lf
+unica/mods/settings/system/bin/unica-movecert binary
 unica/mods/portrom-audio/assets/**/*.mp3 binary
 unica/mods/rezoss/wondertap/source/driver-source.tar.gz binary
 unica/mods/rezoss/wondertap/vendor_dlkm/lib/modules/*.ko binary

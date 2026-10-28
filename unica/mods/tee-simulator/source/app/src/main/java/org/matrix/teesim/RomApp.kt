@@ -44,10 +44,18 @@ object RomApp {
     @Volatile private var activeEpoch = -1L
     @Volatile private var acknowledged = false
 
+    @Volatile private var targetSnapshot = emptyMap<Int, String>()
+    @Volatile private var scopeSnapshot = "[]"
+    fun requestRefresh() { nextPackages = 0; dirty.set(true) }
+    fun adminTargets(): Map<Int, String> = targetSnapshot
+    fun adminScope(): JSONArray = JSONArray(scopeSnapshot)
+
     @JvmStatic
     fun main(args: Array<String>) {
         require(args.size == 1)
         require(android.os.Process.myUid() == 0) { "ROM daemon requires uid 0" }
+        // Fail before probes, persistence or injection when a standalone backend owns this boot.
+        StartupGuard.check()
         ServiceManager.waitForService("package")
         Looper.prepareMainLooper()
         val thread = ActivityThread.systemMain()
@@ -76,6 +84,7 @@ object RomApp {
             acknowledged = false
             publishReady()
         }
+        RomAdmin.start(harvest)
         Control.start()
         Injector(File(args[0])).start()
         observer = object : FileObserver(File("/data/system/users/0"),
@@ -128,7 +137,13 @@ object RomApp {
                     .groupBy({ it.uid }, { it.packageName })
                 nextPackages = now + 30_000
             }
-            val resolved = RomProfiles.resolve(profileConfig, xml, apps, harvest)
+            val overrideText = readSetting("unica_teesim_overrides")
+            val edits = overrideText?.let { JSONObject(it) } ?: JSONObject()
+            val allowed = setOf("attestationSecurityLevel", "keymasterSecurityLevel", "attestationVersion", "keymasterVersion")
+            require(edits.keys().asSequence().all { it in allowed })
+            val effective = Harvester.applyUserOverrides(harvest, edits.keys().asSequence().associateWith { edits.getString(it) })
+            RomAdmin.updateHarvest(effective)
+            val resolved = RomProfiles.resolve(profileConfig, xml, apps, effective)
             // A cleared current signer disables new interception, but keep the previous signer
             // in memory for existing simulator blobs during this daemon lifetime.
             if (resolved.length() == 0) {
@@ -138,7 +153,7 @@ object RomApp {
                 }
             } else cachedProfiles = resolved
             configError = false
-            push(harvest, enabled)
+            push(effective, enabled)
             nextRead = now + 30_000
         }
         lastEnabled = enabled
@@ -192,6 +207,21 @@ object RomApp {
             }
         }
         routingActive = active && (0 until profiles.length()).any { profiles.getJSONObject(it).getJSONArray("uids").length() > 0 }
+        KeyboxInspector.setRomSigners(profiles)
+        targetSnapshot = buildMap {
+            for (i in 0 until profiles.length()) {
+                val p = profiles.getJSONObject(i); val uids = p.getJSONArray("uids")
+                val names = p.getJSONArray("uidPackages")
+                for (j in 0 until uids.length()) put(uids.getInt(j), names.optString(j, ""))
+            }
+        }
+        scopeSnapshot = JSONArray().apply {
+            for (i in 0 until profiles.length()) {
+                val p = profiles.getJSONObject(i)
+                put(JSONObject().put("id", p.getString("id")).put("uids", p.getJSONArray("uids"))
+                    .put("packages", p.getJSONArray("packages")))
+            }
+        }.toString()
         expectedProfiles = profiles.length()
         val msg = JSONObject().apply {
             put("type", "config")

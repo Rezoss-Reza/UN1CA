@@ -262,6 +262,12 @@ LOG_STEP_OUT
 LOG "- Installing Battery Saving service policy"
 python3 "$MODPATH/battery/install-policy.py" "$WORK_DIR" || ABORT "Failed to install Battery Saving service policy"
 python3 "$MODPATH/ota/install-policy.py" "$WORK_DIR" || ABORT "Failed to install OTA staging service policy"
+if [[ "$TARGET_CODENAME" == "dm3q" ]]; then
+    python3 "$MODPATH/movecertificate/install-policy.py" "$WORK_DIR" || ABORT "Failed to install Move Certificate service policy"
+else
+    DELETE_FROM_WORK_DIR "system" "system/bin/unica-movecert"
+    DELETE_FROM_WORK_DIR "system" "system/etc/init/unica_movecert.rc"
+fi
 
 # dm3q-only GPU image editor and recovery backup policy. Other targets keep no
 # partition access or service; the shared Settings page reports unsupported.

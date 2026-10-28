@@ -991,7 +991,7 @@ ADD_TO_WORK_DIR "$LOCAL_SUMMARY_SERVICE_DIR" "system" "system/priv-app/RezossAI/
 SET_METADATA "system" "system/priv-app/RezossAI" 0 0 755 "u:object_r:system_file:s0"
 SET_METADATA "system" "system/priv-app/RezossAI/RezossAI.apk" 0 0 644 "u:object_r:system_file:s0"
 ADD_TO_WORK_DIR "$LOCAL_SUMMARY_SERVICE_DIR" "system" "system/etc/default-permissions/default-permissions-unica-local-summary.xml" 0 0 644 "u:object_r:system_file:s0"
-LOG "- Build legacy QWEN permission stub (V73 model pack is data-only)"
+LOG "- Build updatable QWEN permission stub (V73 model APK uses the same package)"
 QWEN_STUB_DIR="$MODPATH/qwen-llm/system-stub"
 QWEN_STUB_APK="$MODPATH/qwen-llm/system/priv-app/QWEN_LLM_rezoss_stub/QWEN_LLM_rezoss_stub.apk"
 EVAL "bash \"$QWEN_STUB_DIR/build.sh\" \"$QWEN_STUB_APK\""

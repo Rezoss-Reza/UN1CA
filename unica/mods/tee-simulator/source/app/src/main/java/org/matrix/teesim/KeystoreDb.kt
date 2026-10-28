@@ -109,7 +109,7 @@ object KeystoreDb {
      * false, or when [targets] is empty — never throws.
      */
     @Synchronized
-    fun listKeys(targets: Map<Int, String>): List<JSONObject> {
+    fun listKeys(targets: Map<Int, String>, strict: Boolean = false): List<JSONObject> {
         if (!available() || targets.isEmpty()) return emptyList()
 
         val src = File(KEYSTORE2_DB)
@@ -126,6 +126,7 @@ object KeystoreDb {
             query(db, targets)
         } catch (e: Throwable) {
             SystemLogger.warning("KeystoreDb.listKeys: failed", e)
+            if (strict) throw IllegalStateException("Cannot read keystore database snapshot", e)
             emptyList()
         } finally {
             try {

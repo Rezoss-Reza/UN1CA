@@ -27,6 +27,10 @@ def install(work, mod):
     append_unique(contexts, [r'/data/misc/unica-teesim(/.*)? u:object_r:unica_teesim_data_file:s0'])
     append_unique(props, [f'sys.unica.teesim.{name} u:object_r:unica_teesim_status_prop:s0 exact int'
                           for name in ('ready', 'heartbeat', 'connected', 'ack', 'loaded', 'config_error')])
+    services = selinux / 'system_ext_service_contexts'
+    if not services.exists():
+        services.touch()
+    append_unique(services, ['unica.teesim u:object_r:unica_teesim_service:s0'])
     # Prevent init selecting an old precompiled policy after adding the new domain. Change the
     # platform digest (same method Android uses to invalidate the vendor precompiled cache).
     import hashlib

@@ -114,3 +114,21 @@
 (allow unica_teesim cgroup (file (read open getattr)))
 (allow unica_teesim cgroup_v2 (dir (search read open getattr)))
 (allow unica_teesim cgroup_v2 (file (read open getattr)))
+
+; Only list module directories for arbitration; never read root-manager state/key files.
+(allow unica_teesim adb_data_file (dir (search read open getattr)))
+
+; UID-1000 native Settings administration only; signing XML stays in SettingsProvider.
+(type unica_teesim_service)
+(roletype object_r unica_teesim_service)
+(typeattributeset service_manager_type (unica_teesim_service))
+(allow unica_teesim unica_teesim_service (service_manager (add find)))
+(allow system_app unica_teesim_service (service_manager (find)))
+(allow system_app unica_teesim (binder (call transfer)))
+(allow unica_teesim system_app (binder (call transfer)))
+; Snapshot reads only. Deletion uses keystore2's owner-scoped binder API.
+(allow unica_teesim keystore_data_file (dir (read open getattr)))
+(allow unica_teesim keystore_data_file (file (read open getattr)))
+(allow unica_teesim self (capability (setuid)))
+
+(allow unica_teesim remote_prov_prop (file (read open getattr map)))
