@@ -1,0 +1,102 @@
+Call Screening V73 contract recovery - 2026-10-28
+================================================
+SOURCE IMPLEMENTED; HOST VALIDATED; DEVICE INFERENCE NOT VALIDATED.
+No device installation or reboot was performed during this implementation.
+
+Recovered contract and provenance
+---------------------------------
+The installed InCallUI 18.1.00.75 was inspected through REA/JADX:
+SHA256 19b1c9aca978d6346ef014b6e99c49afe88ee4f8e0d56491d25f419a6aa32f5e
+zd.m.b parser evidence:
+ev_92fc4abc3b00be71afc319994c8ab13aee65c2d203cd647f2fe7d0c8bd493c23
+z8.l.a completion predicate evidence:
+ev_6c6564548ceb166be6f361117271da817a78a38b1b85a8e09ac6a31d1c208d7b
+
+Prompt/handler evidence comes from the donor-derived, locally repaired full
+OfflineLanguageModel-repaired-v5.apk, NOT an untouched S26U full model APK.
+The S26U firmware has the stub. Local hardware alias repairs must not be
+mistaken for original donor support for qc_sm8550.
+CallScreeningResponseTaskHandler.handle evidence:
+ev_0d9c9cbcb96d0297ca2f3ec6874814112fb6a3df3251969474b72535ce383d6a
+The 32 recovered templates are retained in tests/fixtures/callscreen/.
+They cover 16 languages, with known and unknown caller variants.
+
+Known caller output: purpose, answer. Unknown caller: caller, purpose, answer.
+All fields are strings. Samsung maps empty, Unknown and null strings to absent
+values. Missing caller/purpose should elicit a question, not fabricated facts.
+Assist must avoid repeating prior answers, especially their opening word.
+The consumer waits ten seconds. A nonblank answer is usable speech, not a
+completion flag. Completion stays in Samsung: exhausted retry count, a purpose
+plus either KNOWN caller or collected name, or terminal native results.
+The result manager accumulates caller/purpose, updates the answer/history,
+and manages retry/error state. The model must not output level/completed or
+control the phone. Cloud/Gemini schemas were deliberately excluded.
+
+Implementation
+--------------
+CallScreeningContract adapts recognized Samsung conversation/schema/language
+into Qwen instructions. Conversation is quoted as untrusted data. The dedicated
+output parser rejects extra, missing, duplicate, nested, nonstring fields,
+trailing content, empty answers and control tokens. Escaped quotes/backslashes
+are rejected because InCallUI removes backslashes before reparsing JSON.
+No deterministic intent classifier or invented completion state was added.
+TextBackend accepts call_screening_response after actual model validation,
+snapshots the selected UID profile into each task, keeps existing Binder
+callbacks/IDs/cancellation/UID checks, bypasses ReplyText cleanup for JSON,
+and limits screening generation to 128 tokens within the 1024-token context.
+The screening deadline is nine seconds from submission, including queue/lock,
+model preparation, tokenization and generation. An independent timer also expires queued tasks and stops their tokenizer/runner.
+Late/invalid output follows
+the existing failure callback. This does not prove cold model startup can
+meet Samsung's deadline; actual warm-up and response latency need device proof.
+Existing contextual_reply/smart_reply behavior and Samsung filtering remain.
+
+Verification
+------------
+450 checks pass across all 32 extracted templates. Tests cover sentinels,
+malformed/duplicate/extra/nested/nonstring output and trailing text.
+ReplyText: 36 boundary cases; ReplyRequests: 196 ownership assertions;
+RecallInference: 31 assertions plus cross-thread isolation pass.
+All backend Java compiles against Android API 37; D8 succeeds.
+Temporary APK signature, 16K alignment and ZIP integrity checks pass:
+/tmp/callscreen-contract/AIOS-V73-callscreen-contract-v3.apk
+The existing build_rom_backend.sh preserves the pinned base native runtime.
+No APK was copied into ROM source prebuilts or installed on the phone.
+
+Reproduce from repository root:
+JSON_JAR=/path/to/host-org-json.jar \
+  bash unica/mods/rezoss/aioskernel/native-now-nudge/tests/run_callscreen_contract_test.sh
+source buildenv.sh dm3q
+bash unica/mods/rezoss/aioskernel/native-now-nudge/build_rom_backend.sh /tmp/NEW-callscreen.apk
+The output APK path must not exist. org.json is supplied by Android in
+production; the host test jar is not bundled into the APK.
+
+Audio remains separate
+----------------------
+Donor libaudiocorehal.qti.so SHA256:
+18c750754e5d267d4353be095796d3ac9dab3c2635d1684e476d9484b31d6dd9
+REA ev_c0b76401b5eeec284a4157a790cee9388399a05cfc785c8a5edd6212e81219c0
+Telephony::switchAudioMode handles screening mode 4. startCall/updateDevices
+force RX 0x10 and TX 0x2a, before pal_stream_open/start or set_device.
+S23U already forces RX 0x10 and TX 0x25. Numeric enum IDs are firmware-specific;
+copying donor 0x2a into S23U is not a valid port.
+Both resource-manager configs name PCM_RT_PROXY-TX-1/RX-1 and afe-proxy.
+The donor afe-proxy mixer path is empty; no missing mixer control is established.
+
+Donor libsession_voice.so SHA256:
+fbfa4f297ae5444dbfd7afad1b3fc19a9eec8f2152bb311382706e0c3f05e789
+REA ev_0e1c1ac39b6537dd5a06d7960c998967b978b2c08fde093e909a82fb92724119
+open allocates front-end IDs and calls SessionAlsaUtils::open.
+start opens/checks RX PCM, then opens/checks TX PCM, applies voice payload,
+and starts RX/TX. Failure cleans up PCM; close calls SessionAlsaUtils::close,
+closes PCM handles and frees front-end IDs. stop stops RX/TX.
+Pseudocode and evidence retained under /tmp/callscreen-contract/ and
+/tmp/callscreen-audit/s26-native-*.c. These are static observations.
+
+S23U's actual call fails before PCM TX is ready: alias 111 graph-open rejects
+with GSL 24, AGM -68, PAL -22; RX alias 277 already opened. The one-byte control
+link candidate failed the live retest and must not be shipped. The matching
+operation sequence alone does not establish why the DSP rejects this graph.
+No further native binary, mixer, calibration or DSP payload was changed.
+A safe audio repair still requires identifying the rejected graph object or
+lifecycle ownership conflict; copying donor HAL/DSP/calibration is unverified.

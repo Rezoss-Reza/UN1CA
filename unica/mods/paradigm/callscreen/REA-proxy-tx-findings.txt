@@ -1,0 +1,122 @@
+Call Screening proxy TX candidate - 2026-10-28
+================================================
+
+Status: OFFLINE CANDIDATE, NOT A VERIFIED REPAIR.
+No device writes, installs, restarts or reboots were performed by this work.
+customize.sh and the active ROM patch stack are unchanged.
+
+Runtime evidence: /tmp/callscreen-audit/completed-call.txt
+14:28:07.138 proxy TX graph alias 111 selected.
+14:28:07.141 GSL graph open returns 24, AGM maps failure to -68.
+14:28:07.144 voice PAL start fails -22 and the voice session closes.
+14:28:08.750 French TTS starts (24 kHz mono PCM16); greeting completes.
+Local LoopbackAudioTrack is explicitly skipped. Caller silence occurs after
+the voice session failed, rather than a persistent synthesis-service bind failure.
+
+REA native evidence:
+ev_a399944bf1279d5b97d96de8b7a4b295f971ce52398920df6e88d370a40a0f65
+AudioVoice::VoiceStart at 0x1c56d0 forces IN_PROXY/OUT_PROXY for mode 4.
+Live audio.primary.kalama.so:
+4ac2a7b0844088a7f1fae3207ccb8210cef2e1a480092536bb80a25acf21489a
+
+AudioReach reference code defines 24 as AR_EDUPLICATE:
+https://github.com/AudioReach/audioreach-graphservices/blob/c3ed9dd4544dc2a36f4e6d54af66105c9e3f18ff/ar_osal/api/ar_osal_error.h
+The container graph parser rejects existing control-port/connection objects:
+https://github.com/AudioReach/audioreach-engine/blob/b38cb85a1a2543aa28aa1b27f4c380cafa5024bb/fwk/spf/containers/cmn/graph_utils/src/graph_utils.c
+These public sources explain a possible failure mechanism, not the exact
+on-device DSP implementation or the identity of its rejected object.
+
+Host calibration analysis:
+Input: out/fw/SM-S918B_EUX/vendor/etc/audconf/OPEN/acdb_cal.acdb
+SHA256: 0de5793f2dd2cea17642427922bbf5be18cf960b67cda2ce7ee162df9be72684
+The live ACDB matches this untouched source.
+The proxy TX graph has exactly one exclusive graph-data block, POOL offset
+0x141a28; its vector is A3000000=A3000008, B1000000=B1000007,
+B3000000=B3000001. Subgraph B000003F has five control-link records.
+Four trailing records also occur in the previously opened proxy RX subgraph
+B0000040 (in graph alias 277). The unique first TX record is:
+4654:C0000003 -> 41B0:80000002.
+
+Candidate changes only file byte 0x187e62, control-link record count 5 -> 1.
+The four repeated records remain as unused trailing payload bytes. Public APM
+code checks the minimum payload size and iterates the declared record count.
+All 848 graph vectors, offsets, module/data-link/calibration bytes and RX
+records are preserved. This does not replace vendor HAL, DSP firmware or
+S26U calibration. Source input is never modified.
+
+Important limit: S26U's ACDB also contains these four repeated links, and
+other AudioReach paths may manage cross-graph links differently. The exact
+rejected DSP object is not logged here. The candidate is an isolation test;
+the duplicated records are not yet proven to be the cause. Successful graph
+startup alone would not prove caller audio, ASR, or microphone isolation.
+
+Reproduce host validation from repository root:
+python3 unica/mods/paradigm/callscreen/prepare_proxy_tx_candidate.py \
+    out/fw/SM-S918B_EUX/vendor/etc/audconf/OPEN/acdb_cal.acdb
+
+Generate a new candidate (output must not exist):
+python3 unica/mods/paradigm/callscreen/prepare_proxy_tx_candidate.py \
+    out/fw/SM-S918B_EUX/vendor/etc/audconf/OPEN/acdb_cal.acdb \
+    --output /tmp/acdb_cal.proxy-tx-candidate.acdb
+
+Prepared payload:
+/tmp/callscreen-audit/acdb_cal.proxy-tx-candidate.acdb
+SHA256: 9cf255211c5c5336c29019a121690ae635326bf838f20fb34a03a49ace30b462
+Experimental KernelSU module, not installed:
+/tmp/callscreen-audit/rezoss-callscreen-proxy-tx-test.zip
+SHA256: 9b44dafaaf438d7ebb9ac172616df5833061631b31d4f16485dd28bbc44b7055
+Module ID: rezoss_callscreen_proxy_tx_test
+The installer checks dm3q identity and the exact active ACDB hash.
+Rollback: disable this module in KernelSU and reboot. It does not overwrite
+the vendor partition. Test deployment/reboot needs separate authorization.
+
+Validation performed:
+- Reparsed candidate and compared all graph vectors and RX control records.
+- Confirmed a single-byte diff, constant file length, original input intact.
+- Rejected truncated, modified and already-patched inputs.
+- Shell syntax and ZIP integrity checks passed for the temporary test bundle.
+- No live audio test performed with the candidate.
+
+Separate AI failure and subsequent user migration:
+At 14:28 the AIOS backend expects content://io.mesalabs.rezoss.qwen.models,
+while only io.mesalabs.rezoss.qwen.v73.models exists. ModelStore.info() returns
+null and TextBackend.select() returns 3 when model validation is unavailable.
+REA evidence:
+ev_2b40084f6d12ae6b81f4c962674cf2a05e567563c54ce095eeb0197d0d0765c9
+ev_af8f2e3611e0aacd1d4800d182fb699df96492435b09713f327d98edc4f92fb7
+ev_6ce04ea97eddc80010eba1fd0d0fd6e64dcc2caf599448bd00b3a48568640655
+
+User installed unified QWEN version 6 during this investigation. Fresh logs
+at 14:47:32 report V73 model validation=true and successful contextual_reply
+inference. These requests belong to Smart Suggestions, not Call Screening.
+At 14:47:37 the backend rejects safety_check; Samsung PostProcessManager
+explicitly falls back to its rule-based filter. No filter was bypassed.
+Fresh CallScreeningResponse warm-up and output still need an actual retest.
+
+A unified version-6 model APK was also built to /tmp/callscreen-audit only,
+with no installation. Signing, ZIP and alignment checks passed. It is not
+needed if the user's installed unified model package already works.
+
+LIVE TEST RESULT - 2026-10-28 15:14 CET
+=====================================
+Version 2 booted with correct vendor_configs_file labels. Audio HAL namespace
+and live ACDB hash both matched candidate 9cf255211c5c5336c29019a121690ae635326bf838f20fb34a03a49ace30b462.
+The screened call still failed at the SAME proxy TX alias 111 with GSL status
+24 / AGM -68 / PAL voice start -22. TTS synthesized all canned utterances.
+Removing these repeated control-link declarations did NOT repair the fault.
+Do not ship this candidate or integrate it into customize.sh.
+The exact rejected DSP object remains unidentified; do not infer it from
+repeated records alone. Need DSP-side graph-open rejection detail or a
+precise reconstruction of the graph-open command and existing DSP objects.
+
+Disabled rezoss_callscreen_proxy_tx_test after collecting evidence. Mountify
+is left enabled. The candidate remains mounted in this boot; original vendor
+ACDB returns on the next reboot. No further reboot was performed.
+Logs: /tmp/callscreen-audit/v2-call-logcat.txt and v2-call-dmesg.txt.
+
+Fresh Call Screening AI evidence:
+15:14:07.051 RezossNudgeV73: Unsupported adapter=call_screening_response
+15:14:07.152 CallScreeningOnDeviceAdapter requestWarmUp failed Internal error.
+The unified package solved model discovery but does not implement this
+Samsung task profile. Mapping it to contextual_reply without verifying
+prompt, output schema and safety semantics would not establish compatibility.

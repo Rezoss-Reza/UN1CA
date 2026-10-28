@@ -130,7 +130,7 @@ public final class PifActivity extends Activity {
         action("View current configuration","Fingerprint and configured properties",()->{try{showText("Current configured properties",Profile.format(current()));}catch(Exception e){error(e);}});
         footnote("Configured values are shown here. Automatic identity fields follow the fingerprint. Activation and Integrity results require device testing.");
         section("Pixel profile");group();
-        action(busy?"Working…":"Choose Pixel device",source,this::devices);
+        action(busy?"Working…":"Choose Pixel device",source+"\nFetch using Autopif or GitHub",this::devices);
         action("Edit PIF properties","Add or change supported profile values",this::edit);
         footnote(status);
         if(!supported())footnote("Native configuration controls require the dm3q SDK 37 PIF backend.");
@@ -181,13 +181,23 @@ public final class PifActivity extends Activity {
             for(int i=0;i<list.length();i++){JSONObject item=list.getJSONObject(i);String model=item.getString("model"),product=item.getString("product");if(!model.startsWith("Pixel ")||!product.matches("[a-z0-9_]+"))continue;labels.add(model);products.add(product);}
             if(products.size()<2)throw new IllegalArgumentException("No Pixel profiles available");
             draw();final int[] selected={0};
-            new AlertDialog.Builder(this).setTitle("Select Pixel device").setSingleChoiceItems(labels.toArray(new String[0]),0,(d,n)->selected[0]=n).setNegativeButton("Cancel",null).setPositiveButton("Fetch",(d,w)->{
-                int index=selected[0]==0?1+new java.security.SecureRandom().nextInt(products.size()-1):selected[0];
-                background(()->Profile.parse(PixelSource.get("device_prop/"+products.get(index)+".prop"),true),profile->{
-                    @SuppressWarnings("unchecked") Map<String,String> fetched=(Map<String,String>)profile;
-                    draft=Profile.replacement(fetched,draft);source=labels.get(index)+" · KOWX712 GitHub";status="Fetched into draft. Review the profile and Save and apply.";draw();
-                });
-            }).show();
+            new AlertDialog.Builder(this).setTitle("Select Pixel device")
+                .setSingleChoiceItems(labels.toArray(new String[0]),0,(d,n)->selected[0]=n)
+                .setNegativeButton("Cancel",null)
+                .setNeutralButton("Autopif",(d,w)->fetchSelected(labels,products,selected[0],true))
+                .setPositiveButton("GitHub",(d,w)->fetchSelected(labels,products,selected[0],false)).show();
+        });
+    }
+    private void fetchSelected(List<String> labels,List<String> products,int selected,boolean automatic){
+        int index=selected==0?1+new java.security.SecureRandom().nextInt(products.size()-1):selected;
+        final String model=labels.get(index),product=products.get(index);
+        background(()->automatic?AutoPif.fetch(model,product):new AutoPif.Result(Profile.parse(PixelSource.get("device_prop/"+product+".prop"),true),false),value->{
+            AutoPif.Result result=(AutoPif.Result)value;
+            draft=Profile.replacement(result.profile,draft);
+            source=model+(automatic?" · Autopif (Google)":" · KOWX712 GitHub");
+            status=automatic?"Autopif fetched live Google Canary data into draft.":"GitHub profile fetched into draft.";
+            if(result.inferredPatch)status+=" Security patch is inferred from the Canary month, not confirmed by the bulletin.";
+            status+=" Review the profile and Save and apply.";draw();
         });
     }
     private JSONObject snapshot()throws Exception {

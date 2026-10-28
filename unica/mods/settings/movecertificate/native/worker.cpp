@@ -7,7 +7,6 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <sched.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <cerrno>
@@ -75,10 +74,9 @@ int main(){
         std::string imports=std::string(root)+"/request/certs";auto selected=names(imports.c_str());
         if(selected.size()>64)throw std::runtime_error("Too many imported certificates");
         if(selected.empty()){status("Enabled, but no certificates imported. No mounts applied by this service.");return 0;}
-        // Run synchronously before Zygote starts. Its descendants inherit the
-        // mounts; later Zygote restarts inherit them from init again.
-        int ns=open("/proc/1/ns/mnt",O_RDONLY|O_CLOEXEC);check(ns>=0,"open init mount namespace");
-        int rc=setns(ns,CLONE_NEWNS);close(ns);check(rc==0,"enter init mount namespace");
+        // Init launches this service in its configured default mount namespace
+        // after APEX activation and before starting Zygote. Apply mounts there
+        // so later Zygote and app namespaces can inherit them.
         std::vector<std::string> targets;
         if(directory(systemStore))targets.emplace_back(systemStore);
         if(directory(apexStore)){

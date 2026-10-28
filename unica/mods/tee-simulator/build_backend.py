@@ -22,7 +22,30 @@ def run(*args, **kwargs):
     subprocess.run([str(a) for a in args], check=True, **kwargs)
 
 
+def rust_environment():
+    env = dict(os.environ)
+    cargo_bin = Path(env.get("CARGO_HOME", str(Path.home() / ".cargo"))) / "bin"
+    env["PATH"] = os.pathsep.join((env.get("PATH", ""), str(cargo_bin)))
+    for command in ("cargo", "rustc", "cargo-ndk"):
+        if not shutil.which(command, path=env["PATH"]):
+            raise SystemExit(
+                f"Missing Rust build dependency: {command}. Install Rust, "
+                "the aarch64-linux-android target, and cargo-ndk; "
+                "for a custom installation set CARGO_HOME and RUSTUP_HOME."
+            )
+    run("cargo", "--version", env=env)
+    run("rustc", "--version", env=env)
+    run("cargo", "ndk", "--version", env=env)
+    target_libdir = subprocess.check_output(
+        ["rustc", "--print", "target-libdir", "--target", "aarch64-linux-android"],
+        env=env, text=True).strip()
+    if not list(Path(target_libdir).glob("libstd-*.rlib")):
+        raise SystemExit("Missing Rust Android target; run: rustup target add aarch64-linux-android")
+    return env
+
+
 def build(args):
+    env = dict(os.environ) if args.java_only else rust_environment()
     work = Path(args.work_dir).resolve()
     if work == ROOT or ROOT in work.parents:
         raise SystemExit("Build directory must be outside the mod source")
@@ -110,7 +133,7 @@ def build(args):
 
     if not args.java_only:
         ndk = sdk / "ndk/28.2.13676358"
-        env = dict(os.environ, ANDROID_HOME=str(sdk), LIBCLANG_PATH=args.libclang)
+        env.update(ANDROID_HOME=str(sdk), LIBCLANG_PATH=args.libclang)
         run("cmake", "-S", source, "-B", work / "native", "-G", "Ninja",
             f"-DCMAKE_TOOLCHAIN_FILE={ndk}/build/cmake/android.toolchain.cmake",
             "-DANDROID_ABI=arm64-v8a", "-DANDROID_PLATFORM=android-35",
@@ -147,7 +170,7 @@ def build(args):
     provenance = {
         "upstream": lock["revision"], "abi": "arm64-v8a", "native_api_floor": 35,
         "rom_sdk": 37, "ndk": "28.2.13676358",
-        "rustc": subprocess.check_output(["rustc", "--version"], text=True).strip(),
+        "rustc": subprocess.check_output(["rustc", "--version"], env=env, text=True).strip(),
         "source_manifest_sha256": hashlib.sha256((ROOT / "source.sha256").read_bytes()).hexdigest(),
     }
     (ROOT / "build-provenance.json").write_text(json.dumps(provenance, indent=2) + "\n")
