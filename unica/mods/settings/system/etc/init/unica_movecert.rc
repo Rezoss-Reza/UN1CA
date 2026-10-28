@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 service unica_movecert /system/bin/unica-movecert
     user root
-    group system
+    group system everybody
     capabilities SYS_ADMIN CHOWN
     seclabel u:r:unica_movecert:s0
     disabled

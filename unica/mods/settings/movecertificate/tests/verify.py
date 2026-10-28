@@ -44,6 +44,16 @@ for name, ca, usage, before, after in [('leaf', False, False, -1, 1), ('badusage
     path.write_bytes(fixture.public_bytes(serialization.Encoding.PEM))
     fixtures.append(path)
 run('java', '-cp', classes, 'io.mesalabs.unica.movecertificate.CertificatesTest', cert, expected, *fixtures)
+sdk = Path(os.environ.get('ANDROID_HOME', str(Path.home() / 'Android/Sdk')))
+android_jar = Path(os.environ.get('ANDROID_JAR', str(sdk / 'platforms/android-37.0/android.jar')))
+stubs = temp / 'stubs'
+stubs.mkdir()
+run('javac', '-source', '8', '-target', '8', '-Xlint:-options', '-cp', android_jar, '-d', stubs,
+    *sorted((settings / 'thermal/stubs').rglob('*.java')))
+classpath = os.pathsep.join(map(str, (stubs, classes, android_jar)))
+run('javac', '-source', '8', '-target', '8', '-Xlint:-options', '-cp', classpath, '-d', classes,
+    source / 'java/io/mesalabs/unica/movecertificate/AdcertController.java', source / 'tests/AdcertSelectionTest.java')
+run('java', '-cp', classpath, 'io.mesalabs.unica.movecertificate.AdcertSelectionTest', cert, fixtures[-1])
 native = temp / 'native'
 native.mkdir()
 run('/usr/bin/g++', '-std=c++17', '-Wall', '-Wextra', '-Werror', source / 'tests/worker_test.cpp', '-o', temp / 'worker-test')
@@ -52,15 +62,16 @@ run(temp / 'worker-test', native)
 android = '{http://schemas.android.com/apk/res/android}'
 menu = list(ET.parse(settings / 'SecSettings.apk/res/xml/unica_spoof_settings.xml').getroot())
 assert menu[-3].get(android + 'key') == 'unica_hma_privacy'
-assert menu[-1].get(android + 'key') == 'unica_movecert_group'
-assert menu[-1][0][0].get(android + 'targetClass') == 'io.mesalabs.unica.movecertificate.MoveCertificateActivity'
+assert menu[-1].get(android + 'key') == 'unica_adcert'
+assert menu[-1].tag == 'SecSwitchPreference'
+assert menu[-1].get('{http://schemas.android.com/apk/res-auto}controller') == 'io.mesalabs.unica.movecertificate.AdcertController'
 patch = settings / 'smali/system/priv-app/SecSettings/SecSettings.apk/0013-Add-Move-Certificate-manager.patch'
 patched = temp / 'patched'
 patched.mkdir()
 run('patch', '--dry-run', '--fuzz=0', '-p1', '-i', patch, cwd=patched, stdout=subprocess.DEVNULL)
 run('patch', '--fuzz=0', '-p1', '-i', patch, cwd=patched, stdout=subprocess.DEVNULL)
 run('smali', 'assemble', '--api', '35', patched / 'smali_classes4', '-o', temp / 'verified.dex')
-print('PASS Settings group placement and zero-fuzz patch/DEX verification')
+print('PASS Settings switch placement and zero-fuzz patch/DEX verification')
 
 work = temp / 'policy'
 firmware = repo / 'out/target/dm3q/work_dir'
@@ -72,6 +83,11 @@ run('python3', source / 'install-policy.py', work)
 snapshot = {p.relative_to(work): p.read_bytes() for p in work.rglob('*') if p.is_file()}
 run('python3', source / 'install-policy.py', work)
 assert snapshot == {p.relative_to(work): p.read_bytes() for p in work.rglob('*') if p.is_file()}
+policy_text = (work / 'system/system/etc/selinux/plat_sepolicy.cil').read_text()
+# context= labels the superblock first, then checks relabelfrom and
+# association of the root inode against that newly labeled superblock.
+assert '(allow unica_movecert system_security_cacerts_file (filesystem (mount remount unmount relabelfrom relabelto)))' in policy_text
+assert '(allow system_security_cacerts_file system_security_cacerts_file (filesystem (associate)))' in policy_text
 compiler = os.environ.get('SECILC')
 if not compiler:
     raise SystemExit('Set SECILC to an Android-compatible compiler to complete policy verification')

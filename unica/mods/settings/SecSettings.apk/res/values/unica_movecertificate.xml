@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="unica_adcert_title">Adcert by AdGuard</string>
+    <string name="unica_adcert_missing">Install the AdGuard Personal CA in Android user certificates to enable.</string>
+    <string name="unica_adcert_off">Trust the AdGuard Personal CA as a system certificate. Reboot to apply.</string>
+    <string name="unica_adcert_on">AdGuard Personal CA is selected for system trust. Reboot to apply changes.</string>
+    <string name="unica_adcert_unavailable">Adcert service is unavailable on this device.</string>
+    <string name="unica_adcert_reboot">Reboot to apply Adcert changes.</string>
+    <string name="unica_adcert_write_failed">Could not save Adcert setting.</string>
     <string name="unica_movecert_owner_only">Manage system certificates from the device owner profile</string>
     <string name="unica_movecert_title">Move Certificate by ys1231</string>
     <string name="unica_movecert_manage">Manage certificates</string>

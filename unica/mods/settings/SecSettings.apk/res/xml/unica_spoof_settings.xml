@@ -15,9 +15,5 @@
     <com.samsung.android.settings.widget.SecInsetCategoryPreference />
     <SecPreference android:title="@string/unica_hma_privacy_title" android:key="unica_hma_privacy" android:summary="@string/unica_hma_privacy_summary" android:fragment="io.mesalabs.unica.settings.spoof.HideDeveloperStatusFragment" />
     <com.samsung.android.settings.widget.SecInsetCategoryPreference />
-    <SecPreferenceCategory android:title="@string/unica_movecert_title" android:key="unica_movecert_group">
-        <SecPreference android:title="@string/unica_movecert_manage" android:key="unica_movecert" android:summary="@string/unica_movecert_summary">
-            <intent android:targetPackage="com.android.settings" android:targetClass="io.mesalabs.unica.movecertificate.MoveCertificateActivity" />
-        </SecPreference>
-    </SecPreferenceCategory>
+    <SecSwitchPreference android:title="@string/unica_adcert_title" android:key="unica_adcert" android:persistent="false" settings:controller="io.mesalabs.unica.movecertificate.AdcertController" />
 </PreferenceScreen>
