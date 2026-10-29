@@ -312,6 +312,7 @@ unset _CALL_SCREENING_ROUTE_SINK
 unset _CALL_SCREENING_ROUTE_SOURCE
 _PARADIGM_PATCH_CALL_SCREENING_USECASE_KV \
     "$WORK_DIR/vendor/etc/usecaseKvManager.xml"
+source "$MODPATH/callscreen/integrate_v6_rom.sh" || return 1
 LOG "- SamsungInCallUI.apk call-screening patch disabled; using framework/vendor route only"
 # Use the S26U One UI 9 call-audio library.
 ADD_TO_WORK_DIR "m3qxxx" "system" "system/lib64/libcallaudio.so" 0 0 644 "u:object_r:system_lib_file:s0"

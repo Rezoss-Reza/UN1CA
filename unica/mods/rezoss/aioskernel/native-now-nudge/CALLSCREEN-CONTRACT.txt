@@ -100,3 +100,41 @@ operation sequence alone does not establish why the DSP rejects this graph.
 No further native binary, mixer, calibration or DSP payload was changed.
 A safe audio repair still requires identifying the rejected graph object or
 lifecycle ownership conflict; copying donor HAL/DSP/calibration is unverified.
+
+2026-10-29 response/timeout correction (v4 candidate)
+-------------------------------------------------
+Live test confirmed initial greeting and caller transcription on Wi-Fi/VoIP,
+then a V73 inference timeout and accepted literal answer=answer. Samsung's
+NO_REQUEST_TIME_OUT path repeated the accepted answer. V6 cellular proxy-TX
+activation was not observed in that call; audio changes remain independent.
+
+CallScreeningContract now rejects label-valued fields, punctuation/symbol-only
+fields, placeholder spoken answers (including repeated answer/response), and
+oversized fields. Purpose=nothing is still allowed as caller data; a spoken
+answer consisting solely of nothing is rejected. No replacement facts or
+scripted success are generated. Compact multilingual instructions request a
+single spoken sentence of at most eight words. Generation cap is 48 instead
+of 128 tokens, to reduce excessive work; the full JSON must still validate.
+
+ScreeningDeadline atomically owns one terminal result and checks success
+against nine seconds from submission even if the timer is delayed. Queue,
+import, tokenize and generation time remain included. Explicit cancellation
+and client death remove queued work. Task cleanup destroys its native process.
+Timing logs report tokenization/request age without dumping conversation text.
+The native runtime still loads per request. This is not persistent warm-up
+and does not prove that every cold inference fits Samsung's response window.
+Observed old runner logs include 27-30 generated tokens taking 9.6-11.5seconds.
+Do not lengthen Samsung's timeout or return placeholders as a workaround.
+
+Host validation: 994 contract checks across32templates/16languages;
+212deadline checks including200completion/cancellation races; existing
+ReplyText36, requestownership196 and recall31plusisolation pass. Android
+Java/D8 build, APK signing, alignment and ZIP checks passed. Native libraries
+are preserved from the pinned V73 base. No install/reboot or live benchmark
+was performed for this candidate. Tests remain under the existing ignored
+tests/ tree; source helpers are in backend/java.
+
+Candidate build command:
+ source buildenv.sh dm3q
+ bash unica/mods/rezoss/aioskernel/native-now-nudge/build_rom_backend.sh /tmp/NEW-callscreen-v4.apk
+The output path must be new. Audio module changes are not required.

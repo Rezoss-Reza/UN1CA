@@ -10,7 +10,6 @@ import java.lang.Process;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /** Opt-in replacement profile. Never loads or claims to execute Samsung Gauss weights. */
 public final class TextBackend {
@@ -142,7 +141,7 @@ public final class TextBackend {
     }
     private List<Task> snapshot(){synchronized(tasks){return new ArrayList<Task>(tasks);}}
     private final class Task extends Binder implements Runnable,IBinder.DeathRecipient {
-        final long submitted=SystemClock.elapsedRealtime();final CallScreeningContract screening;final int owner;final IBinder callback;final List<?> ids;final String name,prompt;final AtomicBoolean done=new AtomicBoolean();volatile Process process;volatile ScheduledFuture<?> timeout;
+        final long submitted=SystemClock.elapsedRealtime();final CallScreeningContract screening;final int owner;final IBinder callback;final List<?> ids;final String name,prompt;final ScreeningDeadline done=new ScreeningDeadline(submitted);volatile Process process;volatile ScheduledFuture<?> timeout;
         Task(int owner,Object input,IBinder cb,String profile)throws Exception {
             this.owner=owner;callback=cb;if(cb==null||input==null)throw new IllegalArgumentException("Missing task input/callback");
             ids=new ArrayList<Object>((List<?>)get(input,"getPromptIDs"));List<?> p=(List<?>)get(input,"getMPrompts"),images=(List<?>)get(input,"getMTensors");
@@ -158,35 +157,52 @@ public final class TextBackend {
             out.writeException(new UnsupportedOperationException("Only cancellation supported"));return true;
         }
         synchronized void armTimeout(){
-            if(screening!=null&&!done.get())timeout=deadlines.schedule(new Runnable(){public void run(){
+            if(screening!=null&&!done.done())timeout=deadlines.schedule(new Runnable(){public void run(){
+                if(done.done())return;
+                Log.w(TAG,"Call Screening deadline expired ageMs="+(SystemClock.elapsedRealtime()-submitted));
                 stop();worker.remove(Task.this);finish(3,null);
-            }},Math.max(1,submitted+9000-SystemClock.elapsedRealtime()),TimeUnit.MILLISECONDS);
+            }},Math.max(1,done.expires()-SystemClock.elapsedRealtime()),TimeUnit.MILLISECONDS);
         }
         synchronized void clearTimeout(){if(timeout!=null)timeout.cancel(false);}
-        void stop(){Process p=process;if(p!=null)p.destroyForcibly();}
-        public void binderDied(){if(done.compareAndSet(false,true)){clearTimeout();stop();tasks.remove(this);}}
+        void stop(){worker.remove(this);Process p=process;if(p!=null)p.destroyForcibly();}
+        public void binderDied(){if(done.finish()){clearTimeout();stop();worker.remove(this);tasks.remove(this);}}
         void finish(int event,Parcelable output){
-            if(!done.compareAndSet(false,true))return;clearTimeout();tasks.remove(this);callback.unlinkToDeath(this,0);
+            // Claim success only while the original submission deadline is live.
+            // A delayed timer must never allow late native output to succeed.
+            if(event==1&&screening!=null){
+                if(!done.complete(SystemClock.elapsedRealtime())){
+                    if(!done.done())finish(3,null);
+                    return;
+                }
+            }else if(!done.finish())return;
+            clearTimeout();tasks.remove(this);callback.unlinkToDeath(this,0);
+            if(event==1)Log.i(TAG,"COMPLETE uid="+owner+" ageMs="+(SystemClock.elapsedRealtime()-submitted));
             Parcel data=Parcel.obtain(),reply=Parcel.obtain();try{data.writeInterfaceToken(PREFIX+"ITaskCallback");if(event==1)data.writeTypedObject(output,0);
                 if(!callback.transact(event,data,reply,0))throw new RemoteException("Callback rejected");reply.readException();reply.readByte();
             }catch(Exception ex){Log.e(TAG,"Callback failed",ex);}finally{data.recycle();reply.recycle();}
         }
         public void run(){
-            File job=null;boolean locked=false;final long deadline=screening==null?Long.MAX_VALUE:submitted+9000;
-            Control control=new Control(){public boolean cancelled(){return done.get();}public long deadline(){return deadline;}public void process(Process p){process=p;if(done.get()&&p!=null)p.destroyForcibly();}};
-            try{if(screening==null){runnerLock.lockInterruptibly();locked=true;}else{locked=runnerLock.tryLock(Math.max(1,deadline-SystemClock.elapsedRealtime()),TimeUnit.MILLISECONDS);if(!locked)throw new IOException("Call Screening queue timeout");}if(done.get())return;
+            File job=null;boolean locked=false;final long deadline=screening==null?Long.MAX_VALUE:done.expires();
+            Control control=new Control(){public boolean cancelled(){return done.done();}public long deadline(){return deadline;}public void process(Process p){process=p;if(done.done()&&p!=null)p.destroyForcibly();}};
+            try{if(screening==null){runnerLock.lockInterruptibly();locked=true;}else{locked=runnerLock.tryLock(Math.max(1,deadline-SystemClock.elapsedRealtime()),TimeUnit.MILLISECONDS);if(!locked)throw new IOException("Call Screening queue timeout");}if(done.done())return;
                 prepareModel(Math.min(deadline,SystemClock.elapsedRealtime()+45000));job=Files.createTempDirectory(context.getCacheDir().toPath(),"reply-").toFile();
+                long countStarted=SystemClock.elapsedRealtime();
                 if(count(prompt,screening==null?null:control)>850)throw new IllegalArgumentException("Prompt exceeds replacement 1024-token context budget");
-                synchronized(this){if(done.get())return;process=launch(job,prompt,null,screening==null?96:128);if(done.get()){stop();return;}}
-                if(!process.waitFor(Math.min(45000,Math.max(1,deadline-SystemClock.elapsedRealtime())),TimeUnit.MILLISECONDS)){stop();throw new IOException("Reply timeout");}if(done.get())return;
+                if(screening!=null){
+                    done.remaining(SystemClock.elapsedRealtime());
+                    Log.i(TAG,"SCREENING tokenizeMs="+(SystemClock.elapsedRealtime()-countStarted)+" ageMs="+(SystemClock.elapsedRealtime()-submitted)+" maxTokens="+CallScreeningContract.MAX_NEW_TOKENS);
+                }
+                synchronized(this){if(done.done())return;process=launch(job,prompt,null,screening==null?96:CallScreeningContract.MAX_NEW_TOKENS);if(done.done()){stop();return;}}
+                long generationWait=screening==null?45000:done.remaining(SystemClock.elapsedRealtime());
+                if(!process.waitFor(generationWait,TimeUnit.MILLISECONDS)){stop();throw new IOException("Reply timeout");}if(done.done())return;
                 if(process.exitValue()!=0)throw new IOException("Runner exit="+process.exitValue()+" job="+job);
                 String text=new String(Files.readAllBytes(new File(job,"output.txt").toPath()),"UTF-8").replace("<|im_end|>","").trim();
                 int think=text.lastIndexOf("</think>");if(think>=0)text=text.substring(think+8).trim();
                 text=screening==null?ReplyText.lines(text):screening.output(text);
                 if(SystemClock.elapsedRealtime()>=deadline)throw new IOException("Call Screening deadline");
                 if(text.isEmpty()||text.contains("<think>"))throw new IOException("Empty/incomplete response");
-                Log.i(TAG,"COMPLETE uid="+owner+" chars="+text.length());finish(1,result(ids,name,text));
-            }catch(Exception ex){Log.e(TAG,"Task failed job="+job,ex);finish(3,null);}finally{if(job!=null)new File(job,"prompt.txt").delete();if(locked)runnerLock.unlock();}
+                Log.i(TAG,"VALIDATED uid="+owner+" chars="+text.length()+" ageMs="+(SystemClock.elapsedRealtime()-submitted));finish(1,result(ids,name,text));
+            }catch(Exception ex){Log.e(TAG,"Task failed job="+job,ex);finish(3,null);}finally{stop();process=null;if(job!=null)new File(job,"prompt.txt").delete();if(locked)runnerLock.unlock();}
         }
     }
     interface Control { boolean cancelled(); long deadline(); void process(Process process); }

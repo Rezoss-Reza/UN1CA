@@ -1,0 +1,64 @@
+dm3q Call Screening v6 ROM integration
+=====================================
+
+unica/mods/paradigm/customize.sh sources integrate_v6_rom.sh after the existing
+Call Screening policy/usecase setup. The hook runs only for TARGET_CODENAME=dm3q.
+It honors disable markers in callscreen/, compat-tx/ and isolation-v6/.
+
+The existing isolation-v6/build_v6.py compiles the same candidate already
+installed on the phone. A temporary build is staged under /tmp. The hook checks
+all current working HAL/PAL/XML/tinyalsa hashes before replacing any target
+file. Exact stock inputs and exact v6 outputs are admitted for repeat builds;
+unrelated modifications abort integration rather than being silently replaced.
+Future firmware changes require an explicit compatibility review/new hash pins.
+
+ROM payload (no root module or boot hook):
+ /vendor/lib64/hw/audio.primary.kalama.so
+ /vendor/lib64/libcs-pal.so
+ /vendor/etc/audio/sku_kalama/resourcemanager.xml
+ /vendor/etc/audio/sku_kalama/mixer_paths.xml
+
+ADD_TO_WORK_DIR and SET_METADATA are the normal UN1CA helpers. File metadata
+is explicitly replaced because ADD_TO_WORK_DIR can retain old entries.
+Stock root:shell/0755 directory ownership is preserved. lib64/hw is labeled
+vendor_hal_file, XML directories/files vendor_configs_file, native files
+vendor_file. There is no broad policy change or recursive relabeling.
+The new companion is placed directly into the vendor image; Mountify,
+skip_mount and arm_v6.sh are not required by the ROM integration.
+
+Corrected Qwen response backend
+-------------------------------
+The existing Rezoss native-now-nudge/integrate_rom.sh already rebuilds the
+AIOS APK from backend/java when UNICA_ENABLE_NATIVE_NOW_NUDGE=true. Therefore
+the response validation/deadline fixes remain part of subsequent enabled ROM
+builds. The separate user-data QWEN model pack is still required; it is not
+replaced by this audio integration. No model weights were changed here.
+
+Verification
+------------
+ source buildenv.sh dm3q
+ bash unica/mods/paradigm/callscreen/compat-tx/isolation-v6/test.sh
+ bash unica/mods/paradigm/callscreen/validate_v6_rom.sh
+
+The second command exercises the existing native shim host tests. The final
+command builds into a new /tmp fixture using real copy/metadata helpers:
+exact four payload hashes, stock ownership/context entries, silent-source XML,
+repeat application, refusal of competing XML changes, copy-failure propagation,
+device/disable guards, absence of root-module boot hooks. It does not write to
+out/fw, out/target or a phone. Run the ordinary ROM build later to incorporate
+the source hook into generated images.
+
+Validation boundary and migration
+----------------------------------
+The phone previously booted with v6 mounted and loaded its companion. Caller
+audio/transcription succeeded over Wi-Fi/VoIP, where the mode4 proxy-TX shim
+was not observed activating. Cellular mode4 startup, real-call microphone
+isolation and normal route transitions remain unverified. Integrating identical
+bytes into a vendor image does not establish those behaviors.
+
+No full ROM build, image flash, module uninstall or reboot was performed for
+this integration. Existing out/target files were inspected only. After flashing
+a ROM containing v6, disable/remove the old standalone v6 root module so it
+does not shadow future ROM updates. This source hook does not touch /data/adb.
+Before flashing, preserve a known working ROM/recovery path: this change affects
+the native audio HAL and its boot-time dependency/configuration.

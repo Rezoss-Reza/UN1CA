@@ -1,0 +1,53 @@
+V5 replacement for failed v3 - 2026-10-29
+=======================================
+Experimental native TX compatibility, NOT a proven call-screening repair.
+
+Concrete changes from v3:
+1. Installs inactive under a NEW ID rezoss_callscreen_compat_tx_v5 with
+   skip_mount and candidate/vendor payload, no active system/vendor tree.
+2. Explicit post-install arm_v5.sh verifies live HAL/PAL, exact payload hashes,
+   and enabled Mountify metamodule. It copies BOTH HAL and companion into
+   system/vendor, applies vendor_file labels AFTER KernelSU installer finishes,
+   checks hashes/labels, and only then renames skip_mount to arm next boot.
+3. No boot mount script or persistent linker config modification. Mountify
+   handles the overlay. Its current metamount.sh respects skip_mount and
+   preserves file contexts with chcon --reference while collecting payloads.
+4. No change to v3 native routing hypothesis: mode4/proxy RX retained, physical
+   handset TX forcibly muted. It remains subject to actual DSP startup, ASR,
+   microphone isolation and normal-call-transition verification.
+
+Verified:
+- Separate private mount namespace and tmpfs-backed /vendor overlay.
+- Full patched audio.primary.kalama.so loaded RTLD_NOW from /vendor/lib64/hw,
+  through /vendor/bin probe with unmodified linker configuration; companion
+  exports all six APIs. No LD_PRELOAD/LD_LIBRARY_PATH overrides, PAL calls,
+  stream creation, injection, live overlay or audio restart.
+- Probe root SELinux domain differs from real audio HAL. This is NOT proof
+  of live HAL SELinux access or correct call behavior.
+- Host ASan/UBSan behavioral tests, Android ARM64 build, shell syntax, ZIP check.
+- Existing audio-service PIDs stayed unchanged and original live HAL hash intact.
+
+Device installation / explicit activation / reboot have NOT occurred for v5.
+If authorized, install ZIP, run installed arm_v5.sh, verify armed paths/context
+before reboot; do not reinstall afterward because installer may relabel files.
+Any failed arming leaves skip_mount intact. If copying fails and system/ exists,
+do not remove skip_mount; inspect before repairing/retrying.
+Rollback: disable rezoss_callscreen_compat_tx_v5 then reboot. In recovery:
+touch /data/adb/modules/rezoss_callscreen_compat_tx_v5/disable
+Do not delete locksettings/Keystore/TEE files. Keep conflicting SUSFS LKM off.
+
+Release:
+/tmp/callscreen-v5/release/rezoss-callscreen-compat-tx-v5.zip
+Build:
+source buildenv.sh dm3q
+python3 unica/mods/paradigm/callscreen/compat-tx/build_v5.py --output /tmp/NEW-v5
+
+CONTEXT FIX - 2026-10-29
+Original v5 failed at boot: its recursive vendor_file assignment mislabeled the
+hw DIRECTORY. Boot audit explicitly denied SurfaceFlinger/audioserver dir read.
+Stock hw uses vendor_hal_file. Corrected arm_v5.sh copies stock contexts per
+directory with BusyBox chcon --reference and checks hw separately. Audio files
+remain vendor_file. No SELinux allow rule added. Private corrected overlay
+and SPHAL load pass; live call behavior still unverified. Do not reuse original
+v5 ZIP. Latest package: /tmp/cs-service-order/contextfix-release/rezoss-callscreen-compat-tx-v5-contextfix.zip
+Full evidence /tmp/cs-service-order/findings.txt. No deployment performed.
