@@ -5,10 +5,16 @@ This module builds `QWEN_LLM_rezoss.apk`, a small settings app and trusted API b
 ## Setup
 
 1. Install the ROM's `QWEN_LLM_rezoss.apk` and open **Rezoss AI**.
-2. Enter an OpenAI-compatible chat-completions HTTPS URL, a model name, and an API key.
+2. Choose OpenAI, Gemini, OpenRouter, or a custom endpoint; enter the provider's model name and API key.
 3. Save the settings. The API key is encrypted with Android Keystore and is not included in the ROM build.
 
-The default URL is `https://api.openai.com/v1/chat/completions`. Providers must accept a non-streaming Chat Completions request and return text in `choices[0].message.content`.
+The app sends non-streaming OpenAI Chat Completions requests. The built-in presets use these endpoints:
+
+- OpenAI: `https://api.openai.com/v1/chat/completions`
+- Gemini's OpenAI-compatible endpoint: `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`
+- OpenRouter: `https://openrouter.ai/api/v1/chat/completions`
+
+Custom endpoints must accept a Bearer API key and OpenAI-style `chat/completions` requests, then return text in `choices[0].message.content`. This covers other providers that implement that protocol. There is no single protocol for every vendor: APIs that only expose a different native format need a matching adapter.
 
 ## Data flow
 

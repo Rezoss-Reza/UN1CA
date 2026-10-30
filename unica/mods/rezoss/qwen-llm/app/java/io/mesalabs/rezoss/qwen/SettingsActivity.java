@@ -9,8 +9,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ArrayAdapter;
+import android.widget.AdapterView;
 import android.os.Handler;
 import android.os.Looper;
 import java.util.concurrent.ExecutorService;
@@ -18,10 +21,15 @@ import java.util.concurrent.Executors;
 
 /** Small user-facing settings screen for an OpenAI-compatible API. */
 public final class SettingsActivity extends Activity {
+    private static final String OPENAI = "https://api.openai.com/v1/chat/completions";
+    private static final String GEMINI = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+    private static final String OPENROUTER = "https://openrouter.ai/api/v1/chat/completions";
+    private static final String[] PROVIDERS = {"OpenAI", "Gemini", "OpenRouter", "Custom endpoint"};
     private EditText endpoint;
     private EditText model;
     private EditText apiKey;
     private TextView keyState;
+    private Spinner provider;
     private final ExecutorService storage = Executors.newSingleThreadExecutor();
     private final Handler main = new Handler(Looper.getMainLooper());
 
@@ -42,19 +50,26 @@ public final class SettingsActivity extends Activity {
         page.addView(title, matchWrap());
 
         TextView description = new TextView(this);
-        description.setText("The ROM keeps its current screen-text extraction and reply/summary flow. Extracted text is sent to the endpoint configured here when it needs a response.");
+        description.setText("Keep the ROM's current screen-text extraction and reply/summary flow while choosing an API provider. Extracted text is sent to that provider when it needs a response.");
         description.setTextSize(14);
         description.setPadding(0, dp(12), 0, dp(18));
         page.addView(description, matchWrap());
 
-        addLabel(page, "OpenAI-compatible chat-completions URL");
-        endpoint = field("https://api.openai.com/v1/chat/completions",
+        addLabel(page, "Provider");
+        provider = new Spinner(this);
+        ArrayAdapter<String> providers = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, PROVIDERS);
+        providers.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        provider.setAdapter(providers);
+        page.addView(provider, matchWrap());
+
+        addLabel(page, "Chat-completions URL (HTTPS)");
+        endpoint = field(OPENAI,
                 InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
-        endpoint.setText("https://api.openai.com/v1/chat/completions");
+        endpoint.setText(OPENAI);
         page.addView(endpoint, matchWrap());
 
         addLabel(page, "Model name");
-        model = field("e.g. gpt-4o-mini", InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        model = field("Provider's model ID", InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         page.addView(model, matchWrap());
 
         addLabel(page, "API key");
@@ -76,13 +91,37 @@ public final class SettingsActivity extends Activity {
         page.addView(clear, matchWrap());
 
         TextView privacy = new TextView(this);
-        privacy.setText("The API key is encrypted with Android Keystore. Use an HTTPS endpoint so the key and extracted text are encrypted in transit.");
+        privacy.setText("OpenAI, Gemini, OpenRouter, and custom OpenAI-compatible endpoints are supported. The API key is encrypted with Android Keystore. Extracted text is sent over HTTPS to the provider you choose.");
         privacy.setTextSize(12);
         privacy.setPadding(0, dp(18), 0, 0);
         page.addView(privacy, matchWrap());
 
         setContentView(scroll);
         loadSettings();
+        provider.setSelection(providerFor(endpoint.getText().toString()));
+        provider.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> parent, android.view.View view, int position, long id) {
+                String preset = endpointFor(position);
+                if (preset != null) endpoint.setText(preset);
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) { }
+        });
+    }
+
+    private static String endpointFor(int position) {
+        switch (position) {
+            case 0: return OPENAI;
+            case 1: return GEMINI;
+            case 2: return OPENROUTER;
+            default: return null;
+        }
+    }
+
+    private static int providerFor(String url) {
+        if (OPENAI.equalsIgnoreCase(url)) return 0;
+        if (GEMINI.equalsIgnoreCase(url)) return 1;
+        if (OPENROUTER.equalsIgnoreCase(url)) return 2;
+        return 3;
     }
 
     private void loadSettings() {
