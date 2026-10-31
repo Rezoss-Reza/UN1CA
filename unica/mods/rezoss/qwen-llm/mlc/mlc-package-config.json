@@ -1,0 +1,15 @@
+{
+  "device": "android",
+  "model_list": [
+    {
+      "model": "HF://mlc-ai/gemma-2b-it-q4f16_0-MLC",
+      "model_id": "gemma-2b-it-q4f16_0-MLC",
+      "estimated_vram_bytes": 3000000000,
+      "bundle_weight": false,
+      "overrides": {
+        "context_window_size": 2048,
+        "prefill_chunk_size": 128
+      }
+    }
+  ]
+}

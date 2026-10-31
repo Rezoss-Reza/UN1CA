@@ -20,6 +20,9 @@ import org.json.JSONObject;
 final class ApiClient {
     private static final int MAX_RESPONSE_BYTES = 262144;
     private static final int MAX_OUTPUT_CHARS = 8192;
+    private static final long LOCAL_FALLBACK_RESERVE_MS = 6500;
+    private static final long MAX_REMOTE_ATTEMPT_MS = 15000;
+    private static final long MIN_REMOTE_ATTEMPT_MS = 500;
     private static final Map<String, HttpURLConnection> ACTIVE = new HashMap<>();
     private static final Set<String> CANCELLED = new LinkedHashSet<>();
 
@@ -34,12 +37,63 @@ final class ApiClient {
                 || maxTokens < 1 || maxTokens > 2048 || requestId == null || requestId.isEmpty())
             throw new ApiException("invalid_request");
         if (Thread.currentThread().isInterrupted()) throw new ApiException("cancelled");
+        if (deadline - SystemClock.elapsedRealtime() < 1) throw new ApiException("deadline");
+
+        boolean localReady = MlcRuntime.isReady(context);
+        Exception remoteFailure = null;
+        ApiSettingsStore.Settings settings = null;
+        try { settings = ApiSettingsStore.read(context); }
+        catch (Exception unavailable) { remoteFailure = new ApiException("api_unconfigured"); }
+
+        if (settings != null && settings.ready()) {
+            try {
+                ApiSettingsStore.validateEndpoint(settings.endpoint);
+                long remoteDeadline = deadline;
+                if (localReady) {
+                    long now = SystemClock.elapsedRealtime();
+                    long remoteBudget = Math.min(MAX_REMOTE_ATTEMPT_MS,
+                            deadline - now - LOCAL_FALLBACK_RESERVE_MS);
+                    if (remoteBudget >= MIN_REMOTE_ATTEMPT_MS) remoteDeadline = now + remoteBudget;
+                    else remoteDeadline = now;
+                }
+                if (remoteDeadline > SystemClock.elapsedRealtime())
+                    return completeRemote(context, settings, systemPrompt, userPrompt,
+                            maxTokens, remoteDeadline, requestId);
+                remoteFailure = new ApiException("network_error");
+            } catch (ApiException failure) {
+                if ("cancelled".equals(failure.status)) throw failure;
+                if ("deadline".equals(failure.status)
+                        && SystemClock.elapsedRealtime() >= deadline) throw failure;
+                remoteFailure = failure;
+            } catch (Exception unavailable) {
+                remoteFailure = new ApiException("api_unconfigured");
+            }
+        } else if (remoteFailure == null) {
+            remoteFailure = new ApiException("api_unconfigured");
+        }
+
+        if (localReady) {
+            if (Thread.currentThread().isInterrupted()) throw new ApiException("cancelled");
+            if (deadline - SystemClock.elapsedRealtime() < 1) throw new ApiException("deadline");
+            try {
+                return MlcRuntime.complete(context, systemPrompt, userPrompt,
+                        maxTokens, deadline, requestId);
+            } catch (ApiException localFailure) {
+                if ("cancelled".equals(localFailure.status)
+                        || "deadline".equals(localFailure.status)) throw localFailure;
+                if (remoteFailure == null || "api_unconfigured".equals(remoteFailure.getMessage()))
+                    throw localFailure;
+            }
+        }
+        if (remoteFailure != null) throw remoteFailure;
+        throw new ApiException("api_unconfigured");
+    }
+
+    private static String completeRemote(Context context, ApiSettingsStore.Settings settings,
+            String systemPrompt, String userPrompt, int maxTokens, long deadline,
+            String requestId) throws Exception {
         long remaining = deadline - SystemClock.elapsedRealtime();
         if (remaining < 1) throw new ApiException("deadline");
-
-        ApiSettingsStore.Settings settings = ApiSettingsStore.read(context);
-        if (!settings.ready()) throw new ApiException("api_unconfigured");
-        ApiSettingsStore.validateEndpoint(settings.endpoint);
 
         JSONArray messages = new JSONArray();
         if (systemPrompt != null && !systemPrompt.isEmpty())
@@ -111,6 +165,7 @@ final class ApiClient {
 
     static void cancel(String requestId) {
         if (requestId == null || requestId.isEmpty()) return;
+        MlcRuntime.cancel(requestId);
         HttpURLConnection connection;
         synchronized (ACTIVE) {
             connection = ACTIVE.remove(requestId);
@@ -123,6 +178,7 @@ final class ApiClient {
     }
 
     static void cancelAll() {
+        MlcRuntime.cancelAll();
         HttpURLConnection[] connections;
         synchronized (ACTIVE) {
             connections = ACTIVE.values().toArray(new HttpURLConnection[0]);

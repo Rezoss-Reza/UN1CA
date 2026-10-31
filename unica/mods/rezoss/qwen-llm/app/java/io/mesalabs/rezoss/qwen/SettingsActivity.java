@@ -29,6 +29,9 @@ public final class SettingsActivity extends Activity {
     private EditText model;
     private EditText apiKey;
     private TextView keyState;
+    private TextView localModelState;
+    private Button downloadModel;
+    private Button cancelDownload;
     private Spinner provider;
     private final ExecutorService storage = Executors.newSingleThreadExecutor();
     private final Handler main = new Handler(Looper.getMainLooper());
@@ -50,7 +53,7 @@ public final class SettingsActivity extends Activity {
         page.addView(title, matchWrap());
 
         TextView description = new TextView(this);
-        description.setText("Keep the ROM's current screen-text extraction and reply/summary flow while choosing an API provider. Extracted text is sent to that provider when it needs a response.");
+        description.setText("Keep the ROM's current screen-text extraction, call-screening, and reply/summary flow. The selected API is tried first; a downloaded local model can answer if the API is unavailable.");
         description.setTextSize(14);
         description.setPadding(0, dp(12), 0, dp(18));
         page.addView(description, matchWrap());
@@ -90,14 +93,39 @@ public final class SettingsActivity extends Activity {
         clear.setOnClickListener(view -> confirmClearKey());
         page.addView(clear, matchWrap());
 
+        addLabel(page, "On-device fallback");
+        TextView localDescription = new TextView(this);
+        localDescription.setText("Download Gemma 2 2B Instruct once (about 1.5 GB). If the API is unavailable, Rezoss AI can handle call-screening prompts and generate replies and summaries on this device.");
+        localDescription.setTextSize(14);
+        localDescription.setPadding(0, dp(6), 0, dp(8));
+        page.addView(localDescription, matchWrap());
+        localModelState = new TextView(this);
+        localModelState.setTextSize(12);
+        localModelState.setPadding(0, 0, 0, dp(8));
+        page.addView(localModelState, matchWrap());
+        downloadModel = new Button(this);
+        downloadModel.setText("Download local fallback model");
+        downloadModel.setOnClickListener(view -> downloadLocalModel());
+        page.addView(downloadModel, matchWrap());
+        cancelDownload = new Button(this);
+        cancelDownload.setText("Cancel download");
+        cancelDownload.setVisibility(android.view.View.GONE);
+        cancelDownload.setOnClickListener(view -> {
+            MlcModelStore.cancelDownload();
+            cancelDownload.setEnabled(false);
+            localModelState.setText("Cancelling the model download…");
+        });
+        page.addView(cancelDownload, matchWrap());
+
         TextView privacy = new TextView(this);
-        privacy.setText("OpenAI, Gemini, OpenRouter, and custom OpenAI-compatible endpoints are supported. The API key is encrypted with Android Keystore. Extracted text is sent over HTTPS to the provider you choose.");
+        privacy.setText("OpenAI, Gemini, OpenRouter, and custom OpenAI-compatible endpoints are supported. The API key is encrypted with Android Keystore. When configured, the remote provider is tried first and receives the prompt over HTTPS; local fallback runs on this device after an API failure.");
         privacy.setTextSize(12);
         privacy.setPadding(0, dp(18), 0, 0);
         page.addView(privacy, matchWrap());
 
         setContentView(scroll);
         loadSettings();
+        refreshLocalModelState();
         provider.setSelection(providerFor(endpoint.getText().toString()));
         provider.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(AdapterView<?> parent, android.view.View view, int position, long id) {
@@ -138,6 +166,60 @@ public final class SettingsActivity extends Activity {
         }
     }
 
+    private void refreshLocalModelState() {
+        if (!MlcRuntime.isPackaged(this)) {
+            localModelState.setText("This build does not include the MLC runtime. It can use a configured API; rebuild with the MLC package to enable local fallback.");
+            downloadModel.setEnabled(false);
+            return;
+        }
+        if (MlcModelStore.isReady(this)) {
+            localModelState.setText("Gemma 2 2B Instruct is downloaded and ready as a fallback.");
+            downloadModel.setText("Model downloaded");
+            downloadModel.setEnabled(false);
+            MlcRuntime.warm(this);
+            return;
+        }
+        localModelState.setText("No local fallback model downloaded.");
+        downloadModel.setEnabled(!MlcModelStore.isDownloading());
+        if (MlcModelStore.isDownloading()) {
+            downloadModel.setText("Download in progress");
+            cancelDownload.setVisibility(android.view.View.VISIBLE);
+            cancelDownload.setEnabled(true);
+        }
+    }
+
+    private void downloadLocalModel() {
+        downloadModel.setEnabled(false);
+        downloadModel.setText("Downloading model…");
+        cancelDownload.setVisibility(android.view.View.VISIBLE);
+        cancelDownload.setEnabled(true);
+        localModelState.setText("Preparing the download. Keep enough free space for about 1.5 GB.");
+        MlcModelStore.download(this, new MlcModelStore.Listener() {
+            @Override public void onProgress(long complete, long total) {
+                int percent = total <= 0 ? 0 : (int) Math.min(100, complete * 100 / total);
+                main.post(() -> {
+                    if (!isFinishing()) localModelState.setText("Downloading local model: " + percent + "%");
+                });
+            }
+            @Override public void onComplete(String error) {
+                main.post(() -> {
+                    if (isFinishing()) return;
+                    cancelDownload.setVisibility(android.view.View.GONE);
+                    cancelDownload.setEnabled(true);
+                    if (error != null) {
+                        localModelState.setText(error);
+                        downloadModel.setText("Retry model download");
+                        downloadModel.setEnabled(true);
+                        return;
+                    }
+                    localModelState.setText("Model downloaded. Starting the local fallback…");
+                    downloadModel.setText("Model downloaded");
+                    MlcRuntime.warm(SettingsActivity.this);
+                });
+            }
+        });
+    }
+
     private void saveSettings() {
         String endpointValue = endpoint.getText().toString();
         String modelValue = model.getText().toString();
@@ -165,7 +247,7 @@ public final class SettingsActivity extends Activity {
 
     private void confirmClearKey() {
         new AlertDialog.Builder(this)
-                .setMessage("Remove the saved API key? Reply and summary generation will stop until you add another key.")
+                .setMessage("Remove the saved API key? A downloaded Gemma fallback can still handle call-screening prompts and generate replies and summaries on this device.")
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Remove", (dialog, which) -> {
                     ApiSettingsStore.clearKey(this);
