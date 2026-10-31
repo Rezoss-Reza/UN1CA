@@ -51,6 +51,7 @@ public final class EngineService extends Service {
     @Override public void onCreate() {
         super.onCreate();
         engine = new ApiEngine(this);
+        MlcRuntime.warm(this);
         watchdog.scheduleAtFixedRate(() -> {
             Job job = active;
             if (job == null) return;

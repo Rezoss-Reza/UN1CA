@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="io.mesalabs.rezoss.qwen" android:versionCode="7" android:versionName="3.0-api">
+    package="io.mesalabs.rezoss.qwen" android:versionCode="8" android:versionName="3.1-api-mlc">
     <uses-sdk android:minSdkVersion="30" android:targetSdkVersion="36" />
     <permission android:name="io.mesalabs.rezoss.permission.QWEN_ENGINE" android:protectionLevel="signature|knownSigner" android:knownCerts="34df0e7a9f1cf1892e45c056b4973cd81ccf148a4050d11aea4ac5a65f900a42" />
     <permission android:name="io.mesalabs.rezoss.permission.QWEN_API" android:protectionLevel="signature|knownSigner" android:knownCerts="34df0e7a9f1cf1892e45c056b4973cd81ccf148a4050d11aea4ac5a65f900a42" />
@@ -11,6 +11,8 @@
     <application android:label="Rezoss AI" android:allowBackup="false"
         android:extractNativeLibs="true" android:usesCleartextTraffic="false"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        <uses-native-library android:name="libOpenCL.so" android:required="false" />
+        <uses-native-library android:name="libOpenCL-pixel.so" android:required="false" />
         <service android:name=".EngineService" android:exported="true"
             android:permission="io.mesalabs.rezoss.permission.QWEN_ENGINE" />
         <activity android:name=".SettingsActivity" android:exported="true">
